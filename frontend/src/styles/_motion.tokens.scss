@@ -1,0 +1,84 @@
+/* Taskly ERP motion contract.
+ * These variables define timing and easing only; components consume them later.
+ */
+
+:root {
+  /* Durations */
+  --erp-duration-instant: 80ms;
+  --erp-duration-fast: 140ms;
+  --erp-duration-standard: 200ms;
+  --erp-duration-emphasized: 280ms;
+  --erp-duration-slow: 360ms;
+
+  /* Easings */
+  --erp-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --erp-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --erp-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --erp-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Sidebar hover behavior */
+  --erp-sidebar-expand-delay: 90ms;
+  --erp-sidebar-collapse-delay: 180ms;
+  --erp-sidebar-expand-duration: 280ms;
+  --erp-sidebar-collapse-duration: 240ms;
+  --erp-sidebar-expand-easing: var(--erp-ease-enter);
+  --erp-sidebar-collapse-easing: var(--erp-ease-standard);
+  --erp-sidebar-label-enter-delay: 70ms;
+  --erp-sidebar-label-exit-duration: 100ms;
+  --erp-sidebar-label-shift: -6px;
+
+  /* Header and navigation */
+  --erp-header-transition: var(--erp-duration-standard) var(--erp-ease-standard);
+  --erp-nav-active-transition: var(--erp-duration-fast) var(--erp-ease-standard);
+  --erp-search-focus-duration: var(--erp-duration-standard);
+
+  /* Controls and surfaces */
+  --erp-control-transition: var(--erp-duration-fast) var(--erp-ease-standard);
+  --erp-card-hover-duration: var(--erp-duration-standard);
+  --erp-card-hover-translate-y: -2px;
+  --erp-press-scale: 0.98;
+
+  /* Overlays */
+  --erp-dropdown-enter-duration: 160ms;
+  --erp-dropdown-exit-duration: 120ms;
+  --erp-drawer-enter-duration: 320ms;
+  --erp-drawer-exit-duration: 240ms;
+  --erp-modal-enter-duration: 220ms;
+  --erp-modal-exit-duration: 160ms;
+  --erp-toast-enter-duration: 240ms;
+  --erp-toast-exit-duration: 180ms;
+  --erp-overlay-enter-shift: 8px;
+  --erp-drawer-enter-shift: 24px;
+
+  /* Feedback */
+  --erp-skeleton-duration: 1400ms;
+  --erp-progress-duration: 400ms;
+  --erp-status-pulse-duration: 1800ms;
+}
+
+/* Motion is reduced globally when the operating system requests it. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --erp-duration-instant: 1ms;
+    --erp-duration-fast: 1ms;
+    --erp-duration-standard: 1ms;
+    --erp-duration-emphasized: 1ms;
+    --erp-duration-slow: 1ms;
+    --erp-sidebar-expand-delay: 0ms;
+    --erp-sidebar-collapse-delay: 0ms;
+    --erp-sidebar-expand-duration: 1ms;
+    --erp-sidebar-collapse-duration: 1ms;
+    --erp-sidebar-label-enter-delay: 0ms;
+    --erp-sidebar-label-exit-duration: 1ms;
+    --erp-dropdown-enter-duration: 1ms;
+    --erp-dropdown-exit-duration: 1ms;
+    --erp-drawer-enter-duration: 1ms;
+    --erp-drawer-exit-duration: 1ms;
+    --erp-modal-enter-duration: 1ms;
+    --erp-modal-exit-duration: 1ms;
+    --erp-toast-enter-duration: 1ms;
+    --erp-toast-exit-duration: 1ms;
+    --erp-card-hover-translate-y: 0;
+    --erp-press-scale: 1;
+  }
+}

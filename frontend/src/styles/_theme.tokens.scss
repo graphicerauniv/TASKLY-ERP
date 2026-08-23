@@ -1,0 +1,194 @@
+/* Taskly ERP design tokens.
+ * Foundation only: no component selectors and no page styling.
+ * Visual direction: supplied GEU admin ERP reference.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --erp-blue-50: #e3f2fd;
+  --erp-blue-100: #cfe8ff;
+  --erp-blue-200: #90caf9;
+  --erp-blue-500: #2196f3;
+  --erp-blue-600: #1976d2;
+  --erp-blue-700: #1565c0;
+  --erp-blue-800: #0b57a4;
+  --erp-blue-900: #073b7a;
+  --erp-sidebar-gradient-start: #0868cc;
+  --erp-sidebar-gradient-end: #0057b8;
+
+  /* Surfaces */
+  --erp-canvas: #f6f8f2;
+  --erp-canvas-soft: #f1f7f3;
+  --erp-surface: #fbfcf6;
+  --erp-surface-raised: #fdfdf9;
+  --erp-surface-overlay: #ffffff;
+  --erp-surface-selected: #e3f2fd;
+  --erp-surface-hover: #eef8fe;
+  --erp-border-subtle: #e7f3fb;
+  --erp-border-default: #d8eaf7;
+  --erp-border-strong: #90caf9;
+  --erp-focus-ring: rgb(33 150 243 / 28%);
+  --erp-backdrop: rgb(16 42 67 / 34%);
+
+  /* Text */
+  --erp-text-heading: #102a43;
+  --erp-text-strong: #243b53;
+  --erp-text-body: #486581;
+  --erp-text-muted: #627d98;
+  --erp-text-light: #829ab1;
+  --erp-text-disabled: #9fb3c8;
+  --erp-text-link: #1976d2;
+  --erp-text-on-primary: #ffffff;
+  --erp-text-on-sidebar: #ffffff;
+  --erp-text-sidebar-muted: rgb(255 255 255 / 78%);
+  --erp-text-sidebar-active: #075fbf;
+
+  /* Semantic */
+  --erp-success: #1f9d63;
+  --erp-success-bg: #e9f9f0;
+  --erp-success-text: #137a49;
+  --erp-warning: #f59e0b;
+  --erp-warning-bg: #fff7df;
+  --erp-warning-text: #a55b00;
+  --erp-danger: #e85d5d;
+  --erp-danger-bg: #fff0ee;
+  --erp-danger-text: #b9382e;
+  --erp-info: #2196f3;
+  --erp-info-bg: #e3f2fd;
+  --erp-info-text: #1976d2;
+
+  /* Typography: Manrope throughout the ERP */
+  --erp-font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --erp-font-display: 28px;
+  --erp-font-page-title: 22px;
+  --erp-font-section-title: 18px;
+  --erp-font-body: 14px;
+  --erp-font-label: 13px;
+  --erp-font-caption: 12px;
+  --erp-line-display: 36px;
+  --erp-line-page-title: 30px;
+  --erp-line-section-title: 26px;
+  --erp-line-body: 22px;
+  --erp-line-label: 18px;
+  --erp-line-caption: 16px;
+  --erp-weight-regular: 400;
+  --erp-weight-medium: 500;
+  --erp-weight-semibold: 600;
+  --erp-weight-bold: 700;
+  --erp-letter-tight: -0.02em;
+  --erp-letter-normal: 0;
+
+  /* Lucide icon system */
+  --erp-icon-stroke: 1.8px;
+  --erp-icon-xs: 14px;
+  --erp-icon-sm: 16px;
+  --erp-icon-md: 20px;
+  --erp-icon-lg: 24px;
+  --erp-icon-default: var(--erp-icon-md);
+  --erp-icon-default-colour: var(--erp-text-muted);
+  --erp-icon-active-colour: var(--erp-blue-600);
+  --erp-icon-disabled-colour: var(--erp-text-disabled);
+
+  /* Spacing */
+  --erp-space-0: 0;
+  --erp-space-1: 4px;
+  --erp-space-2: 8px;
+  --erp-space-3: 12px;
+  --erp-space-4: 16px;
+  --erp-space-5: 20px;
+  --erp-space-6: 24px;
+  --erp-space-8: 32px;
+  --erp-space-10: 40px;
+  --erp-space-12: 48px;
+  --erp-page-padding-desktop: 24px;
+  --erp-page-padding-tablet: 16px;
+  --erp-page-padding-mobile: 12px;
+  --erp-grid-gutter-desktop: 24px;
+  --erp-grid-gutter-mobile: 16px;
+
+  /* Application shell */
+  --erp-sidebar-width: 256px;
+  --erp-sidebar-collapsed-width: 72px;
+  --erp-sidebar-item-height: 44px;
+  --erp-sidebar-item-radius: 8px;
+  --erp-sidebar-inline-padding: 12px;
+  --erp-sidebar-icon-column: 48px;
+  --erp-sidebar-bg: linear-gradient(
+    180deg,
+    var(--erp-sidebar-gradient-start),
+    var(--erp-sidebar-gradient-end)
+  );
+  --erp-sidebar-layer: rgb(144 202 249 / 24%);
+  --erp-sidebar-pattern: rgb(144 202 249 / 42%);
+  --erp-sidebar-active-bg: rgb(255 255 255 / 88%);
+  --erp-sidebar-hover-bg: rgb(255 255 255 / 12%);
+  --erp-sidebar-active-edge: #56b5ff;
+  --erp-sidebar-divider: rgb(255 255 255 / 18%);
+  --erp-header-height: 64px;
+  --erp-header-bg: rgb(253 253 249 / 94%);
+  --erp-header-border: var(--erp-border-default);
+  --erp-header-padding-inline: 20px;
+  --erp-header-search-width: 360px;
+  --erp-content-max-width: 1600px;
+
+  /* Radius and elevation */
+  --erp-radius-xs: 4px;
+  --erp-radius-control: 8px;
+  --erp-radius-chip: 999px;
+  --erp-radius-card: 14px;
+  --erp-radius-overlay: 16px;
+  --erp-radius-avatar: 999px;
+  --erp-shadow-card: 0 4px 14px rgb(33 150 243 / 8%);
+  --erp-shadow-card-hover: 0 10px 24px rgb(33 150 243 / 13%);
+  --erp-shadow-header: 0 1px 0 var(--erp-header-border);
+  --erp-shadow-sidebar: 8px 0 24px rgb(7 59 122 / 14%);
+  --erp-shadow-overlay: 0 20px 44px rgb(16 42 67 / 14%);
+
+  /* Cards and overlays */
+  --erp-card-padding: 20px;
+  --erp-card-padding-compact: 16px;
+  --erp-kpi-card-min-width: 260px;
+  --erp-kpi-card-height: 126px;
+  --erp-chart-card-min-height: 320px;
+  --erp-drawer-width: 420px;
+  --erp-modal-width: 560px;
+
+  /* Controls, tables and chips */
+  --erp-control-height: 40px;
+  --erp-control-height-compact: 36px;
+  --erp-control-height-mobile: 44px;
+  --erp-button-primary-bg: #2196f3;
+  --erp-button-primary-hover: #1976d2;
+  --erp-button-primary-pressed: #1565c0;
+  --erp-button-secondary-bg: #fbfcf6;
+  --erp-button-secondary-border: #90caf9;
+  --erp-input-bg: #fbfcf6;
+  --erp-input-border: #d8eaf7;
+  --erp-input-focus-border: #2196f3;
+  --erp-table-header-height: 44px;
+  --erp-table-row-height: 52px;
+  --erp-table-row-height-compact: 44px;
+  --erp-table-header-bg: #f1f8fd;
+  --erp-table-row-hover: #e3f2fd;
+  --erp-table-divider: #e7f3fb;
+  --erp-chip-height: 24px;
+  --erp-chip-padding-inline: 8px;
+
+  /* Charts */
+  --erp-chart-primary: #2196f3;
+  --erp-chart-secondary: #90caf9;
+  --erp-chart-area-fill: rgb(144 202 249 / 28%);
+  --erp-chart-grid: #d8eaf7;
+  --erp-chart-baseline: #829ab1;
+
+  /* Layer order */
+  --erp-z-content: 1;
+  --erp-z-header: 100;
+  --erp-z-sidebar: 200;
+  --erp-z-dropdown: 400;
+  --erp-z-drawer: 600;
+  --erp-z-modal: 800;
+  --erp-z-toast: 1000;
+}

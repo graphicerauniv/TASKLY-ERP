@@ -1,0 +1,28 @@
+{
+  "name": "taskly-erp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Taskly ERP professional workspace foundation",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint eslint.config.mjs \"frontend/**/*.ts\" \"frontend/**/*.html\" \"backend/**/*.ts\" --no-error-on-unmatched-pattern --max-warnings=0",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "angular-eslint": "^21.4.0",
+    "eslint": "^10.0.0",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.67.0"
+  }
+}

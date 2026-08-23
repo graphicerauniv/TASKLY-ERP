@@ -1,0 +1,157 @@
+/* Reusable state classes. These are global primitives, not page styles. */
+
+.erp-data-region {
+  position: relative;
+  min-width: 0;
+  contain: layout style;
+}
+
+.erp-data-region--busy {
+  cursor: progress;
+  pointer-events: none;
+}
+
+.erp-loading-overlay {
+  position: absolute;
+  z-index: var(--erp-z-dropdown);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--erp-loading-overlay-bg);
+  backdrop-filter: blur(var(--erp-loading-backdrop-blur));
+  border-radius: inherit;
+}
+
+.erp-spinner {
+  width: var(--erp-loading-spinner-size);
+  height: var(--erp-loading-spinner-size);
+  border: 3px solid var(--erp-loading-spinner-track);
+  border-top-color: var(--erp-loading-spinner-active);
+  border-radius: var(--erp-radius-avatar);
+  animation: erp-spin var(--erp-duration-slow) linear infinite;
+}
+
+.erp-skeleton {
+  display: block;
+  min-height: var(--erp-skeleton-line-height);
+  overflow: hidden;
+  background: var(--erp-skeleton-base);
+  border-radius: var(--erp-skeleton-radius);
+}
+
+.erp-skeleton::after {
+  display: block;
+  width: var(--erp-skeleton-shimmer-width);
+  height: 100%;
+  content: '';
+  background: linear-gradient(90deg, transparent, var(--erp-skeleton-highlight), transparent);
+  transform: translateX(-100%);
+  animation: erp-skeleton-shimmer var(--erp-skeleton-duration) ease-in-out infinite;
+}
+
+.erp-is-selected {
+  background: var(--erp-selection-bg);
+  box-shadow: inset var(--erp-selection-indicator-width) 0 0 var(--erp-selection-border);
+}
+
+.erp-is-selected:hover {
+  background: var(--erp-selection-hover-bg);
+}
+
+.erp-selection-toolbar {
+  display: flex;
+  min-height: var(--erp-selection-toolbar-height);
+  align-items: center;
+  gap: var(--erp-space-3);
+  padding-inline: var(--erp-space-4);
+  color: var(--erp-text-strong);
+  background: var(--erp-selection-toolbar-bg);
+  border: 1px solid var(--erp-border-strong);
+  border-radius: var(--erp-radius-control);
+}
+
+.erp-pagination {
+  display: flex;
+  min-height: var(--erp-pagination-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-pagination-gap);
+  color: var(--erp-pagination-text);
+  background: var(--erp-pagination-bg);
+  border-top: 1px solid var(--erp-pagination-border);
+}
+
+.erp-pagination__pages {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-pagination-gap);
+}
+
+.erp-pagination__button {
+  display: inline-grid;
+  width: var(--erp-pagination-button-size);
+  height: var(--erp-pagination-button-size);
+  place-items: center;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--erp-pagination-button-radius);
+  transition:
+    color var(--erp-control-transition),
+    background-color var(--erp-control-transition),
+    border-color var(--erp-control-transition);
+}
+
+.erp-pagination__button:hover:not(:disabled) {
+  color: var(--erp-blue-700);
+  background: var(--erp-surface-hover);
+  border-color: var(--erp-border-default);
+}
+
+.erp-pagination__button--active {
+  color: var(--erp-pagination-active-text);
+  background: var(--erp-pagination-active-bg);
+}
+
+.erp-pagination__button:disabled {
+  cursor: not-allowed;
+  opacity: var(--erp-pagination-disabled-opacity);
+}
+
+.erp-state-panel {
+  display: grid;
+  min-height: var(--erp-state-panel-min-height);
+  place-items: center;
+  padding: var(--erp-space-8);
+  color: var(--erp-text-muted);
+  text-align: center;
+}
+
+.erp-is-stale {
+  opacity: var(--erp-stale-data-opacity);
+}
+
+.erp-render-row {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto var(--erp-content-visibility-size);
+}
+
+@keyframes erp-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes erp-skeleton-shimmer {
+  to {
+    transform: translateX(240%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .erp-spinner,
+  .erp-skeleton::after {
+    animation-duration: 1ms;
+    animation-iteration-count: 1;
+  }
+}

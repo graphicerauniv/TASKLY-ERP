@@ -1,0 +1,50 @@
+/* Global data-view tokens for tables, lists, pagination, selection and loading. */
+
+:root {
+  /* Pagination */
+  --erp-pagination-height: 48px;
+  --erp-pagination-gap: var(--erp-space-2);
+  --erp-pagination-button-size: 36px;
+  --erp-pagination-button-radius: var(--erp-radius-control);
+  --erp-pagination-bg: var(--erp-surface-raised);
+  --erp-pagination-border: var(--erp-border-default);
+  --erp-pagination-text: var(--erp-text-body);
+  --erp-pagination-active-bg: var(--erp-blue-500);
+  --erp-pagination-active-text: var(--erp-text-on-primary);
+  --erp-pagination-disabled-opacity: 0.46;
+
+  /* Selection */
+  --erp-selection-bg: rgb(33 150 243 / 10%);
+  --erp-selection-hover-bg: rgb(33 150 243 / 15%);
+  --erp-selection-border: var(--erp-blue-500);
+  --erp-selection-indicator-width: 3px;
+  --erp-selection-toolbar-height: 48px;
+  --erp-selection-toolbar-bg: var(--erp-blue-50);
+
+  /* Loading and skeletons */
+  --erp-loading-overlay-bg: rgb(251 252 246 / 76%);
+  --erp-loading-backdrop-blur: 2px;
+  --erp-loading-spinner-size: 32px;
+  --erp-loading-spinner-track: var(--erp-blue-100);
+  --erp-loading-spinner-active: var(--erp-blue-600);
+  --erp-skeleton-base: #e8f0f5;
+  --erp-skeleton-highlight: #f7fbfd;
+  --erp-skeleton-radius: var(--erp-radius-control);
+  --erp-skeleton-line-height: 14px;
+  --erp-skeleton-shimmer-width: 45%;
+
+  /* Empty, error and refresh states */
+  --erp-state-panel-min-height: 240px;
+  --erp-state-icon-size: 40px;
+  --erp-state-content-width: 420px;
+  --erp-stale-data-opacity: 0.7;
+  --erp-refresh-indicator-size: 18px;
+
+  /* Data density and rendering */
+  --erp-data-row-height-comfortable: 52px;
+  --erp-data-row-height-compact: 44px;
+  --erp-data-row-height-dense: 36px;
+  --erp-data-cell-padding-inline: 12px;
+  --erp-virtual-scroll-buffer: 320px;
+  --erp-content-visibility-size: 52px;
+}

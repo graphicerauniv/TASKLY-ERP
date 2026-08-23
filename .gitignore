@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.angular/
+.next/
+coverage/
+playwright-report/
+test-results/
+
+# Runtime and cache
+*.log
+logs/
+tmp/
+temp/
+.cache/
+.eslintcache
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local databases and uploads
+*.db
+*.sqlite
+uploads/
+storage/
+
+# Editors and operating systems
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+
+# Generated Prisma files and local tooling
+backend/prisma/migrations/**/migration_lock.toml
+
+# Never ignore project documentation
+!cocumetation SRS/
+!cocumetation SRS/**
