@@ -18,6 +18,7 @@ import {
   LucideFilePenLine,
   LucidePlus,
   LucideUniversity,
+  LucideTrash2,
   LucideUserPlus,
   LucideUsersRound,
 } from '@lucide/angular';
@@ -48,6 +49,7 @@ import { MasterType } from '../../../core/models';
     LucideFilePenLine,
     LucidePlus,
     LucideUniversity,
+    LucideTrash2,
     LucideUserPlus,
     LucideUsersRound,
   ],
