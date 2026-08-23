@@ -190,7 +190,7 @@ export class DynamicAdmissionComponent {
     admission.currentSectionId = section.id;
     this.api.saveAdmission(admission, this.accessKey).subscribe({
       next: ({ item }) => {
-        this.admission.set(item);
+        this.acceptAdmission(item);
         this.message.set('Progress saved.');
         this.saving.set(false);
         if (next && this.activeIndex() < (this.form()?.sections.length || 1) - 1) {

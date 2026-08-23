@@ -27,8 +27,13 @@
       <span>✓</span>
       <h1>{{ embedded() ? 'Student record saved' : 'Application submitted' }}</h1>
       <p>
-        Your application <strong>{{ admission()?.applicationNumber }}</strong> has been received
-        successfully.
+        @if (embedded()) {
+          Student record <strong>{{ admission()?.applicationNumber }}</strong> is now available in
+          the Student Database.
+        } @else {
+          Your application <strong>{{ admission()?.applicationNumber }}</strong> has been received
+          successfully.
+        }
       </p>
       <div class="submitted-actions">
         @if (embedded()) {
@@ -39,7 +44,7 @@
     </section>
   } @else if (form(); as current) {
     <header class="form-heading">
-      <span>Student admission</span>
+      <span>{{ embedded() ? 'New student admission' : 'Student admission' }}</span>
       <h1>{{ current.name }}</h1>
       <p>
         {{ current.description || 'Complete the form and save your progress section by section.' }}
@@ -51,15 +56,10 @@
           type="button"
           [class.active]="i === activeIndex()"
           [class.done]="i < activeIndex()"
+          [attr.aria-current]="i === activeIndex() ? 'step' : null"
           (click)="activeIndex.set(i); loadSectionOptions()"
         >
-          <span>
-            @if (i < activeIndex()) {
-              ✓
-            } @else {
-              {{ i + 1 }}
-            }</span
-          ><strong>{{ tab.name }}</strong>
+          {{ tab.name }}
         </button>
       }
     </nav>
@@ -140,7 +140,7 @@
         </button>
       } @else {
         <button class="submit" type="button" (click)="submit()" [disabled]="saving()">
-          Submit Application
+          {{ embedded() ? 'Save Student Record' : 'Submit Application' }}
         </button>
       }
     </footer>

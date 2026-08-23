@@ -112,8 +112,14 @@ publicRouter.patch(
     if (request.admission.status === 'submitted')
       return response.status(409).json({ message: 'A submitted application cannot be changed.' });
     const update = { updatedAt: new Date() };
-    if (request.body.currentSectionId !== undefined)
-      update.currentSectionId = String(request.body.currentSectionId || '');
+    if (request.body.currentSectionId !== undefined) {
+      const requestedSectionId = String(request.body.currentSectionId || '');
+      update.currentSectionId = request.admission.formSnapshot.sections.some(
+        (section) => section.id === requestedSectionId,
+      )
+        ? requestedSectionId
+        : request.admission.formSnapshot.sections[0]?.id || null;
+    }
     if (
       request.body.responses &&
       typeof request.body.responses === 'object' &&
@@ -182,12 +188,49 @@ publicRouter.post(
 
 async function admissionAccess(request, response, next) {
   try {
-    const admission = await db()
+    let admission = await db()
       .collection('admissions')
       .findOne({ _id: id(request.params.admissionId) });
     const key = request.headers['x-admission-key'];
     if (!admission || !key || hashKey(String(key)) !== admission.accessKeyHash)
       return response.status(401).json({ message: 'Admission access is invalid.' });
+
+    // Drafts keep their entered values, but always use the latest published
+    // structure. Stable section and field IDs preserve the existing answers.
+    if (admission.status === 'draft') {
+      const form = await db()
+        .collection('forms')
+        .findOne({ _id: admission.formId, status: 'published', isActive: true });
+      if (form && form.version !== admission.formVersion) {
+        const formSnapshot = activeForm(form);
+        const currentSectionId = formSnapshot.sections.some(
+          (section) => section.id === admission.currentSectionId,
+        )
+          ? admission.currentSectionId
+          : formSnapshot.sections[0]?.id || null;
+        const updatedAt = new Date();
+        await db()
+          .collection('admissions')
+          .updateOne(
+            { _id: admission._id },
+            {
+              $set: {
+                formVersion: form.version,
+                formSnapshot,
+                currentSectionId,
+                updatedAt,
+              },
+            },
+          );
+        admission = {
+          ...admission,
+          formVersion: form.version,
+          formSnapshot,
+          currentSectionId,
+          updatedAt,
+        };
+      }
+    }
     request.admission = admission;
     next();
   } catch (error) {

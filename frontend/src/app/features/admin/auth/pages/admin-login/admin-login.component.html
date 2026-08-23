@@ -128,7 +128,6 @@
           }
         </div>
 
-<<<<<<< Updated upstream
         <div class="admin-auth-form__options">
           <label class="admin-auth-form__remember">
             <input type="checkbox" formControlName="rememberMe" />
@@ -154,23 +153,5 @@
         </div>
       </form>
     </section>
-=======
-        <label class="flex w-fit cursor-pointer items-center gap-2.5 text-sm"
-          ><input
-            class="size-4 accent-[var(--erp-blue-600)]"
-            type="checkbox"
-            formControlName="rememberMe"
-          />Keep me signed in</label
-        >
-        <button class="admin-auth__submit" type="submit" [disabled]="loading()">
-          <span>{{ loading() ? 'Signing in…' : 'Sign in to administration' }}</span
-          ><svg lucideArrowRight size="18" aria-hidden="true"></svg>
-        </button>
-        @if (error()) {
-          <p class="admin-auth__error" role="alert">{{ error() }}</p>
-        }
-      </form>
-    </div>
->>>>>>> Stashed changes
   </section>
 </main>

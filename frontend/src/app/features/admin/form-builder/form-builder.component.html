@@ -7,10 +7,10 @@
   @if (form()) {
     <div class="save-actions">
       <button class="secondary" type="button" (click)="save()" [disabled]="saving()">
-        Save draft
+        {{ form()?.status === 'published' ? 'Save live changes' : 'Save draft' }}
       </button>
       <button class="primary" type="button" (click)="save(true)" [disabled]="saving()">
-        Publish form
+        {{ form()?.status === 'published' ? 'Republish form' : 'Publish form' }}
       </button>
     </div>
   }

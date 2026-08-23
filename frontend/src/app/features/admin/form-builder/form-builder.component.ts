@@ -336,7 +336,13 @@ export class FormBuilderComponent {
       next: ({ item }) => {
         this.form.set(item);
         this.forms.update((items) => items.map((f) => (f._id === item._id ? item : f)));
-        this.message.set(publish ? 'Form published.' : 'Form saved.');
+        this.message.set(
+          publish
+            ? 'Form published. The latest structure is now available in Student Admission.'
+            : item.status === 'published'
+              ? 'Live form changes saved. Draft admissions will refresh to this structure.'
+              : 'Draft saved.',
+        );
         this.saving.set(false);
       },
       error: (e) => {

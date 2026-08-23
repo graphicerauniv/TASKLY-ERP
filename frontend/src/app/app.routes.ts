@@ -56,6 +56,7 @@ export const appRoutes: Routes = [
                 (c) => c.AdmissionsComponent,
               ),
           },
+          { path: 'admission', redirectTo: 'admission/student', pathMatch: 'full' },
           { path: 'admissions', redirectTo: 'admission/database', pathMatch: 'full' },
           { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
         ],

@@ -82,49 +82,32 @@
   display: flex;
   overflow-x: auto;
   margin: 24px 0;
-  padding: 7px;
-  background: #fff;
-  border: 1px solid var(--erp-border-default);
-  border-radius: 13px;
-  box-shadow: var(--erp-shadow-card);
+  padding: 3px 0 0;
+  background: #20bca5;
+  border-top: 3px solid #08a8e0;
 }
 .steps button {
-  display: flex;
-  min-width: 150px;
+  min-width: 190px;
+  min-height: 72px;
   flex: 1;
-  align-items: center;
-  gap: 8px;
-  padding: 9px;
-  color: var(--erp-text-muted);
+  padding: 16px 22px;
+  color: #fff;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
   background: transparent;
   border: 0;
-  border-radius: 9px;
   cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
 }
-.steps button > span {
-  display: grid;
-  min-width: 29px;
-  height: 29px;
-  place-items: center;
-  background: #edf2f5;
-  border-radius: 50%;
-  font-size: 11px;
-}
-.steps button strong {
-  font-size: 11px;
-  text-align: left;
+.steps button:hover:not(.active) {
+  background: rgb(0 0 0 / 6%);
 }
 .steps button.active {
-  color: var(--erp-blue-700);
-  background: var(--erp-blue-50);
-}
-.steps button.active > span {
-  color: #fff;
-  background: var(--erp-blue-600);
-}
-.steps button.done > span {
-  color: var(--erp-success-text);
-  background: var(--erp-success-bg);
+  color: #5d5d5d;
+  background: #fff;
 }
 .section-heading {
   padding: 22px 24px;
@@ -414,5 +397,11 @@
   }
   .form-heading h1 {
     font-size: 23px;
+  }
+  .steps button {
+    min-width: 165px;
+    min-height: 58px;
+    padding: 12px 16px;
+    font-size: 15px;
   }
 }
