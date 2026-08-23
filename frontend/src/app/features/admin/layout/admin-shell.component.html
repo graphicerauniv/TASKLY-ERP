@@ -1,228 +1,326 @@
-<div class="shell" [class.shell--open]="menuOpen()">
-  <aside class="sidebar">
+<div class="shell" [class.shell--open]="menuOpen()" [class.shell--collapsed]="sidebarCollapsed()">
+  <aside class="sidebar" aria-label="Admin sidebar">
     <div class="brand">
       <span class="brand__mark">
         <img src="assets/images/brand/graphic-era-mark.png" alt="Graphic Era University" />
       </span>
       <span class="brand__copy"><strong>GEU ERP</strong><small>Operations Console</small></span>
-    </div>
-    <nav aria-label="Admin navigation">
-      <a
-        class="nav-link"
-        data-label="Dashboard"
-        routerLink="/admin/dashboard"
-        routerLinkActive="active"
-        (click)="closeNavigation()"
+      <button
+        class="brand__toggle"
+        type="button"
+        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        (click)="sidebarCollapsed.update((value) => !value)"
       >
-        <span class="nav-link__icon"
-          ><svg lucideLayoutDashboard size="19" aria-hidden="true"></svg
-        ></span>
-        <span class="nav-link__label">Dashboard</span>
-      </a>
+        @if (sidebarCollapsed()) {
+          <svg lucidePanelLeftOpen size="18" aria-hidden="true"></svg>
+        } @else {
+          <svg lucidePanelLeftClose size="18" aria-hidden="true"></svg>
+        }
+      </button>
+      <button
+        class="brand__mobile-close"
+        type="button"
+        aria-label="Close navigation"
+        (click)="menuOpen.set(false)"
+      >
+        <svg lucideX size="19" aria-hidden="true"></svg>
+      </button>
+    </div>
+    <label class="sidebar-search" aria-label="Search navigation">
+      <svg lucideSearch size="18" aria-hidden="true"></svg>
+      <input
+        type="search"
+        placeholder="Search navigation"
+        [value]="navigationSearch()"
+        (input)="navigationSearch.set($any($event.target).value)"
+      />
+    </label>
+    <nav class="sidebar__navigation" aria-label="Admin navigation">
+      @if (matchesNavigation('Dashboard')) {
+        <a
+          class="nav-link"
+          data-tooltip="Dashboard"
+          routerLink="/admin/dashboard"
+          routerLinkActive="active"
+          (click)="closeNavigation()"
+          ><span class="nav-link__icon"
+            ><svg
+              lucideLayoutDashboard
+              size="20"
+              [strokeWidth]="1.8"
+              aria-hidden="true"
+            ></svg></span
+          ><span class="nav-link__label">Dashboard</span></a
+        >
+      }
       <p class="nav-section-label">Workspace</p>
-      <div class="master-navigation">
-        <button
-          class="nav-button"
-          data-label="Master Data"
-          [class.active]="isMasterRoute()"
-          type="button"
-          aria-controls="master-data-menu"
-          [attr.aria-expanded]="masterMenuOpen()"
-          (click)="toggleMasterMenu()"
-        >
-          <span class="nav-button__icon"
-            ><svg lucideDatabase size="19" aria-hidden="true"></svg></span
-          ><span class="nav-button__label">Master Data</span
-          ><span class="nav-button__chevron" [class.open]="masterMenuOpen()"
-            ><svg lucideChevronRight size="15" aria-hidden="true"></svg
-          ></span>
-        </button>
-        @if (masterMenuOpen()) {
-          <section class="nav-submenu" id="master-data-menu" aria-label="Master Data menu">
-            <header class="nav-submenu__header">
-              <svg lucideDatabase size="14" aria-hidden="true"></svg>
-              <span>Master folders</span>
-            </header>
-            <div class="nav-submenu__groups">
-              @for (group of masterGroups(); track group.title) {
-                <div class="master-group">
-                  <h3>{{ group.title }}</h3>
-                  @for (type of group.items; track type.slug) {
-                    <a
-                      [routerLink]="['/admin/master-data', type.slug]"
-                      routerLinkActive="active"
-                      (click)="closeNavigation()"
-                    >
-                      <span class="master-item__icon">
-                        @switch (type.slug) {
-                          @case ('academic') {
-                            <svg lucideBookOpenCheck aria-hidden="true"></svg>
-                          }
-                          @case ('university') {
-                            <svg lucideLandmark aria-hidden="true"></svg>
-                          }
-                          @case ('college') {
-                            <svg lucideUniversity aria-hidden="true"></svg>
-                          }
-                          @case ('department') {
-                            <svg lucideNetwork aria-hidden="true"></svg>
-                          }
-                          @case ('level') {
-                            <svg lucideLayers aria-hidden="true"></svg>
-                          }
-                          @case ('course') {
-                            <svg lucideBookOpen aria-hidden="true"></svg>
-                          }
-                          @case ('course-specialization') {
-                            <svg lucideGraduationCap aria-hidden="true"></svg>
-                          }
-                          @case ('country') {
-                            <svg lucideGlobe aria-hidden="true"></svg>
-                          }
-                          @case ('state') {
-                            <svg lucideMap aria-hidden="true"></svg>
-                          }
-                          @case ('district') {
-                            <svg lucideMapPinned aria-hidden="true"></svg>
-                          }
-                          @case ('city') {
-                            <svg lucideBuilding2 aria-hidden="true"></svg>
-                          }
-                          @default {
-                            <svg lucideDatabase aria-hidden="true"></svg>
-                          }
-                        }
-                      </span>
-                      <span
-                        ><strong>{{ type.name }}</strong
-                        ><small>Manage values</small></span
-                      >
-                      <svg
-                        class="master-item__arrow"
-                        lucideChevronRight
-                        size="15"
-                        aria-hidden="true"
-                      ></svg>
-                    </a>
-                  } @empty {
-                    <p class="master-group__empty">No custom masters created yet.</p>
-                  }
-                  @if (group.title === 'Custom Masters') {
-                    <a
-                      class="master-item--create"
-                      routerLink="/admin/master-data/custom"
-                      routerLinkActive="active"
-                      (click)="closeNavigation()"
-                    >
-                      <span class="master-item__icon"
-                        ><svg lucidePlus aria-hidden="true"></svg
-                      ></span>
-                      <span
-                        ><strong>Create Custom Master</strong><small>New data source</small></span
-                      >
-                      <svg
-                        class="master-item__arrow"
-                        lucideChevronRight
-                        size="15"
-                        aria-hidden="true"
-                      ></svg>
-                    </a>
-                  }
-                </div>
-              }
-            </div>
-          </section>
-        }
-      </div>
-      <div class="master-navigation">
-        <button
-          class="nav-button"
-          data-label="Admission"
-          [class.active]="isAdmissionRoute()"
-          type="button"
-          aria-controls="admission-menu"
-          [attr.aria-expanded]="admissionMenuOpen()"
-          (click)="toggleAdmissionMenu()"
-        >
-          <span class="nav-button__icon"
-            ><svg lucideClipboardList size="19" aria-hidden="true"></svg
-          ></span>
-          <span class="nav-button__label">Admission</span>
-          <span class="nav-button__chevron" [class.open]="admissionMenuOpen()"
-            ><svg lucideChevronRight size="15" aria-hidden="true"></svg
-          ></span>
-        </button>
-        @if (admissionMenuOpen()) {
-          <section
-            class="nav-submenu admission-submenu"
-            id="admission-menu"
-            aria-label="Admission menu"
+      @if (matchesNavigation('Master Data')) {
+        <div class="master-navigation">
+          <button
+            class="nav-button"
+            data-tooltip="Master Data"
+            [class.active]="isMasterRoute()"
+            type="button"
+            aria-controls="master-data-menu"
+            [attr.aria-expanded]="masterMenuOpen()"
+            (click)="toggleMasterMenu()"
           >
-            <header class="nav-submenu__header">
-              <svg lucideClipboardList size="14" aria-hidden="true"></svg>
-              <span>Admission folders</span>
-            </header>
-            <div class="nav-submenu__groups">
-              <div class="master-group">
-                <h3>Admission Management</h3>
-                <a
-                  routerLink="/admin/form-builder"
-                  routerLinkActive="active"
-                  (click)="closeNavigation()"
+            <span class="nav-button__icon"
+              ><svg lucideDatabase size="20" [strokeWidth]="1.8" aria-hidden="true"></svg></span
+            ><span class="nav-button__label">Master Data</span
+            ><span class="nav-button__chevron" [class.open]="masterMenuOpen()"
+              ><svg lucideChevronRight size="15" aria-hidden="true"></svg
+            ></span>
+          </button>
+          @if (masterMenuOpen()) {
+            <section
+              class="master-flyout"
+              id="master-data-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="master-menu-title"
+            >
+              <header class="master-flyout__header">
+                <div>
+                  <strong id="master-menu-title">Master Data</strong
+                  ><small>Configure core ERP records</small>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close Master Data menu"
+                  (click)="masterMenuOpen.set(false)"
                 >
-                  <span class="master-item__icon"
-                    ><svg lucideFilePenLine aria-hidden="true"></svg
-                  ></span>
-                  <span><strong>Form Builder</strong><small>Design admission form</small></span>
-                  <svg
-                    class="master-item__arrow"
-                    lucideChevronRight
-                    size="15"
-                    aria-hidden="true"
-                  ></svg>
-                </a>
-                <a
-                  routerLink="/admin/admission/student"
-                  routerLinkActive="active"
-                  (click)="closeNavigation()"
-                >
-                  <span class="master-item__icon"
-                    ><svg lucideUserPlus aria-hidden="true"></svg
-                  ></span>
-                  <span
-                    ><strong>Student Admission</strong><small>Create student record</small></span
-                  >
-                  <svg
-                    class="master-item__arrow"
-                    lucideChevronRight
-                    size="15"
-                    aria-hidden="true"
-                  ></svg>
-                </a>
-                <a
-                  routerLink="/admin/admission/database"
-                  routerLinkActive="active"
-                  (click)="closeNavigation()"
-                >
-                  <span class="master-item__icon"
-                    ><svg lucideUsersRound aria-hidden="true"></svg
-                  ></span>
-                  <span
-                    ><strong>Student Database</strong><small>View admission records</small></span
-                  >
-                  <svg
-                    class="master-item__arrow"
-                    lucideChevronRight
-                    size="15"
-                    aria-hidden="true"
-                  ></svg>
-                </a>
+                  <svg lucideX size="16" aria-hidden="true"></svg>
+                </button>
+              </header>
+              <label class="master-search">
+                <svg lucideSearch size="17" aria-hidden="true"></svg>
+                <input
+                  type="search"
+                  placeholder="Search master data"
+                  [value]="masterSearch()"
+                  (input)="masterSearch.set($any($event.target).value)"
+                />
+              </label>
+              <div class="master-flyout__groups">
+                @for (group of filteredMasterGroups(); track group.title) {
+                  <div class="master-group">
+                    <h3>{{ group.title }}</h3>
+                    @for (type of group.items; track type.slug) {
+                      <a
+                        [routerLink]="['/admin/master-data', type.slug]"
+                        routerLinkActive="active"
+                        (click)="closeNavigation()"
+                      >
+                        <span class="master-item__icon">
+                          @switch (type.slug) {
+                            @case ('academic') {
+                              <svg lucideBookOpenCheck aria-hidden="true"></svg>
+                            }
+                            @case ('university') {
+                              <svg lucideLandmark aria-hidden="true"></svg>
+                            }
+                            @case ('college') {
+                              <svg lucideUniversity aria-hidden="true"></svg>
+                            }
+                            @case ('department') {
+                              <svg lucideNetwork aria-hidden="true"></svg>
+                            }
+                            @case ('level') {
+                              <svg lucideLayers aria-hidden="true"></svg>
+                            }
+                            @case ('course') {
+                              <svg lucideBookOpen aria-hidden="true"></svg>
+                            }
+                            @case ('course-specialization') {
+                              <svg lucideGraduationCap aria-hidden="true"></svg>
+                            }
+                            @case ('country') {
+                              <svg lucideGlobe aria-hidden="true"></svg>
+                            }
+                            @case ('state') {
+                              <svg lucideMap aria-hidden="true"></svg>
+                            }
+                            @case ('district') {
+                              <svg lucideMapPinned aria-hidden="true"></svg>
+                            }
+                            @case ('city') {
+                              <svg lucideBuilding2 aria-hidden="true"></svg>
+                            }
+                            @default {
+                              <svg lucideDatabase aria-hidden="true"></svg>
+                            }
+                          }
+                        </span>
+                        <span
+                          ><strong>{{ type.name }}</strong
+                          ><small>Manage values</small></span
+                        >
+                        <svg
+                          class="master-item__arrow"
+                          lucideChevronRight
+                          size="15"
+                          aria-hidden="true"
+                        ></svg>
+                      </a>
+                    } @empty {
+                      <p class="master-group__empty">No custom masters created yet.</p>
+                    }
+                    @if (group.title === 'Custom Masters') {
+                      <a
+                        class="master-item--create"
+                        routerLink="/admin/master-data/custom"
+                        routerLinkActive="active"
+                        (click)="closeNavigation()"
+                      >
+                        <span class="master-item__icon"
+                          ><svg lucidePlus aria-hidden="true"></svg
+                        ></span>
+                        <span
+                          ><strong>Create Custom Master</strong
+                          ><small>Add a reusable data source</small></span
+                        >
+                        <svg
+                          class="master-item__arrow"
+                          lucideChevronRight
+                          size="15"
+                          aria-hidden="true"
+                        ></svg>
+                      </a>
+                    }
+                  </div>
+                }
               </div>
-            </div>
-          </section>
-        }
-      </div>
+            </section>
+          }
+        </div>
+      }
+      @if (matchesNavigation('Admission')) {
+        <div class="master-navigation">
+          <button
+            class="nav-button"
+            data-tooltip="Admission"
+            [class.active]="isAdmissionRoute()"
+            type="button"
+            aria-controls="admission-menu"
+            [attr.aria-expanded]="admissionMenuOpen()"
+            (click)="toggleAdmissionMenu()"
+          >
+            <span class="nav-button__icon"
+              ><svg lucideClipboardList size="20" [strokeWidth]="1.8" aria-hidden="true"></svg
+            ></span>
+            <span class="nav-button__label">Admission</span>
+            <span class="nav-button__chevron" [class.open]="admissionMenuOpen()"
+              ><svg lucideChevronRight size="15" aria-hidden="true"></svg
+            ></span>
+          </button>
+          @if (admissionMenuOpen()) {
+            <section
+              class="master-flyout admission-flyout"
+              id="admission-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="admission-menu-title"
+            >
+              <header class="master-flyout__header">
+                <div>
+                  <strong id="admission-menu-title">Admission</strong
+                  ><small>Manage student intake</small>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close Admission menu"
+                  (click)="admissionMenuOpen.set(false)"
+                >
+                  <svg lucideX size="16" aria-hidden="true"></svg>
+                </button>
+              </header>
+              <div class="master-flyout__groups admission-flyout__groups">
+                <div class="master-group">
+                  <h3>Admission Management</h3>
+                  <a
+                    routerLink="/admin/form-builder"
+                    routerLinkActive="active"
+                    (click)="closeNavigation()"
+                  >
+                    <span class="master-item__icon"
+                      ><svg lucideFilePenLine aria-hidden="true"></svg
+                    ></span>
+                    <span
+                      ><strong>Form Builder</strong
+                      ><small>Design the dynamic admission form</small></span
+                    >
+                    <svg
+                      class="master-item__arrow"
+                      lucideChevronRight
+                      size="15"
+                      aria-hidden="true"
+                    ></svg>
+                  </a>
+                  <a
+                    routerLink="/admin/admission/student"
+                    routerLinkActive="active"
+                    (click)="closeNavigation()"
+                  >
+                    <span class="master-item__icon"
+                      ><svg lucideUserPlus aria-hidden="true"></svg
+                    ></span>
+                    <span
+                      ><strong>Student Admission</strong
+                      ><small>Enter and save a student's details</small></span
+                    >
+                    <svg
+                      class="master-item__arrow"
+                      lucideChevronRight
+                      size="15"
+                      aria-hidden="true"
+                    ></svg>
+                  </a>
+                  <a
+                    routerLink="/admin/admission/database"
+                    routerLinkActive="active"
+                    (click)="closeNavigation()"
+                  >
+                    <span class="master-item__icon"
+                      ><svg lucideUsersRound aria-hidden="true"></svg
+                    ></span>
+                    <span
+                      ><strong>Student Database</strong
+                      ><small>View all student admission records</small></span
+                    >
+                    <svg
+                      class="master-item__arrow"
+                      lucideChevronRight
+                      size="15"
+                      aria-hidden="true"
+                    ></svg>
+                  </a>
+                </div>
+              </div>
+            </section>
+          }
+        </div>
+      }
+      @if (
+        !matchesNavigation('Dashboard') &&
+        !matchesNavigation('Master Data') &&
+        !matchesNavigation('Admission')
+      ) {
+        <p class="sidebar-search__empty">No navigation found</p>
+      }
     </nav>
+    <footer class="sidebar__footer">
+      <a href="mailto:support@geu.ac.in" data-tooltip="Help and support">
+        <svg lucideLifeBuoy size="18" aria-hidden="true"></svg>
+        <span>Help &amp; Support</span>
+      </a>
+      <div class="service-status" data-tooltip="ERP services operational">
+        <i aria-hidden="true"></i><span>ERP services operational</span>
+      </div>
+      <button type="button" data-tooltip="Sign out" (click)="logout()">
+        <svg lucideLogOut size="18" aria-hidden="true"></svg><span>Sign out</span>
+      </button>
+    </footer>
   </aside>
   <div class="shell__body">
     <header class="topbar">
@@ -232,7 +330,7 @@
         (click)="menuOpen.update((v) => !v)"
         aria-label="Toggle navigation"
       >
-        ☰
+        <svg lucideMenu size="21" aria-hidden="true"></svg>
       </button>
       <div class="topbar__spacer"></div>
       <a class="student-link" routerLink="/admin/admission/student">New student admission</a>
@@ -253,6 +351,14 @@
       type="button"
       aria-label="Close navigation"
       (click)="menuOpen.set(false)"
+    ></button>
+  }
+  @if (masterMenuOpen() || admissionMenuOpen()) {
+    <button
+      class="master-backdrop"
+      type="button"
+      aria-label="Close navigation menu"
+      (click)="closeFlyouts()"
     ></button>
   }
 </div>
