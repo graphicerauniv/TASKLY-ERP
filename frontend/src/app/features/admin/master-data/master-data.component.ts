@@ -4,7 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
-import { MasterType, MasterValue } from '../../../core/models';
+import { MasterDataStore } from '../../../core/master-data.store';
+import { MasterValue } from '../../../core/models';
 
 const DEPENDENCY_CHAINS: Record<string, string[]> = {
   level: ['college', 'department'],
@@ -24,11 +25,12 @@ const DEPENDENCY_CHAINS: Record<string, string[]> = {
 })
 export class MasterDataComponent {
   private readonly api = inject(ApiService);
+  private readonly masterDataStore = inject(MasterDataStore);
   readonly slug = toSignal(
     inject(ActivatedRoute).paramMap.pipe(map((params) => params.get('typeSlug') || '')),
     { initialValue: '' },
   );
-  readonly types = signal<MasterType[]>([]);
+  readonly types = this.masterDataStore.types;
   readonly values = signal<MasterValue[]>([]);
   readonly dependencyValues = signal<Record<string, MasterValue[]>>({});
   readonly loading = signal(false);
@@ -51,8 +53,7 @@ export class MasterDataComponent {
     });
   }
   loadTypes(done?: () => void) {
-    this.api.masterTypes().subscribe(({ items }) => {
-      this.types.set(items);
+    this.masterDataStore.load().subscribe(() => {
       done?.();
     });
   }

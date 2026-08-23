@@ -11,7 +11,7 @@
   z-index: 30;
   inset: 0 auto 0 0;
   width: 256px;
-  overflow-y: auto;
+  overflow: visible;
   color: white;
   background: var(--erp-sidebar-bg);
   box-shadow: var(--erp-shadow-sidebar);
@@ -61,8 +61,10 @@ nav p {
   text-transform: uppercase;
   letter-spacing: 0.14em;
 }
-nav a {
+nav a,
+.nav-button {
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 11px;
   min-height: 42px;
@@ -73,17 +75,187 @@ nav a {
   text-decoration: none;
   border-radius: 9px;
 }
-nav a span {
+nav a > span:first-child,
+.nav-button__icon {
   width: 20px;
   text-align: center;
 }
-nav a:hover {
+nav a:hover,
+.nav-button:hover {
   background: rgb(255 255 255 / 10%);
 }
-nav a.active {
+nav a.active,
+.nav-button.active {
   color: var(--erp-blue-800);
   font-weight: 700;
   background: rgb(255 255 255 / 92%);
+}
+.master-navigation {
+  position: relative;
+}
+.nav-button {
+  font: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.nav-button__label {
+  flex: 1;
+  text-align: left;
+}
+.nav-button__chevron {
+  display: grid;
+  width: 18px;
+  place-items: center;
+  transition: transform 160ms ease;
+}
+.nav-button__chevron.open {
+  transform: rotate(90deg);
+}
+.master-flyout {
+  position: fixed;
+  z-index: 40;
+  top: 80px;
+  left: 248px;
+  width: min(600px, calc(100vw - 276px));
+  max-height: calc(100dvh - 96px);
+  overflow-y: auto;
+  color: var(--erp-text-body);
+  background: rgb(255 255 255 / 98%);
+  border: 1px solid var(--erp-border-default);
+  border-radius: 0 14px 14px 0;
+  box-shadow: 14px 16px 38px rgb(16 42 67 / 18%);
+  backdrop-filter: blur(18px);
+}
+.master-flyout__header {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgb(255 255 255 / 96%);
+  border-bottom: 1px solid var(--erp-border-subtle);
+  backdrop-filter: blur(14px);
+}
+.master-flyout__header small,
+.master-flyout__header strong {
+  display: block;
+}
+.master-flyout__header small {
+  color: var(--erp-blue-600);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.master-flyout__header strong {
+  margin-top: 2px;
+  color: var(--erp-text-heading);
+  font-size: 16px;
+  font-weight: 600;
+}
+.master-flyout__header button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  color: var(--erp-text-muted);
+  font: inherit;
+  background: var(--erp-canvas-soft);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.master-flyout__groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 7px;
+}
+.master-group {
+  padding: 7px;
+}
+.master-group:nth-child(3) {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--erp-border-subtle);
+}
+.master-group h3 {
+  margin: 3px 7px 6px;
+  color: var(--erp-text-light);
+  font-size: 8.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.master-group a {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 14px;
+  min-height: 45px;
+  align-items: center;
+  gap: 8px;
+  margin: 1px 0;
+  padding: 6px 7px;
+  color: var(--erp-text-strong);
+  border-radius: 8px;
+}
+.master-group a:hover,
+.master-group a.active {
+  color: var(--erp-blue-800);
+  background: var(--erp-blue-50);
+}
+.master-group a > span:nth-child(2) {
+  width: auto;
+  text-align: left;
+}
+.master-group a strong,
+.master-group a small {
+  display: block;
+}
+.master-group a strong {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.master-group a small {
+  margin-top: 1px;
+  color: var(--erp-text-muted);
+  font-size: 9px;
+  font-weight: 400;
+}
+.master-item__arrow {
+  color: var(--erp-text-light);
+}
+.master-item__icon {
+  display: grid;
+  width: 30px !important;
+  height: 30px;
+  place-items: center;
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border: 1px solid var(--erp-blue-100);
+  border-radius: 8px;
+}
+.master-item__icon svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
+}
+.master-item--create {
+  border: 1px dashed var(--erp-border-strong);
+}
+.master-group__empty {
+  margin: 5px 7px 8px;
+  color: var(--erp-text-muted);
+  font-size: 9px;
+}
+.master-backdrop {
+  position: fixed;
+  z-index: 29;
+  inset: 0;
+  background: rgb(16 42 67 / 18%);
+  border: 0;
 }
 .shell__body {
   min-width: 0;
@@ -184,5 +356,28 @@ nav a.active {
   }
   .content {
     padding: 16px;
+  }
+  .master-flyout {
+    top: 76px;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    width: auto;
+    max-height: none;
+    border-radius: 16px;
+  }
+  .master-flyout__groups {
+    grid-template-columns: 1fr;
+  }
+  .master-group:nth-child(3) {
+    grid-column: auto;
+  }
+}
+@media (max-width: 520px) {
+  .master-flyout__groups {
+    padding: 5px;
+  }
+  .master-group {
+    padding: 8px;
   }
 }

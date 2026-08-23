@@ -299,6 +299,187 @@ textarea {
   color: var(--erp-danger-text);
   background: var(--erp-danger-bg);
 }
+.dialog-layer {
+  position: fixed;
+  z-index: var(--erp-z-modal);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: rgb(16 42 67 / 46%);
+  border: 0;
+  backdrop-filter: blur(3px);
+}
+.dialog {
+  position: relative;
+  display: flex;
+  width: min(720px, 100%);
+  max-height: min(90dvh, 820px);
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--erp-surface-overlay);
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: 16px;
+  box-shadow: 0 28px 70px rgb(16 42 67 / 28%);
+}
+.dialog--small {
+  width: min(480px, 100%);
+}
+.dialog--field {
+  width: min(860px, 100%);
+}
+.dialog--confirm {
+  width: min(430px, 100%);
+}
+.dialog__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  background: linear-gradient(180deg, #fff, #fbfdff);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.dialog__header small {
+  color: var(--erp-blue-600);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+}
+.dialog__header h2 {
+  margin: 3px 0 0;
+  color: var(--erp-text-heading);
+  font-size: 19px;
+}
+.dialog__header p {
+  margin: 3px 0 0;
+  color: var(--erp-text-muted);
+  font-size: 11px;
+}
+.dialog__header > button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--erp-text-muted);
+  font-size: 19px;
+  background: var(--erp-canvas-soft);
+  border: 0;
+  border-radius: 8px;
+}
+.dialog__body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 18px 20px;
+}
+.dialog__footer {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 13px 20px;
+  background: #fbfdff;
+  border-top: 1px solid var(--erp-border-subtle);
+}
+.dialog__footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dialog-form {
+  display: grid;
+  gap: 14px;
+}
+.dialog-form label > span,
+.dialog-section label > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--erp-text-strong);
+  font-size: 11px;
+  font-weight: 600;
+}
+.field-dialog-body {
+  display: grid;
+  gap: 14px;
+  background: #f8fbfd;
+}
+.dialog-section {
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: 11px;
+}
+.dialog-section h3 {
+  margin: 0 0 13px;
+  color: var(--erp-text-heading);
+  font-size: 13px;
+}
+.dialog .config-grid {
+  padding: 0;
+}
+.config-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.toggle-grid .check {
+  min-height: 38px;
+  padding: 8px 10px;
+  background: var(--erp-canvas-soft);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: 8px;
+}
+.confirm-body {
+  padding: 28px 24px 20px;
+  text-align: center;
+}
+.confirm-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  margin: 0 auto 13px;
+  color: var(--erp-danger-text);
+  font-size: 20px;
+  font-weight: 700;
+  background: var(--erp-danger-bg);
+  border-radius: 50%;
+}
+.confirm-body h2 {
+  margin: 0;
+  color: var(--erp-text-heading);
+  font-size: 18px;
+}
+.confirm-body p {
+  margin: 8px 0 0;
+  color: var(--erp-text-muted);
+  font-size: 12px;
+  line-height: 19px;
+}
+.danger-button {
+  height: 40px;
+  padding: 0 15px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--erp-danger);
+  border: 1px solid var(--erp-danger);
+  border-radius: 8px;
+}
 @media (max-width: 1050px) {
   .builder {
     grid-template-columns: 1fr;
@@ -325,7 +506,23 @@ textarea {
   .config-grid {
     grid-template-columns: 1fr;
   }
+  .config-grid--three,
+  .toggle-grid {
+    grid-template-columns: 1fr;
+  }
   .wide {
     grid-column: auto;
+  }
+  .dialog-layer {
+    padding: 8px;
+  }
+  .dialog {
+    max-height: 96dvh;
+    border-radius: 12px;
+  }
+  .dialog__header,
+  .dialog__body,
+  .dialog__footer {
+    padding-inline: 14px;
   }
 }

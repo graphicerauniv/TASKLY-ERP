@@ -25,6 +25,19 @@ const FIELD_TYPES = [
   ['signature', 'Signature'],
 ];
 
+type NameDialog = {
+  kind: 'section' | 'subsection';
+  mode: 'add' | 'edit';
+  targetId?: string;
+};
+
+type DeleteDialog = {
+  kind: 'section' | 'subsection' | 'field';
+  targetId: string;
+  title: string;
+  message: string;
+};
+
 @Component({
   selector: 'erp-form-builder',
   imports: [FormsModule],
@@ -44,8 +57,13 @@ export class FormBuilderComponent {
   readonly saving = signal(false);
   readonly message = signal('');
   readonly error = signal('');
+  readonly nameDialog = signal<NameDialog | null>(null);
+  readonly fieldDialog = signal<{ mode: 'add' | 'edit'; draft: FormField } | null>(null);
+  readonly deleteDialog = signal<DeleteDialog | null>(null);
   newFormName = '';
-  optionText = '';
+  dialogName = '';
+  dialogDescription = '';
+  dialogOptionText = '';
   constructor() {
     this.load();
     this.api
@@ -97,70 +115,48 @@ export class FormBuilderComponent {
     return (this.form()?.sections || []).flatMap((s) => s.subsections).flatMap((s) => s.fields);
   }
   addSection() {
-    const name = prompt('Super Section name');
-    if (!name) return;
-    const section: FormSection = {
-      id: this.uid('sec'),
-      name,
-      description: '',
-      isActive: true,
-      order: 0,
-      subsections: [],
-    };
-    this.change((f) => f.sections.push(section));
-    this.selectedSectionId.set(section.id);
-    this.selectedSubsectionId.set('');
+    this.dialogName = '';
+    this.dialogDescription = '';
+    this.nameDialog.set({ kind: 'section', mode: 'add' });
   }
   renameSection(section: FormSection) {
-    const name = prompt('Super Section name', section.name);
-    if (name) this.change(() => (section.name = name));
+    this.dialogName = section.name;
+    this.dialogDescription = section.description;
+    this.nameDialog.set({ kind: 'section', mode: 'edit', targetId: section.id });
   }
   removeSection(section: FormSection) {
-    if (confirm(`Delete ${section.name} and all its fields?`))
-      this.change((f) => {
-        f.sections = f.sections.filter((s) => s.id !== section.id);
-        this.selectedSectionId.set(f.sections[0]?.id || '');
-        this.selectedSubsectionId.set(f.sections[0]?.subsections[0]?.id || '');
-      });
+    this.deleteDialog.set({
+      kind: 'section',
+      targetId: section.id,
+      title: 'Delete Super Section?',
+      message: `${section.name} and all of its Sub Sections and fields will be removed.`,
+    });
   }
   addSubsection() {
-    const section = this.section();
-    if (!section) return;
-    const name = prompt('Sub Section name');
-    if (!name) return;
-    const sub: FormSubsection = {
-      id: this.uid('sub'),
-      name,
-      description: '',
-      isActive: true,
-      isRepeatable: false,
-      minEntries: 0,
-      maxEntries: null,
-      order: 0,
-      visibilityCondition: null,
-      fields: [],
-    };
-    this.change(() => section.subsections.push(sub));
-    this.selectedSubsectionId.set(sub.id);
+    if (!this.section()) return;
+    this.dialogName = '';
+    this.dialogDescription = '';
+    this.nameDialog.set({ kind: 'subsection', mode: 'add' });
   }
   renameSubsection(sub: FormSubsection) {
-    const name = prompt('Sub Section name', sub.name);
-    if (name) this.change(() => (sub.name = name));
+    this.dialogName = sub.name;
+    this.dialogDescription = sub.description;
+    this.nameDialog.set({ kind: 'subsection', mode: 'edit', targetId: sub.id });
   }
   removeSubsection(sub: FormSubsection) {
-    if (confirm(`Delete ${sub.name}?`))
-      this.change(() => {
-        const section = this.section();
-        if (section) section.subsections = section.subsections.filter((s) => s.id !== sub.id);
-        this.selectedSubsectionId.set(this.section()?.subsections[0]?.id || '');
-      });
+    this.deleteDialog.set({
+      kind: 'subsection',
+      targetId: sub.id,
+      title: 'Delete Sub Section?',
+      message: `${sub.name} and all fields inside it will be removed.`,
+    });
   }
   addField() {
     const sub = this.subsection();
     if (!sub) return;
-    const field: FormField = {
+    const draft: FormField = {
       id: this.uid('fld'),
-      name: 'New Field',
+      name: '',
       type: 'text',
       isRequired: false,
       isActive: true,
@@ -175,21 +171,22 @@ export class FormBuilderComponent {
       validation: {},
       visibilityCondition: null,
     };
-    this.change(() => sub.fields.push(field));
-    this.selectedFieldId.set(field.id);
-    this.optionText = '';
+    this.selectedFieldId.set(draft.id);
+    this.dialogOptionText = '';
+    this.fieldDialog.set({ mode: 'add', draft });
   }
   selectField(field: FormField) {
     this.selectedFieldId.set(field.id);
-    this.optionText = field.options.map((o) => o.label).join('\n');
+    this.dialogOptionText = field.options.map((option) => option.label).join('\n');
+    this.fieldDialog.set({ mode: 'edit', draft: structuredClone(field) });
   }
   removeField(field: FormField) {
-    if (confirm(`Delete ${field.name}?`))
-      this.change(() => {
-        const sub = this.subsection();
-        if (sub) sub.fields = sub.fields.filter((f) => f.id !== field.id);
-        this.selectedFieldId.set('');
-      });
+    this.deleteDialog.set({
+      kind: 'field',
+      targetId: field.id,
+      title: 'Delete Field?',
+      message: `${field.name} will be removed from this form configuration.`,
+    });
   }
   move<T>(items: T[], index: number, direction: number) {
     const target = index + direction;
@@ -198,34 +195,126 @@ export class FormBuilderComponent {
       [items[index], items[target]] = [items[target], items[index]];
     });
   }
-  updateOptions() {
-    const field = this.field();
-    if (!field) return;
-    this.change(
-      () =>
-        (field.options = this.optionText
-          .split('\n')
-          .map((v) => v.trim())
-          .filter(Boolean)
-          .map((v) => ({ label: v, value: v }))),
-    );
+  saveNameDialog() {
+    const dialog = this.nameDialog();
+    const name = this.dialogName.trim();
+    if (!dialog || !name) return;
+    if (dialog.kind === 'section') {
+      if (dialog.mode === 'add') {
+        const section: FormSection = {
+          id: this.uid('sec'),
+          name,
+          description: this.dialogDescription.trim(),
+          isActive: true,
+          order: this.form()?.sections.length || 0,
+          subsections: [],
+        };
+        this.change((form) => form.sections.push(section));
+        this.selectedSectionId.set(section.id);
+        this.selectedSubsectionId.set('');
+      } else {
+        this.change((form) => {
+          const section = form.sections.find((item) => item.id === dialog.targetId);
+          if (section) {
+            section.name = name;
+            section.description = this.dialogDescription.trim();
+          }
+        });
+      }
+    } else {
+      const section = this.section();
+      if (!section) return;
+      if (dialog.mode === 'add') {
+        const subsection: FormSubsection = {
+          id: this.uid('sub'),
+          name,
+          description: this.dialogDescription.trim(),
+          isActive: true,
+          isRepeatable: false,
+          minEntries: 0,
+          maxEntries: null,
+          order: section.subsections.length,
+          visibilityCondition: null,
+          fields: [],
+        };
+        this.change(() => section.subsections.push(subsection));
+        this.selectedSubsectionId.set(subsection.id);
+      } else {
+        this.change(() => {
+          const subsection = section.subsections.find((item) => item.id === dialog.targetId);
+          if (subsection) {
+            subsection.name = name;
+            subsection.description = this.dialogDescription.trim();
+          }
+        });
+      }
+    }
+    this.nameDialog.set(null);
   }
-  sourceChanged() {
-    const field = this.field();
-    if (!field) return;
+  saveFieldDialog() {
+    const dialog = this.fieldDialog();
+    const subsection = this.subsection();
+    if (!dialog || !subsection || !dialog.draft.name.trim()) return;
+    dialog.draft.name = dialog.draft.name.trim();
+    this.updateDialogOptions();
     this.change(() => {
-      if (!field.dataSource?.masterTypeSlug) field.dataSource = null;
+      const index = subsection.fields.findIndex((field) => field.id === dialog.draft.id);
+      if (index >= 0) subsection.fields[index] = structuredClone(dialog.draft);
+      else subsection.fields.push(structuredClone(dialog.draft));
     });
+    this.selectedFieldId.set(dialog.draft.id);
+    this.fieldDialog.set(null);
   }
-  searchableChanged() {
-    const field = this.field();
+  closeFieldDialog() {
+    this.fieldDialog.set(null);
+    this.selectedFieldId.set('');
+  }
+  updateDialogOptions() {
+    const field = this.fieldDialog()?.draft;
     if (!field) return;
-    this.change(
-      () =>
-        (field.searchConfig = field.searchable
-          ? { searchField: String(field.searchConfig?.['searchField'] || 'name') }
-          : null),
-    );
+    field.options = this.dialogOptionText
+      .split('\n')
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .map((value) => ({ label: value, value }));
+  }
+  dialogSearchableChanged() {
+    const field = this.fieldDialog()?.draft;
+    if (!field) return;
+    field.searchConfig = field.searchable ? { searchField: 'name' } : null;
+  }
+  toggleDialogCondition(enabled: boolean) {
+    const field = this.fieldDialog()?.draft;
+    if (!field) return;
+    field.visibilityCondition = enabled ? { fieldId: '', operator: 'equals', value: '' } : null;
+  }
+  confirmDelete() {
+    const dialog = this.deleteDialog();
+    if (!dialog) return;
+    if (dialog.kind === 'section') {
+      this.change((form) => {
+        form.sections = form.sections.filter((section) => section.id !== dialog.targetId);
+        this.selectedSectionId.set(form.sections[0]?.id || '');
+        this.selectedSubsectionId.set(form.sections[0]?.subsections[0]?.id || '');
+      });
+    } else if (dialog.kind === 'subsection') {
+      this.change(() => {
+        const section = this.section();
+        if (section)
+          section.subsections = section.subsections.filter(
+            (subsection) => subsection.id !== dialog.targetId,
+          );
+        this.selectedSubsectionId.set(this.section()?.subsections[0]?.id || '');
+      });
+    } else {
+      this.change(() => {
+        const subsection = this.subsection();
+        if (subsection)
+          subsection.fields = subsection.fields.filter((field) => field.id !== dialog.targetId);
+        this.selectedFieldId.set('');
+      });
+    }
+    this.deleteDialog.set(null);
   }
   conditionToggle(target: FormField | FormSubsection, enabled: boolean) {
     this.change(

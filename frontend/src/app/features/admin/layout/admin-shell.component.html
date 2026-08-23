@@ -5,30 +5,137 @@
       ><span><strong>Taskly ERP</strong><small>Super Admin</small></span>
     </div>
     <nav>
-      <a routerLink="/admin/dashboard" routerLinkActive="active" (click)="menuOpen.set(false)"
-        ><span>⌂</span>Dashboard</a
+      <a routerLink="/admin/dashboard" routerLinkActive="active" (click)="closeNavigation()"
+        ><span><svg lucideLayoutDashboard size="17" aria-hidden="true"></svg></span>Dashboard</a
       >
-      <p>Master Data</p>
-      @for (type of masterTypes(); track type.slug) {
-        <a
-          [routerLink]="['/admin/master-data', type.slug]"
-          routerLinkActive="active"
-          (click)="menuOpen.set(false)"
-          ><span>◇</span>{{ type.name }}</a
+      <p>Workspace</p>
+      <div class="master-navigation">
+        <button
+          class="nav-button"
+          [class.active]="isMasterRoute()"
+          type="button"
+          aria-controls="master-data-menu"
+          [attr.aria-expanded]="masterMenuOpen()"
+          (click)="toggleMasterMenu()"
         >
-      }
-      <a
-        routerLink="/admin/master-data/custom"
-        routerLinkActive="active"
-        (click)="menuOpen.set(false)"
-        ><span>＋</span>Custom Field</a
-      >
+          <span class="nav-button__icon"
+            ><svg lucideDatabase size="17" aria-hidden="true"></svg></span
+          ><span class="nav-button__label">Master Data</span
+          ><span class="nav-button__chevron" [class.open]="masterMenuOpen()"
+            ><svg lucideChevronRight size="15" aria-hidden="true"></svg
+          ></span>
+        </button>
+        @if (masterMenuOpen()) {
+          <section class="master-flyout" id="master-data-menu" aria-label="Master Data menu">
+            <header class="master-flyout__header">
+              <div><small>Global navigation</small><strong>Master Data</strong></div>
+              <button
+                type="button"
+                aria-label="Close Master Data menu"
+                (click)="masterMenuOpen.set(false)"
+              >
+                <svg lucideX size="16" aria-hidden="true"></svg>
+              </button>
+            </header>
+            <div class="master-flyout__groups">
+              @for (group of masterGroups(); track group.title) {
+                <div class="master-group">
+                  <h3>{{ group.title }}</h3>
+                  @for (type of group.items; track type.slug) {
+                    <a
+                      [routerLink]="['/admin/master-data', type.slug]"
+                      routerLinkActive="active"
+                      (click)="closeNavigation()"
+                    >
+                      <span class="master-item__icon">
+                        @switch (type.slug) {
+                          @case ('academic') {
+                            <svg lucideBookOpenCheck aria-hidden="true"></svg>
+                          }
+                          @case ('university') {
+                            <svg lucideLandmark aria-hidden="true"></svg>
+                          }
+                          @case ('college') {
+                            <svg lucideUniversity aria-hidden="true"></svg>
+                          }
+                          @case ('department') {
+                            <svg lucideNetwork aria-hidden="true"></svg>
+                          }
+                          @case ('level') {
+                            <svg lucideLayers aria-hidden="true"></svg>
+                          }
+                          @case ('course') {
+                            <svg lucideBookOpen aria-hidden="true"></svg>
+                          }
+                          @case ('course-specialization') {
+                            <svg lucideGraduationCap aria-hidden="true"></svg>
+                          }
+                          @case ('country') {
+                            <svg lucideGlobe aria-hidden="true"></svg>
+                          }
+                          @case ('state') {
+                            <svg lucideMap aria-hidden="true"></svg>
+                          }
+                          @case ('district') {
+                            <svg lucideMapPinned aria-hidden="true"></svg>
+                          }
+                          @case ('city') {
+                            <svg lucideBuilding2 aria-hidden="true"></svg>
+                          }
+                          @default {
+                            <svg lucideDatabase aria-hidden="true"></svg>
+                          }
+                        }
+                      </span>
+                      <span
+                        ><strong>{{ type.name }}</strong
+                        ><small>Manage {{ type.name }} values</small></span
+                      >
+                      <svg
+                        class="master-item__arrow"
+                        lucideChevronRight
+                        size="15"
+                        aria-hidden="true"
+                      ></svg>
+                    </a>
+                  } @empty {
+                    <p class="master-group__empty">No custom masters created yet.</p>
+                  }
+                  @if (group.title === 'Custom Masters') {
+                    <a
+                      class="master-item--create"
+                      routerLink="/admin/master-data/custom"
+                      routerLinkActive="active"
+                      (click)="closeNavigation()"
+                    >
+                      <span class="master-item__icon"
+                        ><svg lucidePlus aria-hidden="true"></svg
+                      ></span>
+                      <span
+                        ><strong>Create Custom Master</strong
+                        ><small>Add a reusable data source</small></span
+                      >
+                      <svg
+                        class="master-item__arrow"
+                        lucideChevronRight
+                        size="15"
+                        aria-hidden="true"
+                      ></svg>
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+        }
+      </div>
       <p>Admission</p>
-      <a routerLink="/admin/form-builder" routerLinkActive="active" (click)="menuOpen.set(false)"
-        ><span>▤</span>Form Builder</a
+      <a routerLink="/admin/form-builder" routerLinkActive="active" (click)="closeNavigation()"
+        ><span><svg lucideFilePenLine size="17" aria-hidden="true"></svg></span>Form Builder</a
       >
-      <a routerLink="/admin/admissions" routerLinkActive="active" (click)="menuOpen.set(false)"
-        ><span>◎</span>Student Admission</a
+      <a routerLink="/admin/admissions" routerLinkActive="active" (click)="closeNavigation()"
+        ><span><svg lucideClipboardList size="17" aria-hidden="true"></svg></span>Student
+        Admission</a
       >
     </nav>
   </aside>
@@ -61,6 +168,14 @@
       type="button"
       aria-label="Close navigation"
       (click)="menuOpen.set(false)"
+    ></button>
+  }
+  @if (masterMenuOpen()) {
+    <button
+      class="master-backdrop"
+      type="button"
+      aria-label="Close Master Data menu"
+      (click)="masterMenuOpen.set(false)"
     ></button>
   }
 </div>
