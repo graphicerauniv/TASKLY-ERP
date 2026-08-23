@@ -17,7 +17,6 @@ const typeSchema = z.object({
 });
 const valueSchema = z.object({
   name: z.string().trim().min(1).max(160),
-  code: z.string().trim().max(50).optional().default(''),
   parentId: z.string().nullable().optional(),
   isActive: z.boolean().optional().default(true),
   metadata: z.record(z.string(), z.unknown()).optional().default({}),
@@ -100,14 +99,12 @@ masterDataRouter.get(
     if (request.query.active === 'true') filter.isActive = true;
     if (request.query.parentId) filter.parentId = id(request.query.parentId, 'parentId');
     if (request.query.search)
-      filter.$or = [
-        { name: { $regex: escapeRegex(request.query.search), $options: 'i' } },
-        { code: { $regex: escapeRegex(request.query.search), $options: 'i' } },
-      ];
+      filter.name = { $regex: escapeRegex(request.query.search), $options: 'i' };
     const [items, total] = await Promise.all([
       db()
         .collection('masterValues')
         .find(filter)
+        .project({ code: 0 })
         .sort({ order: 1, name: 1 })
         .skip(skip)
         .limit(limit)
@@ -198,7 +195,6 @@ masterDataRouter.post(
       if (rowNumber === 1) return;
       const name = String(row.getCell(index('name')).text || '').trim();
       if (!name) return;
-      const code = index('code') > 0 ? String(row.getCell(index('code')).text || '').trim() : '';
       const activeText =
         index('active') > 0 ? String(row.getCell(index('active')).text).toLowerCase() : 'true';
       operations.push({
@@ -206,7 +202,6 @@ masterDataRouter.post(
           filter: { typeSlug: request.params.typeSlug, name, parentId: null },
           update: {
             $set: {
-              code,
               isActive: !['false', 'no', '0'].includes(activeText),
               updatedAt: new Date(),
             },

@@ -68,18 +68,10 @@ export class ApiService {
   activeForm() {
     return this.http.get<{ item: AdmissionForm }>(`${API_BASE_URL}/public/forms/active`);
   }
-  publicOptions(
-    slug: string,
-    parentId?: string,
-    search?: string,
-    searchField?: string,
-    labelField?: string,
-  ) {
+  publicOptions(slug: string, parentId?: string, search?: string) {
     let params = new HttpParams();
     if (parentId) params = params.set('parentId', parentId);
     if (search) params = params.set('search', search);
-    if (searchField) params = params.set('searchField', searchField);
-    if (labelField) params = params.set('labelField', labelField);
     return this.http.get<{ items: MasterValue[] }>(
       `${API_BASE_URL}/public/master-data/${slug}/options`,
       { params },

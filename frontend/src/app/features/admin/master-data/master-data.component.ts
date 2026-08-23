@@ -6,6 +6,14 @@ import { map } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
 import { MasterType, MasterValue } from '../../../core/models';
 
+const DEPENDENCY_CHAINS: Record<string, string[]> = {
+  course: ['department', 'level'],
+  'course-specialization': ['department', 'level', 'course'],
+  state: ['country'],
+  district: ['country', 'state'],
+  city: ['country', 'state', 'district'],
+};
+
 @Component({
   selector: 'erp-master-data',
   imports: [FormsModule],
@@ -21,17 +29,17 @@ export class MasterDataComponent {
   );
   readonly types = signal<MasterType[]>([]);
   readonly values = signal<MasterValue[]>([]);
-  readonly parents = signal<MasterValue[]>([]);
+  readonly dependencyValues = signal<Record<string, MasterValue[]>>({});
   readonly loading = signal(false);
   readonly message = signal('');
   readonly error = signal('');
   readonly editingId = signal<string | null>(null);
   name = '';
-  code = '';
-  parentId = '';
+  selectedDependencies: Record<string, string> = {};
   search = '';
   customName = '';
   customParent = '';
+  private editingValue: MasterValue | null = null;
   readonly currentType = () => this.types().find((type) => type.slug === this.slug());
   constructor() {
     effect(() => {
@@ -58,15 +66,24 @@ export class MasterDataComponent {
       },
       error: (e) => this.fail(e),
     });
-    if (type.parentTypeSlug)
-      this.api
-        .masterValues(type.parentTypeSlug, { active: true })
-        .subscribe(({ items }) => this.parents.set(items));
-    else this.parents.set([]);
+    this.selectedDependencies = {};
+    this.dependencyValues.set({});
+    for (const dependencySlug of this.dependencySlugs()) {
+      this.api.masterValues(dependencySlug, { active: true }).subscribe(({ items }) => {
+        this.dependencyValues.update((values) => ({ ...values, [dependencySlug]: items }));
+        this.resolveEditingDependencies();
+      });
+    }
   }
   save() {
     if (!this.name.trim()) return;
-    const body = { name: this.name, code: this.code, parentId: this.parentId || null };
+    const dependencies = this.dependencySlugs();
+    if (dependencies.some((slug) => !this.selectedDependencies[slug])) {
+      this.error.set('Select every required dependency before saving.');
+      return;
+    }
+    const parentId = dependencies.length ? this.selectedDependencies[dependencies.at(-1)!] : null;
+    const body = { name: this.name, parentId };
     const request = this.editingId()
       ? this.api.updateMasterValue(this.slug(), this.editingId()!, body)
       : this.api.createMasterValue(this.slug(), body);
@@ -82,14 +99,49 @@ export class MasterDataComponent {
   edit(item: MasterValue) {
     this.editingId.set(item._id);
     this.name = item.name;
-    this.code = item.code || '';
-    this.parentId = item.parentId || '';
+    this.editingValue = item;
+    this.resolveEditingDependencies();
   }
   reset() {
     this.editingId.set(null);
+    this.editingValue = null;
     this.name = '';
-    this.code = '';
-    this.parentId = '';
+    this.selectedDependencies = {};
+  }
+  dependencySlugs(): string[] {
+    const type = this.currentType();
+    if (!type) return [];
+    return DEPENDENCY_CHAINS[type.slug] || (type.parentTypeSlug ? [type.parentTypeSlug] : []);
+  }
+  dependencyLabel(slug: string): string {
+    return this.types().find((type) => type.slug === slug)?.name || slug;
+  }
+  dependencyOptions(index: number): MasterValue[] {
+    const chain = this.dependencySlugs();
+    const slug = chain[index];
+    const values = this.dependencyValues()[slug] || [];
+    if (index === 0) return values;
+    const parentId = this.selectedDependencies[chain[index - 1]];
+    return parentId ? values.filter((value) => value.parentId === parentId) : [];
+  }
+  dependencyChanged(index: number) {
+    const chain = this.dependencySlugs();
+    for (let next = index + 1; next < chain.length; next += 1)
+      this.selectedDependencies[chain[next]] = '';
+  }
+  parentPath(item: MasterValue): string {
+    const chain = this.dependencySlugs();
+    const names: string[] = [];
+    let parentId = item.parentId;
+    for (let index = chain.length - 1; index >= 0 && parentId; index -= 1) {
+      const value = this.dependencyValues()[chain[index]]?.find(
+        (candidate) => candidate._id === parentId,
+      );
+      if (!value) break;
+      names.unshift(value.name);
+      parentId = value.parentId;
+    }
+    return names.join(' → ') || '—';
   }
   toggle(item: MasterValue) {
     this.api
@@ -130,5 +182,18 @@ export class MasterDataComponent {
   private fail(error: { error?: { message?: string } }) {
     this.error.set(error.error?.message || 'The operation failed.');
     this.loading.set(false);
+  }
+  private resolveEditingDependencies() {
+    if (!this.editingValue) return;
+    const chain = this.dependencySlugs();
+    let parentId = this.editingValue.parentId;
+    const selected: Record<string, string> = {};
+    for (let index = chain.length - 1; index >= 0 && parentId; index -= 1) {
+      selected[chain[index]] = parentId;
+      parentId =
+        this.dependencyValues()[chain[index]]?.find((value) => value._id === parentId)?.parentId ||
+        null;
+    }
+    this.selectedDependencies = selected;
   }
 }

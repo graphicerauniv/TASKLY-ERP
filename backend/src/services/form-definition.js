@@ -127,7 +127,7 @@ function normalizeDataSource(source) {
     kind: 'master',
     masterTypeSlug: String(source.masterTypeSlug),
     parentFieldId: source.parentFieldId || null,
-    labelField: source.labelField || 'name',
+    labelField: 'name',
     valueField: source.valueField || '_id',
   };
 }

@@ -9,7 +9,6 @@ export interface MasterType {
 export interface MasterValue {
   _id: string;
   name: string;
-  code: string;
   label?: string;
   parentId: string | null;
   isActive: boolean;

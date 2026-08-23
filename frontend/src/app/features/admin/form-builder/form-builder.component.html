@@ -234,22 +234,7 @@
                         }
                       }
                     </select></label
-                  ><label
-                    ><span>Display from</span
-                    ><select [(ngModel)]="selected.dataSource.labelField">
-                      <option value="name">Name</option>
-                      <option value="code">Code</option>
-                    </select></label
                   >
-                  @if (selected.searchable && selected.searchConfig) {
-                    <label
-                      ><span>Search database field</span
-                      ><select [(ngModel)]="selected.searchConfig['searchField']">
-                        <option value="name">Name</option>
-                        <option value="code">Code</option>
-                      </select></label
-                    >
-                  }
                 } @else {
                   <label class="wide"
                     ><span>Options (one per line)</span
