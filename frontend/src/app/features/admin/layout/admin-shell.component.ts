@@ -20,7 +20,6 @@ import {
   LucideUniversity,
   LucideUserPlus,
   LucideUsersRound,
-  LucideX,
 } from '@lucide/angular';
 import { AuthService } from '../../../core/auth.service';
 import { MasterDataStore } from '../../../core/master-data.store';
@@ -51,7 +50,6 @@ import { MasterType } from '../../../core/models';
     LucideUniversity,
     LucideUserPlus,
     LucideUsersRound,
-    LucideX,
   ],
   templateUrl: './admin-shell.component.html',
   styleUrl: './admin-shell.component.scss',
@@ -108,10 +106,6 @@ export class AdminShellComponent {
     this.masterMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
     this.menuOpen.set(false);
-  }
-  closeFlyouts() {
-    this.masterMenuOpen.set(false);
-    this.admissionMenuOpen.set(false);
   }
   isMasterRoute() {
     return this.router.url.startsWith('/admin/master-data/');

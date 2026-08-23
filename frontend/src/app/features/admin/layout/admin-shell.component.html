@@ -1,17 +1,29 @@
 <div class="shell" [class.shell--open]="menuOpen()">
   <aside class="sidebar">
     <div class="brand">
-      <span class="brand__mark">T</span
-      ><span><strong>Taskly ERP</strong><small>Super Admin</small></span>
+      <span class="brand__mark">
+        <img src="assets/images/brand/graphic-era-mark.png" alt="Graphic Era University" />
+      </span>
+      <span class="brand__copy"><strong>GEU ERP</strong><small>Operations Console</small></span>
     </div>
-    <nav>
-      <a routerLink="/admin/dashboard" routerLinkActive="active" (click)="closeNavigation()"
-        ><span><svg lucideLayoutDashboard size="17" aria-hidden="true"></svg></span>Dashboard</a
+    <nav aria-label="Admin navigation">
+      <a
+        class="nav-link"
+        data-label="Dashboard"
+        routerLink="/admin/dashboard"
+        routerLinkActive="active"
+        (click)="closeNavigation()"
       >
-      <p>Workspace</p>
+        <span class="nav-link__icon"
+          ><svg lucideLayoutDashboard size="19" aria-hidden="true"></svg
+        ></span>
+        <span class="nav-link__label">Dashboard</span>
+      </a>
+      <p class="nav-section-label">Workspace</p>
       <div class="master-navigation">
         <button
           class="nav-button"
+          data-label="Master Data"
           [class.active]="isMasterRoute()"
           type="button"
           aria-controls="master-data-menu"
@@ -19,25 +31,19 @@
           (click)="toggleMasterMenu()"
         >
           <span class="nav-button__icon"
-            ><svg lucideDatabase size="17" aria-hidden="true"></svg></span
+            ><svg lucideDatabase size="19" aria-hidden="true"></svg></span
           ><span class="nav-button__label">Master Data</span
           ><span class="nav-button__chevron" [class.open]="masterMenuOpen()"
             ><svg lucideChevronRight size="15" aria-hidden="true"></svg
           ></span>
         </button>
         @if (masterMenuOpen()) {
-          <section class="master-flyout" id="master-data-menu" aria-label="Master Data menu">
-            <header class="master-flyout__header">
-              <div><small>Global navigation</small><strong>Master Data</strong></div>
-              <button
-                type="button"
-                aria-label="Close Master Data menu"
-                (click)="masterMenuOpen.set(false)"
-              >
-                <svg lucideX size="16" aria-hidden="true"></svg>
-              </button>
+          <section class="nav-submenu" id="master-data-menu" aria-label="Master Data menu">
+            <header class="nav-submenu__header">
+              <svg lucideDatabase size="14" aria-hidden="true"></svg>
+              <span>Master folders</span>
             </header>
-            <div class="master-flyout__groups">
+            <div class="nav-submenu__groups">
               @for (group of masterGroups(); track group.title) {
                 <div class="master-group">
                   <h3>{{ group.title }}</h3>
@@ -89,7 +95,7 @@
                       </span>
                       <span
                         ><strong>{{ type.name }}</strong
-                        ><small>Manage {{ type.name }} values</small></span
+                        ><small>Manage values</small></span
                       >
                       <svg
                         class="master-item__arrow"
@@ -112,8 +118,7 @@
                         ><svg lucidePlus aria-hidden="true"></svg
                       ></span>
                       <span
-                        ><strong>Create Custom Master</strong
-                        ><small>Add a reusable data source</small></span
+                        ><strong>Create Custom Master</strong><small>New data source</small></span
                       >
                       <svg
                         class="master-item__arrow"
@@ -132,6 +137,7 @@
       <div class="master-navigation">
         <button
           class="nav-button"
+          data-label="Admission"
           [class.active]="isAdmissionRoute()"
           type="button"
           aria-controls="admission-menu"
@@ -139,7 +145,7 @@
           (click)="toggleAdmissionMenu()"
         >
           <span class="nav-button__icon"
-            ><svg lucideClipboardList size="17" aria-hidden="true"></svg
+            ><svg lucideClipboardList size="19" aria-hidden="true"></svg
           ></span>
           <span class="nav-button__label">Admission</span>
           <span class="nav-button__chevron" [class.open]="admissionMenuOpen()"
@@ -148,21 +154,15 @@
         </button>
         @if (admissionMenuOpen()) {
           <section
-            class="master-flyout admission-flyout"
+            class="nav-submenu admission-submenu"
             id="admission-menu"
             aria-label="Admission menu"
           >
-            <header class="master-flyout__header">
-              <div><small>Global navigation</small><strong>Admission</strong></div>
-              <button
-                type="button"
-                aria-label="Close Admission menu"
-                (click)="admissionMenuOpen.set(false)"
-              >
-                <svg lucideX size="16" aria-hidden="true"></svg>
-              </button>
+            <header class="nav-submenu__header">
+              <svg lucideClipboardList size="14" aria-hidden="true"></svg>
+              <span>Admission folders</span>
             </header>
-            <div class="master-flyout__groups admission-flyout__groups">
+            <div class="nav-submenu__groups">
               <div class="master-group">
                 <h3>Admission Management</h3>
                 <a
@@ -173,10 +173,7 @@
                   <span class="master-item__icon"
                     ><svg lucideFilePenLine aria-hidden="true"></svg
                   ></span>
-                  <span
-                    ><strong>Form Builder</strong
-                    ><small>Design the dynamic admission form</small></span
-                  >
+                  <span><strong>Form Builder</strong><small>Design admission form</small></span>
                   <svg
                     class="master-item__arrow"
                     lucideChevronRight
@@ -193,8 +190,7 @@
                     ><svg lucideUserPlus aria-hidden="true"></svg
                   ></span>
                   <span
-                    ><strong>Student Admission</strong
-                    ><small>Enter and save a student's details</small></span
+                    ><strong>Student Admission</strong><small>Create student record</small></span
                   >
                   <svg
                     class="master-item__arrow"
@@ -212,8 +208,7 @@
                     ><svg lucideUsersRound aria-hidden="true"></svg
                   ></span>
                   <span
-                    ><strong>Student Database</strong
-                    ><small>View all student admission records</small></span
+                    ><strong>Student Database</strong><small>View admission records</small></span
                   >
                   <svg
                     class="master-item__arrow"
@@ -258,14 +253,6 @@
       type="button"
       aria-label="Close navigation"
       (click)="menuOpen.set(false)"
-    ></button>
-  }
-  @if (masterMenuOpen() || admissionMenuOpen()) {
-    <button
-      class="master-backdrop"
-      type="button"
-      aria-label="Close navigation menu"
-      (click)="closeFlyouts()"
     ></button>
   }
 </div>
