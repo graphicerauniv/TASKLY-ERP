@@ -6,7 +6,7 @@
   /* Durations */
   --erp-duration-instant: 80ms;
   --erp-duration-fast: 140ms;
-  --erp-duration-standard: 200ms;
+  --erp-duration-standard: 180ms;
   --erp-duration-emphasized: 280ms;
   --erp-duration-slow: 360ms;
 
@@ -17,14 +17,14 @@
   --erp-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Sidebar hover behavior */
-  --erp-sidebar-expand-delay: 70ms;
-  --erp-sidebar-collapse-delay: 220ms;
-  --erp-sidebar-expand-duration: 340ms;
-  --erp-sidebar-collapse-duration: 300ms;
+  --erp-sidebar-expand-delay: 90ms;
+  --erp-sidebar-collapse-delay: 180ms;
+  --erp-sidebar-expand-duration: 240ms;
+  --erp-sidebar-collapse-duration: 240ms;
   --erp-sidebar-expand-easing: var(--erp-ease-enter);
   --erp-sidebar-collapse-easing: var(--erp-ease-standard);
-  --erp-sidebar-label-enter-delay: 110ms;
-  --erp-sidebar-label-exit-duration: 150ms;
+  --erp-sidebar-label-enter-delay: 70ms;
+  --erp-sidebar-label-exit-duration: 100ms;
   --erp-sidebar-label-shift: -6px;
 
   /* Header and navigation */
@@ -41,8 +41,8 @@
   /* Overlays */
   --erp-dropdown-enter-duration: 160ms;
   --erp-dropdown-exit-duration: 120ms;
-  --erp-drawer-enter-duration: 320ms;
-  --erp-drawer-exit-duration: 240ms;
+  --erp-drawer-enter-duration: 220ms;
+  --erp-drawer-exit-duration: 220ms;
   --erp-modal-enter-duration: 220ms;
   --erp-modal-exit-duration: 160ms;
   --erp-toast-enter-duration: 240ms;

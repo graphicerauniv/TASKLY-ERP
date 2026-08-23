@@ -67,6 +67,11 @@
   --erp-font-body: 14px;
   --erp-font-label: 13px;
   --erp-font-caption: 12px;
+  --erp-font-size-xs: 11px;
+  --erp-font-size-sm: 12px;
+  --erp-font-size-md: 14px;
+  --erp-font-size-lg: 18px;
+  --erp-font-size-xl: 22px;
   --erp-line-display: 36px;
   --erp-line-page-title: 30px;
   --erp-line-section-title: 26px;
@@ -109,26 +114,30 @@
   --erp-grid-gutter-mobile: 16px;
 
   /* Application shell */
-  --erp-sidebar-width: 272px;
+  --erp-sidebar-width: 264px;
   --erp-sidebar-collapsed-width: 76px;
-  --erp-sidebar-item-height: 46px;
+  --erp-sidebar-item-height: 44px;
   --erp-sidebar-item-radius: 10px;
-  --erp-sidebar-inline-padding: 11px;
-  --erp-sidebar-icon-column: 42px;
+  --erp-sidebar-inline-padding: 12px;
+  --erp-sidebar-icon-column: 48px;
   --erp-sidebar-bg: linear-gradient(
     180deg,
     var(--erp-sidebar-gradient-start),
     var(--erp-sidebar-gradient-end)
   );
-  --erp-sidebar-layer: rgb(125 211 252 / 20%);
-  --erp-sidebar-pattern: rgb(186 230 253 / 36%);
-  --erp-sidebar-active-bg: rgb(255 255 255 / 94%);
-  --erp-sidebar-hover-bg: rgb(255 255 255 / 14%);
+  --erp-sidebar-layer: rgb(144 202 249 / 24%);
+  --erp-sidebar-pattern: rgb(144 202 249 / 42%);
+  --erp-sidebar-active-bg: rgb(255 255 255 / 88%);
+  --erp-sidebar-hover-bg: rgb(255 255 255 / 12%);
   --erp-sidebar-active-edge: #56b5ff;
   --erp-sidebar-divider: rgb(255 255 255 / 18%);
-  --erp-sidebar-submenu-line: rgb(186 230 253 / 42%);
-  --erp-sidebar-submenu-bg: rgb(3 75 156 / 28%);
-  --erp-sidebar-glow: rgb(56 189 248 / 32%);
+  --erp-sidebar-surface: #e3f2fd;
+  --erp-sidebar-text: #486581;
+  --erp-sidebar-text-muted: #627d98;
+  --erp-sidebar-hover-light: rgb(144 202 249 / 26%);
+  --erp-sidebar-active-light: #2196f3;
+  --erp-sidebar-panel-width: 360px;
+  --erp-sidebar-mobile-width: 304px;
   --erp-header-height: 64px;
   --erp-header-bg: rgb(253 253 249 / 94%);
   --erp-header-border: var(--erp-border-default);
