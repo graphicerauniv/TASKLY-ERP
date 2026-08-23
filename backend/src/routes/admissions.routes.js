@@ -52,6 +52,17 @@ admissionsRouter.get(
     });
   }),
 );
+admissionsRouter.delete(
+  '/:admissionId',
+  asyncHandler(async (request, response) => {
+    const result = await db()
+      .collection('admissions')
+      .deleteOne({ _id: id(request.params.admissionId) });
+    if (!result.deletedCount)
+      return response.status(404).json({ message: 'Admission not found.' });
+    response.status(204).end();
+  }),
+);
 
 function collectObjectIds(value, output) {
   if (typeof value === 'string' && ObjectId.isValid(value)) output.add(value);
