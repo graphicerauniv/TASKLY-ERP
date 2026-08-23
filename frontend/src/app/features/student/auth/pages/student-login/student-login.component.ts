@@ -1,28 +1,22 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import {
-  LucideArrowRight,
-  LucideBookOpen,
   LucideEye,
   LucideEyeOff,
-  LucideGraduationCap,
-  LucideIdCard,
   LucideLockKeyhole,
+  LucideShieldCheck,
+  LucideUserRound,
 } from '@lucide/angular';
 
 @Component({
   selector: 'erp-student-login',
   imports: [
     ReactiveFormsModule,
-    RouterLink,
-    LucideArrowRight,
-    LucideBookOpen,
     LucideEye,
     LucideEyeOff,
-    LucideGraduationCap,
-    LucideIdCard,
     LucideLockKeyhole,
+    LucideShieldCheck,
+    LucideUserRound,
   ],
   templateUrl: './student-login.component.html',
   styleUrl: './student-login.component.scss',

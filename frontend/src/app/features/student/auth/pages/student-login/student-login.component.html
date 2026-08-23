@@ -1,147 +1,186 @@
-<main class="student-auth min-h-dvh lg:grid lg:grid-cols-[0.92fr_1.08fr]">
-  <section class="flex min-h-dvh items-center justify-center bg-white px-5 py-10 sm:px-10 lg:px-14">
-    <div class="w-full max-w-[440px]">
-      <a
-        class="mb-10 flex w-fit items-center gap-3 text-[var(--erp-text-heading)] no-underline"
-        routerLink="/student/login"
+<main class="min-h-dvh bg-[#f8faf7] lg:grid lg:place-items-center lg:p-6 xl:p-8">
+  <div
+    class="mx-auto min-h-dvh w-full overflow-hidden bg-white lg:grid lg:min-h-0 lg:max-w-[1260px] lg:grid-cols-[56%_44%] lg:rounded-2xl lg:border lg:border-[var(--erp-border-strong)] lg:shadow-[0_18px_50px_rgba(16,42,67,0.12)]"
+  >
+    <section class="relative hidden min-h-[760px] overflow-hidden bg-[#eaf5ff] lg:block">
+      <img
+        class="absolute inset-0 size-full object-cover object-center"
+        src="/assets/images/auth/student/student-login-desktop.webp"
+        width="675"
+        height="900"
+        alt="Books, a laptop and a plant in a calm academic workspace"
+        fetchpriority="high"
+        decoding="async"
+      />
+      <img
+        class="absolute left-10 top-8 z-10 h-auto w-[310px] object-contain xl:left-12 xl:top-10 xl:w-[340px]"
+        src="/assets/images/auth/student/graphic-era-logo.webp"
+        width="460"
+        height="143"
+        alt="Graphic Era deemed to be University, Dehradun"
+        decoding="async"
+      />
+      <p
+        class="absolute inset-x-8 bottom-11 z-10 m-0 text-center text-base font-medium text-[var(--erp-text-heading)] xl:bottom-12"
       >
-        <span class="student-auth__brand"
-          ><svg lucideGraduationCap size="23" aria-hidden="true"></svg
-        ></span>
-        <span
-          ><strong class="block text-lg leading-5">Taskly ERP</strong
-          ><small class="text-[var(--erp-text-muted)]">Student Portal</small></span
-        >
-      </a>
+        Everything campus. <span class="text-[var(--erp-blue-600)]">One place.</span>
+      </p>
+    </section>
 
-      <header class="mb-8">
-        <span class="student-auth__tag">Your academic workspace</span>
-        <h1
-          class="mt-3 text-[32px] font-semibold leading-tight tracking-[-0.04em] text-[var(--erp-text-heading)]"
-        >
-          Sign in to your portal
+    <section
+      class="flex min-h-dvh flex-col bg-[var(--erp-surface)] lg:min-h-[760px] lg:justify-center lg:px-12 lg:py-10 xl:px-16"
+    >
+      <header class="px-5 pb-5 pt-7 text-center sm:px-8 lg:hidden">
+        <img
+          class="mx-auto size-[84px] object-contain"
+          src="/assets/images/auth/student/graphic-era-mark.webp"
+          width="144"
+          height="144"
+          alt="Graphic Era University"
+          fetchpriority="high"
+          decoding="async"
+        />
+        <h1 class="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[var(--erp-text-heading)]">
+          Student Portal
         </h1>
-        <p class="mt-3 text-sm leading-6 text-[var(--erp-text-muted)]">
-          Access classes, attendance, documents and university updates.
-        </p>
+        <p class="mt-1 text-sm text-[var(--erp-text-muted)]">Sign in to your student portal</p>
       </header>
 
-      <form class="space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <div>
-          <label class="student-auth__label" for="student-id"
-            >Student ID or enrollment number</label
-          >
-          <div
-            class="student-auth__field"
-            [class.student-auth__field--invalid]="
-              form.controls.studentId.touched && form.controls.studentId.invalid
-            "
-          >
-            <svg lucideIdCard size="18" aria-hidden="true"></svg>
-            <input
-              id="student-id"
-              type="text"
-              formControlName="studentId"
-              autocomplete="username"
-              placeholder="Enter your student ID"
-            />
-          </div>
-          @if (form.controls.studentId.touched && form.controls.studentId.invalid) {
-            <p class="student-auth__error">Enter a valid student or enrollment ID.</p>
-          }
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between gap-3">
-            <label class="student-auth__label" for="student-password">Password</label
-            ><button class="student-auth__link-button" type="button">Need help signing in?</button>
-          </div>
-          <div
-            class="student-auth__field"
-            [class.student-auth__field--invalid]="
-              form.controls.password.touched && form.controls.password.invalid
-            "
-          >
-            <svg lucideLockKeyhole size="18" aria-hidden="true"></svg>
-            <input
-              id="student-password"
-              [type]="showPassword() ? 'text' : 'password'"
-              formControlName="password"
-              autocomplete="current-password"
-              placeholder="Enter your password"
-            />
-            <button
-              class="student-auth__icon-button"
-              type="button"
-              (click)="togglePassword()"
-              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-            >
-              @if (showPassword()) {
-                <svg lucideEyeOff size="18" aria-hidden="true"></svg>
-              } @else {
-                <svg lucideEye size="18" aria-hidden="true"></svg>
-              }
-            </button>
-          </div>
-          @if (form.controls.password.touched && form.controls.password.invalid) {
-            <p class="student-auth__error">Password must contain at least 8 characters.</p>
-          }
-        </div>
-
-        <label class="flex w-fit cursor-pointer items-center gap-2.5 text-sm"
-          ><input
-            class="size-4 accent-[var(--erp-blue-600)]"
-            type="checkbox"
-            formControlName="rememberMe"
-          />Remember this device</label
-        >
-        <button class="student-auth__submit" type="submit">
-          <span>Continue to student portal</span
-          ><svg lucideArrowRight size="18" aria-hidden="true"></svg>
-        </button>
-        @if (frontendValidated()) {
-          <p class="student-auth__notice" role="status">
-            Frontend validation passed. Backend authentication will be connected later.
-          </p>
-        }
-      </form>
+      <picture class="block h-[170px] overflow-hidden bg-[#eaf5ff] sm:h-[220px] lg:hidden">
+        <img
+          class="size-full object-cover object-center"
+          src="/assets/images/auth/student/student-login-mobile.webp"
+          width="900"
+          height="450"
+          alt="Academic books, laptop and plant illustration"
+          fetchpriority="high"
+          decoding="async"
+        />
+      </picture>
 
       <div
-        class="my-8 flex items-center gap-4 text-xs uppercase tracking-[0.12em] text-[var(--erp-text-light)]"
+        class="relative z-10 mx-3 -mt-3 rounded-2xl border border-[var(--erp-border-subtle)] bg-white px-5 py-7 shadow-[0_12px_34px_rgba(16,42,67,0.12)] sm:mx-auto sm:w-[min(92%,480px)] sm:px-8 lg:mx-0 lg:mt-0 lg:w-full lg:max-w-[440px] lg:self-center lg:rounded-xl lg:border-[var(--erp-border-default)] lg:p-8 lg:shadow-[var(--erp-shadow-card)] xl:p-9"
       >
-        <span class="h-px flex-1 bg-[var(--erp-border-default)]"></span><span>Staff access</span
-        ><span class="h-px flex-1 bg-[var(--erp-border-default)]"></span>
-      </div>
-      <a class="student-auth__switch" routerLink="/admin/login"
-        >Open Administration Console <svg lucideArrowRight size="17" aria-hidden="true"></svg
-      ></a>
-    </div>
-  </section>
+        <header class="mb-8 hidden text-center lg:block">
+          <span
+            class="mx-auto grid size-12 place-items-center rounded-full bg-[var(--erp-blue-50)] text-[var(--erp-blue-600)]"
+          >
+            <svg lucideUserRound size="25" strokeWidth="1.8" aria-hidden="true"></svg>
+          </span>
+          <h1
+            class="mt-4 text-[32px] font-semibold leading-tight tracking-[-0.04em] text-[var(--erp-text-heading)]"
+          >
+            Welcome back
+          </h1>
+          <p class="mt-1 text-sm text-[var(--erp-text-muted)]">Sign in to your student portal</p>
+        </header>
 
-  <section
-    class="student-auth__visual relative hidden overflow-hidden p-12 lg:flex lg:flex-col xl:p-16"
-  >
-    <div class="relative z-10 flex items-center justify-between">
-      <span class="student-auth__campus">Campus connected</span
-      ><svg lucideBookOpen size="24" color="var(--erp-blue-600)" aria-hidden="true"></svg>
-    </div>
-    <div class="relative z-10 my-auto max-w-xl">
-      <div class="student-auth__card" aria-hidden="true">
-        <span><svg lucideGraduationCap size="44"></svg></span><i></i><i></i><i></i>
+        <form class="space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div>
+            <label class="student-auth__label" for="student-id">Student ID</label>
+            <div
+              class="student-auth__field"
+              [class.student-auth__field--invalid]="
+                form.controls.studentId.touched && form.controls.studentId.invalid
+              "
+            >
+              <svg lucideUserRound size="18" aria-hidden="true"></svg>
+              <input
+                id="student-id"
+                type="text"
+                formControlName="studentId"
+                autocomplete="username"
+                placeholder="Enter your Student ID"
+              />
+            </div>
+            @if (form.controls.studentId.touched && form.controls.studentId.invalid) {
+              <p class="student-auth__error">Enter a valid Student ID.</p>
+            }
+          </div>
+
+          <div>
+            <label class="student-auth__label" for="student-password">Password</label>
+            <div
+              class="student-auth__field"
+              [class.student-auth__field--invalid]="
+                form.controls.password.touched && form.controls.password.invalid
+              "
+            >
+              <svg lucideLockKeyhole size="18" aria-hidden="true"></svg>
+              <input
+                id="student-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+              />
+              <button
+                class="grid size-9 shrink-0 place-items-center rounded-lg border-0 bg-transparent text-[var(--erp-text-muted)] transition-colors hover:bg-[var(--erp-surface-hover)] hover:text-[var(--erp-blue-700)]"
+                type="button"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                @if (showPassword()) {
+                  <svg lucideEyeOff size="18" aria-hidden="true"></svg>
+                } @else {
+                  <svg lucideEye size="18" aria-hidden="true"></svg>
+                }
+              </button>
+            </div>
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <p class="student-auth__error">Password must contain at least 8 characters.</p>
+            }
+          </div>
+
+          <div class="flex items-center justify-between gap-4">
+            <label
+              class="flex cursor-pointer items-center gap-2.5 text-[13px] text-[var(--erp-text-body)]"
+            >
+              <input
+                class="size-4 rounded accent-[var(--erp-blue-600)]"
+                type="checkbox"
+                formControlName="rememberMe"
+              />
+              Remember me
+            </label>
+            <button
+              class="border-0 bg-transparent p-0 text-[13px] font-medium text-[var(--erp-blue-600)] hover:text-[var(--erp-blue-700)]"
+              type="button"
+            >
+              Forgot password?
+            </button>
+          </div>
+
+          <button
+            class="flex min-h-12 w-full items-center justify-center rounded-lg border-0 bg-gradient-to-r from-[var(--erp-blue-500)] to-[var(--erp-blue-600)] font-semibold text-white shadow-[0_8px_18px_rgba(33,150,243,0.2)] transition hover:-translate-y-px hover:from-[var(--erp-blue-600)] hover:to-[var(--erp-blue-700)] hover:shadow-[0_11px_24px_rgba(25,118,210,0.25)]"
+            type="submit"
+          >
+            Sign in
+          </button>
+
+          @if (frontendValidated()) {
+            <p class="student-auth__notice" role="status">
+              Frontend validation passed. Authentication will connect with the backend later.
+            </p>
+          }
+        </form>
+
+        <div
+          class="mt-7 flex items-center justify-center gap-2 text-center text-xs text-[var(--erp-text-muted)]"
+        >
+          <svg lucideShieldCheck size="18" color="var(--erp-blue-600)" aria-hidden="true"></svg>
+          <span>Secure access for Graphic Era students</span>
+        </div>
       </div>
-      <h2
-        class="mt-10 text-4xl font-semibold leading-tight tracking-[-0.04em] text-[var(--erp-text-heading)] xl:text-5xl"
-      >
-        Everything for your university journey.
-      </h2>
-      <p class="mt-5 max-w-lg text-base leading-7 text-[var(--erp-text-muted)]">
-        One secure place for academic progress, schedules, attendance and campus communication.
+
+      <p class="mb-8 mt-7 text-center text-[13px] text-[var(--erp-text-muted)] lg:mb-0 lg:mt-10">
+        Need help?
+        <a
+          class="font-medium text-[var(--erp-blue-600)] no-underline"
+          href="mailto:support@geu.ac.in"
+          >Contact support</a
+        >
       </p>
-    </div>
-    <div class="relative z-10 grid grid-cols-3 gap-3">
-      <span class="student-auth__feature">Academic records</span
-      ><span class="student-auth__feature">Live updates</span
-      ><span class="student-auth__feature">Secure access</span>
-    </div>
-  </section>
+    </section>
+  </div>
 </main>

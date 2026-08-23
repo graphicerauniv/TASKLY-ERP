@@ -1,132 +1,41 @@
 :host {
   display: block;
 }
-.student-auth__visual {
-  background:
-    radial-gradient(circle at 80% 20%, rgb(144 202 249 / 30%), transparent 30%),
-    linear-gradient(145deg, #f3f9ff, #e7f4ff 58%, #f8fbf4);
-  border-left: 1px solid var(--erp-border-default);
-}
-.student-auth__visual::after {
-  position: absolute;
-  right: -90px;
-  bottom: -110px;
-  width: 370px;
-  height: 370px;
-  content: '';
-  border: 1px solid rgb(33 150 243 / 12%);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 50px rgb(33 150 243 / 3%),
-    0 0 0 100px rgb(33 150 243 / 2%);
-}
-.student-auth__brand {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  color: white;
-  background: linear-gradient(145deg, var(--erp-blue-500), var(--erp-blue-700));
-  border-radius: 13px;
-  box-shadow: 0 8px 18px rgb(25 118 210 / 18%);
-}
-.student-auth__tag,
-.student-auth__campus {
-  display: inline-flex;
-  width: fit-content;
-  padding: 6px 11px;
-  color: var(--erp-blue-700);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  background: var(--erp-blue-50);
-  border: 1px solid var(--erp-border-default);
-  border-radius: 999px;
-}
-.student-auth__card {
-  position: relative;
-  width: 250px;
-  height: 156px;
-  padding: 25px;
-  background: rgb(255 255 255 / 72%);
-  border: 1px solid rgb(144 202 249 / 50%);
-  border-radius: 24px;
-  box-shadow: 0 24px 56px rgb(25 118 210 / 12%);
-  backdrop-filter: blur(12px);
-  transform: rotate(-2deg);
-}
-.student-auth__card span {
-  display: grid;
-  width: 70px;
-  height: 70px;
-  place-items: center;
-  color: var(--erp-blue-600);
-  background: var(--erp-blue-50);
-  border-radius: 20px;
-}
-.student-auth__card i {
-  position: absolute;
-  right: 25px;
-  width: 112px;
-  height: 9px;
-  background: var(--erp-blue-200);
-  border-radius: 999px;
-}
-.student-auth__card i:nth-of-type(1) {
-  top: 36px;
-}
-.student-auth__card i:nth-of-type(2) {
-  top: 58px;
-  width: 84px;
-  background: var(--erp-blue-100);
-}
-.student-auth__card i:nth-of-type(3) {
-  right: auto;
-  bottom: 28px;
-  left: 25px;
-  width: 190px;
-  background: var(--erp-blue-100);
-}
-.student-auth__feature {
-  padding: 12px;
-  color: var(--erp-text-body);
-  font-size: 11px;
-  font-weight: 600;
-  text-align: center;
-  background: rgb(255 255 255 / 64%);
-  border: 1px solid var(--erp-border-default);
-  border-radius: 8px;
-}
+
 .student-auth__label {
   display: block;
-  margin-bottom: 7px;
+  margin-bottom: 8px;
   color: var(--erp-text-strong);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--erp-weight-semibold);
 }
+
 .student-auth__field {
   display: flex;
   min-height: 48px;
   align-items: center;
   gap: 11px;
-  padding-inline: 14px 8px;
+  padding-inline: 14px 7px;
   color: var(--erp-text-muted);
-  background: var(--erp-canvas-soft);
+  background: var(--erp-input-bg);
   border: 1px solid var(--erp-input-border);
-  border-radius: 10px;
+  border-radius: var(--erp-radius-control);
   transition:
     border-color var(--erp-control-transition),
-    box-shadow var(--erp-control-transition);
+    box-shadow var(--erp-control-transition),
+    background-color var(--erp-control-transition);
 }
+
 .student-auth__field:focus-within {
-  background: white;
+  background: var(--erp-surface-overlay);
   border-color: var(--erp-input-focus-border);
   box-shadow: 0 0 0 3px var(--erp-focus-ring);
 }
+
 .student-auth__field--invalid {
   border-color: var(--erp-danger);
 }
+
 .student-auth__field input {
   min-width: 0;
   flex: 1;
@@ -136,74 +45,18 @@
   border: 0;
   outline: 0;
 }
+
 .student-auth__field input::placeholder {
   color: var(--erp-text-light);
 }
-.student-auth__icon-button,
-.student-auth__link-button {
-  color: var(--erp-text-link);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-.student-auth__icon-button {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  color: var(--erp-text-muted);
-  border-radius: 8px;
-}
-.student-auth__icon-button:hover {
-  background: var(--erp-surface-hover);
-}
-.student-auth__link-button {
-  padding: 0;
-  font-size: 12px;
-  font-weight: 600;
-}
+
 .student-auth__error {
   margin: 6px 0 0;
   color: var(--erp-danger-text);
   font-size: 12px;
   line-height: 17px;
 }
-.student-auth__submit,
-.student-auth__switch {
-  display: flex;
-  min-height: 48px;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 10px;
-  transition:
-    transform var(--erp-control-transition),
-    box-shadow var(--erp-control-transition),
-    background-color var(--erp-control-transition);
-}
-.student-auth__submit {
-  width: 100%;
-  color: white;
-  background: linear-gradient(135deg, var(--erp-blue-500), var(--erp-blue-700));
-  border: 0;
-  box-shadow: 0 8px 20px rgb(25 118 210 / 20%);
-  cursor: pointer;
-}
-.student-auth__submit:hover {
-  box-shadow: 0 11px 24px rgb(25 118 210 / 26%);
-  transform: translateY(-1px);
-}
-.student-auth__switch {
-  color: var(--erp-text-strong);
-  background: var(--erp-canvas-soft);
-  border: 1px solid var(--erp-border-default);
-}
-.student-auth__switch:hover {
-  color: var(--erp-blue-700);
-  background: var(--erp-surface-hover);
-}
+
 .student-auth__notice {
   margin: 0;
   padding: 10px 12px;
@@ -211,5 +64,5 @@
   font-size: 12px;
   line-height: 18px;
   background: var(--erp-success-bg);
-  border-radius: 8px;
+  border-radius: var(--erp-radius-control);
 }

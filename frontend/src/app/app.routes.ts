@@ -54,6 +54,11 @@ export const appRoutes: Routes = [
     ],
   },
   {
+    path: 'student',
+    loadChildren: () =>
+      import('./features/student/auth').then((routes) => routes.STUDENT_AUTH_ROUTES),
+  },
+  {
     path: 'admission',
     loadComponent: () =>
       import('./features/student/admission/dynamic-admission.component').then(
