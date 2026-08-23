@@ -162,13 +162,7 @@ export class DynamicAdmissionComponent {
       return;
     }
     this.api
-      .publicOptions(
-        field.dataSource.masterTypeSlug,
-        parent ? String(parent) : undefined,
-        search,
-        String(field.searchConfig?.['searchField'] || 'name'),
-        field.dataSource.labelField,
-      )
+      .publicOptions(field.dataSource.masterTypeSlug, parent ? String(parent) : undefined, search)
       .subscribe(({ items }) =>
         this.optionsState.update((v) => ({ ...v, [this.optionKey(field, index)]: items })),
       );

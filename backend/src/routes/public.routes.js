@@ -50,20 +50,16 @@ publicRouter.get(
   asyncHandler(async (request, response) => {
     const filter = { typeSlug: request.params.typeSlug, isActive: true };
     if (request.query.parentId) filter.parentId = id(request.query.parentId, 'parentId');
-    const searchField = request.query.searchField === 'code' ? 'code' : 'name';
     if (request.query.search)
-      filter[searchField] = { $regex: escapeRegex(request.query.search), $options: 'i' };
+      filter.name = { $regex: escapeRegex(request.query.search), $options: 'i' };
     const items = await db()
       .collection('masterValues')
       .find(filter)
       .sort({ order: 1, name: 1 })
       .limit(50)
-      .project({ name: 1, code: 1, parentId: 1, metadata: 1 })
+      .project({ name: 1, parentId: 1, metadata: 1 })
       .toArray();
-    const labelField = request.query.labelField === 'code' ? 'code' : 'name';
-    response.json({
-      items: items.map((item) => ({ ...serialize(item), label: item[labelField] || item.name })),
-    });
+    response.json({ items: items.map((item) => ({ ...serialize(item), label: item.name })) });
   }),
 );
 

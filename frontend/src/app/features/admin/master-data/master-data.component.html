@@ -79,18 +79,20 @@
   <section class="card form-card">
     <h2>{{ editingId() ? 'Edit value' : 'Add value' }}</h2>
     <div class="form-grid">
-      <label><span>Name *</span><input [(ngModel)]="name" placeholder="Enter value name" /></label
-      ><label><span>Code</span><input [(ngModel)]="code" placeholder="Optional code" /></label>
-      @if (parents().length) {
-        <label
-          ><span>{{ currentType()?.parentTypeSlug }} *</span
-          ><select [(ngModel)]="parentId">
-            <option value="">Select parent</option>
-            @for (parent of parents(); track parent._id) {
-              <option [value]="parent._id">{{ parent.name }}</option>
+      <label><span>Name *</span><input [(ngModel)]="name" placeholder="Enter value name" /></label>
+      @for (dependencySlug of dependencySlugs(); track dependencySlug; let index = $index) {
+        <label>
+          <span>{{ dependencyLabel(dependencySlug) }} *</span>
+          <select
+            [(ngModel)]="selectedDependencies[dependencySlug]"
+            (ngModelChange)="dependencyChanged(index)"
+          >
+            <option value="">Select {{ dependencyLabel(dependencySlug) }}</option>
+            @for (option of dependencyOptions(index); track option._id) {
+              <option [value]="option._id">{{ option.name }}</option>
             }
-          </select></label
-        >
+          </select>
+        </label>
       }
       <button class="primary" type="button" (click)="save()">
         {{ editingId() ? 'Save changes' : 'Add value' }}
@@ -118,9 +120,8 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>Code</th>
-            @if (parents().length) {
-              <th>Parent</th>
+            @if (dependencySlugs().length) {
+              <th>Depends on</th>
             }
             <th>Status</th>
             <th class="actions">Actions</th>
@@ -132,9 +133,8 @@
               <td>
                 <strong>{{ item.name }}</strong>
               </td>
-              <td>{{ item.code || '—' }}</td>
-              @if (parents().length) {
-                <td>{{ item.parentId || '—' }}</td>
+              @if (dependencySlugs().length) {
+                <td>{{ parentPath(item) }}</td>
               }
               <td>
                 <button
@@ -153,7 +153,7 @@
             </tr>
           } @empty {
             <tr>
-              <td [attr.colspan]="parents().length ? 5 : 4" class="empty">
+              <td [attr.colspan]="dependencySlugs().length ? 4 : 3" class="empty">
                 {{ loading() ? 'Loading…' : 'No values found.' }}
               </td>
             </tr>
