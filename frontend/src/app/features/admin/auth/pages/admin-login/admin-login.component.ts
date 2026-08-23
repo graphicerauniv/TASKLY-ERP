@@ -5,12 +5,11 @@ import { inject } from '@angular/core';
 import { ApiService } from '../../../../../core/api.service';
 import { AuthService } from '../../../../../core/auth.service';
 import {
-  LucideArrowRight,
   LucideEye,
   LucideEyeOff,
   LucideLockKeyhole,
+  LucideMail,
   LucideShieldCheck,
-  LucideUserRound,
 } from '@lucide/angular';
 
 @Component({
@@ -18,12 +17,11 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    LucideArrowRight,
     LucideEye,
     LucideEyeOff,
     LucideLockKeyhole,
+    LucideMail,
     LucideShieldCheck,
-    LucideUserRound,
   ],
   templateUrl: './admin-login.component.html',
   styleUrl: './admin-login.component.scss',
