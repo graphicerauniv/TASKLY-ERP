@@ -120,7 +120,7 @@
             </button>
           </div>
           @if (form.controls.password.touched && form.controls.password.invalid) {
-            <p class="admin-auth__error">Password must contain at least 8 characters.</p>
+            <p class="admin-auth__error">Enter your password.</p>
           }
         </div>
 
@@ -131,14 +131,12 @@
             formControlName="rememberMe"
           />Keep me signed in</label
         >
-        <button class="admin-auth__submit" type="submit">
-          <span>Sign in to administration</span
+        <button class="admin-auth__submit" type="submit" [disabled]="loading()">
+          <span>{{ loading() ? 'Signing in…' : 'Sign in to administration' }}</span
           ><svg lucideArrowRight size="18" aria-hidden="true"></svg>
         </button>
-        @if (frontendValidated()) {
-          <p class="admin-auth__notice" role="status">
-            Frontend validation passed. Backend authentication will be connected later.
-          </p>
+        @if (error()) {
+          <p class="admin-auth__error" role="alert">{{ error() }}</p>
         }
       </form>
 
@@ -148,8 +146,8 @@
         <span class="h-px flex-1 bg-[var(--erp-border-default)]"></span><span>Student access</span
         ><span class="h-px flex-1 bg-[var(--erp-border-default)]"></span>
       </div>
-      <a class="admin-auth__switch" routerLink="/student/login"
-        >Open Student Portal <svg lucideArrowRight size="17" aria-hidden="true"></svg
+      <a class="admin-auth__switch" routerLink="/admission"
+        >Open Student Admission <svg lucideArrowRight size="17" aria-hidden="true"></svg
       ></a>
     </div>
   </section>

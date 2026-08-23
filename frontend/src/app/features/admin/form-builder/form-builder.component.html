@@ -1,0 +1,315 @@
+<header class="heading">
+  <div>
+    <span>Admission</span>
+    <h1>Dynamic Form Builder</h1>
+    <p>Create tabs, sections, fields, mappings, conditions, and repeatable groups.</p>
+  </div>
+  @if (form()) {
+    <div class="save-actions">
+      <button class="secondary" type="button" (click)="save()" [disabled]="saving()">
+        Save draft</button
+      ><button class="primary" type="button" (click)="save(true)" [disabled]="saving()">
+        Publish form
+      </button>
+    </div>
+  }
+</header>
+@if (message()) {
+  <p class="notice success">{{ message() }}</p>
+}
+@if (error()) {
+  <p class="notice error">{{ error() }}</p>
+}
+<section class="form-picker card">
+  <div>
+    <label
+      ><span>Admission form</span
+      ><select [ngModel]="form()?._id" (ngModelChange)="chooseForm($event)">
+        @for (item of forms(); track item._id) {
+          <option [value]="item._id">
+            {{ item.name }} · {{ item.status }} · v{{ item.version }}
+          </option>
+        }
+      </select></label
+    >
+  </div>
+  <div>
+    <input [(ngModel)]="newFormName" placeholder="New form name" /><button
+      class="secondary"
+      type="button"
+      (click)="createForm()"
+    >
+      Create form
+    </button>
+  </div>
+</section>
+@if (form(); as current) {
+  <section class="builder">
+    <aside class="structure card">
+      <div class="panel-title">
+        <h2>Form structure</h2>
+        <button type="button" (click)="addSection()">＋ Tab</button>
+      </div>
+      @for (section of current.sections; track section.id; let si = $index) {
+        <div class="section" [class.selected]="section.id === selectedSectionId()">
+          <div class="row">
+            <button
+              class="row__name"
+              type="button"
+              (click)="
+                selectedSectionId.set(section.id);
+                selectedSubsectionId.set(section.subsections[0]?.id || '');
+                selectedFieldId.set('')
+              "
+            >
+              {{ section.name }}</button
+            ><button type="button" (click)="move(current.sections, si, -1)">↑</button
+            ><button type="button" (click)="move(current.sections, si, 1)">↓</button
+            ><button type="button" (click)="renameSection(section)">✎</button
+            ><button class="danger" type="button" (click)="removeSection(section)">×</button>
+          </div>
+          @if (section.id === selectedSectionId()) {
+            @for (sub of section.subsections; track sub.id; let subi = $index) {
+              <div class="sub" [class.selected]="sub.id === selectedSubsectionId()">
+                <div class="row">
+                  <button
+                    class="row__name"
+                    type="button"
+                    (click)="selectedSubsectionId.set(sub.id); selectedFieldId.set('')"
+                  >
+                    └ {{ sub.name }}</button
+                  ><button type="button" (click)="move(section.subsections, subi, -1)">↑</button
+                  ><button type="button" (click)="move(section.subsections, subi, 1)">↓</button
+                  ><button type="button" (click)="renameSubsection(sub)">✎</button
+                  ><button class="danger" type="button" (click)="removeSubsection(sub)">×</button>
+                </div>
+              </div>
+            }
+            <button class="add-sub" type="button" (click)="addSubsection()">
+              ＋ Add Sub Section
+            </button>
+          }
+        </div>
+      } @empty {
+        <p class="empty">Start by adding a Super Section / Tab.</p>
+      }
+    </aside>
+    <div class="workspace">
+      @if (subsection(); as sub) {
+        <section class="card subsection-config">
+          <div>
+            <h2>{{ sub.name }}</h2>
+            <p>Sub Section configuration</p>
+          </div>
+          <label class="check"><input type="checkbox" [(ngModel)]="sub.isActive" /> Enabled</label
+          ><label class="check"
+            ><input type="checkbox" [(ngModel)]="sub.isRepeatable" /> Repeatable / Add More</label
+          >
+          @if (sub.isRepeatable) {
+            <label
+              ><span>Min entries</span
+              ><input type="number" [(ngModel)]="sub.minEntries" min="0" /></label
+            ><label
+              ><span>Max entries</span
+              ><input type="number" [(ngModel)]="sub.maxEntries" min="1" placeholder="No limit"
+            /></label>
+          }
+          <label class="check"
+            ><input
+              type="checkbox"
+              [ngModel]="!!sub.visibilityCondition"
+              (ngModelChange)="conditionToggle(sub, $event)"
+            />
+            Conditional</label
+          >
+          @if (sub.visibilityCondition) {
+            <label
+              ><span>Controlling field</span
+              ><select [(ngModel)]="sub.visibilityCondition.fieldId">
+                <option value="">Choose field</option>
+                @for (item of allFields(); track item.id) {
+                  <option [value]="item.id">{{ item.name }}</option>
+                }
+              </select></label
+            ><label
+              ><span>Operator</span
+              ><select [(ngModel)]="sub.visibilityCondition.operator">
+                <option value="equals">Equals</option>
+                <option value="not-equals">Not equals</option>
+                <option value="contains">Contains</option>
+                <option value="is-empty">Is empty</option>
+                <option value="is-not-empty">Is not empty</option>
+              </select></label
+            ><label><span>Value</span><input [(ngModel)]="sub.visibilityCondition.value" /></label>
+          }
+        </section>
+        <section class="card fields">
+          <div class="panel-title">
+            <h2>Fields</h2>
+            <button type="button" (click)="addField()">＋ Add field</button>
+          </div>
+          @for (item of sub.fields; track item.id; let fi = $index) {
+            <div class="field-row" [class.selected]="item.id === selectedFieldId()">
+              <button class="field-main" type="button" (click)="selectField(item)">
+                <span>{{ fi + 1 }}</span
+                ><strong>{{ item.name }}</strong
+                ><small>{{ item.type }}{{ item.isRequired ? ' · Required' : '' }}</small></button
+              ><button type="button" (click)="move(sub.fields, fi, -1)">↑</button
+              ><button type="button" (click)="move(sub.fields, fi, 1)">↓</button
+              ><button class="danger" type="button" (click)="removeField(item)">×</button>
+            </div>
+          } @empty {
+            <p class="empty">No fields yet. Add the first field.</p>
+          }
+        </section>
+        @if (field(); as selected) {
+          <section class="card editor">
+            <div class="panel-title">
+              <div>
+                <h2>Field configuration</h2>
+                <small>{{ selected.id }}</small>
+              </div>
+            </div>
+            <div class="config-grid">
+              <label><span>Field name *</span><input [(ngModel)]="selected.name" /></label
+              ><label
+                ><span>Field type *</span
+                ><select [(ngModel)]="selected.type">
+                  @for (type of fieldTypes; track type[0]) {
+                    <option [value]="type[0]">{{ type[1] }}</option>
+                  }
+                </select></label
+              ><label><span>Placeholder</span><input [(ngModel)]="selected.placeholder" /></label
+              ><label><span>Help text</span><input [(ngModel)]="selected.helpText" /></label>
+              <label class="check"
+                ><input type="checkbox" [(ngModel)]="selected.isRequired" /> Required</label
+              ><label class="check"
+                ><input type="checkbox" [(ngModel)]="selected.isActive" /> Visible / enabled</label
+              ><label class="check"
+                ><input
+                  type="checkbox"
+                  [(ngModel)]="selected.searchable"
+                  (ngModelChange)="searchableChanged()"
+                />
+                Searchable</label
+              ><label class="check"
+                ><input
+                  type="checkbox"
+                  [ngModel]="!!selected.visibilityCondition"
+                  (ngModelChange)="conditionToggle(selected, $event)"
+                />
+                Conditional visibility</label
+              >
+              @if (['dropdown', 'radio', 'checkbox', 'multi-select'].includes(selected.type)) {
+                <label
+                  ><span>Master data source</span
+                  ><select
+                    [ngModel]="selected.dataSource?.masterTypeSlug || ''"
+                    (ngModelChange)="
+                      selected.dataSource = $event
+                        ? {
+                            kind: 'master',
+                            masterTypeSlug: $event,
+                            parentFieldId: null,
+                            labelField: 'name',
+                            valueField: '_id',
+                          }
+                        : null
+                    "
+                  >
+                    <option value="">Manual options</option>
+                    @for (type of types(); track type.slug) {
+                      <option [value]="type.slug">{{ type.name }}</option>
+                    }
+                  </select></label
+                >
+                @if (selected.dataSource) {
+                  <label
+                    ><span>Depends on field</span
+                    ><select [(ngModel)]="selected.dataSource.parentFieldId">
+                      <option [ngValue]="null">No dependency</option>
+                      @for (item of allFields(); track item.id) {
+                        @if (item.id !== selected.id) {
+                          <option [value]="item.id">{{ item.name }}</option>
+                        }
+                      }
+                    </select></label
+                  ><label
+                    ><span>Display from</span
+                    ><select [(ngModel)]="selected.dataSource.labelField">
+                      <option value="name">Name</option>
+                      <option value="code">Code</option>
+                    </select></label
+                  >
+                  @if (selected.searchable && selected.searchConfig) {
+                    <label
+                      ><span>Search database field</span
+                      ><select [(ngModel)]="selected.searchConfig['searchField']">
+                        <option value="name">Name</option>
+                        <option value="code">Code</option>
+                      </select></label
+                    >
+                  }
+                } @else {
+                  <label class="wide"
+                    ><span>Options (one per line)</span
+                    ><textarea
+                      [(ngModel)]="optionText"
+                      (ngModelChange)="updateOptions()"
+                      rows="4"
+                    ></textarea>
+                  </label>
+                }
+              }
+              @if (selected.visibilityCondition) {
+                <label
+                  ><span>Controlling field</span
+                  ><select [(ngModel)]="selected.visibilityCondition.fieldId">
+                    <option value="">Choose field</option>
+                    @for (item of allFields(); track item.id) {
+                      @if (item.id !== selected.id) {
+                        <option [value]="item.id">{{ item.name }}</option>
+                      }
+                    }
+                  </select></label
+                ><label
+                  ><span>Operator</span
+                  ><select [(ngModel)]="selected.visibilityCondition.operator">
+                    <option value="equals">Equals</option>
+                    <option value="not-equals">Not equals</option>
+                    <option value="contains">Contains</option>
+                    <option value="is-empty">Is empty</option>
+                    <option value="is-not-empty">Is not empty</option>
+                  </select></label
+                ><label
+                  ><span>Value</span><input [(ngModel)]="selected.visibilityCondition.value"
+                /></label>
+              }
+              <label
+                ><span>Minimum length</span
+                ><input type="number" [(ngModel)]="selected.validation.minLength" /></label
+              ><label
+                ><span>Maximum length</span
+                ><input type="number" [(ngModel)]="selected.validation.maxLength" /></label
+              ><label
+                ><span>Validation pattern</span
+                ><input
+                  [(ngModel)]="selected.validation.pattern"
+                  placeholder="Regular expression" /></label
+              ><label
+                ><span>Validation message</span><input [(ngModel)]="selected.validation.message"
+              /></label>
+            </div>
+          </section>
+        }
+      } @else {
+        <section class="card empty-state">
+          <strong>Select or create a Sub Section</strong>
+          <p>Fields are configured within a Sub Section.</p>
+        </section>
+      }
+    </div>
+  </section>
+} @else {
+  <section class="card empty-state"><strong>Create an admission form to begin.</strong></section>
+}

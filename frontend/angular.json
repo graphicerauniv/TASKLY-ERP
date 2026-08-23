@@ -17,6 +17,7 @@
           "options": {
             "browser": "src/main.ts",
             "index": "src/index.html",
+            "assets": [{ "glob": "**/*", "input": "public" }],
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
@@ -36,6 +37,7 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": { "proxyConfig": "proxy.conf.json" },
           "configurations": {
             "production": { "buildTarget": "taskly-erp:build:production" },
             "development": { "buildTarget": "taskly-erp:build:development" }
@@ -44,5 +46,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

@@ -1,0 +1,233 @@
+<header class="portal-header">
+  <a href="/" class="brand"
+    ><span>T</span>
+    <div><strong>Taskly ERP</strong><small>Online Admission</small></div></a
+  >
+  @if (admission()) {
+    <div class="application">
+      <small>Application number</small><strong>{{ admission()?.applicationNumber }}</strong>
+    </div>
+  }
+</header>
+<main class="page">
+  @if (loading()) {
+    <section class="state">
+      <div class="spinner"></div>
+      <p>Preparing your admission form…</p>
+    </section>
+  } @else if (error() && !form()) {
+    <section class="state error-state">
+      <h1>Admission form unavailable</h1>
+      <p>{{ error() }}</p>
+    </section>
+  } @else if (admission()?.status === 'submitted') {
+    <section class="submitted">
+      <span>✓</span>
+      <h1>Application submitted</h1>
+      <p>
+        Your application <strong>{{ admission()?.applicationNumber }}</strong> has been received
+        successfully.
+      </p>
+      <button type="button" (click)="newApplication()">Start another application</button>
+    </section>
+  } @else if (form(); as current) {
+    <header class="form-heading">
+      <span>Student admission</span>
+      <h1>{{ current.name }}</h1>
+      <p>
+        {{ current.description || 'Complete the form and save your progress section by section.' }}
+      </p>
+    </header>
+    <nav class="steps" aria-label="Form sections">
+      @for (tab of current.sections; track tab.id; let i = $index) {
+        <button
+          type="button"
+          [class.active]="i === activeIndex()"
+          [class.done]="i < activeIndex()"
+          (click)="activeIndex.set(i); loadSectionOptions()"
+        >
+          <span>
+            @if (i < activeIndex()) {
+              ✓
+            } @else {
+              {{ i + 1 }}
+            }</span
+          ><strong>{{ tab.name }}</strong>
+        </button>
+      }
+    </nav>
+    @if (message()) {
+      <p class="notice success">{{ message() }}</p>
+    }
+    @if (error()) {
+      <p class="notice error">{{ error() }}</p>
+    }
+    <section class="section-heading">
+      <div>
+        <small>Step {{ activeIndex() + 1 }} of {{ current.sections.length }}</small>
+        <h2>{{ section()?.name }}</h2>
+        <p>{{ section()?.description }}</p>
+      </div>
+    </section>
+    @for (sub of visibleSubsections(); track sub.id) {
+      <section class="subsection">
+        <header>
+          <div>
+            <h3>{{ sub.name }}</h3>
+            @if (sub.description) {
+              <p>{{ sub.description }}</p>
+            }
+          </div>
+          @if (sub.isRepeatable) {
+            <button type="button" (click)="addEntry(sub)">＋ Add {{ sub.name }}</button>
+          }
+        </header>
+        @if (sub.isRepeatable) {
+          @for (entry of entries(sub); track $index; let entryIndex = $index) {
+            <article class="repeat-card">
+              <div class="repeat-title">
+                <strong>{{ sub.name }} {{ entryIndex + 1 }}</strong
+                ><button type="button" (click)="removeEntry(sub, entryIndex)">Remove</button>
+              </div>
+              <div class="field-grid">
+                @for (field of sub.fields; track field.id) {
+                  @if (visible(field, entry)) {
+                    <ng-container
+                      [ngTemplateOutlet]="fieldTemplate"
+                      [ngTemplateOutletContext]="{
+                        $implicit: field,
+                        entry: entry,
+                        index: entryIndex,
+                      }"
+                    ></ng-container>
+                  }
+                }
+              </div>
+            </article>
+          } @empty {
+            <p class="empty-repeat">No records added. Select “Add {{ sub.name }}” to begin.</p>
+          }
+        } @else {
+          <div class="field-grid">
+            @for (field of sub.fields; track field.id) {
+              @if (visible(field)) {
+                <ng-container
+                  [ngTemplateOutlet]="fieldTemplate"
+                  [ngTemplateOutletContext]="{ $implicit: field }"
+                ></ng-container>
+              }
+            }
+          </div>
+        }
+      </section>
+    }
+    <footer class="actions">
+      @if (activeIndex() > 0) {
+        <button class="secondary" type="button" (click)="previous()">← Previous</button>
+      }
+      <div></div>
+      <button class="secondary" type="button" (click)="save()" [disabled]="saving()">Save</button>
+      @if (activeIndex() < current.sections.length - 1) {
+        <button class="primary" type="button" (click)="save(true)" [disabled]="saving()">
+          Save & Next →
+        </button>
+      } @else {
+        <button class="submit" type="button" (click)="submit()" [disabled]="saving()">
+          Submit Application
+        </button>
+      }
+    </footer>
+  }
+</main>
+<ng-template #fieldTemplate let-field let-entry="entry" let-index="index"
+  ><div class="field" [class.wide]="field.type === 'textarea'">
+    <span
+      >{{ field.name }}
+      @if (field.isRequired) {
+        <b>*</b>
+      }
+    </span>
+    @if (field.type === 'textarea') {
+      <textarea
+        rows="4"
+        [placeholder]="field.placeholder"
+        [ngModel]="value(field, entry)"
+        (ngModelChange)="setValue(field, $event, entry, index)"
+      ></textarea>
+    } @else if (['dropdown', 'multi-select'].includes(field.type)) {
+      @if (field.searchable) {
+        <input
+          class="option-search"
+          type="search"
+          placeholder="Search options…"
+          (input)="search(field, $event, entry, index)"
+        />
+      }
+      <select
+        [multiple]="field.type === 'multi-select'"
+        [ngModel]="value(field, entry)"
+        (ngModelChange)="setValue(field, $event, entry, index)"
+      >
+        <option [ngValue]="field.type === 'multi-select' ? [] : ''">Select {{ field.name }}</option>
+        @if (field.dataSource) {
+          @for (option of fieldOptions(field, index); track option._id) {
+            <option [value]="option._id">{{ option.label || option.name }}</option>
+          }
+        } @else {
+          @for (option of field.options; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        }
+      </select>
+    } @else if (field.type === 'radio') {
+      <div class="choices">
+        @for (option of field.options; track option.value) {
+          <label
+            ><input
+              type="radio"
+              [name]="field.id + (index ?? '')"
+              [value]="option.value"
+              [ngModel]="value(field, entry)"
+              (ngModelChange)="setValue(field, $event, entry, index)"
+            />{{ option.label }}</label
+          >
+        }
+      </div>
+    } @else if (field.type === 'checkbox') {
+      <div class="choices">
+        @for (option of field.options; track option.value) {
+          <label
+            ><input
+              type="checkbox"
+              [checked]="checked(field, option.value, entry)"
+              (change)="
+                toggleChoice(field, option.value, $any($event.target).checked, entry, index)
+              "
+            />{{ option.label }}</label
+          >
+        }
+      </div>
+    } @else if (['file', 'image', 'signature'].includes(field.type)) {
+      <input
+        type="file"
+        [accept]="field.type === 'file' ? '.pdf,image/*' : 'image/*'"
+        (change)="upload(field, $event, entry, index)"
+      />
+      @if (value(field, entry)) {
+        <small class="uploaded">✓ File uploaded</small>
+      }
+    } @else {
+      <input
+        [type]="field.type === 'mobile' ? 'tel' : field.type"
+        [placeholder]="field.placeholder"
+        [ngModel]="value(field, entry)"
+        (ngModelChange)="setValue(field, $event, entry, index)"
+        [attr.minlength]="field.validation.minLength"
+        [attr.maxlength]="field.validation.maxLength"
+      />
+    }
+    @if (field.helpText) {
+      <small>{{ field.helpText }}</small>
+    }
+  </div></ng-template
+>

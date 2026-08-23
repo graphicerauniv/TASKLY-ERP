@@ -1,0 +1,165 @@
+@if (slug() === 'custom') {
+  <header class="heading">
+    <div>
+      <span>Master Data</span>
+      <h1>Custom Fields</h1>
+      <p>Create reusable data sources for dynamic dropdowns.</p>
+    </div>
+  </header>
+  @if (message()) {
+    <p class="notice success">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="notice error">{{ error() }}</p>
+  }
+  <section class="card form-card">
+    <h2>Create custom master</h2>
+    <div class="form-grid">
+      <label
+        ><span>Name</span
+        ><input [(ngModel)]="customName" placeholder="e.g. Board, Religion, Category" /></label
+      ><label
+        ><span>Parent master (optional)</span
+        ><select [(ngModel)]="customParent">
+          <option value="">No parent</option>
+          @for (type of types(); track type.slug) {
+            <option [value]="type.slug">{{ type.name }}</option>
+          }
+        </select></label
+      ><button class="primary" type="button" (click)="createCustom()">Create master</button>
+    </div>
+  </section>
+  <section class="card table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Slug</th>
+          <th>Parent</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (type of types(); track type.slug) {
+          @if (type.isCustom) {
+            <tr>
+              <td>
+                <strong>{{ type.name }}</strong>
+              </td>
+              <td>{{ type.slug }}</td>
+              <td>{{ type.parentTypeSlug || '—' }}</td>
+              <td><span class="status active">Active</span></td>
+            </tr>
+          }
+        } @empty {
+          <tr>
+            <td colspan="4" class="empty">No custom masters created.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+} @else {
+  <header class="heading">
+    <div>
+      <span>Master Data</span>
+      <h1>{{ currentType()?.name || 'Master Data' }}</h1>
+      <p>Add, edit, activate, import, and organize database values.</p>
+    </div>
+    <label class="upload"
+      >Bulk upload<input type="file" accept=".csv,.xlsx,.xls" (change)="importFile($event)"
+    /></label>
+  </header>
+  @if (message()) {
+    <p class="notice success">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="notice error">{{ error() }}</p>
+  }
+  <section class="card form-card">
+    <h2>{{ editingId() ? 'Edit value' : 'Add value' }}</h2>
+    <div class="form-grid">
+      <label><span>Name *</span><input [(ngModel)]="name" placeholder="Enter value name" /></label
+      ><label><span>Code</span><input [(ngModel)]="code" placeholder="Optional code" /></label>
+      @if (parents().length) {
+        <label
+          ><span>{{ currentType()?.parentTypeSlug }} *</span
+          ><select [(ngModel)]="parentId">
+            <option value="">Select parent</option>
+            @for (parent of parents(); track parent._id) {
+              <option [value]="parent._id">{{ parent.name }}</option>
+            }
+          </select></label
+        >
+      }
+      <button class="primary" type="button" (click)="save()">
+        {{ editingId() ? 'Save changes' : 'Add value' }}
+      </button>
+      @if (editingId()) {
+        <button class="secondary" type="button" (click)="reset()">Cancel</button>
+      }
+    </div>
+  </section>
+  <section class="card table-card">
+    <div class="table-tools">
+      <h2>
+        Saved values <small>{{ values().length }}</small>
+      </h2>
+      <div>
+        <input
+          [(ngModel)]="search"
+          placeholder="Search values"
+          (keyup.enter)="loadValues()"
+        /><button class="secondary" type="button" (click)="loadValues()">Search</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            @if (parents().length) {
+              <th>Parent</th>
+            }
+            <th>Status</th>
+            <th class="actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of values(); track item._id) {
+            <tr>
+              <td>
+                <strong>{{ item.name }}</strong>
+              </td>
+              <td>{{ item.code || '—' }}</td>
+              @if (parents().length) {
+                <td>{{ item.parentId || '—' }}</td>
+              }
+              <td>
+                <button
+                  class="status"
+                  [class.active]="item.isActive"
+                  type="button"
+                  (click)="toggle(item)"
+                >
+                  {{ item.isActive ? 'Enabled' : 'Disabled' }}
+                </button>
+              </td>
+              <td class="actions">
+                <button type="button" (click)="edit(item)">Edit</button
+                ><button class="danger" type="button" (click)="remove(item)">Delete</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="parents().length ? 5 : 4" class="empty">
+                {{ loading() ? 'Loading…' : 'No values found.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { inject } from '@angular/core';
+import { ApiService } from '../../../../../core/api.service';
+import { AuthService } from '../../../../../core/auth.service';
 import {
   LucideArrowRight,
   LucideEye,
@@ -27,8 +30,12 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminLoginComponent {
+  private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   readonly showPassword = signal(false);
-  readonly frontendValidated = signal(false);
+  readonly loading = signal(false);
+  readonly error = signal('');
 
   readonly form = new FormGroup({
     email: new FormControl('', {
@@ -37,7 +44,7 @@ export class AdminLoginComponent {
     }),
     password: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
+      validators: [Validators.required],
     }),
     rememberMe: new FormControl(false, { nonNullable: true }),
   });
@@ -47,8 +54,20 @@ export class AdminLoginComponent {
   }
 
   submit(): void {
-    this.frontendValidated.set(false);
+    this.error.set('');
     this.form.markAllAsTouched();
-    this.frontendValidated.set(this.form.valid);
+    if (this.form.invalid || this.loading()) return;
+    this.loading.set(true);
+    const { email, password } = this.form.getRawValue();
+    this.api.login(email, password).subscribe({
+      next: ({ token, admin }) => {
+        this.auth.save(token, admin);
+        void this.router.navigate(['/admin/dashboard']);
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Unable to sign in.');
+        this.loading.set(false);
+      },
+    });
   }
 }

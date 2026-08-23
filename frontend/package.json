@@ -2,11 +2,13 @@
   "name": "@taskly-erp/frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Taskly ERP Angular frontend foundation",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
+    "config": "node scripts/write-runtime-config.js",
+    "start": "npm run config && ng serve",
+    "build": "npm run config && ng build",
     "test": "ng test",
     "e2e": "playwright test"
   },

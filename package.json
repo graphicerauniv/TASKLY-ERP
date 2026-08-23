@@ -10,7 +10,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint eslint.config.mjs \"frontend/**/*.ts\" \"frontend/**/*.html\" \"backend/**/*.ts\" --no-error-on-unmatched-pattern --max-warnings=0",
+    "lint": "eslint eslint.config.mjs \"frontend/**/*.ts\" \"frontend/**/*.html\" \"backend/**/*.js\" --no-error-on-unmatched-pattern --max-warnings=0",
     "test": "npm run test --workspaces --if-present"
   },
   "engines": {

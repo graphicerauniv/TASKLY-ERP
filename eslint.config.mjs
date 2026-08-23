@@ -30,12 +30,14 @@ export default tseslint.config(
     extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
   },
   {
-    files: ['backend/**/*.ts'],
-    extends: [eslint.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
+    files: ['backend/**/*.js'],
+    extends: [eslint.configs.recommended],
     languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        structuredClone: 'readonly',
+        TextEncoder: 'readonly',
       },
     },
   },

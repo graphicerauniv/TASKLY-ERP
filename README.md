@@ -1,20 +1,24 @@
 # Taskly ERP
 
-Professional ERP monorepo foundation aligned with the approved technology stack.
+Database-driven admission ERP with a Super Admin form builder.
 
 ## Workspaces
 
-- `frontend`: Angular enterprise client foundation.
-- `backend`: NestJS + Fastify API foundation.
-- `cocumetation SRS`: approved SRS and technology decisions.
+- `frontend`: Angular admin panel and dynamic student admission renderer.
+- `backend`: JavaScript-only Node.js, Express, and MongoDB API.
+- `cocumetation SRS`: SRS and technology decisions.
 
-This establishment phase intentionally contains no pages, components, controllers, services, database schema, or business modules. Application files will be introduced only after their detailed requirements are approved.
+Master data, custom data sources, form configuration, drafts, uploads, and submissions are stored in MongoDB.
 
-## Foundation commands
+## Setup
 
 ```bash
 npm install
-npm run format:check
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+npm run create:admin --workspace backend -- admin@example.com "strong-password" "Super Admin"
+npm run start:dev --workspace backend
+npm start --workspace frontend
 ```
 
-Environment templates are committed as `.env.example`; real `.env` files are ignored.
+MongoDB must be running before the API starts. Alternatively, set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` temporarily in `backend/.env`; the API will create the first database-backed account at startup. Environment templates are committed; real `.env` files remain ignored.

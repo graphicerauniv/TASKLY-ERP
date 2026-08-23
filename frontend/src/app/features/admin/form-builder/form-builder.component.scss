@@ -1,0 +1,331 @@
+.heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.heading > div > span {
+  color: var(--erp-blue-600);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+}
+.heading h1 {
+  margin: 4px 0;
+  color: var(--erp-text-heading);
+  font-size: 25px;
+}
+.heading p {
+  margin: 0;
+  color: var(--erp-text-muted);
+}
+button {
+  font: inherit;
+  cursor: pointer;
+}
+.primary,
+.secondary {
+  height: 40px;
+  padding: 0 15px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+}
+.primary {
+  color: #fff;
+  background: var(--erp-blue-600);
+  border: 1px solid var(--erp-blue-600);
+}
+.secondary {
+  color: var(--erp-blue-700);
+  background: #fff;
+  border: 1px solid var(--erp-border-default);
+}
+.save-actions {
+  display: flex;
+  gap: 8px;
+}
+.card {
+  background: var(--erp-surface-raised);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: 14px;
+  box-shadow: var(--erp-shadow-card);
+}
+.form-picker {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.form-picker > div {
+  display: flex;
+  gap: 7px;
+}
+.form-picker label span,
+.config-grid label > span,
+.subsection-config label > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--erp-text-strong);
+  font-size: 11px;
+  font-weight: 600;
+}
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  color: var(--erp-text-strong);
+  background: var(--erp-input-bg);
+  border: 1px solid var(--erp-input-border);
+  border-radius: 8px;
+  outline: 0;
+}
+.form-picker select {
+  min-width: 280px;
+}
+.builder {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.structure {
+  position: sticky;
+  top: 80px;
+  overflow: hidden;
+}
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.panel-title h2 {
+  margin: 0;
+  color: var(--erp-text-heading);
+  font-size: 15px;
+}
+.panel-title button,
+.add-sub {
+  padding: 6px 9px;
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border: 0;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.section {
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.section.selected {
+  background: #f8fcff;
+}
+.row {
+  display: flex;
+  align-items: center;
+  padding: 5px 7px;
+  gap: 2px;
+}
+.row button {
+  width: 27px;
+  height: 29px;
+  padding: 0;
+  color: var(--erp-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+}
+.row button:hover {
+  background: var(--erp-blue-50);
+}
+.row .row__name {
+  width: auto;
+  min-width: 0;
+  flex: 1;
+  padding: 0 7px;
+  text-align: left;
+  color: var(--erp-text-strong);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row .danger,
+.field-row .danger {
+  color: var(--erp-danger-text);
+}
+.sub {
+  margin-left: 13px;
+  border-left: 2px solid var(--erp-border-default);
+}
+.sub.selected {
+  border-left-color: var(--erp-blue-500);
+  background: var(--erp-blue-50);
+}
+.add-sub {
+  margin: 5px 12px 12px;
+}
+.workspace {
+  display: grid;
+  gap: 14px;
+}
+.subsection-config {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  flex-wrap: wrap;
+}
+.subsection-config > div {
+  margin-right: auto;
+}
+.subsection-config h2 {
+  margin: 0;
+  color: var(--erp-text-heading);
+  font-size: 16px;
+}
+.subsection-config p {
+  margin: 2px 0 0;
+  font-size: 11px;
+}
+.subsection-config label:not(.check) {
+  width: 100px;
+}
+.check {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.check input {
+  width: 16px;
+  min-height: 16px;
+}
+.fields {
+  overflow: hidden;
+}
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.field-row.selected {
+  background: var(--erp-blue-50);
+}
+.field-row > button:not(.field-main) {
+  width: 29px;
+  height: 30px;
+  color: var(--erp-text-muted);
+  background: white;
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: 6px;
+}
+.field-main {
+  display: grid;
+  grid-template-columns: 28px minmax(100px, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+  padding: 7px;
+  text-align: left;
+  color: var(--erp-text-strong);
+  background: transparent;
+  border: 0;
+}
+.field-main > span {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  color: var(--erp-blue-700);
+  font-size: 10px;
+  background: #fff;
+  border-radius: 6px;
+}
+.field-main small {
+  color: var(--erp-text-muted);
+}
+.editor {
+  overflow: hidden;
+}
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  padding: 16px;
+}
+.config-grid .check {
+  align-self: end;
+  height: 38px;
+}
+.wide {
+  grid-column: 1/-1;
+}
+.empty,
+.empty-state {
+  padding: 28px;
+  text-align: center;
+  color: var(--erp-text-muted);
+}
+.empty-state {
+  padding: 55px;
+}
+.empty-state strong {
+  color: var(--erp-text-heading);
+}
+.notice {
+  padding: 10px 14px;
+  border-radius: 9px;
+}
+.success {
+  color: var(--erp-success-text);
+  background: var(--erp-success-bg);
+}
+.error {
+  color: var(--erp-danger-text);
+  background: var(--erp-danger-bg);
+}
+@media (max-width: 1050px) {
+  .builder {
+    grid-template-columns: 1fr;
+  }
+  .structure {
+    position: static;
+  }
+}
+@media (max-width: 650px) {
+  .heading,
+  .form-picker {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .form-picker > div {
+    flex-direction: column;
+  }
+  .form-picker select {
+    min-width: 0;
+  }
+  .save-actions > * {
+    flex: 1;
+  }
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+  .wide {
+    grid-column: auto;
+  }
+}

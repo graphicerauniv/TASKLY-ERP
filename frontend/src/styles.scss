@@ -29,3 +29,16 @@ input {
   outline: 3px solid var(--erp-focus-ring);
   outline-offset: 2px;
 }
+
+.modal-backdrop > .backdrop-close {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.modal-backdrop > .modal {
+  position: relative;
+}
