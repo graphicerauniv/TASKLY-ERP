@@ -7,8 +7,9 @@ import { ApiService } from '../../../core/api.service';
 import { MasterType, MasterValue } from '../../../core/models';
 
 const DEPENDENCY_CHAINS: Record<string, string[]> = {
-  course: ['department', 'level'],
-  'course-specialization': ['department', 'level', 'course'],
+  level: ['college', 'department'],
+  course: ['college', 'department', 'level'],
+  'course-specialization': ['college', 'department', 'level', 'course'],
   state: ['country'],
   district: ['country', 'state'],
   city: ['country', 'state', 'district'],
