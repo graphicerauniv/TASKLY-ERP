@@ -70,9 +70,6 @@ export class ApiService {
       `${API_BASE_URL}/admissions/${id}`,
     );
   }
-  deleteAdmission(id: string) {
-    return this.http.delete<void>(`${API_BASE_URL}/admissions/${id}`);
-  }
   activeForm() {
     return this.http.get<{ item: AdmissionForm }>(`${API_BASE_URL}/public/forms/active`);
   }

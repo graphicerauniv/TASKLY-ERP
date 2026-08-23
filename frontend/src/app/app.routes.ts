@@ -56,13 +56,6 @@ export const appRoutes: Routes = [
                 (c) => c.AdmissionsComponent,
               ),
           },
-          {
-            path: 'admission/delete',
-            loadComponent: () =>
-              import('./features/admin/delete-admissions/delete-admissions.component').then(
-                (c) => c.DeleteAdmissionsComponent,
-              ),
-          },
           { path: 'admission', redirectTo: 'admission/student', pathMatch: 'full' },
           { path: 'admissions', redirectTo: 'admission/database', pathMatch: 'full' },
           { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
