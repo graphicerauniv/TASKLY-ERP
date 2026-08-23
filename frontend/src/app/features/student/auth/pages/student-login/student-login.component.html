@@ -1,0 +1,147 @@
+<main class="student-auth min-h-dvh lg:grid lg:grid-cols-[0.92fr_1.08fr]">
+  <section class="flex min-h-dvh items-center justify-center bg-white px-5 py-10 sm:px-10 lg:px-14">
+    <div class="w-full max-w-[440px]">
+      <a
+        class="mb-10 flex w-fit items-center gap-3 text-[var(--erp-text-heading)] no-underline"
+        routerLink="/student/login"
+      >
+        <span class="student-auth__brand"
+          ><svg lucideGraduationCap size="23" aria-hidden="true"></svg
+        ></span>
+        <span
+          ><strong class="block text-lg leading-5">Taskly ERP</strong
+          ><small class="text-[var(--erp-text-muted)]">Student Portal</small></span
+        >
+      </a>
+
+      <header class="mb-8">
+        <span class="student-auth__tag">Your academic workspace</span>
+        <h1
+          class="mt-3 text-[32px] font-semibold leading-tight tracking-[-0.04em] text-[var(--erp-text-heading)]"
+        >
+          Sign in to your portal
+        </h1>
+        <p class="mt-3 text-sm leading-6 text-[var(--erp-text-muted)]">
+          Access classes, attendance, documents and university updates.
+        </p>
+      </header>
+
+      <form class="space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div>
+          <label class="student-auth__label" for="student-id"
+            >Student ID or enrollment number</label
+          >
+          <div
+            class="student-auth__field"
+            [class.student-auth__field--invalid]="
+              form.controls.studentId.touched && form.controls.studentId.invalid
+            "
+          >
+            <svg lucideIdCard size="18" aria-hidden="true"></svg>
+            <input
+              id="student-id"
+              type="text"
+              formControlName="studentId"
+              autocomplete="username"
+              placeholder="Enter your student ID"
+            />
+          </div>
+          @if (form.controls.studentId.touched && form.controls.studentId.invalid) {
+            <p class="student-auth__error">Enter a valid student or enrollment ID.</p>
+          }
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between gap-3">
+            <label class="student-auth__label" for="student-password">Password</label
+            ><button class="student-auth__link-button" type="button">Need help signing in?</button>
+          </div>
+          <div
+            class="student-auth__field"
+            [class.student-auth__field--invalid]="
+              form.controls.password.touched && form.controls.password.invalid
+            "
+          >
+            <svg lucideLockKeyhole size="18" aria-hidden="true"></svg>
+            <input
+              id="student-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+            />
+            <button
+              class="student-auth__icon-button"
+              type="button"
+              (click)="togglePassword()"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            >
+              @if (showPassword()) {
+                <svg lucideEyeOff size="18" aria-hidden="true"></svg>
+              } @else {
+                <svg lucideEye size="18" aria-hidden="true"></svg>
+              }
+            </button>
+          </div>
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <p class="student-auth__error">Password must contain at least 8 characters.</p>
+          }
+        </div>
+
+        <label class="flex w-fit cursor-pointer items-center gap-2.5 text-sm"
+          ><input
+            class="size-4 accent-[var(--erp-blue-600)]"
+            type="checkbox"
+            formControlName="rememberMe"
+          />Remember this device</label
+        >
+        <button class="student-auth__submit" type="submit">
+          <span>Continue to student portal</span
+          ><svg lucideArrowRight size="18" aria-hidden="true"></svg>
+        </button>
+        @if (frontendValidated()) {
+          <p class="student-auth__notice" role="status">
+            Frontend validation passed. Backend authentication will be connected later.
+          </p>
+        }
+      </form>
+
+      <div
+        class="my-8 flex items-center gap-4 text-xs uppercase tracking-[0.12em] text-[var(--erp-text-light)]"
+      >
+        <span class="h-px flex-1 bg-[var(--erp-border-default)]"></span><span>Staff access</span
+        ><span class="h-px flex-1 bg-[var(--erp-border-default)]"></span>
+      </div>
+      <a class="student-auth__switch" routerLink="/admin/login"
+        >Open Administration Console <svg lucideArrowRight size="17" aria-hidden="true"></svg
+      ></a>
+    </div>
+  </section>
+
+  <section
+    class="student-auth__visual relative hidden overflow-hidden p-12 lg:flex lg:flex-col xl:p-16"
+  >
+    <div class="relative z-10 flex items-center justify-between">
+      <span class="student-auth__campus">Campus connected</span
+      ><svg lucideBookOpen size="24" color="var(--erp-blue-600)" aria-hidden="true"></svg>
+    </div>
+    <div class="relative z-10 my-auto max-w-xl">
+      <div class="student-auth__card" aria-hidden="true">
+        <span><svg lucideGraduationCap size="44"></svg></span><i></i><i></i><i></i>
+      </div>
+      <h2
+        class="mt-10 text-4xl font-semibold leading-tight tracking-[-0.04em] text-[var(--erp-text-heading)] xl:text-5xl"
+      >
+        Everything for your university journey.
+      </h2>
+      <p class="mt-5 max-w-lg text-base leading-7 text-[var(--erp-text-muted)]">
+        One secure place for academic progress, schedules, attendance and campus communication.
+      </p>
+    </div>
+    <div class="relative z-10 grid grid-cols-3 gap-3">
+      <span class="student-auth__feature">Academic records</span
+      ><span class="student-auth__feature">Live updates</span
+      ><span class="student-auth__feature">Secure access</span>
+    </div>
+  </section>
+</main>

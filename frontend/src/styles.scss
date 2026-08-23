@@ -1,0 +1,31 @@
+@use './styles/index';
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+body {
+  color: var(--erp-text-body);
+  font-family: var(--erp-font-family);
+  font-size: var(--erp-font-body);
+  line-height: var(--erp-line-body);
+  background: var(--erp-canvas);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button,
+input {
+  font: inherit;
+}
+:focus-visible {
+  outline: 3px solid var(--erp-focus-ring);
+  outline-offset: 2px;
+}

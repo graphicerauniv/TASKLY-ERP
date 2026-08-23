@@ -1,0 +1,156 @@
+<main class="admin-auth min-h-dvh lg:grid lg:grid-cols-[1.08fr_0.92fr]">
+  <section
+    class="admin-auth__visual relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col xl:p-16"
+  >
+    <div class="admin-auth__orb admin-auth__orb--top" aria-hidden="true"></div>
+    <div class="admin-auth__orb admin-auth__orb--bottom" aria-hidden="true"></div>
+
+    <a
+      class="relative z-10 flex w-fit items-center gap-3 text-white no-underline"
+      routerLink="/admin/login"
+    >
+      <span class="grid size-11 place-items-center rounded-xl border border-white/20 bg-white/10">
+        <svg lucideShieldCheck size="23" aria-hidden="true"></svg>
+      </span>
+      <span
+        ><strong class="block text-lg leading-5">Taskly ERP</strong
+        ><small class="text-white/65">Administration Console</small></span
+      >
+    </a>
+
+    <div class="relative z-10 my-auto max-w-xl">
+      <span class="admin-auth__tag">Secure enterprise access</span>
+      <h1 class="mt-6 text-4xl font-semibold leading-tight tracking-[-0.04em] xl:text-5xl">
+        Control operations with confidence.
+      </h1>
+      <p class="mt-5 max-w-lg text-base leading-7 text-white/75">
+        A protected workspace for administration, governance, approvals and institution-wide
+        visibility.
+      </p>
+      <div class="mt-10 grid max-w-lg grid-cols-3 gap-3">
+        <div class="admin-auth__metric"><strong>RBAC</strong><span>Controlled access</span></div>
+        <div class="admin-auth__metric"><strong>24/7</strong><span>Operational view</span></div>
+        <div class="admin-auth__metric"><strong>100%</strong><span>Audit ready</span></div>
+      </div>
+    </div>
+    <small class="relative z-10 text-white/55">Protected administrative environment</small>
+  </section>
+
+  <section
+    class="flex min-h-dvh items-center justify-center bg-[var(--erp-surface)] px-5 py-10 sm:px-10 lg:px-14"
+  >
+    <div class="w-full max-w-[440px]">
+      <a
+        class="mb-10 flex w-fit items-center gap-3 text-[var(--erp-text-heading)] no-underline lg:hidden"
+        routerLink="/admin/login"
+      >
+        <span class="grid size-10 place-items-center rounded-xl bg-[var(--erp-blue-600)] text-white"
+          ><svg lucideShieldCheck size="21" aria-hidden="true"></svg
+        ></span>
+        <strong>Taskly ERP</strong>
+      </a>
+
+      <header class="mb-8">
+        <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--erp-blue-600)]"
+          >Admin portal</span
+        >
+        <h2
+          class="mt-3 text-[32px] font-semibold leading-tight tracking-[-0.04em] text-[var(--erp-text-heading)]"
+        >
+          Welcome back
+        </h2>
+        <p class="mt-3 text-sm leading-6 text-[var(--erp-text-muted)]">
+          Use your administrator credentials to continue securely.
+        </p>
+      </header>
+
+      <form class="space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div>
+          <label class="admin-auth__label" for="admin-email">Work email</label>
+          <div
+            class="admin-auth__field"
+            [class.admin-auth__field--invalid]="
+              form.controls.email.touched && form.controls.email.invalid
+            "
+          >
+            <svg lucideUserRound size="18" aria-hidden="true"></svg>
+            <input
+              id="admin-email"
+              type="email"
+              formControlName="email"
+              autocomplete="username"
+              placeholder="admin@organisation.edu"
+            />
+          </div>
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <p class="admin-auth__error">Enter a valid work email address.</p>
+          }
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between gap-3">
+            <label class="admin-auth__label" for="admin-password">Password</label
+            ><button class="admin-auth__link-button" type="button">Forgot password?</button>
+          </div>
+          <div
+            class="admin-auth__field"
+            [class.admin-auth__field--invalid]="
+              form.controls.password.touched && form.controls.password.invalid
+            "
+          >
+            <svg lucideLockKeyhole size="18" aria-hidden="true"></svg>
+            <input
+              id="admin-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+            />
+            <button
+              class="admin-auth__icon-button"
+              type="button"
+              (click)="togglePassword()"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            >
+              @if (showPassword()) {
+                <svg lucideEyeOff size="18" aria-hidden="true"></svg>
+              } @else {
+                <svg lucideEye size="18" aria-hidden="true"></svg>
+              }
+            </button>
+          </div>
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <p class="admin-auth__error">Password must contain at least 8 characters.</p>
+          }
+        </div>
+
+        <label class="flex w-fit cursor-pointer items-center gap-2.5 text-sm"
+          ><input
+            class="size-4 accent-[var(--erp-blue-600)]"
+            type="checkbox"
+            formControlName="rememberMe"
+          />Keep me signed in</label
+        >
+        <button class="admin-auth__submit" type="submit">
+          <span>Sign in to administration</span
+          ><svg lucideArrowRight size="18" aria-hidden="true"></svg>
+        </button>
+        @if (frontendValidated()) {
+          <p class="admin-auth__notice" role="status">
+            Frontend validation passed. Backend authentication will be connected later.
+          </p>
+        }
+      </form>
+
+      <div
+        class="my-8 flex items-center gap-4 text-xs uppercase tracking-[0.12em] text-[var(--erp-text-light)]"
+      >
+        <span class="h-px flex-1 bg-[var(--erp-border-default)]"></span><span>Student access</span
+        ><span class="h-px flex-1 bg-[var(--erp-border-default)]"></span>
+      </div>
+      <a class="admin-auth__switch" routerLink="/student/login"
+        >Open Student Portal <svg lucideArrowRight size="17" aria-hidden="true"></svg
+      ></a>
+    </div>
+  </section>
+</main>

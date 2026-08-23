@@ -37,10 +37,3 @@ export const ERP_RENDERING = {
   cacheLastSuccessfulResult: true,
   cancelSupersededRequests: true,
 } as const;
-
-export const ERP_QUERY = {
-  searchDebounceMs: 300,
-  filterDebounceMs: 180,
-  minimumSearchCharacters: 2,
-  defaultSortDirection: 'asc',
-} as const;
