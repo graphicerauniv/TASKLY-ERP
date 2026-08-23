@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
 import {
   Admission,
@@ -13,12 +14,14 @@ import {
 
 @Component({
   selector: 'erp-dynamic-admission',
-  imports: [FormsModule, NgTemplateOutlet],
+  imports: [FormsModule, NgTemplateOutlet, RouterLink],
   templateUrl: './dynamic-admission.component.html',
   styleUrl: './dynamic-admission.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.embedded]': 'embedded()' },
 })
 export class DynamicAdmissionComponent {
+  readonly embedded = input(false);
   private readonly api = inject(ApiService);
   readonly form = signal<AdmissionForm | null>(null);
   readonly admission = signal<Admission | null>(null);

@@ -18,6 +18,8 @@ import {
   LucideFilePenLine,
   LucidePlus,
   LucideUniversity,
+  LucideUserPlus,
+  LucideUsersRound,
   LucideX,
 } from '@lucide/angular';
 import { AuthService } from '../../../core/auth.service';
@@ -47,6 +49,8 @@ import { MasterType } from '../../../core/models';
     LucideFilePenLine,
     LucidePlus,
     LucideUniversity,
+    LucideUserPlus,
+    LucideUsersRound,
     LucideX,
   ],
   templateUrl: './admin-shell.component.html',
@@ -60,6 +64,7 @@ export class AdminShellComponent {
   readonly masterTypes = this.masterDataStore.types;
   readonly menuOpen = signal(false);
   readonly masterMenuOpen = signal(false);
+  readonly admissionMenuOpen = signal(false);
   readonly masterGroups = computed(() => {
     const types = this.masterTypes();
     const bySlug = new Map(types.map((type) => [type.slug, type]));
@@ -92,13 +97,28 @@ export class AdminShellComponent {
     void this.router.navigate(['/admin/login']);
   }
   toggleMasterMenu() {
+    this.admissionMenuOpen.set(false);
     this.masterMenuOpen.update((open) => !open);
+  }
+  toggleAdmissionMenu() {
+    this.masterMenuOpen.set(false);
+    this.admissionMenuOpen.update((open) => !open);
   }
   closeNavigation() {
     this.masterMenuOpen.set(false);
+    this.admissionMenuOpen.set(false);
     this.menuOpen.set(false);
+  }
+  closeFlyouts() {
+    this.masterMenuOpen.set(false);
+    this.admissionMenuOpen.set(false);
   }
   isMasterRoute() {
     return this.router.url.startsWith('/admin/master-data/');
+  }
+  isAdmissionRoute() {
+    return (
+      this.router.url.startsWith('/admin/admission/') || this.router.url === '/admin/form-builder'
+    );
   }
 }

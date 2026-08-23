@@ -129,14 +129,104 @@
           </section>
         }
       </div>
-      <p>Admission</p>
-      <a routerLink="/admin/form-builder" routerLinkActive="active" (click)="closeNavigation()"
-        ><span><svg lucideFilePenLine size="17" aria-hidden="true"></svg></span>Form Builder</a
-      >
-      <a routerLink="/admin/admissions" routerLinkActive="active" (click)="closeNavigation()"
-        ><span><svg lucideClipboardList size="17" aria-hidden="true"></svg></span>Student
-        Admission</a
-      >
+      <div class="master-navigation">
+        <button
+          class="nav-button"
+          [class.active]="isAdmissionRoute()"
+          type="button"
+          aria-controls="admission-menu"
+          [attr.aria-expanded]="admissionMenuOpen()"
+          (click)="toggleAdmissionMenu()"
+        >
+          <span class="nav-button__icon"
+            ><svg lucideClipboardList size="17" aria-hidden="true"></svg
+          ></span>
+          <span class="nav-button__label">Admission</span>
+          <span class="nav-button__chevron" [class.open]="admissionMenuOpen()"
+            ><svg lucideChevronRight size="15" aria-hidden="true"></svg
+          ></span>
+        </button>
+        @if (admissionMenuOpen()) {
+          <section
+            class="master-flyout admission-flyout"
+            id="admission-menu"
+            aria-label="Admission menu"
+          >
+            <header class="master-flyout__header">
+              <div><small>Global navigation</small><strong>Admission</strong></div>
+              <button
+                type="button"
+                aria-label="Close Admission menu"
+                (click)="admissionMenuOpen.set(false)"
+              >
+                <svg lucideX size="16" aria-hidden="true"></svg>
+              </button>
+            </header>
+            <div class="master-flyout__groups admission-flyout__groups">
+              <div class="master-group">
+                <h3>Admission Management</h3>
+                <a
+                  routerLink="/admin/form-builder"
+                  routerLinkActive="active"
+                  (click)="closeNavigation()"
+                >
+                  <span class="master-item__icon"
+                    ><svg lucideFilePenLine aria-hidden="true"></svg
+                  ></span>
+                  <span
+                    ><strong>Form Builder</strong
+                    ><small>Design the dynamic admission form</small></span
+                  >
+                  <svg
+                    class="master-item__arrow"
+                    lucideChevronRight
+                    size="15"
+                    aria-hidden="true"
+                  ></svg>
+                </a>
+                <a
+                  routerLink="/admin/admission/student"
+                  routerLinkActive="active"
+                  (click)="closeNavigation()"
+                >
+                  <span class="master-item__icon"
+                    ><svg lucideUserPlus aria-hidden="true"></svg
+                  ></span>
+                  <span
+                    ><strong>Student Admission</strong
+                    ><small>Enter and save a student's details</small></span
+                  >
+                  <svg
+                    class="master-item__arrow"
+                    lucideChevronRight
+                    size="15"
+                    aria-hidden="true"
+                  ></svg>
+                </a>
+                <a
+                  routerLink="/admin/admission/database"
+                  routerLinkActive="active"
+                  (click)="closeNavigation()"
+                >
+                  <span class="master-item__icon"
+                    ><svg lucideUsersRound aria-hidden="true"></svg
+                  ></span>
+                  <span
+                    ><strong>Student Database</strong
+                    ><small>View all student admission records</small></span
+                  >
+                  <svg
+                    class="master-item__arrow"
+                    lucideChevronRight
+                    size="15"
+                    aria-hidden="true"
+                  ></svg>
+                </a>
+              </div>
+            </div>
+          </section>
+        }
+      </div>
     </nav>
   </aside>
   <div class="shell__body">
@@ -150,7 +240,7 @@
         ☰
       </button>
       <div class="topbar__spacer"></div>
-      <a class="student-link" routerLink="/admission">View admission form</a>
+      <a class="student-link" routerLink="/admin/admission/student">New student admission</a>
       <div class="profile">
         <span>{{ (auth.admin()?.name || 'A').charAt(0) }}</span>
         <div>
@@ -170,12 +260,12 @@
       (click)="menuOpen.set(false)"
     ></button>
   }
-  @if (masterMenuOpen()) {
+  @if (masterMenuOpen() || admissionMenuOpen()) {
     <button
       class="master-backdrop"
       type="button"
-      aria-label="Close Master Data menu"
-      (click)="masterMenuOpen.set(false)"
+      aria-label="Close navigation menu"
+      (click)="closeFlyouts()"
     ></button>
   }
 </div>

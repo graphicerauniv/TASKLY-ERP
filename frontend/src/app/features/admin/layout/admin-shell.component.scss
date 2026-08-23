@@ -175,6 +175,12 @@ nav a.active,
   gap: 0;
   padding: 7px;
 }
+.admission-flyout {
+  width: min(430px, calc(100vw - 276px));
+}
+.admission-flyout__groups {
+  grid-template-columns: 1fr;
+}
 .master-group {
   padding: 7px;
 }

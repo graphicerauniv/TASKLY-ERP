@@ -1,8 +1,12 @@
-<header class="heading">
-  <span>Admission</span>
-  <h1>Student Admissions</h1>
-  <p>Review saved drafts and submitted applications.</p>
+<header class="heading heading--actions">
+  <div>
+    <span>Admission</span>
+    <h1>Student Database</h1>
+    <p>All saved and submitted student admission records.</p>
+  </div>
+  <a class="new-admission" routerLink="/admin/admission/student">＋ New student admission</a>
 </header>
+
 <section class="card">
   <div class="table-scroll">
     <table>
@@ -28,37 +32,88 @@
                 item.status
               }}</span>
             </td>
-            <td><button type="button" (click)="selected.set(item)">View data</button></td>
+            <td>
+              <button type="button" (click)="view(item)">
+                {{ loadingDetails() ? 'Loading…' : 'View details' }}
+              </button>
+            </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="5" class="empty">No admission records yet.</td>
+            <td colspan="5" class="empty">
+              No student records yet. Start a Student Admission to create one.
+            </td>
           </tr>
         }
       </tbody>
     </table>
   </div>
 </section>
-@if (selected(); as item) {
+
+@if (selected(); as admission) {
   <div class="modal-backdrop">
     <button
       class="backdrop-close"
       type="button"
-      aria-label="Close application details"
-      (click)="selected.set(null)"
+      aria-label="Close student details"
+      (click)="close()"
     ></button>
-    <section class="modal">
+    <section
+      class="modal student-detail"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="student-detail-title"
+    >
       <header>
         <div>
-          <small>Application</small>
-          <h2>{{ item.applicationNumber }}</h2>
+          <small>Student record</small>
+          <h2 id="student-detail-title">{{ admission.applicationNumber }}</h2>
+          <p>Form version {{ admission.formVersion }} · {{ admission.status }}</p>
         </div>
-        <button type="button" (click)="selected.set(null)">×</button>
+        <button type="button" aria-label="Close student details" (click)="close()">×</button>
       </header>
-      <h3>Field responses</h3>
-      <pre>{{ item.responses | json }}</pre>
-      <h3>Repeatable responses</h3>
-      <pre>{{ item.repeatableResponses | json }}</pre>
+      <div class="detail-body">
+        @for (section of admission.formSnapshot.sections; track section.id) {
+          <section class="detail-section">
+            <h3>{{ section.name }}</h3>
+            @for (subsection of section.subsections; track subsection.id) {
+              <div class="detail-subsection">
+                <h4>{{ subsection.name }}</h4>
+                @if (subsection.isRepeatable) {
+                  @for (
+                    entry of entries(admission, subsection);
+                    track $index;
+                    let entryIndex = $index
+                  ) {
+                    <article class="repeat-entry">
+                      <strong>{{ subsection.name }} {{ entryIndex + 1 }}</strong>
+                      <dl>
+                        @for (field of subsection.fields; track field.id) {
+                          <div>
+                            <dt>{{ field.name }}</dt>
+                            <dd>{{ value(field, entry) }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    </article>
+                  } @empty {
+                    <p class="no-data">No entries saved.</p>
+                  }
+                } @else {
+                  <dl>
+                    @for (field of subsection.fields; track field.id) {
+                      <div>
+                        <dt>{{ field.name }}</dt>
+                        <dd>{{ value(field, admission.responses) }}</dd>
+                      </div>
+                    }
+                  </dl>
+                }
+              </div>
+            }
+          </section>
+        }
+      </div>
     </section>
   </div>
 }

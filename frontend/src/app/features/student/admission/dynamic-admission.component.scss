@@ -3,6 +3,10 @@
   min-height: 100dvh;
   background: linear-gradient(180deg, #eff7fd 0, #f7f9f5 240px);
 }
+:host(.embedded) {
+  min-height: auto;
+  background: transparent;
+}
 .portal-header {
   display: flex;
   height: 72px;
@@ -52,6 +56,11 @@
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   padding: 30px 0 60px;
+}
+.page--embedded {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 36px;
 }
 .form-heading > span {
   color: var(--erp-blue-600);
@@ -278,7 +287,8 @@
   flex: 1;
 }
 .actions button,
-.submitted button {
+.submitted button,
+.submitted a {
   height: 42px;
   padding: 0 16px;
   font: inherit;
@@ -286,6 +296,20 @@
   font-weight: 700;
   border-radius: 8px;
   cursor: pointer;
+}
+.submitted-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.submitted a {
+  display: inline-flex;
+  align-items: center;
+  color: var(--erp-blue-700);
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid var(--erp-border-strong);
 }
 .primary,
 .submit {

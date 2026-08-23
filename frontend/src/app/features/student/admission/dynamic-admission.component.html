@@ -1,15 +1,17 @@
-<header class="portal-header">
-  <a href="/" class="brand"
-    ><span>T</span>
-    <div><strong>Taskly ERP</strong><small>Online Admission</small></div></a
-  >
-  @if (admission()) {
-    <div class="application">
-      <small>Application number</small><strong>{{ admission()?.applicationNumber }}</strong>
-    </div>
-  }
-</header>
-<main class="page">
+@if (!embedded()) {
+  <header class="portal-header">
+    <a href="/" class="brand"
+      ><span>T</span>
+      <div><strong>Taskly ERP</strong><small>Online Admission</small></div></a
+    >
+    @if (admission()) {
+      <div class="application">
+        <small>Application number</small><strong>{{ admission()?.applicationNumber }}</strong>
+      </div>
+    }
+  </header>
+}
+<main class="page" [class.page--embedded]="embedded()">
   @if (loading()) {
     <section class="state">
       <div class="spinner"></div>
@@ -23,12 +25,17 @@
   } @else if (admission()?.status === 'submitted') {
     <section class="submitted">
       <span>✓</span>
-      <h1>Application submitted</h1>
+      <h1>{{ embedded() ? 'Student record saved' : 'Application submitted' }}</h1>
       <p>
         Your application <strong>{{ admission()?.applicationNumber }}</strong> has been received
         successfully.
       </p>
-      <button type="button" (click)="newApplication()">Start another application</button>
+      <div class="submitted-actions">
+        @if (embedded()) {
+          <a routerLink="/admin/admission/database">Open Student Database</a>
+        }
+        <button type="button" (click)="newApplication()">Start another admission</button>
+      </div>
     </section>
   } @else if (form(); as current) {
     <header class="form-heading">

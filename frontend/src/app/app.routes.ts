@@ -42,12 +42,21 @@ export const appRoutes: Routes = [
               ),
           },
           {
-            path: 'admissions',
+            path: 'admission/student',
+            data: { embedded: true },
+            loadComponent: () =>
+              import('./features/student/admission/dynamic-admission.component').then(
+                (c) => c.DynamicAdmissionComponent,
+              ),
+          },
+          {
+            path: 'admission/database',
             loadComponent: () =>
               import('./features/admin/admissions/admissions.component').then(
                 (c) => c.AdmissionsComponent,
               ),
           },
+          { path: 'admissions', redirectTo: 'admission/database', pathMatch: 'full' },
           { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
         ],
       },
@@ -57,13 +66,6 @@ export const appRoutes: Routes = [
     path: 'student',
     loadChildren: () =>
       import('./features/student/auth').then((routes) => routes.STUDENT_AUTH_ROUTES),
-  },
-  {
-    path: 'admission',
-    loadComponent: () =>
-      import('./features/student/admission/dynamic-admission.component').then(
-        (c) => c.DynamicAdmissionComponent,
-      ),
   },
   { path: '', pathMatch: 'full', redirectTo: 'admin/login' },
   { path: '**', redirectTo: 'admin/login' },

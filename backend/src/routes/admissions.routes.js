@@ -1,4 +1,5 @@
 import express from 'express';
+import { ObjectId } from 'mongodb';
 import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { pageResult, pagination } from '../lib/pagination.js';
@@ -33,6 +34,28 @@ admissionsRouter.get(
       .collection('admissions')
       .findOne({ _id: id(request.params.admissionId) }, { projection: { accessKeyHash: 0 } });
     if (!item) return response.status(404).json({ message: 'Admission not found.' });
-    response.json({ item: serialize(item) });
+    const valueIds = new Set();
+    collectObjectIds(item.responses, valueIds);
+    collectObjectIds(item.repeatableResponses, valueIds);
+    const masterValues = valueIds.size
+      ? await db()
+          .collection('masterValues')
+          .find({ _id: { $in: [...valueIds].map((value) => new ObjectId(value)) } })
+          .project({ name: 1 })
+          .toArray()
+      : [];
+    response.json({
+      item: serialize(item),
+      masterLabels: Object.fromEntries(
+        masterValues.map((value) => [value._id.toString(), value.name]),
+      ),
+    });
   }),
 );
+
+function collectObjectIds(value, output) {
+  if (typeof value === 'string' && ObjectId.isValid(value)) output.add(value);
+  else if (Array.isArray(value)) value.forEach((item) => collectObjectIds(item, output));
+  else if (value && typeof value === 'object')
+    Object.values(value).forEach((item) => collectObjectIds(item, output));
+}

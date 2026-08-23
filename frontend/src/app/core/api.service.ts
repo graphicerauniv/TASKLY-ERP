@@ -65,6 +65,11 @@ export class ApiService {
   admissions() {
     return this.http.get<{ items: Admission[] }>(`${API_BASE_URL}/admissions`);
   }
+  admission(id: string) {
+    return this.http.get<{ item: Admission; masterLabels: Record<string, string> }>(
+      `${API_BASE_URL}/admissions/${id}`,
+    );
+  }
   activeForm() {
     return this.http.get<{ item: AdmissionForm }>(`${API_BASE_URL}/public/forms/active`);
   }
