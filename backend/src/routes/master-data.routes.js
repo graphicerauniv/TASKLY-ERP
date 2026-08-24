@@ -27,7 +27,7 @@ masterDataRouter.get(
   asyncHandler(async (request, response) => {
     const items = await db()
       .collection('masterTypes')
-      .find({})
+      .find({ slug: { $ne: 'course-specialization' } })
       .sort({ order: 1, name: 1 })
       .toArray();
     response.json({ items: items.map(serialize) });

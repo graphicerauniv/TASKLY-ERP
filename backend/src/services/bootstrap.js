@@ -9,7 +9,6 @@ export const BUILTIN_MASTERS = [
   ['department', 'Department', 'college'],
   ['level', 'Level', 'department'],
   ['course', 'Course', 'level'],
-  ['course-specialization', 'Course Specialization', 'course'],
   ['country', 'Country', null],
   ['state', 'State', 'country'],
   ['district', 'District', 'state'],
@@ -40,6 +39,8 @@ export async function bootstrap() {
         ),
     ),
   );
+  await migrateSpecializationsToCourses(now);
+  await migrateFormSpecializationSources(now);
   const { email, password, name } = config.bootstrapAdmin;
   if (email && password && !(await db().collection('admins').findOne({ email }))) {
     await db()
@@ -54,5 +55,66 @@ export async function bootstrap() {
         updatedAt: now,
       });
     console.log(`Created bootstrap Super Admin: ${email}`);
+  }
+}
+
+async function migrateSpecializationsToCourses(now) {
+  const legacyType = await db().collection('masterTypes').findOne({ slug: 'course-specialization' });
+  if (!legacyType) return;
+  const specializations = await db()
+    .collection('masterValues')
+    .find({ typeSlug: 'course-specialization' })
+    .toArray();
+  for (const specialization of specializations) {
+    const parentCourse = specialization.parentId
+      ? await db().collection('masterValues').findOne({ _id: specialization.parentId, typeSlug: 'course' })
+      : null;
+    const migratedName = parentCourse && !specialization.name.toLocaleLowerCase().includes(parentCourse.name.toLocaleLowerCase())
+      ? `${parentCourse.name} - ${specialization.name}`
+      : specialization.name;
+    await db().collection('masterValues').updateOne(
+      { typeSlug: 'course', name: migratedName, parentId: parentCourse?.parentId || null },
+      {
+        $setOnInsert: {
+          typeSlug: 'course',
+          name: migratedName,
+          parentId: parentCourse?.parentId || null,
+          order: specialization.order || 0,
+          isActive: specialization.isActive ?? true,
+          metadata: {
+            ...(specialization.metadata || {}),
+            migratedFromSpecialization: String(specialization._id),
+            baseCourseId: parentCourse ? String(parentCourse._id) : null,
+          },
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+      { upsert: true },
+    );
+  }
+  await db().collection('masterTypes').updateOne(
+    { _id: legacyType._id },
+    { $set: { isActive: false, legacy: true, updatedAt: now } },
+  );
+}
+
+async function migrateFormSpecializationSources(now) {
+  const forms = await db().collection('forms').find({
+    'sections.subsections.fields.dataSource.masterTypeSlug': 'course-specialization',
+  }).toArray();
+  for (const form of forms) {
+    let changed = false;
+    for (const section of form.sections || []) {
+      for (const subsection of section.subsections || []) {
+        for (const field of subsection.fields || []) {
+          if (field.dataSource?.masterTypeSlug === 'course-specialization') {
+            field.dataSource.masterTypeSlug = 'course';
+            changed = true;
+          }
+        }
+      }
+    }
+    if (changed) await db().collection('forms').updateOne({ _id: form._id }, { $set: { sections: form.sections, updatedAt: now } });
   }
 }

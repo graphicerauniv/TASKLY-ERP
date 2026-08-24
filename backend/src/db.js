@@ -82,6 +82,18 @@ async function ensureIndexes(databaseInstance) {
         { roomId: 1, bedNumber: 1, academicSession: 1 },
         { unique: true, partialFilterExpression: { status: 'active' } },
       ),
+    databaseInstance.collection('feeBooks').createIndex({ code: 1 }, { unique: true }),
+    databaseInstance.collection('feeHeads').createIndex(
+      { bookId: 1, normalizedName: 1 },
+      { unique: true },
+    ),
+    databaseInstance.collection('hostelFees').createIndex(
+      { bookId: 1, hostelId: 1, seater: 1, roomType: 1, feeHeadId: 1, frequency: 1 },
+      { unique: true },
+    ),
+    databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1 }),
+    databaseInstance.collection('courseFees').createIndex({ importPreviewId: 1 }),
+    databaseInstance.collection('feeImportPreviews').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]);
 }
 

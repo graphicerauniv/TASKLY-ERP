@@ -1,0 +1,211 @@
+/* ERP-LOCAL-STYLE: Fee configuration needs multi-entity editor grids and a large workbook
+ * mapping review surface that are unique to this administrative workflow. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.fee-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+}
+
+.fee-inline-form,
+.fee-upload-row,
+.fee-import-actions,
+.fee-form-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--erp-space-3);
+}
+
+.fee-inline-form .erp-field-stack,
+.fee-upload-row .erp-field-stack {
+  min-width: 0;
+  flex: 1;
+}
+
+.fee-book-selector {
+  width: min(620px, 100%);
+}
+
+.fee-form-actions,
+.fee-import-actions {
+  justify-content: flex-end;
+  margin-top: var(--erp-space-4);
+}
+
+.fee-import-actions {
+  justify-content: space-between;
+}
+
+.fee-section-gap {
+  margin-top: var(--erp-admin-section-gap);
+}
+
+.fee-mapping-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+  margin-bottom: var(--erp-space-4);
+}
+
+.fee-mapping-summary div {
+  display: grid;
+  gap: var(--erp-space-1);
+  padding: var(--erp-space-3);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-compact);
+  background: var(--erp-surface-detail);
+}
+
+.fee-mapping-summary strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-page-title);
+}
+
+.fee-mapping-summary span,
+.fee-upload-row small,
+.fee-mapping-table small {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.fee-checkbox {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--erp-space-2);
+}
+
+.fee-mapping-table table {
+  min-width: var(--erp-table-wide-min-width);
+}
+
+.fee-course-multiselect {
+  min-height: calc(var(--erp-control-height) * 3);
+}
+
+.fee-view-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+}
+
+.fee-view-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-space-5);
+}
+
+.fee-view-heading h2,
+.fee-year-card__header h2 {
+  margin: 0;
+}
+
+.fee-view-heading p,
+.fee-year-card__header p {
+  margin: var(--erp-space-1) 0 0;
+  color: var(--erp-text-muted);
+}
+
+.fee-view-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-width: min(100%, var(--erp-modal-width));
+  gap: var(--erp-space-2);
+}
+
+.fee-view-summary div {
+  display: grid;
+  gap: var(--erp-space-1);
+  padding: var(--erp-space-3);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-compact);
+  background: var(--erp-surface-detail);
+  text-align: center;
+}
+
+.fee-view-summary strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-section-title);
+}
+
+.fee-view-summary span,
+.fee-matrix-table small {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.fee-year-card__header {
+  align-items: center;
+}
+
+.fee-matrix-table {
+  min-width: var(--erp-table-wide-min-width);
+}
+
+.fee-matrix-table td:first-child,
+.fee-matrix-table td:nth-child(2) {
+  min-width: calc(var(--erp-control-height) * 4);
+}
+
+.fee-matrix-table td strong,
+.fee-matrix-table td small {
+  display: block;
+}
+
+.fee-matrix-table td small {
+  margin-top: var(--erp-space-1);
+}
+
+.fee-amount-cell {
+  min-width: calc(var(--erp-control-height) * 4);
+  font-variant-numeric: tabular-nums;
+}
+
+.fee-amount-cell--conflict {
+  background: var(--erp-warning-bg);
+}
+
+.fee-amount-cell--conflict small {
+  color: var(--erp-warning-text);
+}
+
+@media (max-width: 1000px) {
+  .fee-form-grid,
+  .fee-mapping-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fee-view-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fee-view-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 720px) {
+  .fee-form-grid,
+  .fee-mapping-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .fee-view-filter-grid,
+  .fee-view-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .fee-inline-form,
+  .fee-upload-row,
+  .fee-import-actions,
+  .fee-form-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

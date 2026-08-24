@@ -14,6 +14,11 @@ import {
   HostelStudentOption,
   MasterType,
   MasterValue,
+  CourseFee,
+  FeeBook,
+  FeeHead,
+  FeeImportPreview,
+  HostelFee,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -291,5 +296,77 @@ export class ApiService {
     return this.http.get<HostelOverview>(`${API_BASE_URL}/hostels/overview/summary`, {
       params: session ? { session } : {},
     });
+  }
+  feeBooks() {
+    return this.http.get<{ items: FeeBook[] }>(`${API_BASE_URL}/fees/books`);
+  }
+  feeCourseOptions() {
+    return this.http.get<{ items: MasterValue[] }>(`${API_BASE_URL}/fees/course-options`);
+  }
+  createFeeBook(body: Omit<FeeBook, '_id' | 'collegeName'>) {
+    return this.http.post<{ item: FeeBook }>(`${API_BASE_URL}/fees/books`, body);
+  }
+  updateFeeBook(id: string, body: Partial<FeeBook>) {
+    return this.http.patch<{ item: FeeBook }>(`${API_BASE_URL}/fees/books/${id}`, body);
+  }
+  deleteFeeBook(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/fees/books/${id}`);
+  }
+  feeHeads(bookId = '') {
+    return this.http.get<{ items: FeeHead[] }>(`${API_BASE_URL}/fees/heads`, {
+      params: bookId ? { bookId } : {},
+    });
+  }
+  createFeeHead(body: { bookId: string; name: string; category: FeeHead['category'] }) {
+    return this.http.post<{ item: FeeHead }>(`${API_BASE_URL}/fees/heads`, body);
+  }
+  updateFeeHead(id: string, body: Partial<FeeHead>) {
+    return this.http.patch<{ item: FeeHead }>(`${API_BASE_URL}/fees/heads/${id}`, body);
+  }
+  deleteFeeHead(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/fees/heads/${id}`);
+  }
+  hostelFees(bookId = '') {
+    return this.http.get<{ items: HostelFee[] }>(`${API_BASE_URL}/fees/hostel-fees`, {
+      params: bookId ? { bookId } : {},
+    });
+  }
+  createHostelFee(body: Omit<HostelFee, '_id' | 'bookCode' | 'hostelName' | 'feeHeadName'>) {
+    return this.http.post<{ item: HostelFee }>(`${API_BASE_URL}/fees/hostel-fees`, body);
+  }
+  deleteHostelFee(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/fees/hostel-fees/${id}`);
+  }
+  courseFees(bookId = '', courseId = '') {
+    let params = new HttpParams();
+    if (bookId) params = params.set('bookId', bookId);
+    if (courseId) params = params.set('courseId', courseId);
+    return this.http.get<{ items: CourseFee[] }>(`${API_BASE_URL}/fees/course-fees`, { params });
+  }
+  createCourseFee(body: Omit<CourseFee, '_id' | 'bookCode' | 'courseName' | 'feeHeadName' | 'category' | 'source' | 'sourceSheet'>) {
+    return this.http.post<{ item: CourseFee }>(`${API_BASE_URL}/fees/course-fees`, body);
+  }
+  deleteCourseFee(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/fees/course-fees/${id}`);
+  }
+  previewCourseFeeImport(bookId: string, file: File) {
+    const data = new FormData();
+    data.append('bookId', bookId);
+    data.append('file', file);
+    return this.http.post<{ preview: FeeImportPreview }>(
+      `${API_BASE_URL}/fees/course-fees/import/preview`,
+      data,
+    );
+  }
+  commitCourseFeeImport(body: {
+    previewId: string;
+    sheetMappings: Array<{ sheetName: string; courseIds: string[] }>;
+    headMappings: Array<{ sourceHead: string; feeHeadId: string | null }>;
+    replaceExisting: boolean;
+  }) {
+    return this.http.post<{ imported: number; mappedSheets: number }>(
+      `${API_BASE_URL}/fees/course-fees/import/commit`,
+      body,
+    );
   }
 }

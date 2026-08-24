@@ -189,3 +189,89 @@ export interface HostelOverview {
     available: number;
   }>;
 }
+
+export type FeeFrequency = 'one-time' | 'semester' | 'half-yearly' | 'yearly';
+
+export interface FeeBook {
+  _id: string;
+  collegeId: string;
+  collegeName: string;
+  startDate: string;
+  endDate: string;
+  academicSession: string;
+  code: string;
+  frequency: 'semester' | 'year';
+  isActive: boolean;
+}
+
+export interface FeeHead {
+  _id: string;
+  bookId: string;
+  bookCode: string;
+  name: string;
+  category: 'fee' | 'discount' | 'payment-option';
+  isActive: boolean;
+}
+
+export interface HostelFee {
+  _id: string;
+  bookId: string;
+  bookCode: string;
+  hostelId: string;
+  hostelName: string;
+  seater: number;
+  roomType: string;
+  feeHeadId: string;
+  feeHeadName: string;
+  frequency: FeeFrequency;
+  amount: number;
+}
+
+export interface CourseFee {
+  _id: string;
+  bookId: string;
+  bookCode: string;
+  courseId: string;
+  courseName: string;
+  feeHeadId: string;
+  feeHeadName: string;
+  category: FeeHead['category'];
+  academicYear: number | null;
+  semester: number | null;
+  frequency: FeeFrequency;
+  eligibilityBand: string;
+  amount: number;
+  source: 'manual' | 'excel';
+  sourceSheet?: string;
+}
+
+export interface FeeImportSheet {
+  sheetName: string;
+  courseTitle: string;
+  subtitle: string;
+  programNames: string[];
+  intakeYear: number | null;
+  lineCount: number;
+  sourceHeads: string[];
+  warnings: string[];
+  match: {
+    status: 'matched' | 'ambiguous' | 'unmatched';
+    courseId: string | null;
+    courseName: string | null;
+    candidates: Array<{ courseId: string; courseName: string; score: number }>;
+  };
+}
+
+export interface FeeImportPreview {
+  _id: string;
+  bookId: string;
+  bookCode: string;
+  fileName: string;
+  sheets: FeeImportSheet[];
+  headMappings: Array<{
+    sourceHead: string;
+    status: 'matched' | 'ambiguous' | 'unmatched';
+    feeHeadId: string | null;
+    feeHeadName: string | null;
+  }>;
+}

@@ -12,6 +12,7 @@ import { formsRouter } from './routes/forms.routes.js';
 import { publicRouter } from './routes/public.routes.js';
 import { admissionsRouter } from './routes/admissions.routes.js';
 import { hostelsRouter } from './routes/hostels.routes.js';
+import { feesRouter } from './routes/fees.routes.js';
 
 export function createApp() {
   const app = express();
@@ -43,6 +44,7 @@ export function createApp() {
   app.use(`${config.apiPrefix}/forms`, requireAdmin, formsRouter);
   app.use(`${config.apiPrefix}/admissions`, requireAdmin, admissionsRouter);
   app.use(`${config.apiPrefix}/hostels`, requireAdmin, hostelsRouter);
+  app.use(`${config.apiPrefix}/fees`, requireAdmin, feesRouter);
   app.use(notFound);
   app.use(errorHandler);
   return app;

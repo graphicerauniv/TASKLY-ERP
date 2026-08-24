@@ -7,6 +7,7 @@ import { FormBuilderComponent } from './form-builder/form-builder.component';
 import { AdminShellComponent } from './layout/admin-shell.component';
 import { MasterDataComponent } from './master-data/master-data.component';
 import { HostelManagementComponent } from './hostel-management/hostel-management.component';
+import { FeeManagementComponent } from './fee-management/fee-management.component';
 
 /**
  * Admin routes share one shell and one router outlet.
@@ -50,6 +51,22 @@ export const ADMIN_ROUTES: Routes = [
       ].map(([path, section]) => ({
         path: `master-data/hostel/${path}`,
         component: HostelManagementComponent,
+        data: { section },
+      })),
+      {
+        path: 'fees',
+        pathMatch: 'full',
+        redirectTo: 'fees/books',
+      },
+      ...[
+        ['books', 'books'],
+        ['heads', 'heads'],
+        ['hostel-fees', 'hostel-fees'],
+        ['course-fees', 'course-fees'],
+        ['course-fee-view', 'course-fee-view'],
+      ].map(([path, section]) => ({
+        path: `fees/${path}`,
+        component: FeeManagementComponent,
         data: { section },
       })),
       {

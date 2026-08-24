@@ -11,13 +11,13 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import {
   LucideBookOpen,
   LucideBookOpenCheck,
+  LucideBookPlus,
   LucideBell,
   LucideBuilding2,
   LucideChevronRight,
   LucideClipboardList,
   LucideDatabase,
   LucideGlobe,
-  LucideGraduationCap,
   LucideHouse,
   LucideLandmark,
   LucideLayers,
@@ -30,11 +30,15 @@ import {
   LucideNetwork,
   LucideFilePenLine,
   LucidePlus,
+  LucideReceiptIndianRupee,
   LucideSearch,
   LucideUniversity,
   LucideUserPlus,
   LucideUsersRound,
   LucideX,
+  LucideTags,
+  LucideTableProperties,
+  LucideWalletCards,
 } from '@lucide/angular';
 import { AuthService } from '../../../core/auth.service';
 import { MasterDataStore } from '../../../core/master-data.store';
@@ -49,13 +53,13 @@ import { filter } from 'rxjs';
     RouterLinkActive,
     LucideBookOpen,
     LucideBookOpenCheck,
+    LucideBookPlus,
     LucideBell,
     LucideBuilding2,
     LucideChevronRight,
     LucideClipboardList,
     LucideDatabase,
     LucideGlobe,
-    LucideGraduationCap,
     LucideHouse,
     LucideLandmark,
     LucideLayers,
@@ -68,11 +72,15 @@ import { filter } from 'rxjs';
     LucideNetwork,
     LucideFilePenLine,
     LucidePlus,
+    LucideReceiptIndianRupee,
     LucideSearch,
     LucideUniversity,
     LucideUserPlus,
     LucideUsersRound,
     LucideX,
+    LucideTags,
+    LucideTableProperties,
+    LucideWalletCards,
   ],
   templateUrl: './admin-shell.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,6 +96,7 @@ export class AdminShellComponent {
   readonly masterMenuOpen = signal(false);
   readonly hostelMenuOpen = signal(false);
   readonly admissionMenuOpen = signal(false);
+  readonly feeMenuOpen = signal(false);
   readonly masterSearch = signal('');
   readonly currentModule = signal('Dashboard');
   readonly masterGroups = computed(() => {
@@ -105,7 +114,6 @@ export class AdminShellComponent {
         'department',
         'level',
         'course',
-        'course-specialization',
       ]),
       group('Location Masters', ['country', 'state', 'district', 'city']),
       {
@@ -138,6 +146,7 @@ export class AdminShellComponent {
   }
   toggleMasterMenu() {
     this.admissionMenuOpen.set(false);
+    this.feeMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
     this.masterMenuOpen.update((open) => !open);
     if (!this.masterMenuOpen()) this.masterSearch.set('');
@@ -150,22 +159,31 @@ export class AdminShellComponent {
   toggleAdmissionMenu() {
     this.masterMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
+    this.feeMenuOpen.set(false);
     this.admissionMenuOpen.update((open) => !open);
   }
   closeNavigation() {
     this.masterMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
+    this.feeMenuOpen.set(false);
     this.menuOpen.set(false);
   }
   closeFlyouts() {
     this.masterMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
+    this.feeMenuOpen.set(false);
     this.masterSearch.set('');
   }
   toggleHostelMenu() {
     this.hostelMenuOpen.update((open) => !open);
+  }
+  toggleFeeMenu() {
+    this.masterMenuOpen.set(false);
+    this.hostelMenuOpen.set(false);
+    this.admissionMenuOpen.set(false);
+    this.feeMenuOpen.update((open) => !open);
   }
   matchesNavigation(label: string) {
     const query = this.navigationSearch().trim().toLocaleLowerCase();
@@ -177,6 +195,7 @@ export class AdminShellComponent {
       this.masterMenuOpen() ||
       this.hostelMenuOpen() ||
       this.admissionMenuOpen() ||
+      this.feeMenuOpen() ||
       this.menuOpen()
     ) {
       this.closeNavigation();
@@ -186,7 +205,7 @@ export class AdminShellComponent {
   @HostListener('document:keydown.tab', ['$event'])
   keepFocusInOpenPanel(event: Event) {
     const keyboardEvent = event as KeyboardEvent;
-    if (!this.masterMenuOpen() && !this.admissionMenuOpen()) return;
+    if (!this.masterMenuOpen() && !this.admissionMenuOpen() && !this.feeMenuOpen()) return;
     const panel = this.host.nativeElement.querySelector<HTMLElement>(
       this.hostelMenuOpen() ? '.hostel-flyout' : '.master-flyout',
     );
@@ -217,8 +236,12 @@ export class AdminShellComponent {
       this.router.url === '/admin/form-builder'
     );
   }
+  isFeeRoute() {
+    return this.router.url.startsWith('/admin/fees/');
+  }
   private updateCurrentModule(url: string) {
-    if (url.includes('/master-data/')) this.currentModule.set('Master Data');
+    if (url.includes('/fees/')) this.currentModule.set('Fee Management');
+    else if (url.includes('/master-data/')) this.currentModule.set('Master Data');
     else if (url.includes('/form-builder')) this.currentModule.set('Dynamic Form Builder');
     else if (url.includes('/admissions')) this.currentModule.set('Student Database');
     else if (url.includes('/delete-admissions')) this.currentModule.set('Delete Admission');

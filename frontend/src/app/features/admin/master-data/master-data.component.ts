@@ -22,7 +22,6 @@ import {
 const DEPENDENCY_CHAINS: Record<string, string[]> = {
   level: ['college', 'department'],
   course: ['college', 'department', 'level'],
-  'course-specialization': ['college', 'department', 'level', 'course'],
   state: ['country'],
   district: ['country', 'state'],
   city: ['country', 'state', 'district'],
