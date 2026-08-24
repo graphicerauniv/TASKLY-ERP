@@ -174,10 +174,6 @@ export class HostelManagementComponent {
     { id: 'edit', label: 'Rename floor', icon: 'edit' },
     { id: 'delete', label: 'Delete floor', icon: 'delete', destructive: true, separator: true },
   ];
-  readonly structureAddActions: CompactActionItem[] = [
-    { id: 'block', label: 'Add block', icon: 'add-child' },
-    { id: 'floor', label: 'Add floor', icon: 'add-child' },
-  ];
   readonly roomActions = (room: HostelRoom): CompactActionItem[] => [
     { id: 'view', label: 'View details', icon: 'view' },
     { id: 'edit', label: 'Edit room number', icon: 'edit' },
@@ -663,10 +659,6 @@ export class HostelManagementComponent {
     this.message.set('');
     this.cancelStructureEdit();
     this.structureDialog.set({ kind, mode: 'create' });
-  }
-
-  handleStructureAdd(kind: string) {
-    if (kind === 'block' || kind === 'floor') this.openStructureDialog(kind);
   }
 
   closeStructureDialog() {

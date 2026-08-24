@@ -128,6 +128,12 @@
   font-size: var(--erp-font-size-xs);
 }
 
+.hostel-structure-tree__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--erp-space-2);
+}
+
 .hostel-structure-tree__scroll {
   min-height: 0;
   max-height: 560px;

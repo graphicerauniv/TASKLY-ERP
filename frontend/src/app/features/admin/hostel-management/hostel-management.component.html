@@ -15,12 +15,20 @@
         <svg lucidePlus size="17" aria-hidden="true"></svg><span>Create hostel</span>
       </button>
     } @else if (section() === 'structure') {
-      <erp-compact-action-menu
-        variant="add"
-        label="Add structure item"
-        [items]="structureAddActions"
-        (selected)="handleStructureAdd($event)"
-      />
+      <button
+        class="erp-button erp-button--secondary"
+        type="button"
+        (click)="openStructureDialog('block')"
+      >
+        <svg lucidePlus size="17" aria-hidden="true"></svg><span>Add block</span>
+      </button>
+      <button
+        class="erp-button erp-button--primary"
+        type="button"
+        (click)="openStructureDialog('floor')"
+      >
+        <svg lucidePlus size="17" aria-hidden="true"></svg><span>Add floor</span>
+      </button>
     } @else if (section() === 'rooms') {
       <button
         class="erp-button erp-button--primary"
@@ -248,12 +256,26 @@
               <h2>Structure</h2>
               <p>Blocks and hostel-wide floors</p>
             </div>
-            <erp-compact-action-menu
-              variant="add"
-              label="Add"
-              [items]="structureAddActions"
-              (selected)="handleStructureAdd($event)"
-            />
+            <div class="hostel-structure-tree__actions" aria-label="Structure creation actions">
+              <button
+                class="erp-icon-button"
+                type="button"
+                aria-label="Add block"
+                title="Add block"
+                (click)="openStructureDialog('block')"
+              >
+                <svg lucideLayers3 size="17" aria-hidden="true"></svg>
+              </button>
+              <button
+                class="erp-icon-button"
+                type="button"
+                aria-label="Add floor"
+                title="Add floor"
+                (click)="openStructureDialog('floor')"
+              >
+                <svg lucidePlus size="17" aria-hidden="true"></svg>
+              </button>
+            </div>
           </header>
 
           @if (loading()) {
