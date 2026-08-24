@@ -46,6 +46,8 @@ const courseFeeSchema = z.object({
   bookId: z.string(),
   courseId: z.string(),
   feeHeadId: z.string(),
+  domicileId: z.string(),
+  academicId: z.string().nullable().optional(),
   academicYear: z.coerce.number().int().min(1).max(10).nullable().optional(),
   semester: z.coerce.number().int().min(1).max(20).nullable().optional(),
   frequency: z.enum(['one-time', 'semester', 'half-yearly', 'yearly']),
@@ -192,7 +194,8 @@ feesRouter.delete('/hostel-fees/:feeId', asyncHandler(async (request, response) 
 feesRouter.get('/course-fees', asyncHandler(async (request, response) => {
   const filter = request.query.bookId ? { bookId: id(request.query.bookId, 'bookId') } : {};
   if (request.query.courseId) filter.courseId = id(request.query.courseId, 'courseId');
-  const items = await db().collection('courseFees').find(filter).sort({ courseName: 1, academicYear: 1, semester: 1, feeHeadName: 1 }).limit(5000).toArray();
+  if (request.query.domicileId) filter.domicileId = id(request.query.domicileId, 'domicileId');
+  const items = await db().collection('courseFees').find(filter).sort({ courseName: 1, domicileName: 1, academicYear: 1, semester: 1, feeHeadName: 1 }).limit(5000).toArray();
   response.json({ items: items.map(serialize) });
 }));
 
@@ -201,8 +204,12 @@ feesRouter.post('/course-fees', asyncHandler(async (request, response) => {
   const book = await feeBook(data.bookId);
   const course = await masterValue(data.courseId, 'course', 'courseId');
   const head = await feeHead(data.feeHeadId, book._id);
+  const domicile = await masterValue(data.domicileId, 'domicile', 'domicileId');
+  const academic = data.academicId
+    ? await masterValue(data.academicId, 'academic', 'academicId')
+    : null;
   const now = new Date();
-  const document = { ...data, bookId: book._id, bookCode: book.code, courseId: course._id, courseName: course.name, feeHeadId: head._id, feeHeadName: head.name, category: head.category, source: 'manual', createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
+  const document = { ...data, bookId: book._id, bookCode: book.code, courseId: course._id, courseName: course.name, feeHeadId: head._id, feeHeadName: head.name, domicileId: domicile._id, domicileName: domicile.name, academicId: academic?._id || null, academicName: academic?.name || null, category: head.category, source: 'manual', createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
   const result = await db().collection('courseFees').insertOne(document);
   response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
 }));
@@ -216,6 +223,7 @@ feesRouter.delete('/course-fees/:feeId', asyncHandler(async (request, response) 
 feesRouter.post('/course-fees/import/preview', upload.single('file'), asyncHandler(async (request, response) => {
   if (!request.file) return response.status(400).json({ message: 'Choose an .xlsx fee workbook.' });
   const book = await feeBook(request.body.bookId);
+  const domicile = await masterValue(request.body.domicileId, 'domicile', 'domicileId');
   const courses = await db().collection('masterValues').find({ typeSlug: 'course', isActive: true }).sort({ name: 1 }).toArray();
   const heads = await db().collection('feeHeads').find({ bookId: book._id, isActive: true }).toArray();
   const workbook = new ExcelJS.Workbook();
@@ -227,7 +235,7 @@ feesRouter.post('/course-fees/import/preview', upload.single('file'), asyncHandl
     return { sourceHead, status: matches.length === 1 ? 'matched' : matches.length ? 'ambiguous' : 'unmatched', feeHeadId: matches.length === 1 ? String(matches[0]._id) : null, feeHeadName: matches.length === 1 ? matches[0].name : null };
   });
   const now = new Date();
-  const preview = { bookId: book._id, bookCode: book.code, fileName: request.file.originalname, sheets, headMappings, createdBy: id(request.admin._id), createdAt: now, expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), status: 'pending' };
+  const preview = { bookId: book._id, bookCode: book.code, domicileId: domicile._id, domicileName: domicile.name, fileName: request.file.originalname, sheets, headMappings, createdBy: id(request.admin._id), createdAt: now, expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), status: 'pending' };
   const result = await db().collection('feeImportPreviews').insertOne(preview);
   response.status(201).json({ preview: serialize({ ...preview, _id: result.insertedId, sheets: sheets.map(({ lines, ...sheet }) => sheet) }) });
 }));
@@ -251,20 +259,18 @@ feesRouter.post('/course-fees/import/commit', asyncHandler(async (request, respo
   const courseMap = new Map(courses.map((item) => [String(item._id), item]));
   const headMap = new Map(heads.map((item) => [String(item._id), item]));
   const documents = [];
+  const adminId = id(request.admin._id);
+  const mappedSheetNames = [];
   for (const sheet of preview.sheets) {
     const mappedCourses = (courseIds.get(sheet.sheetName) || [])
       .map((courseId) => courseMap.get(String(courseId)))
       .filter(Boolean);
-    for (const course of mappedCourses) {
-      for (const line of sheet.lines) {
-        const feeHeadId = headIds.get(line.sourceHead);
-        const head = feeHeadId && headMap.get(String(feeHeadId));
-        if (!head) continue;
-        documents.push({
-        bookId: preview.bookId,
-        bookCode: preview.bookCode,
-        courseId: course._id,
-        courseName: course.name,
+    for (const line of sheet.lines) {
+      const feeHeadId = headIds.get(line.sourceHead);
+      const head = feeHeadId && headMap.get(String(feeHeadId));
+      if (!head) continue;
+      const now = new Date();
+      const template = {
         feeHeadId: head._id,
         feeHeadName: head.name,
         category: line.category,
@@ -274,22 +280,37 @@ feesRouter.post('/course-fees/import/commit', asyncHandler(async (request, respo
         eligibilityBand: line.eligibilityBand,
         amount: line.amount,
         intakeYear: sheet.intakeYear,
-        source: 'excel',
-        sourceFile: preview.fileName,
-        sourceSheet: sheet.sheetName,
         sourceCell: line.sourceCell,
         importPreviewId: preview._id,
-        createdBy: id(request.admin._id),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      };
+      for (const course of mappedCourses) {
+        documents.push({
+          ...template,
+          bookId: preview.bookId,
+          bookCode: preview.bookCode,
+          courseId: course._id,
+          courseName: course.name,
+          domicileId: preview.domicileId,
+          domicileName: preview.domicileName,
+          source: 'excel',
+          sourceFile: preview.fileName,
+          sourceSheet: sheet.sheetName,
+          createdBy: adminId,
+          createdAt: now,
+          updatedAt: now,
         });
       }
     }
+    if (mappedCourses.length) mappedSheetNames.push(sheet.sheetName);
   }
   if (!documents.length) return response.status(400).json({ message: 'No fee rows have both a course and fee-head mapping.' });
   if (data.replaceExisting) {
-    const mappedCourses = [...new Set(documents.map((item) => String(item.courseId)))].map((value) => id(value));
-    await db().collection('courseFees').deleteMany({ bookId: preview.bookId, courseId: { $in: mappedCourses }, source: 'excel' });
+    await db().collection('courseFees').deleteMany({
+      bookId: preview.bookId,
+      domicileId: preview.domicileId,
+      source: 'excel',
+      sourceSheet: { $in: mappedSheetNames },
+    });
   }
   await db().collection('courseFees').insertMany(documents);
   await db().collection('feeImportPreviews').updateOne({ _id: preview._id }, { $set: { status: 'imported', importedAt: new Date(), importedCount: documents.length } });

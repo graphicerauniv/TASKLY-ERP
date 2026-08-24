@@ -30,7 +30,6 @@ import {
   LucideMap,
   LucideMapPinned,
   LucideMenu,
-  LucideNetwork,
   LucideFilePenLine,
   LucidePlus,
   LucideReceiptIndianRupee,
@@ -75,7 +74,6 @@ import { filter } from 'rxjs';
     LucideMap,
     LucideMapPinned,
     LucideMenu,
-    LucideNetwork,
     LucideFilePenLine,
     LucidePlus,
     LucideReceiptIndianRupee,
@@ -122,6 +120,7 @@ export class AdminShellComponent {
         'department',
         'level',
         'course',
+        'domicile',
       ]),
       group('Location Masters', ['country', 'state', 'district', 'city']),
       {
@@ -244,9 +243,6 @@ export class AdminShellComponent {
       this.closeNavigation();
       this.masterSearch.set('');
     }
-
-    }
-    if (this.menuOpen()) this.menuOpen.set(false);
   }
   @HostListener('document:keydown.tab', ['$event'])
   keepFocusInOpenPanel(event: Event) {

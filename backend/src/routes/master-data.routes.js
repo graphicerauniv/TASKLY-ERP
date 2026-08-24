@@ -160,6 +160,13 @@ masterDataRouter.delete(
       return response
         .status(409)
         .json({ message: 'This value is used as a parent and cannot be deleted.' });
+    if (
+      request.params.typeSlug === 'domicile' &&
+      (await db().collection('courseFees').countDocuments({ domicileId: valueId }))
+    )
+      return response
+        .status(409)
+        .json({ message: 'This domicile is used by course fees. Disable it instead of deleting it.' });
     const result = await db()
       .collection('masterValues')
       .deleteOne({ _id: valueId, typeSlug: request.params.typeSlug });

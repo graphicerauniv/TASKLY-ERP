@@ -22,7 +22,12 @@ import {
   CompactActionMenuComponent,
 } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
-type FeeSection = 'books' | 'heads' | 'hostel-fees' | 'course-fees' | 'course-fee-view';
+type FeeSection =
+  | 'books'
+  | 'heads'
+  | 'hostel-fees'
+  | 'course-fees'
+  | 'course-fee-view';
 
 interface FeeViewCell {
   eligibilityBand: string;
@@ -79,13 +84,13 @@ export class FeeManagementComponent {
   readonly books = signal<FeeBook[]>([]);
   readonly heads = signal<FeeHead[]>([]);
   readonly hostelFees = signal<HostelFee[]>([]);
-  readonly courseFees = signal<CourseFee[]>([]);
   readonly courseFeeViewRecords = signal<CourseFee[]>([]);
   readonly colleges = signal<MasterValue[]>([]);
   readonly academicSessions = signal<MasterValue[]>([]);
   readonly departments = signal<MasterValue[]>([]);
   readonly levels = signal<MasterValue[]>([]);
   readonly courses = signal<MasterValue[]>([]);
+  readonly domiciles = signal<MasterValue[]>([]);
   readonly hostels = signal<Hostel[]>([]);
   readonly preview = signal<FeeImportPreview | null>(null);
   readonly loading = signal(false);
@@ -122,16 +127,22 @@ export class FeeManagementComponent {
   levelId = '';
   courseId = '';
   courseFeeHeadId = '';
-  courseYear: number | null = 1;
+  courseDomicileId = '';
+  courseAcademicId = '';
   courseSemester: number | null = null;
   courseFrequency: FeeFrequency = 'semester';
   courseEligibility = 'All candidates';
   courseAmount: number | null = null;
   replaceExisting = true;
+  importDomicileId = '';
   viewCollegeId = '';
   viewDepartmentId = '';
   viewLevelId = '';
   viewCourseId = '';
+  viewDomicileId = '';
+  previewPage = 1;
+  previewPageSize = 10;
+  previewCourseToAdd: Record<string, string> = {};
   sheetMappings: Record<string, string[]> = {};
   headMappings: Record<string, string> = {};
 
@@ -143,13 +154,19 @@ export class FeeManagementComponent {
   };
   readonly levelOptions = () => this.levels().filter((item) => item.parentId === this.departmentId);
   readonly courseOptions = () => this.courses().filter((item) => item.parentId === this.levelId);
-  readonly displayedPreviewSheets = computed(() => {
+  readonly filteredPreviewSheets = () => {
     const preview = this.preview();
     if (!preview) return [];
     if (!this.showOnlyNeedsMapping()) return preview.sheets;
     return preview.sheets.filter((sheet) => !this.sheetMappings[sheet.sheetName]?.length);
-  });
-  readonly previewCounts = computed(() => {
+  };
+  readonly pagedPreviewSheets = () => {
+    const start = (this.previewPage - 1) * this.previewPageSize;
+    return this.filteredPreviewSheets().slice(start, start + this.previewPageSize);
+  };
+  readonly previewTotalPages = () =>
+    Math.max(1, Math.ceil(this.filteredPreviewSheets().length / this.previewPageSize));
+  readonly previewCounts = () => {
     const sheets = this.preview()?.sheets || [];
     return {
       total: sheets.length,
@@ -157,7 +174,7 @@ export class FeeManagementComponent {
       needsMapping: sheets.filter((sheet) => !this.sheetMappings[sheet.sheetName]?.length).length,
       lines: sheets.reduce((sum, sheet) => sum + sheet.lineCount, 0),
     };
-  });
+  };
   readonly viewDepartmentOptions = () =>
     this.viewCollegeId
       ? this.departments().filter((item) => item.parentId === this.viewCollegeId)
@@ -199,6 +216,11 @@ export class FeeManagementComponent {
         label = `Academic Year ${fee.academicYear}`;
         description = `All configured fees and payment options for year ${fee.academicYear}.`;
         order = fee.academicYear * 10;
+      } else if (fee.academicName) {
+        key = `academic-${fee.academicId || fee.academicName}`;
+        label = fee.academicName;
+        description = `Fees configured manually for academic year ${fee.academicName}.`;
+        order = 500;
       }
       const group = groups.get(key) || { label, description, order, fees: [] };
       group.fees.push(fee);
@@ -258,6 +280,7 @@ export class FeeManagementComponent {
     this.api.masterValues('academic', { active: true }).subscribe(({ items }) => this.academicSessions.set(items));
     this.api.masterValues('department', { active: true }).subscribe(({ items }) => this.departments.set(items));
     this.api.masterValues('level', { active: true }).subscribe(({ items }) => this.levels.set(items));
+    this.api.masterValues('domicile', { active: true }).subscribe(({ items }) => this.domiciles.set(items));
     this.api.feeCourseOptions().subscribe(({ items }) => this.courses.set(items));
     if (this.section() === 'hostel-fees') this.api.hostels().subscribe(({ items }) => this.hostels.set(items));
   }
@@ -272,7 +295,7 @@ export class FeeManagementComponent {
     });
     if (this.section() === 'books') this.loading.set(false);
     if (this.section() === 'hostel-fees') this.loadHostelFees();
-    if (this.section() === 'course-fees') this.loadCourseFees();
+    if (this.section() === 'course-fees') this.loading.set(false);
     if (this.section() === 'course-fee-view') {
       this.viewBookChanged();
       this.loading.set(false);
@@ -288,7 +311,6 @@ export class FeeManagementComponent {
     this.courseId = '';
     if (this.section() === 'course-fee-view') this.viewBookChanged();
     if (this.section() === 'hostel-fees') this.loadHostelFees();
-    if (this.section() === 'course-fees') this.loadCourseFees();
   }
 
   saveBook() {
@@ -387,14 +409,23 @@ export class FeeManagementComponent {
   }
 
   saveCourseFee() {
-    if (!this.selectedBookId || !this.courseId || !this.courseFeeHeadId || !this.courseAmount)
+    if (
+      !this.selectedBookId ||
+      !this.courseId ||
+      !this.courseFeeHeadId ||
+      !this.courseDomicileId ||
+      !this.courseAcademicId ||
+      !this.courseAmount
+    )
       return this.error.set('Complete all required course-fee fields.');
     this.startSaving();
     this.api.createCourseFee({
       bookId: this.selectedBookId,
       courseId: this.courseId,
       feeHeadId: this.courseFeeHeadId,
-      academicYear: this.courseYear,
+      domicileId: this.courseDomicileId,
+      academicId: this.courseAcademicId || null,
+      academicYear: null,
       semester: this.courseSemester,
       frequency: this.courseFrequency,
       eligibilityBand: this.courseEligibility.trim() || 'All candidates',
@@ -402,19 +433,23 @@ export class FeeManagementComponent {
     }).subscribe({ next: () => { this.courseAmount = null; this.saved('Course fee saved.'); }, error: (error) => this.fail(error) });
   }
 
-  deleteCourseFee(action: string, fee: CourseFee) {
-    if (action === 'delete' && confirm(`Delete ${fee.feeHeadName} for ${fee.courseName}?`))
-      this.api.deleteCourseFee(fee._id).subscribe({ next: () => this.saved('Course fee deleted.'), error: (error) => this.fail(error) });
-  }
-
   previewWorkbook(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file || !this.selectedBookId) return this.error.set('Select a fee book and choose an .xlsx file.');
+    if (!file || !this.selectedBookId || !this.importDomicileId)
+      return this.error.set('Select a fee book and domicile, then choose an .xlsx file.');
     this.startSaving();
-    this.api.previewCourseFeeImport(this.selectedBookId, file).subscribe({
+    this.api.previewCourseFeeImport(this.selectedBookId, this.importDomicileId, file).subscribe({
       next: ({ preview }) => {
         this.preview.set(preview);
-        this.sheetMappings = Object.fromEntries(preview.sheets.map((sheet) => [sheet.sheetName, sheet.match.courseId ? [sheet.match.courseId] : []]));
+        this.sheetMappings = Object.fromEntries(
+          preview.sheets.map((sheet) => [
+            sheet.sheetName,
+            sheet.match.courseId ? [sheet.match.courseId] : [],
+          ]),
+        );
+        this.previewPage = 1;
+        this.previewPageSize = 10;
+        this.previewCourseToAdd = {};
         this.headMappings = Object.fromEntries(preview.headMappings.map((head) => [head.sourceHead, head.feeHeadId || '']));
         this.message.set(`Workbook analysed: ${preview.sheets.length} sheets found.`);
         this.saving.set(false);
@@ -442,7 +477,6 @@ export class FeeManagementComponent {
         this.headMappings = {};
         this.message.set(`${imported} fee rows imported from ${mappedSheets} course sheets.`);
         this.saving.set(false);
-        this.loadCourseFees();
       },
       error: (error) => this.fail(error),
     });
@@ -450,10 +484,6 @@ export class FeeManagementComponent {
 
   loadHostelFees() {
     this.api.hostelFees(this.selectedBookId).subscribe({ next: ({ items }) => { this.hostelFees.set(items); this.loading.set(false); }, error: (error) => this.fail(error) });
-  }
-
-  loadCourseFees() {
-    this.api.courseFees(this.selectedBookId).subscribe({ next: ({ items }) => { this.courseFees.set(items); this.loading.set(false); }, error: (error) => this.fail(error) });
   }
 
   departmentChanged() {
@@ -465,11 +495,46 @@ export class FeeManagementComponent {
     this.courseId = '';
   }
 
+  addPreviewCourse(sheetName: string) {
+    const courseId = this.previewCourseToAdd[sheetName];
+    if (!courseId) return;
+    const current = this.sheetMappings[sheetName] || [];
+    if (!current.includes(courseId)) this.sheetMappings[sheetName] = [...current, courseId];
+    this.previewCourseToAdd[sheetName] = '';
+  }
+
+  removePreviewCourse(sheetName: string, courseId: string) {
+    this.sheetMappings[sheetName] = (this.sheetMappings[sheetName] || []).filter(
+      (value) => value !== courseId,
+    );
+  }
+
+  previewMappingStatus(sheet: FeeImportPreview['sheets'][number]) {
+    const selected = this.sheetMappings[sheet.sheetName] || [];
+    if (!selected.length) return sheet.match.status === 'ambiguous' ? 'Ambiguous' : 'Unmapped';
+    if (selected.length === 1 && selected[0] === sheet.match.courseId) return 'Auto-mapped';
+    return 'Manually mapped';
+  }
+
+  courseName(courseId: string) {
+    return this.courses().find((course) => course._id === courseId)?.name || 'Unknown course';
+  }
+
+  setPreviewPageSize(value: number) {
+    this.previewPageSize = Number(value);
+    this.previewPage = 1;
+  }
+
+  setPreviewPage(page: number) {
+    this.previewPage = Math.min(Math.max(1, page), this.previewTotalPages());
+  }
+
   viewBookChanged() {
     this.viewCollegeId = this.currentBook()?.collegeId || '';
     this.viewDepartmentId = '';
     this.viewLevelId = '';
     this.viewCourseId = '';
+    this.viewDomicileId = '';
     this.courseFeeViewRecords.set([]);
   }
 
@@ -491,12 +556,16 @@ export class FeeManagementComponent {
     this.courseFeeViewRecords.set([]);
   }
 
+  viewDomicileChanged() {
+    this.courseFeeViewRecords.set([]);
+  }
+
   loadCourseFeeView() {
-    if (!this.selectedBookId || !this.viewCollegeId || !this.viewDepartmentId || !this.viewLevelId || !this.viewCourseId)
-      return this.error.set('Select the book, college, department, level and course.');
+    if (!this.selectedBookId || !this.viewCollegeId || !this.viewDepartmentId || !this.viewLevelId || !this.viewCourseId || !this.viewDomicileId)
+      return this.error.set('Select the book, college, department, level, course and domicile.');
     this.clearNotices();
     this.loading.set(true);
-    this.api.courseFees(this.selectedBookId, this.viewCourseId).subscribe({
+    this.api.courseFees(this.selectedBookId, this.viewCourseId, this.viewDomicileId).subscribe({
       next: ({ items }) => {
         this.courseFeeViewRecords.set(items);
         this.loading.set(false);

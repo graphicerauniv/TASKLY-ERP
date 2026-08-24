@@ -103,7 +103,8 @@
         <label class="erp-field-stack"><span>Level *</span><select class="erp-control" [(ngModel)]="levelId" (ngModelChange)="levelChanged()"><option value="">Select level</option>@for (level of levelOptions(); track level._id) {<option [value]="level._id">{{ level.name }}</option>}</select></label>
         <label class="erp-field-stack"><span>Course *</span><select class="erp-control" [(ngModel)]="courseId"><option value="">Select course</option>@for (course of courseOptions(); track course._id) {<option [value]="course._id">{{ course.name }}</option>}</select></label>
         <label class="erp-field-stack"><span>Fee head *</span><select class="erp-control" [(ngModel)]="courseFeeHeadId"><option value="">Select fee head</option>@for (head of bookHeads(); track head._id) {<option [value]="head._id">{{ head.name }}</option>}</select></label>
-        <label class="erp-field-stack"><span>Academic year</span><input class="erp-control" type="number" min="1" max="10" [(ngModel)]="courseYear" /></label>
+        <label class="erp-field-stack"><span>Domicile *</span><select class="erp-control" [(ngModel)]="courseDomicileId"><option value="">Select domicile</option>@for (domicile of domiciles(); track domicile._id) {<option [value]="domicile._id">{{ domicile.name }}</option>}</select>@if (!domiciles().length) {<small>Add values in <a routerLink="/admin/master-data/domicile">Domicile Master</a>.</small>}</label>
+        <label class="erp-field-stack"><span>Academic year *</span><select class="erp-control" [(ngModel)]="courseAcademicId"><option value="">Select academic year</option>@for (academic of academicSessions(); track academic._id) {<option [value]="academic._id">{{ academic.name }}</option>}</select></label>
         <label class="erp-field-stack"><span>Semester</span><input class="erp-control" type="number" min="1" max="20" [(ngModel)]="courseSemester" /></label>
         <label class="erp-field-stack"><span>Frequency *</span><select class="erp-control" [(ngModel)]="courseFrequency"><option value="one-time">One-time</option><option value="semester">Semester wise</option><option value="half-yearly">Half-yearly</option><option value="yearly">Yearly</option></select></label>
         <label class="erp-field-stack"><span>Eligibility band</span><input class="erp-control" [(ngModel)]="courseEligibility" /></label>
@@ -115,28 +116,54 @@
     <section class="erp-card erp-card--padded fee-section-gap">
       <div class="erp-card__header"><div><h2>Bulk upload fee workbook</h2><p>Upload .xlsx, review every automatic match, manually map unresolved sheets and fee heads, then import.</p></div></div>
       <div class="fee-upload-row">
-        <label class="erp-field-stack"><span>Excel workbook *</span><input class="erp-control" type="file" accept=".xlsx" [disabled]="!selectedBookId || saving()" (change)="previewWorkbook($event)" /></label>
-        <small>Nothing is saved until you confirm the mapping preview.</small>
+        <label class="erp-field-stack"><span>Domicile *</span><select class="erp-control" [(ngModel)]="importDomicileId" (ngModelChange)="preview.set(null)"><option value="">Select domicile for this workbook</option>@for (domicile of domiciles(); track domicile._id) {<option [value]="domicile._id">{{ domicile.name }}</option>}</select></label>
+        <label class="erp-field-stack"><span>Excel workbook *</span><input class="erp-control" type="file" accept=".xlsx" [disabled]="!selectedBookId || !importDomicileId || saving()" (change)="previewWorkbook($event)" /></label>
+        <small>Every imported fee will use the selected domicile. Nothing is saved until you confirm the mapping preview.</small>
       </div>
     </section>
 
     @if (preview(); as importPreview) {
       <section class="erp-card erp-card--padded fee-section-gap">
-        <div class="erp-card__header"><div><h2>Workbook mapping preview</h2><p>{{ importPreview.fileName }}</p></div></div>
+        <div class="erp-card__header"><div><h2>Workbook mapping preview</h2><p>{{ importPreview.fileName }} · Domicile: {{ importPreview.domicileName }}</p></div></div>
         <div class="fee-mapping-summary">
           <div><strong>{{ previewCounts().total }}</strong><span>Sheets</span></div>
           <div><strong>{{ previewCounts().mapped }}</strong><span>Mapped courses</span></div>
           <div><strong>{{ previewCounts().needsMapping }}</strong><span>Need manual mapping</span></div>
           <div><strong>{{ previewCounts().lines }}</strong><span>Detected fee rows</span></div>
         </div>
-        <label class="fee-checkbox"><input type="checkbox" [checked]="showOnlyNeedsMapping()" (change)="showOnlyNeedsMapping.set($any($event.target).checked)" /> Show only sheets needing manual mapping</label>
+        <label class="fee-checkbox"><input type="checkbox" [checked]="showOnlyNeedsMapping()" (change)="showOnlyNeedsMapping.set($any($event.target).checked); previewPage = 1" /> Show only sheets needing manual mapping</label>
       </section>
 
-      <section class="erp-card erp-table-shell fee-section-gap">
-        <div class="erp-table-toolbar"><h2>Course sheet mapping <small>{{ displayedPreviewSheets().length }}</small></h2></div>
-        <div class="erp-table-shell__scroll fee-mapping-table"><table><thead><tr><th>Excel sheet</th><th>Detected course</th><th>Intake</th><th>Status</th><th>Map to Course master</th><th>Rows</th></tr></thead><tbody>
-          @for (sheet of displayedPreviewSheets(); track sheet.sheetName) {<tr><td><strong>{{ sheet.sheetName }}</strong>@if (sheet.warnings.length) {<small>{{ sheet.warnings.join(' ') }}</small>}</td><td>{{ sheet.courseTitle }}@if (sheet.programNames.length > 1) {<small>Shared by: {{ sheet.programNames.join(' · ') }}</small>}</td><td>{{ sheet.intakeYear || 'Review' }}</td><td><span class="erp-status" [class.erp-status--neutral]="!sheetMappings[sheet.sheetName]?.length">{{ sheetMappings[sheet.sheetName]?.length ? (sheet.match.status === 'matched' && sheetMappings[sheet.sheetName].length === 1 ? 'Auto-mapped' : 'Manually mapped') : (sheet.match.status === 'ambiguous' ? 'Ambiguous' : 'Unmatched') }}</span></td><td><select class="erp-control fee-course-multiselect" multiple [(ngModel)]="sheetMappings[sheet.sheetName]" aria-label="Map sheet to one or more courses">@for (course of courses(); track course._id) {<option [value]="course._id">{{ course.name }}</option>}</select><small>Use Ctrl/Command to select every course sharing this fee sheet.</small>@if (!sheetMappings[sheet.sheetName]?.length && sheet.match.candidates.length) {<small>Suggestion: {{ sheet.match.candidates[0].courseName }}</small>}</td><td>{{ sheet.lineCount }}</td></tr>}
-        </tbody></table></div>
+      <section class="erp-card erp-card--padded fee-section-gap">
+        <div class="erp-card__header fee-list-header"><div><h2>Course sheet mapping</h2><p>Showing {{ pagedPreviewSheets().length }} of {{ filteredPreviewSheets().length }} Excel sheets</p></div><label class="erp-field-stack fee-page-size"><span>Rows per page</span><select class="erp-control" [ngModel]="previewPageSize" (ngModelChange)="setPreviewPageSize($event)"><option [ngValue]="10">10</option><option [ngValue]="20">20</option><option [ngValue]="50">50</option></select></label></div>
+        <div class="fee-mapping-card-list">
+          @for (sheet of pagedPreviewSheets(); track sheet.sheetName) {
+            <article class="fee-mapping-card">
+              <header class="fee-mapping-card__header">
+                <div><span class="fee-sheet-name">{{ sheet.sheetName }}</span><h3>{{ sheet.courseTitle }}</h3><p>Intake {{ sheet.intakeYear || 'requires review' }} · {{ sheet.lineCount }} fee rows</p></div>
+                <span class="erp-status" [class.erp-status--neutral]="!sheetMappings[sheet.sheetName]?.length">{{ previewMappingStatus(sheet) }}</span>
+              </header>
+              <div class="fee-mapping-card__body">
+                <div class="fee-detected-details">
+                  <strong>Detected from workbook</strong>
+                  @if (sheet.programNames.length > 1) {<p>This fee sheet is shared by:</p><ul>@for (program of sheet.programNames; track program) {<li>{{ program }}</li>}</ul>}
+                  @else {<p>{{ sheet.programNames[0] || sheet.subtitle }}</p>}
+                  @if (sheet.match.candidates.length && !sheetMappings[sheet.sheetName]?.length) {<p class="fee-suggestion">Suggested Course: {{ sheet.match.candidates[0].courseName }}</p>}
+                  @for (warning of sheet.warnings; track warning) {<p class="fee-warning">{{ warning }}</p>}
+                </div>
+                <div class="fee-assignment-editor">
+                  <strong>Mapped Course master records</strong>
+                  <div class="fee-course-chips">
+                    @for (courseId of sheetMappings[sheet.sheetName] || []; track courseId) {<span class="fee-course-chip">{{ courseName(courseId) }}<button type="button" [attr.aria-label]="'Remove ' + courseName(courseId)" (click)="removePreviewCourse(sheet.sheetName, courseId)">×</button></span>}
+                    @empty {<span class="fee-unmapped-copy">No course is mapped. This sheet will be skipped.</span>}
+                  </div>
+                  <div class="fee-course-picker"><select class="erp-control" [(ngModel)]="previewCourseToAdd[sheet.sheetName]"><option value="">Select a Course master record</option>@for (course of courses(); track course._id) {<option [value]="course._id" [disabled]="sheetMappings[sheet.sheetName]?.includes(course._id)">{{ course.name }}</option>}</select><button class="erp-button erp-button--secondary" type="button" (click)="addPreviewCourse(sheet.sheetName)" [disabled]="!previewCourseToAdd[sheet.sheetName]">Add course</button></div>
+                </div>
+              </div>
+            </article>
+          } @empty {<div class="erp-empty-state">No sheets match the selected filter.</div>}
+        </div>
+        <div class="erp-pagination fee-pagination"><span>Page {{ previewPage }} of {{ previewTotalPages() }}</span><div class="erp-pagination__pages"><button class="erp-pagination__button" type="button" aria-label="Previous page" [disabled]="previewPage === 1" (click)="setPreviewPage(previewPage - 1)">‹</button><button class="erp-pagination__button erp-pagination__button--active" type="button">{{ previewPage }}</button><button class="erp-pagination__button" type="button" aria-label="Next page" [disabled]="previewPage === previewTotalPages()" (click)="setPreviewPage(previewPage + 1)">›</button></div></div>
       </section>
 
       <section class="erp-card erp-table-shell fee-section-gap">
@@ -151,10 +178,6 @@
       </section>
     }
 
-    <section class="erp-card erp-table-shell fee-section-gap"><div class="erp-table-toolbar"><h2>Course fee records <small>{{ courseFees().length }}</small></h2></div><div class="erp-table-shell__scroll"><table><thead><tr><th>Course</th><th>Fee head</th><th>Schedule</th><th>Eligibility</th><th>Amount</th><th>Source</th><th class="erp-table-shell__actions">Actions</th></tr></thead><tbody>
-      @for (fee of courseFees(); track fee._id) {<tr><td><strong>{{ fee.courseName }}</strong></td><td>{{ fee.feeHeadName }}</td><td>{{ fee.frequency }}@if (fee.academicYear) { · Year {{ fee.academicYear }}}@if (fee.semester) { · Sem {{ fee.semester }}}</td><td>{{ fee.eligibilityBand }}</td><td>{{ fee.amount | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ fee.source === 'excel' ? 'Excel · ' + fee.sourceSheet : 'Manual' }}</td><td class="erp-table-shell__actions"><erp-compact-action-menu [items]="deleteActions" (selected)="deleteCourseFee($event, fee)" /></td></tr>}
-      @empty {<tr><td colspan="7" class="erp-empty-state">No course fees saved for this book.</td></tr>}
-    </tbody></table></div></section>
   }
 
   @if (section() === 'course-fee-view') {
@@ -170,7 +193,8 @@
         <label class="erp-field-stack"><span>College *</span><select class="erp-control" [(ngModel)]="viewCollegeId" (ngModelChange)="viewCollegeChanged()"><option value="">Select college</option>@for (college of viewCollegeOptions(); track college._id) {<option [value]="college._id">{{ college.name }}</option>}</select></label>
         <label class="erp-field-stack"><span>Department *</span><select class="erp-control" [(ngModel)]="viewDepartmentId" (ngModelChange)="viewDepartmentChanged()"><option value="">Select department</option>@for (department of viewDepartmentOptions(); track department._id) {<option [value]="department._id">{{ department.name }}</option>}</select></label>
         <label class="erp-field-stack"><span>Level *</span><select class="erp-control" [(ngModel)]="viewLevelId" (ngModelChange)="viewLevelChanged()"><option value="">Select level</option>@for (level of viewLevelOptions(); track level._id) {<option [value]="level._id">{{ level.name }}</option>}</select></label>
-        <label class="erp-field-stack"><span>Course *</span><select class="erp-control" [(ngModel)]="viewCourseId"><option value="">Select course</option>@for (course of viewCourseOptions(); track course._id) {<option [value]="course._id">{{ course.name }}</option>}</select></label>
+        <label class="erp-field-stack"><span>Course *</span><select class="erp-control" [(ngModel)]="viewCourseId" (ngModelChange)="courseFeeViewRecords.set([])"><option value="">Select course</option>@for (course of viewCourseOptions(); track course._id) {<option [value]="course._id">{{ course.name }}</option>}</select></label>
+        <label class="erp-field-stack"><span>Domicile *</span><select class="erp-control" [(ngModel)]="viewDomicileId" (ngModelChange)="viewDomicileChanged()"><option value="">Select domicile</option>@for (domicile of domiciles(); track domicile._id) {<option [value]="domicile._id">{{ domicile.name }}</option>}</select></label>
       </div>
       <div class="fee-form-actions"><button class="erp-button erp-button--primary" type="button" [disabled]="loading()" (click)="loadCourseFeeView()">View fee structure</button></div>
     </section>
@@ -178,7 +202,7 @@
     @if (courseFeeViewRecords().length) {
       <section class="erp-card erp-card--padded fee-section-gap fee-view-heading">
         <div>
-          <span class="erp-page-header__eyebrow">{{ currentBook()?.code }} · {{ currentBook()?.academicSession }}</span>
+          <span class="erp-page-header__eyebrow">{{ currentBook()?.code }} · {{ currentBook()?.academicSession }} · {{ courseFeeViewRecords()[0].domicileName }}</span>
           <h2>{{ selectedViewCourse()?.name }}</h2>
           <p>{{ currentBook()?.collegeName }}</p>
         </div>

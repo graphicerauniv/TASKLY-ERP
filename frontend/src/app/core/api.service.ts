@@ -337,21 +337,23 @@ export class ApiService {
   deleteHostelFee(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/hostel-fees/${id}`);
   }
-  courseFees(bookId = '', courseId = '') {
+  courseFees(bookId = '', courseId = '', domicileId = '') {
     let params = new HttpParams();
     if (bookId) params = params.set('bookId', bookId);
     if (courseId) params = params.set('courseId', courseId);
+    if (domicileId) params = params.set('domicileId', domicileId);
     return this.http.get<{ items: CourseFee[] }>(`${API_BASE_URL}/fees/course-fees`, { params });
   }
-  createCourseFee(body: Omit<CourseFee, '_id' | 'bookCode' | 'courseName' | 'feeHeadName' | 'category' | 'source' | 'sourceSheet'>) {
+  createCourseFee(body: Omit<CourseFee, '_id' | 'bookCode' | 'courseName' | 'domicileName' | 'feeHeadName' | 'academicName' | 'category' | 'source' | 'sourceSheet'>) {
     return this.http.post<{ item: CourseFee }>(`${API_BASE_URL}/fees/course-fees`, body);
   }
   deleteCourseFee(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/course-fees/${id}`);
   }
-  previewCourseFeeImport(bookId: string, file: File) {
+  previewCourseFeeImport(bookId: string, domicileId: string, file: File) {
     const data = new FormData();
     data.append('bookId', bookId);
+    data.append('domicileId', domicileId);
     data.append('file', file);
     return this.http.post<{ preview: FeeImportPreview }>(
       `${API_BASE_URL}/fees/course-fees/import/preview`,

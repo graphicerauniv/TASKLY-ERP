@@ -233,9 +233,13 @@ export interface CourseFee {
   bookCode: string;
   courseId: string;
   courseName: string;
+  domicileId: string;
+  domicileName: string;
   feeHeadId: string;
   feeHeadName: string;
   category: FeeHead['category'];
+  academicId: string | null;
+  academicName: string | null;
   academicYear: number | null;
   semester: number | null;
   frequency: FeeFrequency;
@@ -266,6 +270,8 @@ export interface FeeImportPreview {
   _id: string;
   bookId: string;
   bookCode: string;
+  domicileId: string;
+  domicileName: string;
   fileName: string;
   sheets: FeeImportSheet[];
   headMappings: Array<{
