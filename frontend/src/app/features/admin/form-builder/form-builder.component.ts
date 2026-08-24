@@ -169,6 +169,7 @@ export class FormBuilderComponent {
       searchable: false,
       searchConfig: null,
       validation: {},
+      uploadConfig: null,
       visibilityCondition: null,
     };
     this.selectedFieldId.set(draft.id);
@@ -178,7 +179,9 @@ export class FormBuilderComponent {
   selectField(field: FormField) {
     this.selectedFieldId.set(field.id);
     this.dialogOptionText = field.options.map((option) => option.label).join('\n');
-    this.fieldDialog.set({ mode: 'edit', draft: structuredClone(field) });
+    const draft = structuredClone(field);
+    this.configureUpload(draft);
+    this.fieldDialog.set({ mode: 'edit', draft });
   }
   removeField(field: FormField) {
     this.deleteDialog.set({
@@ -282,6 +285,32 @@ export class FormBuilderComponent {
     const field = this.fieldDialog()?.draft;
     if (!field) return;
     field.searchConfig = field.searchable ? { searchField: 'name' } : null;
+  }
+  configureUpload(field: FormField) {
+    if (!['file', 'image', 'signature'].includes(field.type)) {
+      field.uploadConfig = null;
+      return;
+    }
+    const allowedTypes =
+      field.type === 'file'
+        ? field.uploadConfig?.allowedTypes?.length
+          ? field.uploadConfig.allowedTypes
+          : (['image', 'pdf', 'word'] as Array<'image' | 'pdf' | 'word'>)
+        : (['image'] as Array<'image'>);
+    field.uploadConfig = {
+      maxSizeMb: field.uploadConfig?.maxSizeMb || 5,
+      allowedTypes,
+    };
+  }
+  uploadTypeEnabled(field: FormField, type: 'image' | 'pdf' | 'word') {
+    return field.uploadConfig?.allowedTypes.includes(type) || false;
+  }
+  toggleUploadType(field: FormField, type: 'image' | 'pdf' | 'word', enabled: boolean) {
+    if (!field.uploadConfig) this.configureUpload(field);
+    if (!field.uploadConfig) return;
+    field.uploadConfig.allowedTypes = enabled
+      ? [...new Set([...field.uploadConfig.allowedTypes, type])]
+      : field.uploadConfig.allowedTypes.filter((candidate) => candidate !== type);
   }
   toggleDialogCondition(enabled: boolean) {
     const field = this.fieldDialog()?.draft;

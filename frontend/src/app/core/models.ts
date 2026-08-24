@@ -51,6 +51,10 @@ export interface FormField {
     pattern?: string;
     message?: string;
   };
+  uploadConfig?: {
+    maxSizeMb: number;
+    allowedTypes: Array<'image' | 'pdf' | 'word'>;
+  } | null;
   visibilityCondition: VisibilityCondition | null;
 }
 export interface FormSubsection {

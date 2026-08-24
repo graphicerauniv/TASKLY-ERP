@@ -443,6 +443,19 @@ textarea {
   border: 1px solid var(--erp-border-subtle);
   border-radius: 8px;
 }
+.upload-types {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0;
+}
+.upload-types .check:has(input:disabled) {
+  opacity: 0.72;
+}
+.dialog-section__hint {
+  margin: 12px 0 0;
+  color: var(--erp-text-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
 .confirm-body {
   padding: 28px 24px 20px;
   text-align: center;

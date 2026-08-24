@@ -211,6 +211,35 @@
   color: var(--erp-text-muted);
   font-size: 10px;
 }
+.field > input[type='file'] {
+  width: 100%;
+  padding: 8px;
+  color: var(--erp-text-muted);
+  font: inherit;
+  font-size: 11px;
+  background: var(--erp-input-bg);
+  border: 1px dashed var(--erp-input-border);
+  border-radius: 8px;
+}
+.field > input[type='file']::file-selector-button {
+  min-height: 32px;
+  padding: 0 11px;
+  margin-right: 10px;
+  color: var(--erp-blue-700);
+  font: inherit;
+  font-weight: 700;
+  background: var(--erp-blue-50);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.field > small.upload-rules {
+  color: var(--erp-text-muted);
+}
+.field > small.uploaded {
+  color: var(--erp-success-text);
+  font-weight: 700;
+}
 .field.wide {
   grid-column: 1/-1;
 }

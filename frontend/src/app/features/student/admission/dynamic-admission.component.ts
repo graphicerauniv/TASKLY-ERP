@@ -177,10 +177,43 @@ export class DynamicAdmissionComponent {
     const file = (event.target as HTMLInputElement).files?.[0],
       admission = this.admission();
     if (!file || !admission) return;
-    this.api.upload(admission._id, this.accessKey, file).subscribe({
+    const maxSizeMb = field.uploadConfig?.maxSizeMb || 5;
+    if (file.size > maxSizeMb * 1024 * 1024) {
+      this.error.set(`${field.name} must be ${maxSizeMb} MB or smaller.`);
+      return;
+    }
+    if (!this.allowedUploadMimeTypes(field).includes(file.type)) {
+      this.error.set(`The selected file type is not allowed for ${field.name}.`);
+      return;
+    }
+    this.error.set('');
+    this.api.upload(admission._id, this.accessKey, field.id, file).subscribe({
       next: ({ file: stored }) => this.setValue(field, stored, entry, index),
       error: (e) => this.fail(e),
     });
+  }
+  acceptFor(field: FormField) {
+    const categories = field.uploadConfig?.allowedTypes ||
+      (field.type === 'file' ? ['image', 'pdf', 'word'] : ['image']);
+    return categories
+      .flatMap((type) =>
+        type === 'image'
+          ? ['image/jpeg', 'image/png', 'image/webp']
+          : type === 'pdf'
+            ? ['application/pdf']
+            : [
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              ],
+      )
+      .join(',');
+  }
+  uploadHelp(field: FormField) {
+    const labels = (field.uploadConfig?.allowedTypes ||
+      (field.type === 'file' ? ['image', 'pdf', 'word'] : ['image']))
+      .map((type) => ({ image: 'JPG/PNG/WebP', pdf: 'PDF', word: 'DOC/DOCX' })[type])
+      .join(', ');
+    return `${labels} · Maximum ${field.uploadConfig?.maxSizeMb || 5} MB`;
   }
   save(next = false) {
     const admission = this.admission(),
@@ -266,6 +299,9 @@ export class DynamicAdmissionComponent {
   }
   private optionKey(field: FormField, index?: number) {
     return `${field.id}:${index ?? 'single'}`;
+  }
+  private allowedUploadMimeTypes(field: FormField) {
+    return this.acceptFor(field).split(',');
   }
   private readStored(): { id: string; key: string } | null {
     try {

@@ -1,5 +1,6 @@
 import { stableId } from '../lib/ids.js';
 import { slugify } from '../lib/slug.js';
+import { normalizeUploadConfig } from './upload-rules.js';
 
 export const FIELD_TYPES = [
   'text',
@@ -64,6 +65,7 @@ export function normalizeForm(input, existing = {}) {
                   ? field.searchConfig
                   : null,
               validation: normalizeValidation(field.validation),
+              uploadConfig: normalizeUploadConfig(field.type, field.uploadConfig),
               visibilityCondition: normalizeCondition(field.visibilityCondition),
             };
           },

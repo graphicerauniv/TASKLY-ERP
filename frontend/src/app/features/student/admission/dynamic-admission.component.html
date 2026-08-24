@@ -217,11 +217,12 @@
     } @else if (['file', 'image', 'signature'].includes(field.type)) {
       <input
         type="file"
-        [accept]="field.type === 'file' ? '.pdf,image/*' : 'image/*'"
+        [accept]="acceptFor(field)"
         (change)="upload(field, $event, entry, index)"
       />
+      <small class="upload-rules">{{ uploadHelp(field) }}</small>
       @if (value(field, entry)) {
-        <small class="uploaded">✓ File uploaded</small>
+        <small class="uploaded">✓ {{ $any(value(field, entry)).name || 'File uploaded' }}</small>
       }
     } @else {
       <input

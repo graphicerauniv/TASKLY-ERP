@@ -114,10 +114,16 @@ export class ApiService {
       { headers: { 'x-admission-key': key } },
     );
   }
-  upload(id: string, key: string, file: File): Observable<{ file: { name: string; url: string } }> {
+  upload(
+    id: string,
+    key: string,
+    fieldId: string,
+    file: File,
+  ): Observable<{ file: { name: string; key: string; url: string } }> {
     const data = new FormData();
+    data.append('fieldId', fieldId);
     data.append('file', file);
-    return this.http.post<{ file: { name: string; url: string } }>(
+    return this.http.post<{ file: { name: string; key: string; url: string } }>(
       `${API_BASE_URL}/public/admissions/${id}/upload`,
       data,
       { headers: { 'x-admission-key': key } },

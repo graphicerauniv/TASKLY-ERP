@@ -1,36 +1,19 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'node:path';
 import crypto from 'node:crypto';
-import fs from 'node:fs';
 import { config } from '../config.js';
 import { db, id, serialize } from '../db.js';
 import { accessKey, applicationNumber, hashKey } from '../lib/ids.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { activeForm } from '../services/form-definition.js';
 import { validateSubmission } from '../services/admission-validation.js';
+import { storeObject } from '../services/object-storage.js';
+import { allowedMimeTypes, extensionForMimeType } from '../services/upload-rules.js';
 
 export const publicRouter = express.Router();
-fs.mkdirSync(config.uploadDir, { recursive: true });
-const storage = multer.diskStorage({
-  destination: config.uploadDir,
-  filename: (request, file, done) =>
-    done(null, `${Date.now()}-${crypto.randomUUID()}${safeExtension(file.originalname)}`),
-});
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: config.maxUploadBytes },
-  fileFilter: (request, file, done) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-    done(
-      allowed.includes(file.mimetype)
-        ? null
-        : Object.assign(new Error('Only JPG, PNG, WebP, and PDF files are allowed.'), {
-            status: 400,
-          }),
-      allowed.includes(file.mimetype),
-    );
-  },
 });
 
 publicRouter.get(
@@ -149,12 +132,34 @@ publicRouter.post(
   upload.single('file'),
   asyncHandler(async (request, response) => {
     if (!request.file) return response.status(400).json({ message: 'Choose a file to upload.' });
+    const field = findField(request.admission.formSnapshot, request.body.fieldId);
+    if (!field || !['file', 'image', 'signature'].includes(field.type))
+      return response.status(400).json({ message: 'The upload field is invalid.' });
+    const allowed = allowedMimeTypes(field);
+    if (!allowed.has(request.file.mimetype))
+      return response.status(400).json({ message: 'This file type is not allowed for the field.' });
+    const fieldLimitMb = Math.min(
+      Number(field.uploadConfig?.maxSizeMb) || config.maxUploadMb,
+      config.maxUploadMb,
+    );
+    if (request.file.size > fieldLimitMb * 1024 * 1024)
+      return response
+        .status(400)
+        .json({ message: `The file must be ${fieldLimitMb} MB or smaller.` });
+    const key = `admissions/${request.admission._id}/${field.id}/${crypto.randomUUID()}${extensionForMimeType(request.file.mimetype)}`;
+    const stored = await storeObject({
+      key,
+      body: request.file.buffer,
+      contentType: request.file.mimetype,
+    });
     response.status(201).json({
       file: {
         name: request.file.originalname,
-        url: `/uploads/${request.file.filename}`,
+        key: stored.key,
+        url: stored.url,
         mimeType: request.file.mimetype,
         size: request.file.size,
+        storage: config.storage.driver,
       },
     });
   }),
@@ -242,8 +247,12 @@ function admissionForStudent(document) {
   delete value.accessKeyHash;
   return value;
 }
-function safeExtension(filename) {
-  const ext = path.extname(filename).toLowerCase();
-  return ['.jpg', '.jpeg', '.png', '.webp', '.pdf'].includes(ext) ? ext : '';
+function findField(form, fieldId) {
+  for (const section of form.sections || [])
+    for (const subsection of section.subsections || []) {
+      const field = subsection.fields?.find((candidate) => candidate.id === fieldId);
+      if (field) return field;
+    }
+  return null;
 }
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

@@ -34,6 +34,40 @@ test('removes disabled configuration from the published renderer', () => {
   );
 });
 
+test('normalizes upload rules for image and document fields', () => {
+  const form = normalizeForm({
+    name: 'Uploads',
+    sections: [
+      {
+        name: 'Documents',
+        subsections: [
+          {
+            name: 'Files',
+            fields: [
+              {
+                name: 'Photo',
+                type: 'image',
+                uploadConfig: { maxSizeMb: 2, allowedTypes: ['pdf'] },
+              },
+              {
+                name: 'Certificates',
+                type: 'file',
+                uploadConfig: { maxSizeMb: 8, allowedTypes: ['pdf', 'word'] },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  const [photo, certificates] = form.sections[0].subsections[0].fields;
+  assert.deepEqual(photo.uploadConfig, { maxSizeMb: 2, allowedTypes: ['image'] });
+  assert.deepEqual(certificates.uploadConfig, {
+    maxSizeMb: 8,
+    allowedTypes: ['pdf', 'word'],
+  });
+});
+
 test('validates required and repeatable admission responses', () => {
   const form = normalizeForm({
     name: 'Admission',

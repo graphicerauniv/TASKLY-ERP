@@ -330,7 +330,10 @@
               /></label>
               <label
                 ><span>Field type *</span
-                ><select [(ngModel)]="selected.type">
+                ><select
+                  [ngModel]="selected.type"
+                  (ngModelChange)="selected.type = $event; configureUpload(selected)"
+                >
                   @for (type of fieldTypes; track type[0]) {
                     <option [value]="type[0]">{{ type[1] }}</option>
                   }
@@ -370,6 +373,55 @@
               >
             </div>
           </section>
+
+          @if (['file', 'image', 'signature'].includes(selected.type) && selected.uploadConfig) {
+            <section class="dialog-section">
+              <h3>Upload settings</h3>
+              <div class="config-grid">
+                <label
+                  ><span>Maximum file size (MB)</span
+                  ><input
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    [(ngModel)]="selected.uploadConfig.maxSizeMb"
+                /></label>
+                <label class="wide"
+                  ><span>Allowed file types</span>
+                  <div class="toggle-grid upload-types">
+                    <label class="check"
+                      ><input
+                        type="checkbox"
+                        [checked]="uploadTypeEnabled(selected, 'image')"
+                        [disabled]="selected.type !== 'file'"
+                        (change)="toggleUploadType(selected, 'image', $any($event.target).checked)"
+                      />Images (JPG, PNG, WebP)</label
+                    >
+                    @if (selected.type === 'file') {
+                      <label class="check"
+                        ><input
+                          type="checkbox"
+                          [checked]="uploadTypeEnabled(selected, 'pdf')"
+                          (change)="toggleUploadType(selected, 'pdf', $any($event.target).checked)"
+                        />PDF documents</label
+                      >
+                      <label class="check"
+                        ><input
+                          type="checkbox"
+                          [checked]="uploadTypeEnabled(selected, 'word')"
+                          (change)="toggleUploadType(selected, 'word', $any($event.target).checked)"
+                        />Word documents (DOC, DOCX)</label
+                      >
+                    }
+                  </div>
+                </label>
+              </div>
+              <p class="dialog-section__hint">
+                The backend verifies these rules before sending the file to object storage. The
+                server-wide limit in MAX_UPLOAD_MB is always the upper limit.
+              </p>
+            </section>
+          }
 
           @if (['dropdown', 'radio', 'checkbox', 'multi-select'].includes(selected.type)) {
             <section class="dialog-section">
