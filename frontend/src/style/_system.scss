@@ -2220,7 +2220,6 @@ erp-admin-shell {
   letter-spacing: 0.11em;
 }
 
-.brand__toggle,
 .brand__mobile-close {
   display: grid;
   width: 34px;
@@ -2239,11 +2238,6 @@ erp-admin-shell {
 
 .brand__mobile-close {
   display: none;
-}
-
-.brand__toggle:hover {
-  color: var(--erp-blue-700);
-  background: #fff;
 }
 
 .sidebar__navigation {
@@ -2713,18 +2707,6 @@ erp-admin-shell {
   transition-delay: 55ms;
 }
 
-.shell--collapsed .brand__toggle {
-  position: static;
-  width: 0;
-  min-width: 0;
-  height: 34px;
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .shell--collapsed .brand {
   gap: 0;
 }
@@ -3059,19 +3041,9 @@ erp-admin-shell {
     pointer-events: auto !important;
   }
 
-  .brand__toggle {
-    display: none;
-  }
-
   .brand__mobile-close {
     display: grid;
     margin-left: auto;
-  }
-
-  .shell--collapsed .brand__toggle {
-    position: static;
-    border-radius: 9px;
-    box-shadow: none;
   }
 
   .shell--collapsed :is(.nav-link, .nav-button) {
