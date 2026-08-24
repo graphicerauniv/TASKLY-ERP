@@ -9,6 +9,7 @@ import {
 import {
   LucideArrowDown,
   LucideArrowUp,
+  LucideArrowRightLeft,
   LucideCopy,
   LucideDynamicIcon,
   LucideEllipsisVertical,
@@ -20,6 +21,7 @@ import {
   LucideSquarePlus,
   LucideTrash2,
   LucideEye,
+  LucideLogOut,
 } from '@lucide/angular';
 
 const ACTION_ICONS = {
@@ -34,6 +36,8 @@ const ACTION_ICONS = {
   'add-child': LucidePlus,
   delete: LucideTrash2,
   view: LucideEye,
+  transfer: LucideArrowRightLeft,
+  vacate: LucideLogOut,
 } as const;
 
 export type CompactActionIcon = keyof typeof ACTION_ICONS;

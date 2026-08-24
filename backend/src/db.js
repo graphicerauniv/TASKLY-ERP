@@ -46,6 +46,7 @@ export function serialize(document) {
 }
 
 async function ensureIndexes(databaseInstance) {
+  await migrateHostelFloors(databaseInstance);
   await Promise.all([
     databaseInstance.collection('admins').createIndex({ email: 1 }, { unique: true }),
     databaseInstance.collection('masterTypes').createIndex({ slug: 1 }, { unique: true }),
@@ -55,5 +56,67 @@ async function ensureIndexes(databaseInstance) {
       .collection('admissions')
       .createIndex({ applicationNumber: 1 }, { unique: true }),
     databaseInstance.collection('admissions').createIndex({ formId: 1, createdAt: -1 }),
+    databaseInstance.collection('hostels').createIndex({ code: 1 }, { unique: true }),
+    databaseInstance.collection('hostels').createIndex({ name: 1 }),
+    databaseInstance
+      .collection('hostelBlocks')
+      .createIndex({ hostelId: 1, name: 1 }, { unique: true }),
+    databaseInstance
+      .collection('hostelFloors')
+      .createIndex({ hostelId: 1, name: 1 }, { unique: true }),
+    databaseInstance
+      .collection('hostelRooms')
+      .createIndex({ hostelId: 1, roomNumber: 1 }, { unique: true }),
+    databaseInstance
+      .collection('hostelRoomConfigurations')
+      .createIndex({ roomId: 1, academicSession: 1 }, { unique: true }),
+    databaseInstance
+      .collection('hostelAllocations')
+      .createIndex(
+        { studentAdmissionId: 1, academicSession: 1 },
+        { unique: true, partialFilterExpression: { status: 'active' } },
+      ),
+    databaseInstance
+      .collection('hostelAllocations')
+      .createIndex(
+        { roomId: 1, bedNumber: 1, academicSession: 1 },
+        { unique: true, partialFilterExpression: { status: 'active' } },
+      ),
   ]);
+}
+
+async function migrateHostelFloors(databaseInstance) {
+  const floors = await databaseInstance.collection('hostelFloors').find({}).toArray();
+  const grouped = new Map();
+  for (const floor of floors) {
+    const key = `${String(floor.hostelId)}::${String(floor.name).trim().toLocaleLowerCase()}`;
+    grouped.set(key, [...(grouped.get(key) || []), floor]);
+  }
+  for (const matches of grouped.values()) {
+    const [canonical, ...duplicates] = matches;
+    await databaseInstance
+      .collection('hostelFloors')
+      .updateOne({ _id: canonical._id }, { $unset: { blockId: '', blockName: '' } });
+    if (!duplicates.length) continue;
+    const duplicateIds = duplicates.map((floor) => floor._id);
+    await Promise.all([
+      databaseInstance
+        .collection('hostelRooms')
+        .updateMany({ floorId: { $in: duplicateIds } }, { $set: { floorId: canonical._id } }),
+      databaseInstance
+        .collection('hostelAllocations')
+        .updateMany({ floorId: { $in: duplicateIds } }, { $set: { floorId: canonical._id } }),
+      databaseInstance.collection('hostelFloors').deleteMany({ _id: { $in: duplicateIds } }),
+    ]);
+  }
+  let indexes = [];
+  try {
+    indexes = await databaseInstance.collection('hostelFloors').indexes();
+  } catch (error) {
+    if (error.codeName !== 'NamespaceNotFound') throw error;
+  }
+  const oldIndex = indexes.find(
+    (index) => index.key?.blockId === 1 && index.key?.name === 1 && !index.key?.hostelId,
+  );
+  if (oldIndex) await databaseInstance.collection('hostelFloors').dropIndex(oldIndex.name);
 }

@@ -11,6 +11,7 @@ import { masterDataRouter } from './routes/master-data.routes.js';
 import { formsRouter } from './routes/forms.routes.js';
 import { publicRouter } from './routes/public.routes.js';
 import { admissionsRouter } from './routes/admissions.routes.js';
+import { hostelsRouter } from './routes/hostels.routes.js';
 
 export function createApp() {
   const app = express();
@@ -41,6 +42,7 @@ export function createApp() {
   app.use(`${config.apiPrefix}/master-data`, requireAdmin, masterDataRouter);
   app.use(`${config.apiPrefix}/forms`, requireAdmin, formsRouter);
   app.use(`${config.apiPrefix}/admissions`, requireAdmin, admissionsRouter);
+  app.use(`${config.apiPrefix}/hostels`, requireAdmin, hostelsRouter);
   app.use(notFound);
   app.use(errorHandler);
   return app;

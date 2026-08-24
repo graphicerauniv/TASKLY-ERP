@@ -18,6 +18,7 @@ import {
   LucideDatabase,
   LucideGlobe,
   LucideGraduationCap,
+  LucideHouse,
   LucideLandmark,
   LucideLayers,
   LucideLayoutDashboard,
@@ -57,6 +58,7 @@ import { filter } from 'rxjs';
     LucideDatabase,
     LucideGlobe,
     LucideGraduationCap,
+    LucideHouse,
     LucideLandmark,
     LucideLayers,
     LucideLayoutDashboard,
@@ -89,6 +91,7 @@ export class AdminShellComponent {
   readonly sidebarCollapsed = signal(false);
   readonly navigationSearch = signal('');
   readonly masterMenuOpen = signal(false);
+  readonly hostelMenuOpen = signal(false);
   readonly admissionMenuOpen = signal(false);
   readonly masterSearch = signal('');
   readonly currentModule = signal('Dashboard');
@@ -143,6 +146,7 @@ export class AdminShellComponent {
   }
   toggleMasterMenu() {
     this.admissionMenuOpen.set(false);
+    this.hostelMenuOpen.set(false);
     this.masterMenuOpen.update((open) => !open);
     if (!this.masterMenuOpen()) this.masterSearch.set('');
     if (this.masterMenuOpen()) {
@@ -153,17 +157,23 @@ export class AdminShellComponent {
   }
   toggleAdmissionMenu() {
     this.masterMenuOpen.set(false);
+    this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.update((open) => !open);
   }
   closeNavigation() {
     this.masterMenuOpen.set(false);
+    this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
     this.menuOpen.set(false);
   }
   closeFlyouts() {
     this.masterMenuOpen.set(false);
+    this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
     this.masterSearch.set('');
+  }
+  toggleHostelMenu() {
+    this.hostelMenuOpen.update((open) => !open);
   }
   matchesNavigation(label: string) {
     const query = this.navigationSearch().trim().toLocaleLowerCase();
@@ -171,7 +181,12 @@ export class AdminShellComponent {
   }
   @HostListener('document:keydown.escape')
   closeOnEscape() {
-    if (this.masterMenuOpen() || this.admissionMenuOpen() || this.menuOpen()) {
+    if (
+      this.masterMenuOpen() ||
+      this.hostelMenuOpen() ||
+      this.admissionMenuOpen() ||
+      this.menuOpen()
+    ) {
       this.closeNavigation();
       this.masterSearch.set('');
     }
@@ -180,7 +195,9 @@ export class AdminShellComponent {
   keepFocusInOpenPanel(event: Event) {
     const keyboardEvent = event as KeyboardEvent;
     if (!this.masterMenuOpen() && !this.admissionMenuOpen()) return;
-    const panel = this.host.nativeElement.querySelector<HTMLElement>('.master-flyout');
+    const panel = this.host.nativeElement.querySelector<HTMLElement>(
+      this.hostelMenuOpen() ? '.hostel-flyout' : '.master-flyout',
+    );
     const focusable = Array.from(
       panel?.querySelectorAll<HTMLElement>(
         'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',

@@ -2,7 +2,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from './runtime-config';
-import { Admission, AdmissionForm, MasterType, MasterValue } from './models';
+import {
+  Admission,
+  AdmissionForm,
+  Hostel,
+  HostelAllocation,
+  HostelBlock,
+  HostelFloor,
+  HostelOverview,
+  HostelRoom,
+  HostelStudentOption,
+  MasterType,
+  MasterValue,
+} from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -131,5 +143,153 @@ export class ApiService {
       data,
       { headers: { 'x-admission-key': key } },
     );
+  }
+  hostels(session = '') {
+    return this.http.get<{ items: Hostel[] }>(`${API_BASE_URL}/hostels`, {
+      params: session ? { session } : {},
+    });
+  }
+  createHostel(body: {
+    name: string;
+    type: Hostel['type'];
+    blockCount: number;
+    floorCount: number;
+    plannedRoomCount: number;
+  }) {
+    return this.http.post<{ item: Hostel }>(`${API_BASE_URL}/hostels`, body);
+  }
+  updateHostel(
+    id: string,
+    body: Partial<
+      Pick<Hostel, 'name' | 'type' | 'blockCount' | 'floorCount' | 'plannedRoomCount' | 'isActive'>
+    >,
+  ) {
+    return this.http.patch<{ item: Hostel }>(`${API_BASE_URL}/hostels/${id}`, body);
+  }
+  deleteHostel(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/hostels/${id}`);
+  }
+  hostelStructure(hostelId: string) {
+    return this.http.get<{ items: HostelBlock[]; floors: HostelFloor[] }>(
+      `${API_BASE_URL}/hostels/structure/list`,
+      { params: { hostelId } },
+    );
+  }
+  createHostelBlock(body: { hostelId: string; name: string }) {
+    return this.http.post<{ item: HostelBlock }>(`${API_BASE_URL}/hostels/blocks`, body);
+  }
+  updateHostelBlock(id: string, name: string) {
+    return this.http.patch<{ item: HostelBlock }>(`${API_BASE_URL}/hostels/blocks/${id}`, { name });
+  }
+  deleteHostelBlock(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/hostels/blocks/${id}`);
+  }
+  createHostelFloor(body: { hostelId: string; name: string }) {
+    return this.http.post<{ item: HostelFloor }>(`${API_BASE_URL}/hostels/floors`, body);
+  }
+  updateHostelFloor(id: string, name: string) {
+    return this.http.patch<{ item: HostelFloor }>(`${API_BASE_URL}/hostels/floors/${id}`, { name });
+  }
+  deleteHostelFloor(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/hostels/floors/${id}`);
+  }
+  hostelRooms(options: {
+    hostelId?: string;
+    blockId?: string;
+    floorId?: string;
+    block?: string;
+    floor?: string;
+    session?: string;
+  }) {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(options)) if (value) params = params.set(key, value);
+    return this.http.get<{ items: HostelRoom[] }>(`${API_BASE_URL}/hostels/rooms/options`, {
+      params,
+    });
+  }
+  updateHostelRoom(id: string, body: { roomType: string; capacity: number; isActive?: boolean }) {
+    return this.http.patch<{ item: HostelRoom }>(`${API_BASE_URL}/hostels/rooms/${id}`, body);
+  }
+  createHostelRoom(body: {
+    hostelId: string;
+    blockId: string;
+    floorId: string;
+    roomNumber: string;
+  }) {
+    return this.http.post<{ item: HostelRoom }>(`${API_BASE_URL}/hostels/rooms/manual`, body);
+  }
+  generateHostelRooms(body: {
+    hostelId: string;
+    blockId: string;
+    floorId: string;
+    prefix: string;
+    startNumber: number;
+    count: number;
+  }) {
+    return this.http.post<{ items: HostelRoom[] }>(`${API_BASE_URL}/hostels/rooms/generate`, body);
+  }
+  updateHostelRoomDetails(id: string, body: { roomNumber?: string; isActive?: boolean }) {
+    return this.http.patch<{ item: HostelRoom }>(
+      `${API_BASE_URL}/hostels/rooms/${id}/details`,
+      body,
+    );
+  }
+  deleteHostelRoom(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/hostels/rooms/${id}`);
+  }
+  hostelCapacityOptions() {
+    return this.http.get<{ seaters: number[]; roomTypes: string[] }>(
+      `${API_BASE_URL}/hostels/capacity/options`,
+    );
+  }
+  saveHostelRoomCapacity(
+    id: string,
+    body: { academicSession: string; capacity: number; roomType: string },
+  ) {
+    return this.http.put<{ item: HostelRoom }>(
+      `${API_BASE_URL}/hostels/rooms/${id}/capacity`,
+      body,
+    );
+  }
+  hostelStudents() {
+    return this.http.get<{ items: HostelStudentOption[] }>(
+      `${API_BASE_URL}/hostels/students/options`,
+    );
+  }
+  hostelAllocations(options: { session?: string; hostelId?: string; status?: string }) {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(options)) if (value) params = params.set(key, value);
+    return this.http.get<{ items: HostelAllocation[] }>(
+      `${API_BASE_URL}/hostels/allocations/list`,
+      { params },
+    );
+  }
+  createHostelAllocation(body: {
+    studentAdmissionId: string;
+    academicSession: string;
+    roomId: string;
+    bedNumber: number;
+  }) {
+    return this.http.post<{ item: HostelAllocation }>(`${API_BASE_URL}/hostels/allocations`, body);
+  }
+  vacateHostelAllocation(id: string, reason: string) {
+    return this.http.patch<{ item: HostelAllocation }>(
+      `${API_BASE_URL}/hostels/allocations/${id}/vacate`,
+      { reason },
+    );
+  }
+  transferHostelAllocation(
+    id: string,
+    body: { roomId: string; bedNumber: number; reason: string },
+  ) {
+    return this.http.patch<{ item: HostelAllocation }>(
+      `${API_BASE_URL}/hostels/allocations/${id}/transfer`,
+      body,
+    );
+  }
+  hostelOverview(session: string) {
+    return this.http.get<HostelOverview>(`${API_BASE_URL}/hostels/overview/summary`, {
+      params: session ? { session } : {},
+    });
   }
 }

@@ -6,6 +6,7 @@ import { DeleteAdmissionsComponent } from './delete-admissions/delete-admissions
 import { FormBuilderComponent } from './form-builder/form-builder.component';
 import { AdminShellComponent } from './layout/admin-shell.component';
 import { MasterDataComponent } from './master-data/master-data.component';
+import { HostelManagementComponent } from './hostel-management/hostel-management.component';
 
 /**
  * Admin routes share one shell and one router outlet.
@@ -25,13 +26,32 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./dashboard/dashboard.component').then((component) => component.DashboardComponent),
+          import('./dashboard/dashboard.component').then(
+            (component) => component.DashboardComponent,
+          ),
       },
       {
         path: 'master-data',
         pathMatch: 'full',
         redirectTo: 'master-data/custom',
       },
+      {
+        path: 'master-data/hostel',
+        pathMatch: 'full',
+        redirectTo: 'master-data/hostel/details',
+      },
+      ...[
+        ['details', 'details'],
+        ['structure', 'structure'],
+        ['rooms', 'rooms'],
+        ['capacity', 'capacity'],
+        ['allocation', 'allocation'],
+        ['overview', 'overview'],
+      ].map(([path, section]) => ({
+        path: `master-data/hostel/${path}`,
+        component: HostelManagementComponent,
+        data: { section },
+      })),
       {
         path: 'master-data/:typeSlug',
         component: MasterDataComponent,

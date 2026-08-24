@@ -11,6 +11,14 @@ export function errorHandler(error, request, response, next) {
     return response
       .status(409)
       .json({ message: 'A record with the same unique value already exists.' });
+  if (error.name === 'ZodError') {
+    const issue = error.issues?.[0];
+    const field = issue?.path?.length ? `${issue.path.join('.')}: ` : '';
+    return response.status(400).json({
+      message: `${field}${issue?.message || 'Invalid request data.'}`,
+      issues: error.issues || [],
+    });
+  }
   if (error.name === 'MulterError') return response.status(400).json({ message: error.message });
   const status = error.status || 500;
   if (status >= 500) console.error(error);

@@ -2533,7 +2533,8 @@ erp-admin-shell {
   letter-spacing: 0.1em;
 }
 
-.master-group a {
+.master-group a,
+.master-group__item {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) 16px;
   min-height: 48px;
@@ -2545,38 +2546,49 @@ erp-admin-shell {
   border-radius: 10px;
   color: var(--erp-text-strong);
   text-decoration: none;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
   transition:
     color var(--erp-duration-standard) ease-out,
     background-color var(--erp-duration-standard) ease-out,
     transform var(--erp-duration-standard) ease-out;
 }
 
-.master-group a:hover {
+.master-group a:hover,
+.master-group__item:hover {
   color: var(--erp-blue-700);
   background: var(--erp-blue-50);
   transform: translateX(2px);
 }
 
-.master-group a.active {
+.master-group a.active,
+.master-group__item[aria-expanded='true'] {
   color: var(--erp-blue-700);
   background: rgb(144 202 249 / 28%);
   border-color: rgb(144 202 249 / 38%);
 }
 
 .master-group a strong,
-.master-group a small {
+.master-group a small,
+.master-group__item strong,
+.master-group__item small {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.master-group a strong {
+.master-group a strong,
+.master-group__item strong {
   font-size: var(--erp-font-size-md);
   font-weight: var(--erp-weight-semibold);
 }
 
-.master-group a small {
+.master-group a small,
+.master-group__item small {
   margin-top: 1px;
   color: var(--erp-text-muted);
   font-size: var(--erp-font-caption);
@@ -2617,6 +2629,20 @@ erp-admin-shell {
 
 .admission-flyout {
   width: min(360px, calc(100vw - var(--erp-sidebar-width) - 16px));
+}
+
+.hostel-flyout {
+  left: calc(var(--erp-sidebar-width) + var(--erp-sidebar-panel-width));
+  width: min(390px, calc(100vw - var(--erp-sidebar-width) - var(--erp-sidebar-panel-width) - 16px));
+}
+
+.shell--collapsed .hostel-flyout {
+  left: calc(var(--erp-sidebar-collapsed-width) + var(--erp-sidebar-panel-width));
+}
+
+.shell--collapsed .sidebar:hover .hostel-flyout,
+.shell--collapsed .sidebar:focus-within .hostel-flyout {
+  left: calc(var(--erp-sidebar-width) + var(--erp-sidebar-panel-width));
 }
 
 .sidebar__footer {

@@ -1,0 +1,138 @@
+/* ERP-LOCAL-STYLE: Hostel configuration needs linked structure, room-generation grids,
+ * and a focused vacate dialog layout that are unique to this operational workspace. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.hostel-form-grid,
+.hostel-filter-grid,
+.hostel-allocation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+}
+
+.hostel-filter-grid,
+.hostel-allocation-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.hostel-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-admin-section-gap);
+}
+
+.hostel-inline-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--erp-space-3);
+  margin-bottom: var(--erp-space-4);
+}
+
+.hostel-inline-form .erp-field-stack {
+  min-width: 0;
+  flex: 1;
+}
+
+.hostel-section-gap {
+  margin-top: var(--erp-admin-section-gap);
+}
+
+.hostel-select {
+  width: min(420px, 100%);
+}
+
+.hostel-mode-picker {
+  display: flex;
+  gap: var(--erp-space-4);
+  margin-bottom: var(--erp-space-3);
+}
+
+.hostel-mode-picker label {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--erp-space-2);
+}
+
+.hostel-filter-action {
+  align-self: end;
+}
+
+.hostel-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--erp-space-2);
+  margin-top: var(--erp-space-4);
+}
+
+.hostel-editor-card,
+.hostel-overview-table {
+  margin-top: var(--erp-admin-section-gap);
+  margin-bottom: var(--erp-admin-section-gap);
+}
+
+.hostel-overview-filter {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--erp-space-3);
+}
+
+.hostel-overview-filter .erp-field-stack {
+  width: min(320px, 100%);
+}
+
+.hostel-dialog-layer {
+  position: fixed;
+  z-index: var(--erp-z-modal);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--erp-space-4);
+  background: var(--erp-backdrop);
+}
+
+.hostel-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+}
+
+.hostel-dialog {
+  position: relative;
+  width: min(100%, var(--erp-modal-width));
+  padding: var(--erp-card-padding);
+  background: var(--erp-surface-overlay);
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-overlay);
+  box-shadow: var(--erp-shadow-overlay);
+}
+
+@media (max-width: 1000px) {
+  .hostel-two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .hostel-filter-grid,
+  .hostel-allocation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .hostel-form-grid,
+  .hostel-filter-grid,
+  .hostel-allocation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hostel-form-actions,
+  .hostel-overview-filter,
+  .hostel-inline-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

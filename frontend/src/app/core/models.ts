@@ -99,3 +99,93 @@ export interface Admission {
   createdAt: string;
   submittedAt?: string;
 }
+
+export interface Hostel {
+  _id: string;
+  name: string;
+  code: string;
+  type: 'boys' | 'girls' | 'co-ed';
+  blockCount: number;
+  floorCount: number;
+  plannedRoomCount: number;
+  roomCount: number;
+  bedCount: number;
+  occupiedBeds: number;
+  isActive: boolean;
+}
+
+export interface HostelBlock {
+  _id: string;
+  hostelId: string;
+  hostelName: string;
+  name: string;
+  sortOrder: number;
+}
+
+export interface HostelFloor {
+  _id: string;
+  hostelId: string;
+  name: string;
+  sortOrder: number;
+}
+
+export interface HostelRoom {
+  _id: string;
+  hostelId: string;
+  hostelName: string;
+  blockId?: string;
+  blockIndex: number;
+  blockName: string;
+  floorId?: string;
+  floorIndex: number;
+  floorName: string;
+  roomIndex: number;
+  roomNumber: string;
+  roomType: string;
+  seater: string;
+  capacity: number;
+  beds: number[];
+  occupiedBeds: number[];
+  configuredForSession?: boolean;
+  isActive: boolean;
+}
+
+export interface HostelStudentOption {
+  _id: string;
+  applicationNumber: string;
+  name: string;
+}
+
+export interface HostelAllocation {
+  _id: string;
+  studentAdmissionId: string;
+  studentApplicationNumber: string;
+  studentName: string;
+  academicSession: string;
+  hostelId: string;
+  hostelName: string;
+  roomId: string;
+  blockId?: string;
+  blockName: string;
+  floorId?: string;
+  floorName: string;
+  roomNumber: string;
+  bedNumber: number;
+  status: 'active' | 'vacated';
+  allocatedAt: string;
+  vacatedAt?: string;
+  history: Array<Record<string, unknown>>;
+}
+
+export interface HostelOverview {
+  totals: { hostels: number; rooms: number; beds: number; occupied: number; available: number };
+  byHostel: Array<{
+    hostelId: string;
+    hostelName: string;
+    type: Hostel['type'];
+    rooms: number;
+    beds: number;
+    occupied: number;
+    available: number;
+  }>;
+}

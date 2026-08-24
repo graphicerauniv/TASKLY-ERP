@@ -1,0 +1,866 @@
+<erp-admin-page eyebrow="Hostel" [title]="pageTitle()" [description]="pageDescription()">
+  <button
+    page-actions
+    class="erp-button erp-button--secondary"
+    type="button"
+    (click)="loadHostels()"
+  >
+    Refresh
+  </button>
+
+  @if (message()) {
+    <p class="erp-notice erp-notice--success" role="status">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+  }
+
+  @if (section() === 'details') {
+    <section class="erp-card erp-card--padded">
+      <div class="erp-card__header">
+        <div>
+          <h2>{{ editingHostel() ? 'Edit hostel' : 'Add hostel' }}</h2>
+          <p>Enter the planned room count; created rooms are tracked separately.</p>
+        </div>
+      </div>
+      <div class="hostel-form-grid">
+        <label class="erp-field-stack"
+          ><span>Hostel name *</span
+          ><input
+            class="erp-control"
+            [(ngModel)]="hostelName"
+            placeholder="e.g. Nanda Devi Girls Hostel"
+        /></label>
+        <label class="erp-field-stack"
+          ><span>Hostel type *</span
+          ><select class="erp-control" [(ngModel)]="hostelType">
+            <option value="boys">Boys</option>
+            <option value="girls">Girls</option>
+            <option value="co-ed">Co-ed</option>
+          </select></label
+        >
+        <label class="erp-field-stack"
+          ><span>Number of blocks *</span
+          ><input
+            class="erp-control"
+            type="number"
+            min="0"
+            max="30"
+            [(ngModel)]="blockCount"
+            [disabled]="!!editingHostel()"
+        /></label>
+        <label class="erp-field-stack"
+          ><span>Number of floors *</span
+          ><input
+            class="erp-control"
+            type="number"
+            min="0"
+            max="30"
+            [(ngModel)]="floorCount"
+            [disabled]="!!editingHostel()"
+        /></label>
+        <label class="erp-field-stack"
+          ><span>Total number of rooms *</span
+          ><input
+            class="erp-control"
+            type="number"
+            min="0"
+            max="5000"
+            [(ngModel)]="plannedRoomCount"
+        /></label>
+      </div>
+      <div class="hostel-form-actions">
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          (click)="saveHostel()"
+          [disabled]="saving()"
+        >
+          {{ editingHostel() ? 'Save hostel' : 'Create hostel' }}
+        </button>
+        @if (editingHostel()) {
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="resetHostelForm()"
+          >
+            Cancel
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="erp-card erp-table-shell hostel-section-gap">
+      <div class="erp-table-toolbar">
+        <h2>
+          Configured hostels <small>{{ hostels().length }}</small>
+        </h2>
+      </div>
+      <div class="erp-table-shell__scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Hostel</th>
+              <th>Type</th>
+              <th>Blocks</th>
+              <th>Floors</th>
+              <th>Planned rooms</th>
+              <th>Created rooms</th>
+              <th>Status</th>
+              <th class="erp-table-shell__actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (hostel of hostels(); track hostel._id) {
+              <tr>
+                <td>
+                  <strong>{{ hostel.name }}</strong
+                  ><small>{{ hostel.code }}</small>
+                </td>
+                <td>{{ hostel.type }}</td>
+                <td>{{ hostel.blockCount }}</td>
+                <td>{{ hostel.floorCount || 0 }}</td>
+                <td>{{ hostel.plannedRoomCount || 0 }}</td>
+                <td>{{ hostel.roomCount }}</td>
+                <td>
+                  <span class="erp-status" [class.erp-status--neutral]="!hostel.isActive">{{
+                    hostel.isActive ? 'Active' : 'Disabled'
+                  }}</span>
+                </td>
+                <td class="erp-table-shell__actions">
+                  <erp-compact-action-menu
+                    [items]="hostelActions(hostel)"
+                    (selected)="handleHostelAction($event, hostel)"
+                  />
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="erp-empty-state">
+                  {{ loading() ? 'Loading…' : 'No hostels configured.' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (section() === 'structure') {
+    <section class="erp-card erp-card--padded">
+      <label class="erp-field-stack hostel-select"
+        ><span>Hostel *</span
+        ><select
+          class="erp-control"
+          [(ngModel)]="selectedHostelId"
+          (ngModelChange)="hostelSelectionChanged()"
+        >
+          <option value="">Select hostel</option>
+          @for (hostel of hostels(); track hostel._id) {
+            <option [value]="hostel._id">{{ hostel.name }}</option>
+          }
+        </select></label
+      >
+    </section>
+    <div class="hostel-two-column hostel-section-gap">
+      <section class="erp-card erp-card--padded">
+        <div class="erp-card__header">
+          <div>
+            <h2>Blocks</h2>
+            <p>Create the hostel's block list manually.</p>
+          </div>
+        </div>
+        <div class="hostel-inline-form">
+          <label class="erp-field-stack"
+            ><span>Block name *</span
+            ><input
+              class="erp-control"
+              [(ngModel)]="blockName"
+              placeholder="e.g. Main Block" /></label
+          ><button
+            class="erp-button erp-button--primary"
+            type="button"
+            (click)="saveBlock()"
+            [disabled]="saving()"
+          >
+            {{ editingBlock() ? 'Save name' : 'Add block' }}
+          </button>
+          @if (editingBlock()) {
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="cancelStructureEdit()"
+            >
+              Cancel
+            </button>
+          }
+        </div>
+        <div class="erp-table-shell__scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Block</th>
+                <th class="erp-table-shell__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (block of blocks(); track block._id) {
+                <tr>
+                  <td>
+                    <strong>{{ block.name }}</strong>
+                  </td>
+                  <td class="erp-table-shell__actions">
+                    <erp-compact-action-menu
+                      [items]="blockActions"
+                      (selected)="handleBlockAction($event, block)"
+                    />
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="2" class="erp-empty-state">No blocks created for this hostel.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="erp-card erp-card--padded">
+        <div class="erp-card__header">
+          <div>
+            <h2>Floors</h2>
+            <p>Create the hostel's floor list manually.</p>
+          </div>
+        </div>
+        <div class="hostel-inline-form">
+          <label class="erp-field-stack"
+            ><span>Floor name *</span
+            ><input class="erp-control" [(ngModel)]="floorName" placeholder="e.g. Ground Floor"
+          /></label>
+          <button
+            class="erp-button erp-button--primary"
+            type="button"
+            (click)="saveFloor()"
+            [disabled]="saving()"
+          >
+            {{ editingFloor() ? 'Save name' : 'Add floor' }}
+          </button>
+          @if (editingFloor()) {
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="cancelStructureEdit()"
+            >
+              Cancel
+            </button>
+          }
+        </div>
+        <div class="erp-table-shell__scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Floor</th>
+                <th class="erp-table-shell__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (floor of floors(); track floor._id) {
+                <tr>
+                  <td>
+                    <strong>{{ floor.name }}</strong>
+                  </td>
+                  <td class="erp-table-shell__actions">
+                    <erp-compact-action-menu
+                      [items]="floorActions"
+                      (selected)="handleFloorAction($event, floor)"
+                    />
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="2" class="erp-empty-state">No floors created for this hostel.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  }
+
+  @if (section() === 'rooms' || section() === 'capacity') {
+    <section class="erp-card erp-card--padded">
+      <div class="hostel-filter-grid">
+        @if (section() === 'capacity') {
+          <label class="erp-field-stack"
+            ><span>Academic session *</span
+            ><input
+              class="erp-control"
+              [(ngModel)]="academicSession"
+              list="hostel-session-options"
+              (change)="sessionChanged()"
+          /></label>
+        }
+        <label class="erp-field-stack"
+          ><span>Hostel *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="selectedHostelId"
+            (ngModelChange)="hostelSelectionChanged()"
+          >
+            <option value="">Select hostel</option>
+            @for (hostel of hostels(); track hostel._id) {
+              <option [value]="hostel._id">{{ hostel.name }}</option>
+            }
+          </select></label
+        >
+        <label class="erp-field-stack"
+          ><span>Block *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="selectedBlockId"
+            (ngModelChange)="blockSelectionChanged()"
+          >
+            <option value="">Select block</option>
+            @for (block of blocks(); track block._id) {
+              <option [value]="block._id">{{ block.name }}</option>
+            }
+          </select></label
+        >
+        <label class="erp-field-stack"
+          ><span>Floor *</span
+          ><select class="erp-control" [(ngModel)]="selectedFloorId">
+            <option value="">Select floor</option>
+            @for (floor of floorOptions(); track floor._id) {
+              <option [value]="floor._id">{{ floor.name }}</option>
+            }
+          </select></label
+        >
+      </div>
+    </section>
+
+    @if (section() === 'rooms') {
+      <section class="erp-card erp-card--padded hostel-section-gap">
+        <div class="erp-card__header">
+          <div>
+            <h2>Create rooms</h2>
+            <p>Create one room manually or generate a numbered sequence.</p>
+          </div>
+        </div>
+        <div class="hostel-mode-picker">
+          <label
+            ><input type="radio" name="roomMode" value="manual" [(ngModel)]="roomMode" />
+            Manual</label
+          ><label
+            ><input type="radio" name="roomMode" value="automatic" [(ngModel)]="roomMode" /> Auto
+            generate</label
+          >
+        </div>
+        @if (roomMode === 'manual') {
+          <div class="hostel-inline-form">
+            <label class="erp-field-stack"
+              ><span>Room number *</span
+              ><input
+                class="erp-control"
+                [(ngModel)]="roomNumber"
+                placeholder="e.g. A-101" /></label
+            ><button
+              class="erp-button erp-button--primary"
+              type="button"
+              (click)="saveRooms()"
+              [disabled]="saving()"
+            >
+              Create room
+            </button>
+          </div>
+        } @else {
+          <div class="hostel-filter-grid">
+            <label class="erp-field-stack"
+              ><span>Prefix</span
+              ><input class="erp-control" [(ngModel)]="roomPrefix" placeholder="e.g. A-" /></label
+            ><label class="erp-field-stack"
+              ><span>Start number *</span
+              ><input
+                class="erp-control"
+                type="number"
+                min="1"
+                [(ngModel)]="roomStartNumber" /></label
+            ><label class="erp-field-stack"
+              ><span>Number of rooms *</span
+              ><input
+                class="erp-control"
+                type="number"
+                min="1"
+                max="500"
+                [(ngModel)]="roomGenerationCount" /></label
+            ><button
+              class="erp-button erp-button--primary hostel-filter-action"
+              type="button"
+              (click)="saveRooms()"
+              [disabled]="saving()"
+            >
+              Generate rooms
+            </button>
+          </div>
+        }
+      </section>
+      @if (editingRoom()) {
+        <section class="erp-card erp-card--padded hostel-section-gap">
+          <div class="hostel-inline-form">
+            <label class="erp-field-stack"
+              ><span>Edit room number</span
+              ><input class="erp-control" [(ngModel)]="editedRoomNumber" /></label
+            ><button
+              class="erp-button erp-button--primary"
+              type="button"
+              (click)="saveRoomNumber()"
+            >
+              Save</button
+            ><button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="editingRoom.set(null); editedRoomNumber = ''"
+            >
+              Cancel
+            </button>
+          </div>
+        </section>
+      }
+    }
+
+    @if (section() === 'capacity' && capacityRoom(); as room) {
+      <section class="erp-card erp-card--padded hostel-section-gap">
+        <div class="erp-card__header">
+          <div>
+            <h2>Configure room {{ room.roomNumber }}</h2>
+            <p>This setting is saved for academic session {{ academicSession }}.</p>
+          </div>
+        </div>
+        <div class="hostel-form-grid">
+          <label class="erp-field-stack"
+            ><span>Room seater *</span
+            ><select class="erp-control" [(ngModel)]="capacityChoice">
+              @for (seater of savedSeaters(); track seater) {
+                <option [value]="seater">{{ seater }}-Seater</option>
+              }
+              <option value="custom">Custom</option>
+            </select></label
+          >
+          @if (capacityChoice === 'custom') {
+            <label class="erp-field-stack"
+              ><span>Custom capacity *</span
+              ><input
+                class="erp-control"
+                type="number"
+                min="1"
+                max="50"
+                [(ngModel)]="customCapacity"
+            /></label>
+          }
+          <label class="erp-field-stack"
+            ><span>Room type *</span
+            ><select class="erp-control" [(ngModel)]="roomTypeChoice">
+              @for (type of savedRoomTypes(); track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+              <option value="custom">Custom</option>
+            </select></label
+          >
+          @if (roomTypeChoice === 'custom') {
+            <label class="erp-field-stack"
+              ><span>Custom room type *</span
+              ><input class="erp-control" [(ngModel)]="customRoomType" placeholder="e.g. Deluxe AC"
+            /></label>
+          }
+        </div>
+        <div class="hostel-form-actions">
+          <button
+            class="erp-button erp-button--primary"
+            type="button"
+            (click)="saveCapacity()"
+            [disabled]="saving()"
+          >
+            Save capacity</button
+          ><button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="capacityRoom.set(null)"
+          >
+            Cancel
+          </button>
+        </div>
+      </section>
+    }
+
+    <section class="erp-card erp-table-shell hostel-section-gap">
+      <div class="erp-table-toolbar">
+        <h2>
+          Rooms <small>{{ filteredRooms().length }}</small>
+        </h2>
+      </div>
+      <div class="erp-table-shell__scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Room</th>
+              <th>Location</th>
+              <th>Room type</th>
+              <th>Seater</th>
+              @if (section() === 'capacity') {
+                <th>Session status</th>
+              }
+              <th>Status</th>
+              <th class="erp-table-shell__actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (room of filteredRooms(); track room._id) {
+              <tr>
+                <td>
+                  <strong>{{ room.roomNumber }}</strong>
+                </td>
+                <td>{{ room.blockName }} · {{ room.floorName }}</td>
+                <td>{{ room.roomType }}</td>
+                <td>{{ room.capacity ? room.capacity + ' beds' : 'Not assigned' }}</td>
+                @if (section() === 'capacity') {
+                  <td>
+                    <span
+                      class="erp-status"
+                      [class.erp-status--neutral]="!room.configuredForSession"
+                      >{{ room.configuredForSession ? 'Configured' : 'Not configured' }}</span
+                    >
+                  </td>
+                }
+                <td>
+                  <span class="erp-status" [class.erp-status--neutral]="!room.isActive">{{
+                    room.isActive ? 'Active' : 'Disabled'
+                  }}</span>
+                </td>
+                <td class="erp-table-shell__actions">
+                  <erp-compact-action-menu
+                    [items]="section() === 'rooms' ? roomActions(room) : capacityActions"
+                    (selected)="
+                      section() === 'rooms' ? handleRoomAction($event, room) : openCapacity(room)
+                    "
+                  />
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td [attr.colspan]="section() === 'capacity' ? 7 : 6" class="erp-empty-state">
+                  Select a hostel, block and floor to view rooms.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (section() === 'allocation') {
+    <section class="erp-card erp-card--padded">
+      <div class="erp-card__header">
+        <div>
+          <h2>{{ transferTarget() ? 'Transfer student' : 'Allocate student room' }}</h2>
+          <p>Only rooms configured for the selected session have beds available.</p>
+        </div>
+      </div>
+      @if (transferTarget(); as transfer) {
+        <p class="erp-notice erp-notice--success">
+          Transferring {{ transfer.studentName }} from {{ transfer.hostelName }} /
+          {{ transfer.roomNumber }} / Bed {{ transfer.bedNumber }}.
+        </p>
+      }
+      <div class="hostel-filter-grid">
+        <label class="erp-field-stack"
+          ><span>Academic session *</span
+          ><input
+            class="erp-control"
+            [(ngModel)]="academicSession"
+            list="hostel-session-options"
+            (change)="sessionChanged()" /></label
+        ><label class="erp-field-stack"
+          ><span>Student *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="selectedStudentId"
+            [disabled]="!!transferTarget()"
+          >
+            <option value="">Select submitted student</option>
+            @for (student of students(); track student._id) {
+              <option [value]="student._id" [disabled]="allocatedStudentIds().has(student._id)">
+                {{ student.name }} · {{ student.applicationNumber }}
+              </option>
+            }
+          </select></label
+        ><label class="erp-field-stack"
+          ><span>Hostel *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="selectedHostelId"
+            (ngModelChange)="hostelSelectionChanged()"
+          >
+            <option value="">Select hostel</option>
+            @for (hostel of hostels(); track hostel._id) {
+              @if (hostel.isActive) {
+                <option [value]="hostel._id">{{ hostel.name }}</option>
+              }
+            }
+          </select></label
+        ><label class="erp-field-stack"
+          ><span>Block</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="selectedBlockId"
+            (ngModelChange)="blockSelectionChanged()"
+          >
+            <option value="">All blocks</option>
+            @for (block of blocks(); track block._id) {
+              <option [value]="block._id">{{ block.name }}</option>
+            }
+          </select></label
+        ><label class="erp-field-stack"
+          ><span>Floor</span
+          ><select class="erp-control" [(ngModel)]="selectedFloorId">
+            <option value="">All floors</option>
+            @for (floor of floorOptions(); track floor._id) {
+              <option [value]="floor._id">{{ floor.name }}</option>
+            }
+          </select></label
+        ><label class="erp-field-stack"
+          ><span>Room *</span
+          ><select class="erp-control" [(ngModel)]="selectedRoomId" (ngModelChange)="roomChanged()">
+            <option value="">Select configured room</option>
+            @for (room of filteredRooms(); track room._id) {
+              @if (room.isActive && room.capacity && room.occupiedBeds.length < room.capacity) {
+                <option [value]="room._id">
+                  {{ room.roomNumber }} · {{ room.roomType }} ({{
+                    room.capacity - room.occupiedBeds.length
+                  }}
+                  free)
+                </option>
+              }
+            }
+          </select></label
+        ><label class="erp-field-stack"
+          ><span>Bed *</span
+          ><select class="erp-control" [(ngModel)]="selectedBedNumber" [disabled]="!selectedRoomId">
+            <option [ngValue]="null">Select available bed</option>
+            @for (bed of availableBeds(); track bed) {
+              <option [ngValue]="bed">Bed {{ bed }}</option>
+            }
+          </select></label
+        >
+        @if (transferTarget()) {
+          <label class="erp-field-stack"
+            ><span>Transfer reason</span
+            ><input class="erp-control" [(ngModel)]="transferReason" placeholder="Optional reason"
+          /></label>
+        }
+      </div>
+      <div class="hostel-form-actions">
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          (click)="createOrTransferAllocation()"
+          [disabled]="saving()"
+        >
+          {{ transferTarget() ? 'Confirm transfer' : 'Allocate room' }}
+        </button>
+        @if (transferTarget()) {
+          <button class="erp-button erp-button--secondary" type="button" (click)="cancelTransfer()">
+            Cancel transfer
+          </button>
+        }
+      </div>
+    </section>
+    <section class="erp-card erp-table-shell hostel-section-gap">
+      <div class="erp-table-toolbar">
+        <h2>
+          Active allocations <small>{{ allocations().length }}</small>
+        </h2>
+      </div>
+      <div class="erp-table-shell__scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Session</th>
+              <th>Hostel</th>
+              <th>Room / Bed</th>
+              <th>Allocated</th>
+              <th class="erp-table-shell__actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (allocation of allocations(); track allocation._id) {
+              <tr>
+                <td>
+                  <strong>{{ allocation.studentName }}</strong
+                  ><small>{{ allocation.studentApplicationNumber }}</small>
+                </td>
+                <td>{{ allocation.academicSession }}</td>
+                <td>
+                  {{ allocation.hostelName
+                  }}<small>{{ allocation.blockName }} · {{ allocation.floorName }}</small>
+                </td>
+                <td>{{ allocation.roomNumber }} · Bed {{ allocation.bedNumber }}</td>
+                <td>{{ allocation.allocatedAt | date: 'mediumDate' }}</td>
+                <td class="erp-table-shell__actions">
+                  <erp-compact-action-menu
+                    [items]="allocationActions"
+                    (selected)="handleAllocationAction($event, allocation)"
+                  />
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="erp-empty-state">
+                  No active allocations for this hostel and session.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (section() === 'overview') {
+    <section class="erp-card erp-card--padded hostel-overview-filter">
+      <label class="erp-field-stack"
+        ><span>Academic session</span
+        ><input
+          class="erp-control"
+          [(ngModel)]="academicSession"
+          list="hostel-session-options"
+          (change)="sessionChanged()" /></label
+      ><button class="erp-button erp-button--secondary" type="button" (click)="loadOverview()">
+        Refresh overview
+      </button>
+    </section>
+    @if (overview(); as summary) {
+      <div class="erp-kpi-grid hostel-section-gap">
+        <article class="erp-kpi-card">
+          <div>
+            <small>Active hostels</small><strong>{{ summary.totals.hostels }}</strong>
+          </div>
+        </article>
+        <article class="erp-kpi-card">
+          <div>
+            <small>Total rooms</small><strong>{{ summary.totals.rooms }}</strong>
+          </div>
+        </article>
+        <article class="erp-kpi-card">
+          <div>
+            <small>Occupied beds</small><strong>{{ summary.totals.occupied }}</strong>
+          </div>
+        </article>
+        <article class="erp-kpi-card">
+          <div>
+            <small>Available beds</small><strong>{{ summary.totals.available }}</strong>
+          </div>
+        </article>
+      </div>
+      <section class="erp-card erp-table-shell hostel-section-gap">
+        <div class="erp-table-toolbar"><h2>Hostel occupancy</h2></div>
+        <div class="erp-table-shell__scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Hostel</th>
+                <th>Type</th>
+                <th>Rooms</th>
+                <th>Total beds</th>
+                <th>Occupied</th>
+                <th>Available</th>
+                <th>Occupancy</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of summary.byHostel; track item.hostelId) {
+                <tr>
+                  <td>
+                    <strong>{{ item.hostelName }}</strong>
+                  </td>
+                  <td>{{ item.type }}</td>
+                  <td>{{ item.rooms }}</td>
+                  <td>{{ item.beds }}</td>
+                  <td>{{ item.occupied }}</td>
+                  <td>{{ item.available }}</td>
+                  <td>
+                    {{ item.beds ? ((item.occupied * 100) / item.beds | number: '1.0-0') : 0 }}%
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="erp-empty-state">No active hostel capacity available.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+
+  <datalist id="hostel-session-options">
+    @for (session of sessionOptions(); track session) {
+      <option [value]="session"></option>
+    }
+  </datalist>
+</erp-admin-page>
+
+@if (vacateTarget(); as allocation) {
+  <div class="hostel-dialog-layer">
+    <button
+      class="hostel-dialog-backdrop"
+      type="button"
+      aria-label="Cancel vacating room"
+      (click)="vacateTarget.set(null)"
+    ></button>
+    <section
+      class="hostel-dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="vacate-title"
+    >
+      <div class="erp-card__header">
+        <div>
+          <h2 id="vacate-title">Vacate room?</h2>
+          <p>
+            This releases {{ allocation.roomNumber }} / Bed {{ allocation.bedNumber }} for another
+            student.
+          </p>
+        </div>
+      </div>
+      <label class="erp-field-stack"
+        ><span>Reason</span
+        ><textarea
+          class="erp-control"
+          rows="3"
+          [(ngModel)]="vacateReason"
+          placeholder="Graduated, withdrawn, room transfer…"
+        ></textarea>
+      </label>
+      <div class="hostel-form-actions">
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="vacateTarget.set(null)"
+        >
+          Cancel</button
+        ><button
+          class="erp-button erp-button--danger"
+          type="button"
+          (click)="confirmVacate()"
+          [disabled]="saving()"
+        >
+          Confirm vacate
+        </button>
+      </div>
+    </section>
+  </div>
+}
