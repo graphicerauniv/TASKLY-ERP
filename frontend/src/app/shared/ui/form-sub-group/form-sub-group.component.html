@@ -11,7 +11,13 @@
     }
   </span>
   <span class="erp-form-subgroup__meta">
-    @if (requiredCount()) {
+    @if (complete()) {
+      <svg lucideCheck size="16" aria-hidden="true"></svg>
+      Complete
+    } @else if (remainingRequired()) {
+      <svg lucideAlertTriangle size="15" aria-hidden="true"></svg>
+      {{ remainingRequired() }} required remaining
+    } @else if (requiredCount()) {
       {{ requiredCount() }} required
     } @else {
       {{ fieldCount() }} fields

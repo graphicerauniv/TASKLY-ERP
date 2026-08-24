@@ -13,6 +13,7 @@ export class FormActionBarComponent {
   readonly showSaveDraft = input(true);
   readonly saving = input(false);
   readonly primaryLabel = input('Save & Continue');
+  readonly primaryDisabled = input(false);
   readonly back = output<void>();
   readonly saveDraft = output<void>();
   readonly primary = output<void>();

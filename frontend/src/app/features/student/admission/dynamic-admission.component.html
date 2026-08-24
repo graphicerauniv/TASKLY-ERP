@@ -59,6 +59,17 @@
       (sectionsRequested)="requestSections()"
     />
 
+    <erp-admission-journey-rail
+      [items]="sectionNavigationItems()"
+      [currentIndex]="activeIndex()"
+      [progress]="progressPercent()"
+      [currentProgress]="
+        completedRequiredFields() + ' of ' + requiredFieldTotal() + ' required fields completed'
+      "
+      (sectionSelected)="goToStep($event)"
+      (allSectionsRequested)="requestSections()"
+    />
+
     @if (message()) {
       <p class="erp-notice erp-notice--success">{{ message() }}</p>
     }
@@ -66,8 +77,51 @@
       <p class="erp-notice erp-notice--error">{{ error() }}</p>
     }
 
-    <erp-admission-form-workspace>
-      <div workspace-main>
+    @if (reviewMode()) {
+      <section class="erp-admission-review" aria-labelledby="admission-review-title">
+        <header>
+          <span>Final review</span>
+          <h2 id="admission-review-title">Review your application</h2>
+          <p>Check every configured section before submitting the application.</p>
+        </header>
+        <div class="erp-admission-review__list">
+          @for (item of sectionNavigationItems(); track item.id) {
+            <article
+              [class.erp-admission-review__item--attention]="
+                requiredMissingFields(current.sections[item.index]) > 0
+              "
+            >
+              <span class="erp-admission-review__status">
+                @if (requiredMissingFields(current.sections[item.index]) > 0) {
+                  <svg lucideAlertTriangle size="18" aria-hidden="true"></svg>
+                } @else {
+                  <svg lucideCheck size="18" aria-hidden="true"></svg>
+                }
+              </span>
+              <div>
+                <strong>{{ item.title }}</strong>
+                <small>
+                  @if (requiredMissingFields(current.sections[item.index]) > 0) {
+                    {{ requiredMissingFields(current.sections[item.index]) }} required fields
+                    pending
+                  } @else {
+                    Complete
+                  }
+                </small>
+              </div>
+              <button
+                class="erp-button erp-button--secondary erp-button--compact"
+                type="button"
+                (click)="goToStep(item.index)"
+              >
+                Edit
+              </button>
+            </article>
+          }
+        </div>
+      </section>
+    } @else {
+      <div class="erp-guided-form-workspace">
         <erp-dynamic-section-renderer
           [sectionNumber]="activeSectionNumber()"
           [title]="section()?.name || 'Admission details'"
@@ -76,8 +130,8 @@
             'Complete this section carefully. Your progress can be saved anytime.'
           "
           [icon]="stepIconName(section()?.name || '')"
-          [completedFields]="completedFields()"
-          [totalFields]="totalFields()"
+          [completedFields]="completedRequiredFields()"
+          [totalFields]="requiredFieldTotal()"
         >
           @for (sub of visibleSubsections(); track sub.id) {
             <erp-form-sub-group
@@ -85,6 +139,8 @@
               [description]="sub.description"
               [fieldCount]="fieldCount(sub)"
               [requiredCount]="requiredFieldCount(sub)"
+              [remainingRequired]="subsectionRequiredMissing(sub)"
+              [complete]="requiredFieldCount(sub) > 0 && subsectionRequiredMissing(sub) === 0"
               [open]="subsectionOpen(sub.id)"
               (toggled)="toggleSubsection(sub.id)"
             >
@@ -155,22 +211,15 @@
           }
         </erp-dynamic-section-renderer>
       </div>
-
-      <erp-form-section-navigator
-        workspace-navigator
-        [items]="sectionNavigationItems()"
-        [completedCount]="completedSectionCount()"
-        [totalCount]="current.sections.length"
-        (sectionSelected)="goToStep($event)"
-      />
-    </erp-admission-form-workspace>
+    }
 
     <erp-form-action-bar
       [saveStatus]="saveStatusText()"
-      [showBack]="activeIndex() > 0"
+      [showBack]="activeIndex() > 0 || reviewMode()"
       [saving]="saving()"
       [primaryLabel]="primaryActionLabel()"
-      (back)="previous()"
+      [primaryDisabled]="reviewMode() && applicationMissingRequired() > 0"
+      (back)="backAction()"
       (saveDraft)="save()"
       (primary)="primaryAction()"
     />

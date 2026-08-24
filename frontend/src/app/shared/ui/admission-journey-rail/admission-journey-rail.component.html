@@ -1,0 +1,84 @@
+<section class="erp-journey" aria-label="Guided application path">
+  <div class="erp-journey__mobile">
+    <div>
+      <strong>Section {{ currentIndex() + 1 }} of {{ items().length }}</strong>
+      <span>{{ progress() }}% complete</span>
+    </div>
+    <div class="erp-journey__mobile-progress" role="progressbar" [attr.aria-valuenow]="progress()">
+      <span [style.width.%]="progress()"></span>
+    </div>
+    <button
+      class="erp-button erp-button--secondary"
+      type="button"
+      (click)="allSectionsRequested.emit()"
+    >
+      <svg lucideListTree size="17" aria-hidden="true"></svg>
+      All sections
+    </button>
+  </div>
+
+  <div class="erp-journey__desktop">
+    @if (items().length > 6 && items().length <= 12) {
+      <button
+        class="erp-journey__scroll erp-journey__scroll--left"
+        type="button"
+        aria-label="Previous sections"
+        (click)="scroll(-1)"
+      >
+        <svg lucideChevronLeft size="18" aria-hidden="true"></svg>
+      </button>
+    }
+    <div
+      #railViewport
+      class="erp-journey__viewport"
+      [class.erp-journey__viewport--scrollable]="items().length > 6 && items().length <= 12"
+    >
+      <div class="erp-journey__track" [class.erp-journey__track--compact]="items().length > 6">
+        @for (item of displayedItems(); track item.id; let last = $last) {
+          <button
+            class="erp-journey-step"
+            type="button"
+            [class.erp-journey-step--complete]="item.state === 'complete'"
+            [class.erp-journey-step--current]="item.state === 'current'"
+            [class.erp-journey-step--attention]="item.state === 'attention'"
+            (click)="sectionSelected.emit(item.index)"
+          >
+            <span class="erp-journey-step__node">
+              @if (item.state === 'complete') {
+                <svg lucideCheck size="17" aria-hidden="true"></svg>
+              } @else if (item.state === 'attention') {
+                <svg lucideAlertTriangle size="15" aria-hidden="true"></svg>
+              } @else {
+                {{ item.index + 1 }}
+              }
+            </span>
+            @if (!last) {
+              <span class="erp-journey-step__connector" aria-hidden="true"></span>
+            }
+            <span class="erp-journey-step__number">{{ sectionNumber(item.index) }}</span>
+            <strong>{{ item.title }}</strong>
+            <small>{{
+              item.state === 'current' && currentProgress() ? currentProgress() : item.status
+            }}</small>
+          </button>
+        }
+      </div>
+    </div>
+    @if (items().length > 6 && items().length <= 12) {
+      <button
+        class="erp-journey__scroll erp-journey__scroll--right"
+        type="button"
+        aria-label="Next sections"
+        (click)="scroll(1)"
+      >
+        <svg lucideChevronRight size="18" aria-hidden="true"></svg>
+      </button>
+    }
+    @if (items().length > 6) {
+      <button class="erp-journey__all" type="button" (click)="allSectionsRequested.emit()">
+        <svg lucideListTree size="17" aria-hidden="true"></svg>
+        {{ items().length > 12 ? 'View all ' + items().length + ' sections' : 'All sections' }}
+      </button>
+    }
+  </div>
+</section>

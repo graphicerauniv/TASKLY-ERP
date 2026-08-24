@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { LucideListTree } from '@lucide/angular';
 
 @Component({
   selector: 'erp-form-progress-header',
-  imports: [LucideListTree],
   templateUrl: './form-progress-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -62,6 +62,9 @@ export class ApiService {
   saveForm(form: AdmissionForm) {
     return this.http.put<{ item: AdmissionForm }>(`${API_BASE_URL}/forms/${form._id}`, form);
   }
+  deleteForm(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/forms/${id}`);
+  }
   admissions() {
     return this.http.get<{ items: Admission[] }>(`${API_BASE_URL}/admissions`);
   }

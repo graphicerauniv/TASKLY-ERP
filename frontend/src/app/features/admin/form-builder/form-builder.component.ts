@@ -209,7 +209,7 @@ export class FormBuilderComponent {
   handleFormAction(action: string) {
     if (action !== 'delete') return;
     const form = this.form();
-    if (!form) return;
+    if (!form?._id) return;
     this.deleteError.set('');
     this.deleteDialog.set({
       kind: 'form',
@@ -648,9 +648,7 @@ export class FormBuilderComponent {
           }
         },
         error: (error) => {
-          this.deleteError.set(
-            error.error?.message || 'Unable to delete this form. Try again.',
-          );
+          this.deleteError.set(error.error?.message || 'Unable to delete this form. Try again.');
           this.deleting.set(false);
         },
       });

@@ -31,10 +31,7 @@ import {
           <span class="erp-status" [class.erp-status--draft]="activeForm.status !== 'published'">
             {{ activeForm.status }}
           </span>
-          <erp-compact-action-menu
-            [items]="formActions"
-            (selected)="formAction.emit($event)"
-          />
+          <erp-compact-action-menu [items]="formActions" (selected)="formAction.emit($event)" />
         }
       </div>
       <span class="toolbar__spacer"></span>

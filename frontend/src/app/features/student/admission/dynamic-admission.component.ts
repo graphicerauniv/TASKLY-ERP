@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucideCheck } from '@lucide/angular';
+import { LucideAlertTriangle, LucideCheck } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
 import {
   Admission,
@@ -11,12 +11,11 @@ import {
   MasterValue,
   VisibilityCondition,
 } from '../../../core/models';
-import { AdmissionFormWorkspaceComponent } from '../../../shared/ui/admission-form-workspace/admission-form-workspace.component';
+import { AdmissionJourneyRailComponent } from '../../../shared/ui/admission-journey-rail/admission-journey-rail.component';
 import { DynamicFieldRendererComponent } from '../../../shared/ui/dynamic-field-renderer/dynamic-field-renderer.component';
 import { DynamicSectionRendererComponent } from '../../../shared/ui/dynamic-section-renderer/dynamic-section-renderer.component';
 import { FormActionBarComponent } from '../../../shared/ui/form-action-bar/form-action-bar.component';
 import { FormProgressHeaderComponent } from '../../../shared/ui/form-progress-header/form-progress-header.component';
-import { FormSectionNavigatorComponent } from '../../../shared/ui/form-section-navigator/form-section-navigator.component';
 import { FormSubGroupComponent } from '../../../shared/ui/form-sub-group/form-sub-group.component';
 import { FormSectionNavigationItem } from '../../../shared/ui/form-workflow.models';
 import { MobileSectionNavigatorSheetComponent } from '../../../shared/ui/mobile-section-navigator-sheet/mobile-section-navigator-sheet.component';
@@ -26,12 +25,12 @@ import { MobileSectionNavigatorSheetComponent } from '../../../shared/ui/mobile-
   imports: [
     RouterLink,
     LucideCheck,
-    AdmissionFormWorkspaceComponent,
+    LucideAlertTriangle,
+    AdmissionJourneyRailComponent,
     DynamicFieldRendererComponent,
     DynamicSectionRendererComponent,
     FormActionBarComponent,
     FormProgressHeaderComponent,
-    FormSectionNavigatorComponent,
     FormSubGroupComponent,
     MobileSectionNavigatorSheetComponent,
   ],
@@ -53,6 +52,7 @@ export class DynamicAdmissionComponent {
   readonly error = signal('');
   readonly dirty = signal(false);
   readonly mobileNavigatorOpen = signal(false);
+  readonly reviewMode = signal(false);
   private accessKey = '';
   constructor() {
     this.initialize();
@@ -132,7 +132,11 @@ export class DynamicAdmissionComponent {
         const entries = this.entries(sub);
         for (const entry of entries) {
           for (const field of sub.fields) {
-            if (field.isActive && this.visible(field, entry) && this.hasValue(this.value(field, entry))) {
+            if (
+              field.isActive &&
+              this.visible(field, entry) &&
+              this.hasValue(this.value(field, entry))
+            ) {
               completed += 1;
             }
           }
@@ -166,9 +170,44 @@ export class DynamicAdmissionComponent {
       const entries = sub.isRepeatable ? this.entries(sub) : [this.admission()?.responses || {}];
       for (const entry of entries.length ? entries : [{}]) {
         for (const field of sub.fields) {
-          if (field.isActive && field.isRequired && this.visible(field, entry) && !this.hasValue(entry[field.id])) {
+          if (
+            field.isActive &&
+            field.isRequired &&
+            this.visible(field, entry) &&
+            !this.hasValue(entry[field.id])
+          ) {
             missing += 1;
           }
+        }
+      }
+    }
+    return missing;
+  }
+  requiredFieldTotal(section = this.section()) {
+    if (!section) return 0;
+    let total = 0;
+    for (const sub of section.subsections) {
+      if (!this.matches(sub.visibilityCondition, this.admission()?.responses || {})) continue;
+      const multiplier = sub.isRepeatable ? Math.max(1, this.entries(sub).length) : 1;
+      total += sub.fields.filter((field) => field.isActive && field.isRequired).length * multiplier;
+    }
+    return total;
+  }
+  completedRequiredFields(section = this.section()) {
+    return Math.max(0, this.requiredFieldTotal(section) - this.requiredMissingFields(section));
+  }
+  subsectionRequiredMissing(sub: FormSubsection) {
+    let missing = 0;
+    const entries = sub.isRepeatable ? this.entries(sub) : [this.admission()?.responses || {}];
+    for (const entry of entries.length ? entries : [{}]) {
+      for (const field of sub.fields) {
+        if (
+          field.isActive &&
+          field.isRequired &&
+          this.visible(field, entry) &&
+          !this.hasValue(entry[field.id])
+        ) {
+          missing += 1;
         }
       }
     }
@@ -185,7 +224,11 @@ export class DynamicAdmissionComponent {
   sectionState(index: number, section?: FormSection) {
     const currentSection = section || this.form()?.sections[index];
     if (index === this.activeIndex()) return 'current';
-    if (currentSection && this.requiredMissingFields(currentSection) && index < this.activeIndex()) {
+    if (
+      currentSection &&
+      this.requiredMissingFields(currentSection) &&
+      index < this.activeIndex()
+    ) {
       return 'attention';
     }
     if (index < this.activeIndex()) return 'complete';
@@ -215,14 +258,41 @@ export class DynamicAdmissionComponent {
     return this.message() || 'Draft saved just now';
   }
   primaryActionLabel() {
+    if (this.reviewMode()) return this.embedded() ? 'Save Student Record' : 'Submit Application';
     const finalSection = this.activeIndex() === (this.form()?.sections.length || 1) - 1;
-    if (!finalSection) return 'Save & Continue';
-    return this.embedded() ? 'Save Student Record' : 'Submit Application';
+    return finalSection ? 'Review Application' : 'Save & Continue';
   }
   primaryAction() {
+    if (this.reviewMode()) {
+      if (!this.applicationMissingRequired()) this.submit();
+      return;
+    }
+    const missing = this.requiredMissingFields();
+    if (missing) {
+      this.error.set(`Complete ${missing} required field${missing === 1 ? '' : 's'} to continue.`);
+      const firstIncomplete = this.visibleSubsections().find(
+        (sub) => this.subsectionRequiredMissing(sub) > 0,
+      );
+      if (firstIncomplete) this.openSubsectionIds.set(new Set([firstIncomplete.id]));
+      return;
+    }
+    this.error.set('');
     const finalSection = this.activeIndex() === (this.form()?.sections.length || 1) - 1;
-    if (finalSection) this.submit();
+    if (finalSection) this.reviewMode.set(true);
     else this.save(true);
+  }
+  applicationMissingRequired() {
+    return (this.form()?.sections || []).reduce(
+      (total, section) => total + this.requiredMissingFields(section),
+      0,
+    );
+  }
+  backAction() {
+    if (this.reviewMode()) {
+      this.reviewMode.set(false);
+      return;
+    }
+    this.previous();
   }
   value(field: FormField, entry?: Record<string, unknown>) {
     return (entry || this.admission()?.responses || {})[field.id];
@@ -302,12 +372,7 @@ export class DynamicAdmissionComponent {
         this.optionsState.update((v) => ({ ...v, [this.optionKey(field, index)]: items })),
       );
   }
-  searchOptions(
-    field: FormField,
-    query: string,
-    entry?: Record<string, unknown>,
-    index?: number,
-  ) {
+  searchOptions(field: FormField, query: string, entry?: Record<string, unknown>, index?: number) {
     this.loadOptions(field, entry, index, query);
   }
   upload(field: FormField, file: File, entry?: Record<string, unknown>, index?: number) {
@@ -329,7 +394,8 @@ export class DynamicAdmissionComponent {
     });
   }
   acceptFor(field: FormField) {
-    const categories = field.uploadConfig?.allowedTypes ||
+    const categories =
+      field.uploadConfig?.allowedTypes ||
       (field.type === 'file' ? ['image', 'pdf', 'word'] : ['image']);
     return categories
       .flatMap((type) =>
@@ -416,6 +482,7 @@ export class DynamicAdmissionComponent {
   goToStep(index: number) {
     if (index === this.activeIndex()) return;
     this.activeIndex.set(index);
+    this.reviewMode.set(false);
     this.closeMobileNavigator();
     this.loadSectionOptions();
     this.resetOpenSubsections();
@@ -443,7 +510,12 @@ export class DynamicAdmissionComponent {
     return sub.fields.filter((field) => field.isActive && field.isRequired).length;
   }
   private hasValue(value: unknown) {
-    return value !== null && value !== undefined && value !== '' && (!Array.isArray(value) || value.length > 0);
+    return (
+      value !== null &&
+      value !== undefined &&
+      value !== '' &&
+      (!Array.isArray(value) || value.length > 0)
+    );
   }
   subsectionOpen(id: string) {
     return this.openSubsectionIds().has(id);
@@ -457,7 +529,9 @@ export class DynamicAdmissionComponent {
     });
   }
   private resetOpenSubsections() {
-    const first = this.visibleSubsections()[0]?.id;
+    const visible = this.visibleSubsections();
+    const first =
+      visible.find((sub) => this.subsectionRequiredMissing(sub) > 0)?.id || visible[0]?.id;
     this.openSubsectionIds.set(new Set(first ? [first] : []));
   }
   private loadSubsectionOptions(

@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { LucideChevronDown } from '@lucide/angular';
+import { LucideAlertTriangle, LucideCheck, LucideChevronDown } from '@lucide/angular';
 
 @Component({
   selector: 'erp-form-sub-group',
-  imports: [LucideChevronDown],
+  imports: [LucideAlertTriangle, LucideCheck, LucideChevronDown],
   templateUrl: './form-sub-group.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -16,6 +16,8 @@ export class FormSubGroupComponent {
   readonly description = input('');
   readonly fieldCount = input(0);
   readonly requiredCount = input(0);
+  readonly remainingRequired = input(0);
+  readonly complete = input(false);
   readonly open = input(false);
   readonly toggled = output<void>();
 }

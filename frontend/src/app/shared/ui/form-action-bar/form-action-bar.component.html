@@ -1,12 +1,14 @@
 <footer class="erp-form-action-bar">
-  <span class="erp-form-action-bar__status" aria-live="polite">{{ saveStatus() }}</span>
-  <div class="erp-form-action-bar__actions">
+  <div class="erp-form-action-bar__previous">
     @if (showBack()) {
       <button class="erp-button erp-button--secondary" type="button" (click)="back.emit()">
         <svg lucideArrowLeft size="16" aria-hidden="true"></svg>
-        Back
+        Previous section
       </button>
     }
+  </div>
+  <span class="erp-form-action-bar__status" aria-live="polite">{{ saveStatus() }}</span>
+  <div class="erp-form-action-bar__actions">
     @if (showSaveDraft()) {
       <button
         class="erp-button erp-button--secondary"
@@ -21,7 +23,7 @@
     <button
       class="erp-button erp-button--primary"
       type="button"
-      [disabled]="saving()"
+      [disabled]="saving() || primaryDisabled()"
       (click)="primary.emit()"
     >
       {{ primaryLabel() }}
