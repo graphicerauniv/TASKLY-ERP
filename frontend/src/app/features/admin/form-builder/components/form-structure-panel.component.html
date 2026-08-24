@@ -1,0 +1,120 @@
+<aside class="structure-panel" aria-label="Form structure">
+  <header class="panel-header">
+    <h2>Form structure</h2>
+    <div class="panel-header__actions">
+      <erp-compact-action-menu
+        variant="add"
+        [items]="addActions"
+        (selected)="addRequested.emit($event)"
+      />
+      <button
+        class="panel-collapse"
+        type="button"
+        aria-label="Collapse form structure"
+        (click)="closeRequested.emit()"
+      >
+        <svg lucidePanelRightOpen size="17" aria-hidden="true"></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="tree" role="tree" aria-label="Form structure hierarchy">
+    @for (section of form().sections; track section.id; let sectionIndex = $index) {
+      <div class="tree-group">
+        <div class="tree-row tree-row--section" [class.selected]="section.id === selectedSectionId()">
+          <button
+            class="tree-row__main"
+            type="button"
+            [attr.aria-expanded]="sectionExpanded(section.id)"
+            (click)="sectionToggled.emit(section); sectionSelected.emit(section)"
+          >
+            <svg
+              class="tree-row__chevron"
+              [class.open]="sectionExpanded(section.id)"
+              lucideChevronRight
+              size="15"
+              aria-hidden="true"
+            ></svg>
+            <svg lucideFileText size="17" aria-hidden="true"></svg>
+            <span>{{ section.name }}</span>
+          </button>
+          <erp-compact-action-menu
+            [items]="sectionActions"
+            (selected)="
+              sectionAction.emit({ action: $event, section: section, index: sectionIndex })
+            "
+          />
+        </div>
+
+        @if (sectionExpanded(section.id)) {
+          <div class="tree-children">
+            @for (subsection of section.subsections; track subsection.id; let subIndex = $index) {
+              <div
+                class="tree-row tree-row--sub"
+                [class.selected]="subsection.id === selectedSubsectionId()"
+              >
+                <button
+                  class="tree-row__main"
+                  type="button"
+                  (click)="subsectionSelected.emit({ section, subsection })"
+                >
+                  <span class="tree-connector" aria-hidden="true"></span>
+                  <svg lucideRows3 size="16" aria-hidden="true"></svg>
+                  <span>{{ subsection.name }}</span>
+                </button>
+                <erp-compact-action-menu
+                  [items]="subsectionActions"
+                  (selected)="
+                    subsectionAction.emit({
+                      action: $event,
+                      section,
+                      subsection,
+                      index: subIndex,
+                    })
+                  "
+                />
+              </div>
+
+              <div class="tree-fields">
+                @for (field of subsection.fields; track field.id; let fieldIndex = $index) {
+                  <div class="tree-field-row" [class.selected]="field.id === selectedFieldId()">
+                    <button
+                      class="tree-field"
+                      type="button"
+                      (click)="fieldSelected.emit({ section, subsection, field })"
+                    >
+                      <span class="tree-connector" aria-hidden="true"></span>
+                      <erp-field-type-icon [type]="field.type" [size]="14" />
+                      <span>{{ field.name }}</span>
+                    </button>
+                    <erp-compact-action-menu
+                      [items]="fieldActions"
+                      (selected)="
+                        fieldAction.emit({
+                          action: $event,
+                          section,
+                          subsection,
+                          field,
+                          index: fieldIndex,
+                        })
+                      "
+                    />
+                  </div>
+                }
+              </div>
+            }
+            <button class="tree-add" type="button" (click)="addSubsectionRequested.emit(section)">
+              <svg lucidePlus size="15" aria-hidden="true"></svg>
+              Add sub section
+            </button>
+          </div>
+        }
+      </div>
+    } @empty {
+      <div class="compact-empty">
+        <svg lucideListTree size="22" aria-hidden="true"></svg>
+        <p>Add a tab to begin structuring this form.</p>
+      </div>
+    }
+  </div>
+</aside>

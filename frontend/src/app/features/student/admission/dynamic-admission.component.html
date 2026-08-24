@@ -1,30 +1,31 @@
 @if (!embedded()) {
-  <header class="portal-header">
-    <a href="/" class="brand"
-      ><span>T</span>
-      <div><strong>Taskly ERP</strong><small>Online Admission</small></div></a
-    >
+  <header class="erp-admission-portal-header">
+    <a routerLink="/" class="erp-admission-brand">
+      <span>GEU</span>
+      <div><strong>GEU ERP</strong><small>Online Admission</small></div>
+    </a>
     @if (admission()) {
-      <div class="application">
+      <div class="erp-admission-application-number">
         <small>Application number</small><strong>{{ admission()?.applicationNumber }}</strong>
       </div>
     }
   </header>
 }
-<main class="page" [class.page--embedded]="embedded()">
+
+<main class="erp-admission-page" [class.erp-admission-page--embedded]="embedded()">
   @if (loading()) {
-    <section class="state">
-      <div class="spinner"></div>
-      <p>Preparing your admission form…</p>
+    <section class="erp-card erp-loading-state">
+      <div class="erp-spinner"></div>
+      <p>Preparing your admission form...</p>
     </section>
   } @else if (error() && !form()) {
-    <section class="state error-state">
+    <section class="erp-card erp-card--padded erp-admission-state">
       <h1>Admission form unavailable</h1>
       <p>{{ error() }}</p>
     </section>
   } @else if (admission()?.status === 'submitted') {
-    <section class="submitted">
-      <span>✓</span>
+    <section class="erp-card erp-card--padded erp-admission-submitted">
+      <span><svg lucideCheck size="28" aria-hidden="true"></svg></span>
       <h1>{{ embedded() ? 'Student record saved' : 'Application submitted' }}</h1>
       <p>
         @if (embedded()) {
@@ -35,207 +36,152 @@
           successfully.
         }
       </p>
-      <div class="submitted-actions">
+      <div class="erp-admission-submitted__actions">
         @if (embedded()) {
-          <a routerLink="/admin/admission/database">Open Student Database</a>
+          <a class="erp-button erp-button--secondary" routerLink="/admin/admissions">
+            Open Student Database
+          </a>
         }
-        <button type="button" (click)="newApplication()">Start another admission</button>
+        <button class="erp-button erp-button--primary" type="button" (click)="newApplication()">
+          Start another admission
+        </button>
       </div>
     </section>
   } @else if (form(); as current) {
-    <header class="form-heading">
-      <span>{{ embedded() ? 'New student admission' : 'Student admission' }}</span>
-      <h1>{{ current.name }}</h1>
-      <p>
-        {{ current.description || 'Complete the form and save your progress section by section.' }}
-      </p>
-    </header>
-    <nav class="steps" aria-label="Form sections">
-      @for (tab of current.sections; track tab.id; let i = $index) {
-        <button
-          type="button"
-          [class.active]="i === activeIndex()"
-          [class.done]="i < activeIndex()"
-          [attr.aria-current]="i === activeIndex() ? 'step' : null"
-          (click)="activeIndex.set(i); loadSectionOptions()"
-        >
-          {{ tab.name }}
-        </button>
-      }
-    </nav>
+    <erp-form-progress-header
+      [eyebrow]="embedded() ? 'New student admission' : 'Student admission'"
+      [title]="current.name"
+      [description]="current.description || 'Complete each section to submit the application.'"
+      [currentSection]="activeIndex() + 1"
+      [totalSections]="current.sections.length"
+      [progress]="progressPercent()"
+      [saveStatus]="saveStatusText()"
+      (sectionsRequested)="requestSections()"
+    />
+
     @if (message()) {
-      <p class="notice success">{{ message() }}</p>
+      <p class="erp-notice erp-notice--success">{{ message() }}</p>
     }
     @if (error()) {
-      <p class="notice error">{{ error() }}</p>
+      <p class="erp-notice erp-notice--error">{{ error() }}</p>
     }
-    <section class="section-heading">
-      <div>
-        <small>Step {{ activeIndex() + 1 }} of {{ current.sections.length }}</small>
-        <h2>{{ section()?.name }}</h2>
-        <p>{{ section()?.description }}</p>
-      </div>
-    </section>
-    @for (sub of visibleSubsections(); track sub.id) {
-      <section class="subsection">
-        <header>
-          <div>
-            <h3>{{ sub.name }}</h3>
-            @if (sub.description) {
-              <p>{{ sub.description }}</p>
-            }
-          </div>
-          @if (sub.isRepeatable) {
-            <button type="button" (click)="addEntry(sub)">＋ Add {{ sub.name }}</button>
-          }
-        </header>
-        @if (sub.isRepeatable) {
-          @for (entry of entries(sub); track $index; let entryIndex = $index) {
-            <article class="repeat-card">
-              <div class="repeat-title">
-                <strong>{{ sub.name }} {{ entryIndex + 1 }}</strong
-                ><button type="button" (click)="removeEntry(sub, entryIndex)">Remove</button>
-              </div>
-              <div class="field-grid">
-                @for (field of sub.fields; track field.id) {
-                  @if (visible(field, entry)) {
-                    <ng-container
-                      [ngTemplateOutlet]="fieldTemplate"
-                      [ngTemplateOutletContext]="{
-                        $implicit: field,
-                        entry: entry,
-                        index: entryIndex,
-                      }"
-                    ></ng-container>
-                  }
+
+    <erp-admission-form-workspace>
+      <div workspace-main>
+        <erp-dynamic-section-renderer
+          [sectionNumber]="activeSectionNumber()"
+          [title]="section()?.name || 'Admission details'"
+          [description]="
+            section()?.description ||
+            'Complete this section carefully. Your progress can be saved anytime.'
+          "
+          [icon]="stepIconName(section()?.name || '')"
+          [completedFields]="completedFields()"
+          [totalFields]="totalFields()"
+        >
+          @for (sub of visibleSubsections(); track sub.id) {
+            <erp-form-sub-group
+              [title]="sub.name"
+              [description]="sub.description"
+              [fieldCount]="fieldCount(sub)"
+              [requiredCount]="requiredFieldCount(sub)"
+              [open]="subsectionOpen(sub.id)"
+              (toggled)="toggleSubsection(sub.id)"
+            >
+              @if (sub.isRepeatable) {
+                @for (entry of entries(sub); track $index; let entryIndex = $index) {
+                  <article class="erp-repeat-group">
+                    <div class="erp-repeat-group__header">
+                      <strong>{{ sub.name }} {{ entryIndex + 1 }}</strong>
+                      <button
+                        class="erp-button erp-button--danger erp-button--compact"
+                        type="button"
+                        (click)="removeEntry(sub, entryIndex)"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div class="erp-field-grid">
+                      @for (field of sub.fields; track field.id) {
+                        @if (visible(field, entry)) {
+                          <erp-dynamic-field-renderer
+                            [field]="field"
+                            [modelValue]="value(field, entry)"
+                            [options]="fieldOptions(field, entryIndex)"
+                            [entryKey]="sub.id + '-' + entryIndex"
+                            (modelChanged)="setValue(field, $event, entry, entryIndex)"
+                            (optionSearch)="searchOptions(field, $event, entry, entryIndex)"
+                            (fileSelected)="upload(field, $event, entry, entryIndex)"
+                            (uploadRemoved)="setValue(field, '', entry, entryIndex)"
+                          />
+                        }
+                      }
+                    </div>
+                  </article>
+                } @empty {
+                  <p class="erp-empty-repeat">No records added. Add {{ sub.name }} to begin.</p>
                 }
-              </div>
-            </article>
-          } @empty {
-            <p class="empty-repeat">No records added. Select “Add {{ sub.name }}” to begin.</p>
-          }
-        } @else {
-          <div class="field-grid">
-            @for (field of sub.fields; track field.id) {
-              @if (visible(field)) {
-                <ng-container
-                  [ngTemplateOutlet]="fieldTemplate"
-                  [ngTemplateOutletContext]="{ $implicit: field }"
-                ></ng-container>
+                <button
+                  class="erp-button erp-button--secondary"
+                  type="button"
+                  (click)="addEntry(sub)"
+                >
+                  Add {{ sub.name }}
+                </button>
+              } @else {
+                <div class="erp-field-grid">
+                  @for (field of sub.fields; track field.id) {
+                    @if (visible(field)) {
+                      <erp-dynamic-field-renderer
+                        [field]="field"
+                        [modelValue]="value(field)"
+                        [options]="fieldOptions(field)"
+                        [entryKey]="sub.id"
+                        (modelChanged)="setValue(field, $event)"
+                        (optionSearch)="searchOptions(field, $event)"
+                        (fileSelected)="upload(field, $event)"
+                        (uploadRemoved)="setValue(field, '')"
+                      />
+                    }
+                  }
+                </div>
               }
-            }
-          </div>
-        }
-      </section>
-    }
-    <footer class="actions">
-      @if (activeIndex() > 0) {
-        <button class="secondary" type="button" (click)="previous()">← Previous</button>
-      }
-      <div></div>
-      <button class="secondary" type="button" (click)="save()" [disabled]="saving()">Save</button>
-      @if (activeIndex() < current.sections.length - 1) {
-        <button class="primary" type="button" (click)="save(true)" [disabled]="saving()">
-          Save & Next →
-        </button>
-      } @else {
-        <button class="submit" type="button" (click)="submit()" [disabled]="saving()">
-          {{ embedded() ? 'Save Student Record' : 'Submit Application' }}
-        </button>
-      }
-    </footer>
+            </erp-form-sub-group>
+          } @empty {
+            <div class="erp-empty-state erp-empty-state--compact">
+              <strong>No fields configured</strong>
+              <p>This section does not contain any visible fields.</p>
+            </div>
+          }
+        </erp-dynamic-section-renderer>
+      </div>
+
+      <erp-form-section-navigator
+        workspace-navigator
+        [items]="sectionNavigationItems()"
+        [completedCount]="completedSectionCount()"
+        [totalCount]="current.sections.length"
+        (sectionSelected)="goToStep($event)"
+      />
+    </erp-admission-form-workspace>
+
+    <erp-form-action-bar
+      [saveStatus]="saveStatusText()"
+      [showBack]="activeIndex() > 0"
+      [saving]="saving()"
+      [primaryLabel]="primaryActionLabel()"
+      (back)="previous()"
+      (saveDraft)="save()"
+      (primary)="primaryAction()"
+    />
+
+    <erp-mobile-section-navigator-sheet
+      [open]="mobileNavigatorOpen()"
+      [items]="sectionNavigationItems()"
+      [completedCount]="completedSectionCount()"
+      [totalCount]="current.sections.length"
+      (closed)="closeMobileNavigator()"
+      (sectionSelected)="goToStep($event)"
+    />
   }
 </main>
-<ng-template #fieldTemplate let-field let-entry="entry" let-index="index"
-  ><div class="field" [class.wide]="field.type === 'textarea'">
-    <span
-      >{{ field.name }}
-      @if (field.isRequired) {
-        <b>*</b>
-      }
-    </span>
-    @if (field.type === 'textarea') {
-      <textarea
-        rows="4"
-        [placeholder]="field.placeholder"
-        [ngModel]="value(field, entry)"
-        (ngModelChange)="setValue(field, $event, entry, index)"
-      ></textarea>
-    } @else if (['dropdown', 'multi-select'].includes(field.type)) {
-      @if (field.searchable) {
-        <input
-          class="option-search"
-          type="search"
-          placeholder="Search options…"
-          (input)="search(field, $event, entry, index)"
-        />
-      }
-      <select
-        [multiple]="field.type === 'multi-select'"
-        [ngModel]="value(field, entry)"
-        (ngModelChange)="setValue(field, $event, entry, index)"
-      >
-        <option [ngValue]="field.type === 'multi-select' ? [] : ''">Select {{ field.name }}</option>
-        @if (field.dataSource) {
-          @for (option of fieldOptions(field, index); track option._id) {
-            <option [value]="option._id">{{ option.label || option.name }}</option>
-          }
-        } @else {
-          @for (option of field.options; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        }
-      </select>
-    } @else if (field.type === 'radio') {
-      <div class="choices">
-        @for (option of field.options; track option.value) {
-          <label
-            ><input
-              type="radio"
-              [name]="field.id + (index ?? '')"
-              [value]="option.value"
-              [ngModel]="value(field, entry)"
-              (ngModelChange)="setValue(field, $event, entry, index)"
-            />{{ option.label }}</label
-          >
-        }
-      </div>
-    } @else if (field.type === 'checkbox') {
-      <div class="choices">
-        @for (option of field.options; track option.value) {
-          <label
-            ><input
-              type="checkbox"
-              [checked]="checked(field, option.value, entry)"
-              (change)="
-                toggleChoice(field, option.value, $any($event.target).checked, entry, index)
-              "
-            />{{ option.label }}</label
-          >
-        }
-      </div>
-    } @else if (['file', 'image', 'signature'].includes(field.type)) {
-      <input
-        type="file"
-        [accept]="acceptFor(field)"
-        (change)="upload(field, $event, entry, index)"
-      />
-      <small class="upload-rules">{{ uploadHelp(field) }}</small>
-      @if (value(field, entry)) {
-        <small class="uploaded">✓ {{ $any(value(field, entry)).name || 'File uploaded' }}</small>
-      }
-    } @else {
-      <input
-        [type]="field.type === 'mobile' ? 'tel' : field.type"
-        [placeholder]="field.placeholder"
-        [ngModel]="value(field, entry)"
-        (ngModelChange)="setValue(field, $event, entry, index)"
-        [attr.minlength]="field.validation.minLength"
-        [attr.maxlength]="field.validation.maxLength"
-      />
-    }
-    @if (field.helpText) {
-      <small>{{ field.helpText }}</small>
-    }
-  </div></ng-template
->

@@ -1,246 +1,528 @@
-<header class="heading">
-  <div>
-    <span>Admission</span>
-    <h1>Dynamic Form Builder</h1>
-    <p>Create tabs, sections, fields, mappings, conditions, and repeatable groups.</p>
-  </div>
+<erp-admin-page
+  class="form-builder-page"
+  eyebrow="Admission"
+  title="Dynamic Form Builder"
+  description="Create and maintain admission form sections and fields."
+>
   @if (form()) {
-    <div class="save-actions">
+    <div page-actions class="save-actions">
       <button class="secondary" type="button" (click)="save()" [disabled]="saving()">
+        <svg lucideSave size="16" aria-hidden="true"></svg>
         {{ form()?.status === 'published' ? 'Save live changes' : 'Save draft' }}
       </button>
       <button class="primary" type="button" (click)="save(true)" [disabled]="saving()">
+        <svg lucideSend size="16" aria-hidden="true"></svg>
         {{ form()?.status === 'published' ? 'Republish form' : 'Publish form' }}
       </button>
     </div>
   }
-</header>
 
-@if (message()) {
-  <p class="notice success">{{ message() }}</p>
-}
-@if (error()) {
-  <p class="notice error">{{ error() }}</p>
-}
+  @if (message()) {
+    <p class="notice success">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="notice error">{{ error() }}</p>
+  }
 
-<section class="form-picker card">
-  <label>
-    <span>Admission form</span>
-    <select [ngModel]="form()?._id" (ngModelChange)="chooseForm($event)">
-      @for (item of forms(); track item._id) {
-        <option [value]="item._id">
-          {{ item.name }} · {{ item.status }} · v{{ item.version }}
-        </option>
-      }
-    </select>
-  </label>
-  <div>
-    <input [(ngModel)]="newFormName" placeholder="New form name" />
-    <button class="secondary" type="button" (click)="createForm()">Create form</button>
-  </div>
-</section>
+  <erp-form-builder-toolbar
+    [forms]="forms()"
+    [form]="form()"
+    (formSelected)="chooseForm($event)"
+    (createRequested)="createFormDialog.set(true)"
+  />
 
-@if (form(); as current) {
-  <section class="builder">
-    <aside class="structure card">
-      <div class="panel-title">
-        <h2>Form structure</h2>
-        <button type="button" (click)="addSection()">＋ Tab</button>
-      </div>
-      @for (section of current.sections; track section.id; let sectionIndex = $index) {
-        <div class="section" [class.selected]="section.id === selectedSectionId()">
-          <div class="row">
-            <button
-              class="row__name"
-              type="button"
-              (click)="
-                selectedSectionId.set(section.id);
-                selectedSubsectionId.set(section.subsections[0]?.id || '');
-                selectedFieldId.set('')
-              "
-            >
-              {{ section.name }}
-            </button>
-            <button
-              type="button"
-              aria-label="Move section up"
-              (click)="move(current.sections, sectionIndex, -1)"
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              aria-label="Move section down"
-              (click)="move(current.sections, sectionIndex, 1)"
-            >
-              ↓
-            </button>
-            <button type="button" aria-label="Edit section" (click)="renameSection(section)">
-              ✎
-            </button>
-            <button
-              class="danger"
-              type="button"
-              aria-label="Delete section"
-              (click)="removeSection(section)"
-            >
-              ×
-            </button>
-          </div>
-          @if (section.id === selectedSectionId()) {
-            @for (sub of section.subsections; track sub.id; let subIndex = $index) {
-              <div class="sub" [class.selected]="sub.id === selectedSubsectionId()">
-                <div class="row">
-                  <button
-                    class="row__name"
-                    type="button"
-                    (click)="selectedSubsectionId.set(sub.id); selectedFieldId.set('')"
+  @if (form(); as current) {
+    <div class="builder-mobile-actions">
+      <button class="secondary" type="button" (click)="structureVisible.set(true)">
+        <svg lucideListTree size="17" aria-hidden="true"></svg> Form structure
+      </button>
+    </div>
+
+    <div class="builder-grid" [class.builder-grid--structure-hidden]="!structureVisible()">
+      <erp-form-structure-panel
+        [form]="current"
+        [open]="structureVisible()"
+        [selectedSectionId]="selectedSectionId()"
+        [selectedSubsectionId]="selectedSubsectionId()"
+        [selectedFieldId]="selectedFieldId()"
+        [expandedSectionIds]="expandedSectionIds()"
+        (closeRequested)="toggleStructure()"
+        (addRequested)="handleStructureAdd($event)"
+        (sectionToggled)="toggleSectionExpansion($event)"
+        (sectionSelected)="handleStructureSectionSelected($event)"
+        (subsectionSelected)="handleStructureSubsectionSelected($event)"
+        (fieldSelected)="handleStructureFieldSelected($event)"
+        (addSubsectionRequested)="handleStructureAddSubsection($event)"
+        (sectionAction)="handleStructureSectionAction($event)"
+        (subsectionAction)="handleStructureSubsectionAction($event)"
+        (fieldAction)="handleStructureFieldAction($event)"
+      />
+
+      <erp-form-canvas
+        [section]="section()"
+        [subsection]="subsection()"
+        [selectedFieldId]="selectedFieldId()"
+        [structureVisible]="structureVisible()"
+        (structureRequested)="structureVisible.set(true)"
+        (addFieldRequested)="addField()"
+        (fieldSelected)="selectField($event)"
+        (fieldAction)="handleCanvasFieldAction($event)"
+      />
+
+      @if (inspectorVisible()) {
+        <erp-settings-modal
+          [title]="inspectorTitle()"
+          [eyebrow]="inspectorEyebrow()"
+          [open]="true"
+          (closed)="closeInspector()"
+        >
+          @if (fieldDialog(); as dialog) {
+            @if (dialog.draft; as selected) {
+              <div class="settings-grid">
+                <section class="inspector-group">
+                  <h3>Properties</h3>
+                  <label
+                    ><span>Field label *</span
+                    ><input [(ngModel)]="selected.name" placeholder="e.g. First name"
+                  /></label>
+                  <label
+                    ><span>Field type</span
+                    ><select
+                      [ngModel]="selected.type"
+                      (ngModelChange)="selected.type = $event; configureUpload(selected)"
+                    >
+                      @for (type of fieldTypes; track type[0]) {
+                        <option [value]="type[0]">{{ type[1] }}</option>
+                      }
+                    </select></label
                   >
-                    └ {{ sub.name }}
+                  <label
+                    ><span>Placeholder</span><input [(ngModel)]="selected.placeholder"
+                  /></label>
+                  <label
+                    ><span>Help text</span
+                    ><textarea [(ngModel)]="selected.helpText" rows="2"></textarea>
+                  </label>
+                </section>
+
+                <section class="inspector-group">
+                  <h3>Behaviour</h3>
+                  <label class="switch-row"
+                    ><span
+                      ><strong>Required</strong><small>Student must provide a value</small></span
+                    ><input type="checkbox" [(ngModel)]="selected.isRequired"
+                  /></label>
+                  <label class="switch-row"
+                    ><span
+                      ><strong>Visible</strong><small>Show this field in the live form</small></span
+                    ><input type="checkbox" [(ngModel)]="selected.isActive"
+                  /></label>
+                  <label class="switch-row"
+                    ><span
+                      ><strong>Searchable</strong><small>Enable lookup for long lists</small></span
+                    ><input
+                      type="checkbox"
+                      [(ngModel)]="selected.searchable"
+                      (ngModelChange)="dialogSearchableChanged()"
+                  /></label>
+                </section>
+
+                @if (['dropdown', 'radio', 'checkbox', 'multi-select'].includes(selected.type)) {
+                  <section class="inspector-group inspector-group--wide">
+                    <h3>Choices and data</h3>
+                    <div class="inspector-grid">
+                      <label
+                        ><span>Data source</span
+                        ><select
+                          [ngModel]="selected.dataSource?.masterTypeSlug || ''"
+                          (ngModelChange)="
+                            selected.dataSource = $event
+                              ? {
+                                  kind: 'master',
+                                  masterTypeSlug: $event,
+                                  parentFieldId: null,
+                                  labelField: 'name',
+                                  valueField: '_id',
+                                }
+                              : null
+                          "
+                        >
+                          <option value="">Manual options</option>
+                          @for (type of types(); track type.slug) {
+                            <option [value]="type.slug">{{ type.name }}</option>
+                          }
+                        </select></label
+                      >
+                      @if (selected.dataSource) {
+                        <label
+                          ><span>Depends on field (optional)</span
+                          ><select [(ngModel)]="selected.dataSource.parentFieldId">
+                            <option [ngValue]="null">No dependency</option>
+                            @for (item of allFields(); track item.id) {
+                              @if (item.id !== selected.id) {
+                                <option [value]="item.id">{{ item.name }}</option>
+                              }
+                            }
+                          </select></label
+                        >
+                      }
+                    </div>
+                    @if (!selected.dataSource) {
+                      <label
+                        ><span>Manual options · one per line</span
+                        ><textarea
+                          [(ngModel)]="dialogOptionText"
+                          (ngModelChange)="updateDialogOptions()"
+                          rows="4"
+                          placeholder="Option one&#10;Option two&#10;Option three"
+                        ></textarea>
+                      </label>
+                    } @else {
+                      <p class="setting-note">
+                        Options are loaded from the selected master data source.
+                      </p>
+                    }
+                  </section>
+                }
+
+                <section class="inspector-group">
+                  <h3>Validation</h3>
+                  @if (selected.type === 'number') {
+                    <div class="inspector-grid">
+                      <label
+                        ><span>Minimum value</span
+                        ><input type="number" [(ngModel)]="selected.validation.min"
+                      /></label>
+                      <label
+                        ><span>Maximum value</span
+                        ><input type="number" [(ngModel)]="selected.validation.max"
+                      /></label>
+                    </div>
+                  }
+                  @if (['text', 'email', 'mobile', 'textarea'].includes(selected.type)) {
+                    <div class="inspector-grid">
+                      <label
+                        ><span>Min length</span
+                        ><input type="number" min="0" [(ngModel)]="selected.validation.minLength"
+                      /></label>
+                      <label
+                        ><span>Max length</span
+                        ><input type="number" min="1" [(ngModel)]="selected.validation.maxLength"
+                      /></label>
+                    </div>
+                    <label
+                      ><span>Pattern (optional)</span
+                      ><input
+                        [(ngModel)]="selected.validation.pattern"
+                        placeholder="Regular expression"
+                    /></label>
+                  }
+                  <label
+                    ><span>Validation message</span
+                    ><input
+                      [(ngModel)]="selected.validation.message"
+                      placeholder="Explain how to correct the value"
+                  /></label>
+                </section>
+
+                <section class="inspector-group">
+                  <h3>Visibility</h3>
+                  <label class="switch-row"
+                    ><span
+                      ><strong>Conditional</strong><small>Show based on another field</small></span
+                    ><input
+                      type="checkbox"
+                      [ngModel]="!!selected.visibilityCondition"
+                      (ngModelChange)="toggleDialogCondition($event)"
+                  /></label>
+                  @if (selected.visibilityCondition) {
+                    <label
+                      ><span>Controlling field</span
+                      ><select [(ngModel)]="selected.visibilityCondition.fieldId">
+                        <option value="">Choose field</option>
+                        @for (item of allFields(); track item.id) {
+                          @if (item.id !== selected.id) {
+                            <option [value]="item.id">{{ item.name }}</option>
+                          }
+                        }
+                      </select></label
+                    >
+                    <div class="inspector-grid">
+                      <label
+                        ><span>Operator</span
+                        ><select [(ngModel)]="selected.visibilityCondition.operator">
+                          <option value="equals">Equals</option>
+                          <option value="not-equals">Not equals</option>
+                          <option value="contains">Contains</option>
+                          <option value="is-empty">Is empty</option>
+                        </select></label
+                      >
+                      <label
+                        ><span>Expected value</span
+                        ><input [(ngModel)]="selected.visibilityCondition.value"
+                      /></label>
+                    </div>
+                  }
+                </section>
+
+                @if (['file', 'image', 'signature'].includes(selected.type)) {
+                  <section class="inspector-group inspector-group--wide">
+                    <h3>Upload rules</h3>
+                    @if (selected.uploadConfig) {
+                      <div class="inspector-grid inspector-grid--upload">
+                        <label
+                          ><span>Maximum file size (MB)</span
+                          ><input
+                            type="number"
+                            min="1"
+                            max="100"
+                            [(ngModel)]="selected.uploadConfig.maxSizeMb"
+                        /></label>
+                        <fieldset class="upload-types">
+                          <legend>Allowed file types</legend>
+                          <div class="upload-types__options">
+                            <label
+                              ><input
+                                type="checkbox"
+                                [ngModel]="uploadTypeEnabled(selected, 'image')"
+                                (ngModelChange)="toggleUploadType(selected, 'image', $event)"
+                              />Images</label
+                            >
+                            @if (selected.type === 'file') {
+                              <label
+                                ><input
+                                  type="checkbox"
+                                  [ngModel]="uploadTypeEnabled(selected, 'pdf')"
+                                  (ngModelChange)="toggleUploadType(selected, 'pdf', $event)"
+                                />PDF</label
+                              >
+                              <label
+                                ><input
+                                  type="checkbox"
+                                  [ngModel]="uploadTypeEnabled(selected, 'word')"
+                                  (ngModelChange)="toggleUploadType(selected, 'word', $event)"
+                                />Word</label
+                              >
+                            }
+                          </div>
+                        </fieldset>
+                      </div>
+                    }
+                  </section>
+                }
+              </div>
+              <div inspector-actions class="inspector-actions">
+                @if (dialog.mode === 'edit') {
+                  <button class="drawer-action" type="button" (click)="duplicateCurrentSelection()">
+                    <svg lucideCopy size="15" aria-hidden="true"></svg> Duplicate
                   </button>
                   <button
+                    class="drawer-action drawer-action--danger"
                     type="button"
-                    aria-label="Move Sub Section up"
-                    (click)="move(section.subsections, subIndex, -1)"
+                    (click)="deleteCurrentSelection()"
                   >
-                    ↑
+                    <svg lucideTrash2 size="15" aria-hidden="true"></svg> Delete
                   </button>
-                  <button
-                    type="button"
-                    aria-label="Move Sub Section down"
-                    (click)="move(section.subsections, subIndex, 1)"
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Edit Sub Section"
-                    (click)="renameSubsection(sub)"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    class="danger"
-                    type="button"
-                    aria-label="Delete Sub Section"
-                    (click)="removeSubsection(sub)"
-                  >
-                    ×
-                  </button>
-                </div>
+                }
+                <span class="inspector-actions__spacer"></span>
+                <button class="secondary" type="button" (click)="closeFieldDialog()">Cancel</button>
+                <button
+                  class="primary"
+                  type="button"
+                  [disabled]="!selected.name.trim()"
+                  (click)="saveFieldDialog()"
+                >
+                  <svg lucideCheck size="16" aria-hidden="true"></svg>
+                  {{ dialog.mode === 'add' ? 'Add field' : 'Apply changes' }}
+                </button>
               </div>
             }
-            <button class="add-sub" type="button" (click)="addSubsection()">
-              ＋ Add Sub Section
-            </button>
-          }
-        </div>
-      } @empty {
-        <p class="empty">Start by adding a Super Section / Tab.</p>
-      }
-    </aside>
-
-    <div class="workspace">
-      @if (subsection(); as sub) {
-        <section class="card subsection-config">
-          <div>
-            <h2>{{ sub.name }}</h2>
-            <p>Sub Section configuration</p>
-          </div>
-          <label class="check"><input type="checkbox" [(ngModel)]="sub.isActive" /> Enabled</label>
-          <label class="check"
-            ><input type="checkbox" [(ngModel)]="sub.isRepeatable" /> Repeatable / Add More</label
-          >
-          @if (sub.isRepeatable) {
-            <label
-              ><span>Min entries</span><input type="number" [(ngModel)]="sub.minEntries" min="0"
-            /></label>
-            <label
-              ><span>Max entries</span
-              ><input type="number" [(ngModel)]="sub.maxEntries" min="1" placeholder="No limit"
-            /></label>
-          }
-          <label class="check"
-            ><input
-              type="checkbox"
-              [ngModel]="!!sub.visibilityCondition"
-              (ngModelChange)="conditionToggle(sub, $event)"
-            />
-            Conditional</label
-          >
-          @if (sub.visibilityCondition) {
-            <label
-              ><span>Controlling field</span
-              ><select [(ngModel)]="sub.visibilityCondition.fieldId">
-                <option value="">Choose field</option>
-                @for (item of allFields(); track item.id) {
-                  <option [value]="item.id">{{ item.name }}</option>
+          } @else if (subsection(); as selectedSubsection) {
+            <div class="settings-grid settings-grid--section">
+              <section class="inspector-group">
+                <h3>Properties</h3>
+                <label
+                  ><span>Section title</span><input [(ngModel)]="selectedSubsection.name"
+                /></label>
+                <label
+                  ><span>Description</span
+                  ><textarea [(ngModel)]="selectedSubsection.description" rows="3"></textarea>
+                </label>
+              </section>
+              <section class="inspector-group">
+                <h3>Behaviour</h3>
+                <label class="switch-row"
+                  ><span><strong>Enabled</strong><small>Include in the admission form</small></span
+                  ><input type="checkbox" [(ngModel)]="selectedSubsection.isActive"
+                /></label>
+                <label class="switch-row"
+                  ><span
+                    ><strong>Repeatable</strong
+                    ><small>Allow students to add multiple entries</small></span
+                  ><input type="checkbox" [(ngModel)]="selectedSubsection.isRepeatable"
+                /></label>
+                @if (selectedSubsection.isRepeatable) {
+                  <div class="inspector-grid">
+                    <label
+                      ><span>Minimum entries</span
+                      ><input type="number" min="0" [(ngModel)]="selectedSubsection.minEntries"
+                    /></label>
+                    <label
+                      ><span>Maximum entries</span
+                      ><input type="number" min="1" [(ngModel)]="selectedSubsection.maxEntries"
+                    /></label>
+                  </div>
                 }
-              </select></label
-            >
-            <label
-              ><span>Operator</span
-              ><select [(ngModel)]="sub.visibilityCondition.operator">
-                <option value="equals">Equals</option>
-                <option value="not-equals">Not equals</option>
-                <option value="contains">Contains</option>
-                <option value="is-empty">Is empty</option>
-                <option value="is-not-empty">Is not empty</option>
-              </select></label
-            >
-            <label><span>Value</span><input [(ngModel)]="sub.visibilityCondition.value" /></label>
-          }
-        </section>
-
-        <section class="card fields">
-          <div class="panel-title">
-            <h2>Fields</h2>
-            <button type="button" (click)="addField()">＋ Add field</button>
-          </div>
-          @for (item of sub.fields; track item.id; let fieldIndex = $index) {
-            <div class="field-row" [class.selected]="item.id === selectedFieldId()">
-              <button class="field-main" type="button" (click)="selectField(item)">
-                <span>{{ fieldIndex + 1 }}</span
-                ><strong>{{ item.name }}</strong
-                ><small>{{ item.type }}{{ item.isRequired ? ' · Required' : '' }}</small>
+              </section>
+              <section class="inspector-group inspector-group--wide">
+                <h3>Visibility</h3>
+                <label class="switch-row">
+                  <span
+                    ><strong>Conditional section</strong
+                    ><small>Control visibility from another field</small></span
+                  >
+                  <input
+                    type="checkbox"
+                    [ngModel]="!!selectedSubsection.visibilityCondition"
+                    (ngModelChange)="conditionToggle(selectedSubsection, $event)"
+                  />
+                </label>
+                @if (selectedSubsection.visibilityCondition) {
+                  <div class="condition-grid">
+                    <label
+                      ><span>Controlling field</span
+                      ><select [(ngModel)]="selectedSubsection.visibilityCondition.fieldId">
+                        <option value="">Choose field</option>
+                        @for (item of allFields(); track item.id) {
+                          <option [value]="item.id">{{ item.name }}</option>
+                        }
+                      </select></label
+                    >
+                    <label
+                      ><span>Operator</span
+                      ><select [(ngModel)]="selectedSubsection.visibilityCondition.operator">
+                        <option value="equals">Equals</option>
+                        <option value="not-equals">Not equals</option>
+                        <option value="contains">Contains</option>
+                        <option value="is-empty">Is empty</option>
+                      </select></label
+                    >
+                    <label
+                      ><span>Expected value</span
+                      ><input [(ngModel)]="selectedSubsection.visibilityCondition.value"
+                    /></label>
+                  </div>
+                }
+              </section>
+            </div>
+            <div inspector-actions class="inspector-actions">
+              <button class="drawer-action" type="button" (click)="duplicateCurrentSelection()">
+                <svg lucideCopy size="15" aria-hidden="true"></svg> Duplicate
               </button>
               <button
+                class="drawer-action drawer-action--danger"
                 type="button"
-                aria-label="Move field up"
-                (click)="move(sub.fields, fieldIndex, -1)"
+                (click)="deleteCurrentSelection()"
               >
-                ↑
+                <svg lucideTrash2 size="15" aria-hidden="true"></svg> Delete
               </button>
-              <button
-                type="button"
-                aria-label="Move field down"
-                (click)="move(sub.fields, fieldIndex, 1)"
-              >
-                ↓
-              </button>
-              <button
-                class="danger"
-                type="button"
-                aria-label="Delete field"
-                (click)="removeField(item)"
-              >
-                ×
+              <span class="inspector-actions__spacer"></span>
+              <button class="primary" type="button" (click)="closeInspector()">
+                <svg lucideCheck size="16" aria-hidden="true"></svg> Done
               </button>
             </div>
-          } @empty {
-            <p class="empty">No fields yet. Add the first field.</p>
+          } @else if (section(); as selectedSection) {
+            <div class="settings-grid settings-grid--single">
+              <section class="inspector-group">
+                <h3>Tab properties</h3>
+                <label><span>Tab title</span><input [(ngModel)]="selectedSection.name" /></label>
+                <label
+                  ><span>Description</span
+                  ><textarea [(ngModel)]="selectedSection.description" rows="3"></textarea>
+                </label>
+                <label class="switch-row"
+                  ><span><strong>Enabled</strong><small>Include this tab in the form</small></span
+                  ><input type="checkbox" [(ngModel)]="selectedSection.isActive"
+                /></label>
+              </section>
+            </div>
+            <div inspector-actions class="inspector-actions">
+              <button class="drawer-action" type="button" (click)="duplicateCurrentSelection()">
+                <svg lucideCopy size="15" aria-hidden="true"></svg> Duplicate
+              </button>
+              <button
+                class="drawer-action drawer-action--danger"
+                type="button"
+                (click)="deleteCurrentSelection()"
+              >
+                <svg lucideTrash2 size="15" aria-hidden="true"></svg> Delete
+              </button>
+              <span class="inspector-actions__spacer"></span>
+              <button class="primary" type="button" (click)="closeInspector()">
+                <svg lucideCheck size="16" aria-hidden="true"></svg> Done
+              </button>
+            </div>
+          } @else {
+            <div class="inspector-empty">
+              <svg lucideSettings2 size="26" aria-hidden="true"></svg
+              ><strong>Select an item to configure</strong>
+              <p>Choose a tab, section, or field from the workspace.</p>
+            </div>
           }
-        </section>
-      } @else {
-        <section class="card empty-state">
-          <strong>Select or create a Sub Section</strong>
-          <p>Fields are configured within a Sub Section.</p>
-        </section>
+        </erp-settings-modal>
       }
     </div>
-  </section>
-} @else {
-  <section class="card empty-state"><strong>Create an admission form to begin.</strong></section>
+  } @else {
+    <section class="erp-card compact-empty canvas-empty">
+      <strong>Create an admission form to begin.</strong>
+    </section>
+  }
+</erp-admin-page>
+
+@if (createFormDialog()) {
+  <div class="dialog-layer">
+    <button
+      class="dialog-backdrop"
+      type="button"
+      aria-label="Close dialog"
+      (click)="createFormDialog.set(false)"
+    ></button>
+    <section
+      class="dialog dialog--small"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-form-title"
+    >
+      <header class="dialog__header">
+        <div>
+          <small>Admission</small>
+          <h2 id="create-form-title">Create form</h2>
+        </div>
+        <button type="button" aria-label="Close dialog" (click)="createFormDialog.set(false)">
+          ×
+        </button>
+      </header>
+      <div class="dialog__body dialog-form">
+        <label
+          ><span>Form name *</span
+          ><input [(ngModel)]="newFormName" placeholder="e.g. Undergraduate Admission 2027"
+        /></label>
+      </div>
+      <footer class="dialog__footer">
+        <button class="secondary" type="button" (click)="createFormDialog.set(false)">
+          Cancel
+        </button>
+        <button
+          class="primary"
+          type="button"
+          [disabled]="!newFormName.trim()"
+          (click)="createForm()"
+        >
+          Create form
+        </button>
+      </footer>
+    </section>
+  </div>
 }
 
 @if (nameDialog(); as dialog) {
@@ -260,24 +542,16 @@
       <header class="dialog__header">
         <div>
           <small>{{ dialog.mode === 'add' ? 'Create' : 'Edit' }}</small>
-          <h2 id="name-dialog-title">
-            {{ dialog.kind === 'section' ? 'Super Section / Tab' : 'Sub Section' }}
-          </h2>
+          <h2 id="name-dialog-title">{{ dialog.kind === 'section' ? 'Tab' : 'Sub section' }}</h2>
         </div>
         <button type="button" aria-label="Close dialog" (click)="nameDialog.set(null)">×</button>
       </header>
       <div class="dialog__body dialog-form">
         <label
           ><span>Name *</span
-          ><input [(ngModel)]="dialogName" placeholder="Enter a clear display name"
-        /></label>
-        <label
-          ><span>Description</span
-          ><textarea
-            [(ngModel)]="dialogDescription"
-            rows="3"
-            placeholder="Optional guidance shown on the admission form"
-          ></textarea>
+          ><input [(ngModel)]="dialogName" placeholder="Enter a clear display name" /></label
+        ><label
+          ><span>Description</span><textarea [(ngModel)]="dialogDescription" rows="3"></textarea>
         </label>
       </div>
       <footer class="dialog__footer">
@@ -293,265 +567,6 @@
       </footer>
     </section>
   </div>
-}
-
-@if (fieldDialog(); as dialog) {
-  @if (dialog.draft; as selected) {
-    <div class="dialog-layer">
-      <button
-        class="dialog-backdrop"
-        type="button"
-        aria-label="Close field dialog"
-        (click)="closeFieldDialog()"
-      ></button>
-      <section
-        class="dialog dialog--field"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="field-dialog-title"
-      >
-        <header class="dialog__header">
-          <div>
-            <small>{{ dialog.mode === 'add' ? 'New field' : 'Edit field' }}</small>
-            <h2 id="field-dialog-title">Field Configuration</h2>
-            <p>Configure how this field appears and behaves on the student form.</p>
-          </div>
-          <button type="button" aria-label="Close field dialog" (click)="closeFieldDialog()">
-            ×
-          </button>
-        </header>
-        <div class="dialog__body field-dialog-body">
-          <section class="dialog-section">
-            <h3>Basic details</h3>
-            <div class="config-grid">
-              <label
-                ><span>Field name *</span
-                ><input [(ngModel)]="selected.name" placeholder="e.g. First Name"
-              /></label>
-              <label
-                ><span>Field type *</span
-                ><select
-                  [ngModel]="selected.type"
-                  (ngModelChange)="selected.type = $event; configureUpload(selected)"
-                >
-                  @for (type of fieldTypes; track type[0]) {
-                    <option [value]="type[0]">{{ type[1] }}</option>
-                  }
-                </select></label
-              >
-              <label><span>Placeholder</span><input [(ngModel)]="selected.placeholder" /></label>
-              <label><span>Default value</span><input [(ngModel)]="selected.defaultValue" /></label>
-              <label class="wide"
-                ><span>Help text</span
-                ><input
-                  [(ngModel)]="selected.helpText"
-                  placeholder="Optional instructions for the student"
-              /></label>
-            </div>
-            <div class="toggle-grid">
-              <label class="check"
-                ><input type="checkbox" [(ngModel)]="selected.isRequired" /> Required</label
-              >
-              <label class="check"
-                ><input type="checkbox" [(ngModel)]="selected.isActive" /> Visible / enabled</label
-              >
-              <label class="check"
-                ><input
-                  type="checkbox"
-                  [(ngModel)]="selected.searchable"
-                  (ngModelChange)="dialogSearchableChanged()"
-                />
-                Searchable</label
-              >
-              <label class="check"
-                ><input
-                  type="checkbox"
-                  [ngModel]="!!selected.visibilityCondition"
-                  (ngModelChange)="toggleDialogCondition($event)"
-                />
-                Conditional visibility</label
-              >
-            </div>
-          </section>
-
-          @if (['file', 'image', 'signature'].includes(selected.type) && selected.uploadConfig) {
-            <section class="dialog-section">
-              <h3>Upload settings</h3>
-              <div class="config-grid">
-                <label
-                  ><span>Maximum file size (MB)</span
-                  ><input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    [(ngModel)]="selected.uploadConfig.maxSizeMb"
-                /></label>
-                <label class="wide"
-                  ><span>Allowed file types</span>
-                  <div class="toggle-grid upload-types">
-                    <label class="check"
-                      ><input
-                        type="checkbox"
-                        [checked]="uploadTypeEnabled(selected, 'image')"
-                        [disabled]="selected.type !== 'file'"
-                        (change)="toggleUploadType(selected, 'image', $any($event.target).checked)"
-                      />Images (JPG, PNG, WebP)</label
-                    >
-                    @if (selected.type === 'file') {
-                      <label class="check"
-                        ><input
-                          type="checkbox"
-                          [checked]="uploadTypeEnabled(selected, 'pdf')"
-                          (change)="toggleUploadType(selected, 'pdf', $any($event.target).checked)"
-                        />PDF documents</label
-                      >
-                      <label class="check"
-                        ><input
-                          type="checkbox"
-                          [checked]="uploadTypeEnabled(selected, 'word')"
-                          (change)="toggleUploadType(selected, 'word', $any($event.target).checked)"
-                        />Word documents (DOC, DOCX)</label
-                      >
-                    }
-                  </div>
-                </label>
-              </div>
-              <p class="dialog-section__hint">
-                The backend verifies these rules before sending the file to object storage. The
-                server-wide limit in MAX_UPLOAD_MB is always the upper limit.
-              </p>
-            </section>
-          }
-
-          @if (['dropdown', 'radio', 'checkbox', 'multi-select'].includes(selected.type)) {
-            <section class="dialog-section">
-              <h3>Options and data source</h3>
-              <div class="config-grid">
-                <label
-                  ><span>Data source</span
-                  ><select
-                    [ngModel]="selected.dataSource?.masterTypeSlug || ''"
-                    (ngModelChange)="
-                      selected.dataSource = $event
-                        ? {
-                            kind: 'master',
-                            masterTypeSlug: $event,
-                            parentFieldId: null,
-                            labelField: 'name',
-                            valueField: '_id',
-                          }
-                        : null
-                    "
-                  >
-                    <option value="">Manual options</option>
-                    @for (type of types(); track type.slug) {
-                      <option [value]="type.slug">{{ type.name }}</option>
-                    }
-                  </select></label
-                >
-                @if (selected.dataSource) {
-                  <label
-                    ><span>Depends on field</span
-                    ><select [(ngModel)]="selected.dataSource.parentFieldId">
-                      <option [ngValue]="null">No dependency</option>
-                      @for (item of allFields(); track item.id) {
-                        @if (item.id !== selected.id) {
-                          <option [value]="item.id">{{ item.name }}</option>
-                        }
-                      }
-                    </select></label
-                  >
-                } @else {
-                  <label class="wide"
-                    ><span>Manual options — one per line</span
-                    ><textarea
-                      [(ngModel)]="dialogOptionText"
-                      (ngModelChange)="updateDialogOptions()"
-                      rows="4"
-                      placeholder="Yes&#10;No"
-                    ></textarea>
-                  </label>
-                }
-              </div>
-            </section>
-          }
-
-          @if (selected.visibilityCondition) {
-            <section class="dialog-section">
-              <h3>Visibility condition</h3>
-              <div class="config-grid config-grid--three">
-                <label
-                  ><span>Controlling field</span
-                  ><select [(ngModel)]="selected.visibilityCondition.fieldId">
-                    <option value="">Choose field</option>
-                    @for (item of allFields(); track item.id) {
-                      @if (item.id !== selected.id) {
-                        <option [value]="item.id">{{ item.name }}</option>
-                      }
-                    }
-                  </select></label
-                >
-                <label
-                  ><span>Operator</span
-                  ><select [(ngModel)]="selected.visibilityCondition.operator">
-                    <option value="equals">Equals</option>
-                    <option value="not-equals">Not equals</option>
-                    <option value="contains">Contains</option>
-                    <option value="is-empty">Is empty</option>
-                    <option value="is-not-empty">Is not empty</option>
-                  </select></label
-                >
-                <label
-                  ><span>Expected value</span
-                  ><input [(ngModel)]="selected.visibilityCondition.value"
-                /></label>
-              </div>
-            </section>
-          }
-
-          <section class="dialog-section">
-            <h3>Validation</h3>
-            <div class="config-grid">
-              <label
-                ><span>Minimum value</span
-                ><input type="number" [(ngModel)]="selected.validation.min"
-              /></label>
-              <label
-                ><span>Maximum value</span
-                ><input type="number" [(ngModel)]="selected.validation.max"
-              /></label>
-              <label
-                ><span>Minimum length</span
-                ><input type="number" [(ngModel)]="selected.validation.minLength"
-              /></label>
-              <label
-                ><span>Maximum length</span
-                ><input type="number" [(ngModel)]="selected.validation.maxLength"
-              /></label>
-              <label
-                ><span>Validation pattern</span
-                ><input [(ngModel)]="selected.validation.pattern" placeholder="Regular expression"
-              /></label>
-              <label
-                ><span>Error message</span><input [(ngModel)]="selected.validation.message"
-              /></label>
-            </div>
-          </section>
-        </div>
-        <footer class="dialog__footer">
-          <button class="secondary" type="button" (click)="closeFieldDialog()">Cancel</button
-          ><button
-            class="primary"
-            type="button"
-            [disabled]="!selected.name.trim()"
-            (click)="saveFieldDialog()"
-          >
-            {{ dialog.mode === 'add' ? 'Add field' : 'Save changes' }}
-          </button>
-        </footer>
-      </section>
-    </div>
-  }
 }
 
 @if (deleteDialog(); as dialog) {

@@ -24,7 +24,6 @@ import {
     LucideShieldCheck,
   ],
   templateUrl: './admin-login.component.html',
-  styleUrl: './admin-login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminLoginComponent {

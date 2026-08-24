@@ -1,0 +1,33 @@
+<button
+  class="erp-section-nav-item"
+  type="button"
+  [class.erp-section-nav-item--complete]="item().state === 'complete'"
+  [class.erp-section-nav-item--current]="item().state === 'current'"
+  [class.erp-section-nav-item--attention]="item().state === 'attention'"
+  [attr.aria-current]="item().state === 'current' ? 'step' : null"
+  (click)="selected.emit(item().index)"
+>
+  <span class="erp-section-nav-item__status" aria-hidden="true">
+    @switch (item().state) {
+      @case ('complete') {
+        <svg lucideCheck size="12"></svg>
+      }
+      @case ('current') {
+        <svg lucideCircleDot size="14"></svg>
+      }
+      @case ('attention') {
+        <svg lucideTriangleAlert size="13"></svg>
+      }
+      @default {
+        <svg lucideCircle size="12"></svg>
+      }
+    }
+  </span>
+  <span class="erp-section-nav-item__number">
+    {{ item().index + 1 < 10 ? '0' + (item().index + 1) : item().index + 1 }}
+  </span>
+  <span class="erp-section-nav-item__body">
+    <strong>{{ item().title }}</strong>
+    <small>{{ item().status }}</small>
+  </span>
+</button>

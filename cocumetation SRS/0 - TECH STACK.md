@@ -64,7 +64,7 @@
 
 ## Primary API Stack
 
-Node.js + TypeScript + NestJS + Fastify is the primary ERP API stack.
+Node.js + javascript + NestJS + Fastify is the primary ERP API stack.
 
 ## Decisions to Confirm Later
 

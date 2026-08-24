@@ -7,10 +7,11 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
   LucideBookOpen,
   LucideBookOpenCheck,
+  LucideBell,
   LucideBuilding2,
   LucideChevronRight,
   LucideClipboardList,
@@ -39,6 +40,7 @@ import {
 import { AuthService } from '../../../core/auth.service';
 import { MasterDataStore } from '../../../core/master-data.store';
 import { MasterType } from '../../../core/models';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'erp-admin-shell',
@@ -48,6 +50,7 @@ import { MasterType } from '../../../core/models';
     RouterLinkActive,
     LucideBookOpen,
     LucideBookOpenCheck,
+    LucideBell,
     LucideBuilding2,
     LucideChevronRight,
     LucideClipboardList,
@@ -74,7 +77,6 @@ import { MasterType } from '../../../core/models';
     LucideX,
   ],
   templateUrl: './admin-shell.component.html',
-  styleUrl: './admin-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminShellComponent {
@@ -89,6 +91,7 @@ export class AdminShellComponent {
   readonly masterMenuOpen = signal(false);
   readonly admissionMenuOpen = signal(false);
   readonly masterSearch = signal('');
+  readonly currentModule = signal('Dashboard');
   readonly masterGroups = computed(() => {
     const types = this.masterTypes();
     const bySlug = new Map(types.map((type) => [type.slug, type]));
@@ -125,11 +128,18 @@ export class AdminShellComponent {
       .filter((group) => group.items.length > 0 || group.title === 'Custom Masters');
   });
   constructor() {
+    if (typeof window !== 'undefined' && window.innerWidth > 850 && window.innerWidth < 1280) {
+      this.sidebarCollapsed.set(true);
+    }
+    this.updateCurrentModule(this.router.url);
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => this.updateCurrentModule(event.urlAfterRedirects));
     this.masterDataStore.load().subscribe();
   }
   logout() {
     this.auth.clear();
-    void this.router.navigate(['/admin/login']);
+    void this.router.navigate(['/login']);
   }
   toggleMasterMenu() {
     this.admissionMenuOpen.set(false);
@@ -192,7 +202,18 @@ export class AdminShellComponent {
   }
   isAdmissionRoute() {
     return (
-      this.router.url.startsWith('/admin/admission/') || this.router.url === '/admin/form-builder'
+      this.router.url.startsWith('/admin/admission/') ||
+      this.router.url === '/admin/admissions' ||
+      this.router.url === '/admin/delete-admissions' ||
+      this.router.url === '/admin/form-builder'
     );
+  }
+  private updateCurrentModule(url: string) {
+    if (url.includes('/master-data/')) this.currentModule.set('Master Data');
+    else if (url.includes('/form-builder')) this.currentModule.set('Dynamic Form Builder');
+    else if (url.includes('/admissions')) this.currentModule.set('Student Database');
+    else if (url.includes('/delete-admissions')) this.currentModule.set('Delete Admission');
+    else if (url.includes('/admission/student')) this.currentModule.set('Student Admission');
+    else this.currentModule.set('Dashboard');
   }
 }

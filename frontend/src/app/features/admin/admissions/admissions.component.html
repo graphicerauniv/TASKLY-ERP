@@ -1,54 +1,56 @@
-<header class="heading heading--actions">
-  <div>
-    <span>Admission</span>
-    <h1>Student Database</h1>
-    <p>All saved and submitted student admission records.</p>
-  </div>
-  <a class="new-admission" routerLink="/admin/admission/student">＋ New student admission</a>
-</header>
+<erp-admin-page
+  eyebrow="Admission"
+  title="Student Database"
+  description="All saved and submitted student admission records."
+>
+  <a page-actions class="erp-button erp-button--primary" routerLink="/admin/admission/student"
+    >＋ New student admission</a
+  >
 
-<section class="card">
-  <div class="table-scroll">
-    <table>
-      <thead>
-        <tr>
-          <th>Application number</th>
-          <th>Form version</th>
-          <th>Created</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of items(); track item._id) {
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
           <tr>
-            <td>
-              <strong>{{ item.applicationNumber }}</strong>
-            </td>
-            <td>v{{ item.formVersion || '—' }}</td>
-            <td>{{ item.createdAt | date: 'medium' }}</td>
-            <td>
-              <span class="status" [class.submitted]="item.status === 'submitted'">{{
-                item.status
-              }}</span>
-            </td>
-            <td>
-              <button type="button" (click)="view(item)">
-                {{ loadingDetails() ? 'Loading…' : 'View details' }}
-              </button>
-            </td>
+            <th>Application number</th>
+            <th>Form version</th>
+            <th>Created</th>
+            <th>Status</th>
+            <th class="erp-table-shell__actions">Actions</th>
           </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="empty">
-              No student records yet. Start a Student Admission to create one.
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</section>
+        </thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td>
+                <strong>{{ item.applicationNumber }}</strong>
+              </td>
+              <td>v{{ item.formVersion || '—' }}</td>
+              <td>{{ item.createdAt | date: 'medium' }}</td>
+              <td>
+                <span class="erp-status" [class.erp-status--warning]="item.status !== 'submitted'">
+                  {{ item.status }}
+                </span>
+              </td>
+              <td class="erp-table-shell__actions">
+                <erp-compact-action-menu
+                  [items]="rowActions"
+                  (selected)="handleRowAction($event, item)"
+                />
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="erp-empty-state">
+                No student records yet. Start a Student Admission to create one.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</erp-admin-page>
 
 @if (selected(); as admission) {
   <div class="modal-backdrop">

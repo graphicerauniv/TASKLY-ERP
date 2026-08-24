@@ -16,6 +16,7 @@ logs/
 tmp/
 temp/
 .cache/
+.npm-cache/
 .eslintcache
 *.tsbuildinfo
 

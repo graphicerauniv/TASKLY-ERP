@@ -1,0 +1,33 @@
+<header class="erp-current-section__header">
+  <span class="erp-current-section__icon">
+    @switch (icon()) {
+      @case ('graduation') {
+        <svg lucideGraduationCap size="20" aria-hidden="true"></svg>
+      }
+      @case ('document') {
+        <svg lucideFileText size="20" aria-hidden="true"></svg>
+      }
+      @case ('address') {
+        <svg lucideMapPin size="20" aria-hidden="true"></svg>
+      }
+      @case ('payment') {
+        <svg lucideCreditCard size="20" aria-hidden="true"></svg>
+      }
+      @default {
+        <svg lucideShieldCheck size="20" aria-hidden="true"></svg>
+      }
+    }
+  </span>
+  <div class="erp-current-section__copy">
+    <small>Section {{ sectionNumber() }}</small>
+    <h2>{{ title() }}</h2>
+    <p>{{ description() }}</p>
+  </div>
+  <span class="erp-current-section__state">
+    {{ completedFields() }} of {{ totalFields() }} fields completed
+  </span>
+</header>
+
+<section class="erp-form-surface">
+  <ng-content />
+</section>

@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import {
+  LucideCheck,
+  LucideCopy,
+  LucideListTree,
+  LucideSave,
+  LucideSend,
+  LucideSettings2,
+  LucideTrash2,
+} from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
 import {
   AdmissionForm,
@@ -8,6 +17,18 @@ import {
   FormSubsection,
   MasterType,
 } from '../../../core/models';
+import { SettingsModalComponent } from '../../../shared/ui/settings-modal/settings-modal.component';
+import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { FormBuilderToolbarComponent } from './components/form-builder-toolbar.component';
+import {
+  FormStructurePanelComponent,
+  StructureFieldActionEvent,
+  StructureFieldEvent,
+  StructureSectionActionEvent,
+  StructureSubsectionActionEvent,
+  StructureSubsectionEvent,
+} from './components/form-structure-panel.component';
+import { CanvasFieldActionEvent, FormCanvasComponent } from './components/form-canvas.component';
 
 const FIELD_TYPES = [
   ['text', 'Text'],
@@ -40,9 +61,22 @@ type DeleteDialog = {
 
 @Component({
   selector: 'erp-form-builder',
-  imports: [FormsModule],
+  imports: [
+    AdminPageComponent,
+    FormBuilderToolbarComponent,
+    FormStructurePanelComponent,
+    FormCanvasComponent,
+    FormsModule,
+    SettingsModalComponent,
+    LucideCheck,
+    LucideCopy,
+    LucideListTree,
+    LucideSave,
+    LucideSend,
+    LucideSettings2,
+    LucideTrash2,
+  ],
   templateUrl: './form-builder.component.html',
-  styleUrl: './form-builder.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormBuilderComponent {
@@ -53,6 +87,7 @@ export class FormBuilderComponent {
   readonly selectedSectionId = signal('');
   readonly selectedSubsectionId = signal('');
   readonly selectedFieldId = signal('');
+  readonly expandedSectionIds = signal<Set<string>>(new Set());
   readonly fieldTypes = FIELD_TYPES;
   readonly saving = signal(false);
   readonly message = signal('');
@@ -60,11 +95,29 @@ export class FormBuilderComponent {
   readonly nameDialog = signal<NameDialog | null>(null);
   readonly fieldDialog = signal<{ mode: 'add' | 'edit'; draft: FormField } | null>(null);
   readonly deleteDialog = signal<DeleteDialog | null>(null);
+  readonly createFormDialog = signal(false);
+  readonly inspectorVisible = signal(false);
+  readonly structureVisible = signal(true);
+  readonly inspectorTitle = computed(() => {
+    const dialog = this.fieldDialog();
+    if (dialog)
+      return dialog.mode === 'add' ? 'New field' : dialog.draft.name || 'Field properties';
+    return this.subsection()?.name || this.section()?.name || 'Properties';
+  });
+  readonly inspectorEyebrow = computed(() => {
+    if (this.fieldDialog()) return 'Field settings';
+    if (this.subsection()) return 'Section settings';
+    if (this.section()) return 'Tab settings';
+    return 'Configuration';
+  });
   newFormName = '';
   dialogName = '';
   dialogDescription = '';
   dialogOptionText = '';
   constructor() {
+    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+      this.structureVisible.set(false);
+    }
     this.load();
     this.api
       .masterTypes()
@@ -85,6 +138,9 @@ export class FormBuilderComponent {
     this.selectedSectionId.set(form.sections[0]?.id || '');
     this.selectedSubsectionId.set(form.sections[0]?.subsections[0]?.id || '');
     this.selectedFieldId.set('');
+    this.expandedSectionIds.set(new Set());
+    this.fieldDialog.set(null);
+    this.inspectorVisible.set(false);
   }
   createForm() {
     if (!this.newFormName.trim()) return;
@@ -98,6 +154,7 @@ export class FormBuilderComponent {
       })
       .subscribe(({ item }) => {
         this.newFormName = '';
+        this.createFormDialog.set(false);
         this.forms.update((v) => [item, ...v]);
         this.choose(item);
       });
@@ -119,6 +176,25 @@ export class FormBuilderComponent {
     this.dialogDescription = '';
     this.nameDialog.set({ kind: 'section', mode: 'add' });
   }
+  selectSection(section: FormSection) {
+    this.selectedSectionId.set(section.id);
+    this.selectedSubsectionId.set('');
+    this.selectedFieldId.set('');
+    this.fieldDialog.set(null);
+    this.inspectorVisible.set(true);
+    this.closeStructureOnCompactScreen();
+  }
+  sectionExpanded(sectionId: string) {
+    return this.expandedSectionIds().has(sectionId);
+  }
+  toggleSectionExpansion(section: FormSection) {
+    this.expandedSectionIds.update((ids) => {
+      const next = new Set(ids);
+      if (next.has(section.id)) next.delete(section.id);
+      else next.add(section.id);
+      return next;
+    });
+  }
   renameSection(section: FormSection) {
     this.dialogName = section.name;
     this.dialogDescription = section.description;
@@ -137,6 +213,14 @@ export class FormBuilderComponent {
     this.dialogName = '';
     this.dialogDescription = '';
     this.nameDialog.set({ kind: 'subsection', mode: 'add' });
+  }
+  selectSubsection(section: FormSection, subsection: FormSubsection) {
+    this.selectedSectionId.set(section.id);
+    this.selectedSubsectionId.set(subsection.id);
+    this.selectedFieldId.set('');
+    this.fieldDialog.set(null);
+    this.inspectorVisible.set(true);
+    this.closeStructureOnCompactScreen();
   }
   renameSubsection(sub: FormSubsection) {
     this.dialogName = sub.name;
@@ -175,6 +259,7 @@ export class FormBuilderComponent {
     this.selectedFieldId.set(draft.id);
     this.dialogOptionText = '';
     this.fieldDialog.set({ mode: 'add', draft });
+    this.inspectorVisible.set(true);
   }
   selectField(field: FormField) {
     this.selectedFieldId.set(field.id);
@@ -182,6 +267,13 @@ export class FormBuilderComponent {
     const draft = structuredClone(field);
     this.configureUpload(draft);
     this.fieldDialog.set({ mode: 'edit', draft });
+    this.inspectorVisible.set(true);
+  }
+  selectFieldFromTree(section: FormSection, subsection: FormSubsection, field: FormField) {
+    this.selectedSectionId.set(section.id);
+    this.selectedSubsectionId.set(subsection.id);
+    this.selectField(field);
+    this.closeStructureOnCompactScreen();
   }
   removeField(field: FormField) {
     this.deleteDialog.set({
@@ -267,10 +359,155 @@ export class FormBuilderComponent {
     });
     this.selectedFieldId.set(dialog.draft.id);
     this.fieldDialog.set(null);
+    this.inspectorVisible.set(false);
   }
   closeFieldDialog() {
     this.fieldDialog.set(null);
     this.selectedFieldId.set('');
+    this.inspectorVisible.set(false);
+  }
+  closeInspector() {
+    if (this.fieldDialog()?.mode === 'add') this.selectedFieldId.set('');
+    this.fieldDialog.set(null);
+    this.inspectorVisible.set(false);
+  }
+  openInspector() {
+    const selected = this.field();
+    if (selected) this.selectField(selected);
+    this.inspectorVisible.set(true);
+  }
+  toggleStructure() {
+    this.structureVisible.update((visible) => !visible);
+  }
+  handleStructureAdd(action: string) {
+    if (action === 'add-tab') this.addSection();
+    if (action === 'add-section') {
+      if (!this.section() && this.form()?.sections[0])
+        this.selectedSectionId.set(this.form()!.sections[0].id);
+      this.addSubsection();
+    }
+    if (action === 'add-field') this.addField();
+  }
+  handleStructureSectionSelected(section: FormSection) {
+    this.selectSection(section);
+  }
+  handleStructureSubsectionSelected(event: StructureSubsectionEvent) {
+    this.selectSubsection(event.section, event.subsection);
+  }
+  handleStructureFieldSelected(event: StructureFieldEvent) {
+    this.selectFieldFromTree(event.section, event.subsection, event.field);
+  }
+  handleStructureAddSubsection(section: FormSection) {
+    this.selectSection(section);
+    this.addSubsection();
+  }
+  handleStructureSectionAction(event: StructureSectionActionEvent) {
+    this.handleSectionAction(event.action, event.section, event.index);
+  }
+  handleStructureSubsectionAction(event: StructureSubsectionActionEvent) {
+    this.handleSubsectionAction(event.action, event.section, event.subsection, event.index);
+  }
+  handleStructureFieldAction(event: StructureFieldActionEvent) {
+    this.selectFieldFromTree(event.section, event.subsection, event.field);
+    this.handleFieldAction(event.action, event.field, event.index);
+  }
+  handleCanvasFieldAction(event: CanvasFieldActionEvent) {
+    this.handleFieldAction(event.action, event.field, event.index);
+  }
+  duplicateCurrentSelection() {
+    const dialog = this.fieldDialog();
+    const subsection = this.subsection();
+    if (dialog && subsection && dialog.mode === 'edit') {
+      const index = subsection.fields.findIndex((field) => field.id === dialog.draft.id);
+      if (index >= 0) this.duplicateField(subsection, dialog.draft, index);
+      this.closeInspector();
+      return;
+    }
+    const selectedSubsection = this.subsection();
+    const selectedSection = this.section();
+    if (selectedSubsection && selectedSection) {
+      const index = selectedSection.subsections.findIndex(
+        (item) => item.id === selectedSubsection.id,
+      );
+      this.duplicateSubsection(selectedSection, selectedSubsection, index);
+    } else if (selectedSection && this.form()) {
+      const index = this.form()!.sections.findIndex((item) => item.id === selectedSection.id);
+      this.duplicateSection(selectedSection, index);
+    }
+    this.closeInspector();
+  }
+  deleteCurrentSelection() {
+    const dialog = this.fieldDialog();
+    if (dialog?.mode === 'edit') this.removeField(dialog.draft);
+    else if (this.subsection()) this.removeSubsection(this.subsection()!);
+    else if (this.section()) this.removeSection(this.section()!);
+    this.inspectorVisible.set(false);
+  }
+  handleSectionAction(action: string, section: FormSection, index: number) {
+    if (action === 'rename') this.renameSection(section);
+    if (action === 'duplicate') this.duplicateSection(section, index);
+    if (action === 'up') this.move(this.form()?.sections || [], index, -1);
+    if (action === 'down') this.move(this.form()?.sections || [], index, 1);
+    if (action === 'add-child') {
+      this.selectSection(section);
+      this.addSubsection();
+    }
+    if (action === 'delete') this.removeSection(section);
+  }
+  handleSubsectionAction(
+    action: string,
+    section: FormSection,
+    subsection: FormSubsection,
+    index: number,
+  ) {
+    this.selectedSectionId.set(section.id);
+    if (action === 'rename') this.renameSubsection(subsection);
+    if (action === 'duplicate') this.duplicateSubsection(section, subsection, index);
+    if (action === 'up') this.move(section.subsections, index, -1);
+    if (action === 'down') this.move(section.subsections, index, 1);
+    if (action === 'add-child') {
+      this.selectSubsection(section, subsection);
+      this.addField();
+    }
+    if (action === 'delete') this.removeSubsection(subsection);
+  }
+  handleFieldAction(action: string, field: FormField, index: number) {
+    const subsection = this.subsection();
+    if (!subsection) return;
+    if (action === 'edit') this.selectField(field);
+    if (action === 'duplicate') this.duplicateField(subsection, field, index);
+    if (action === 'up') this.move(subsection.fields, index, -1);
+    if (action === 'down') this.move(subsection.fields, index, 1);
+    if (action === 'delete') this.removeField(field);
+  }
+  private duplicateSection(section: FormSection, index: number) {
+    const copy = structuredClone(section);
+    copy.id = this.uid('sec');
+    copy.name = `${section.name} copy`;
+    copy.subsections = copy.subsections.map((subsection) => ({
+      ...subsection,
+      id: this.uid('sub'),
+      fields: subsection.fields.map((field) => ({ ...field, id: this.uid('fld') })),
+    }));
+    this.change((form) => form.sections.splice(index + 1, 0, copy));
+  }
+  private duplicateSubsection(section: FormSection, subsection: FormSubsection, index: number) {
+    const copy = structuredClone(subsection);
+    copy.id = this.uid('sub');
+    copy.name = `${subsection.name} copy`;
+    copy.fields = copy.fields.map((field) => ({ ...field, id: this.uid('fld') }));
+    this.change(() => section.subsections.splice(index + 1, 0, copy));
+  }
+  private duplicateField(subsection: FormSubsection, field: FormField, index: number) {
+    const copy = structuredClone(field);
+    copy.id = this.uid('fld');
+    copy.name = `${field.name} copy`;
+    this.change(() => subsection.fields.splice(index + 1, 0, copy));
+  }
+  private closeStructureOnCompactScreen() {
+    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+      this.structureVisible.set(false);
+    }
   }
   updateDialogOptions() {
     const field = this.fieldDialog()?.draft;

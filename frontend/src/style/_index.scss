@@ -1,0 +1,11 @@
+/* Official ERP style entry.
+ * Keep global design in this folder only:
+ * - tokens: theme, spacing, motion, layout values
+ * - system: reusable erp-* UI contracts for pages, cards, tables, forms, states
+ *
+ * Feature pages should consume variables/classes from here and keep local SCSS
+ * only for truly unique screens such as auth artwork, sidebar shell, dialogs,
+ * and advanced builders.
+ */
+@forward 'tokens';
+@forward 'system';

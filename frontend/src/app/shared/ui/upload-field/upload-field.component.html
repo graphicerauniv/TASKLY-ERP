@@ -1,0 +1,27 @@
+<div class="erp-upload-field" [class.erp-upload-field--complete]="!!value()">
+  <label class="erp-upload-field__dropzone">
+    @if (field().type === 'image') {
+      <svg lucideImage size="20" aria-hidden="true"></svg>
+    } @else {
+      <svg lucidePaperclip size="20" aria-hidden="true"></svg>
+    }
+    <span>
+      <strong>{{ value() ? 'Replace ' + field().name : 'Upload ' + field().name }}</strong>
+      <small>{{ helpText() }}</small>
+    </span>
+    <input type="file" [accept]="accept()" (change)="choose($event)" />
+  </label>
+
+  @if (value()) {
+    <div class="erp-upload-field__file">
+      <span>
+        <svg lucideRefreshCw size="13" aria-hidden="true"></svg>
+        {{ fileName() }}
+      </span>
+      <button type="button" aria-label="Remove uploaded file" (click)="removed.emit()">
+        <svg lucideX size="14" aria-hidden="true"></svg>
+        Remove
+      </button>
+    </div>
+  }
+</div>

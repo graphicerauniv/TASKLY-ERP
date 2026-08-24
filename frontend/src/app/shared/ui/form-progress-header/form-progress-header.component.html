@@ -1,0 +1,33 @@
+<header class="erp-form-progress-header">
+  <div class="erp-form-progress-header__heading">
+    <span>{{ eyebrow() }}</span>
+    <h1>{{ title() }}</h1>
+    <p>{{ description() }}</p>
+  </div>
+
+  <section class="erp-form-progress-card" aria-label="Form progress">
+    <div class="erp-form-progress-card__meta">
+      <strong>Section {{ currentSection() }} of {{ totalSections() }}</strong>
+      <span>{{ boundedProgress() }}% complete</span>
+      <span>{{ saveStatus() }}</span>
+    </div>
+    <div
+      class="erp-form-progress-bar"
+      role="progressbar"
+      [attr.aria-valuenow]="boundedProgress()"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <span [style.width.%]="boundedProgress()"></span>
+    </div>
+    <button
+      class="erp-button erp-button--secondary erp-form-progress-card__sections"
+      type="button"
+      (click)="sectionsRequested.emit()"
+    >
+      <svg lucideListTree size="16" aria-hidden="true"></svg>
+      <span class="erp-form-progress-card__sections-desktop">View all sections</span>
+      <span class="erp-form-progress-card__sections-mobile">Sections</span>
+    </button>
+  </section>
+</header>

@@ -9,7 +9,7 @@
       "sourceRoot": "src",
       "prefix": "erp",
       "schematics": {
-        "@schematics/angular:component": { "style": "scss", "changeDetection": "OnPush" }
+        "@schematics/angular:component": { "style": "none", "changeDetection": "OnPush" }
       },
       "architect": {
         "build": {

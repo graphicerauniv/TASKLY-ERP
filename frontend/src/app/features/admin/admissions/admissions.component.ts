@@ -3,12 +3,16 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
 import { Admission, FormField, FormSubsection } from '../../../core/models';
+import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import {
+  CompactActionItem,
+  CompactActionMenuComponent,
+} from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
 @Component({
   selector: 'erp-admissions',
-  imports: [DatePipe, RouterLink],
+  imports: [AdminPageComponent, CompactActionMenuComponent, DatePipe, RouterLink],
   templateUrl: './admissions.component.html',
-  styleUrl: './admissions.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdmissionsComponent {
@@ -17,6 +21,7 @@ export class AdmissionsComponent {
   readonly selected = signal<Admission | null>(null);
   readonly masterLabels = signal<Record<string, string>>({});
   readonly loadingDetails = signal(false);
+  readonly rowActions: CompactActionItem[] = [{ id: 'view', label: 'View details', icon: 'view' }];
 
   constructor() {
     this.api.admissions().subscribe(({ items }) => this.items.set(items));
@@ -32,6 +37,10 @@ export class AdmissionsComponent {
       },
       error: () => this.loadingDetails.set(false),
     });
+  }
+
+  handleRowAction(action: string, item: Admission) {
+    if (action === 'view') this.view(item);
   }
 
   close() {

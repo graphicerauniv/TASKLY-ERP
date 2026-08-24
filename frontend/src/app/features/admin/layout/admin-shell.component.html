@@ -277,7 +277,7 @@
                     ></svg>
                   </a>
                   <a
-                    routerLink="/admin/admission/database"
+                    routerLink="/admin/admissions"
                     routerLinkActive="active"
                     (click)="closeNavigation()"
                   >
@@ -332,8 +332,14 @@
       >
         <svg lucideMenu size="21" aria-hidden="true"></svg>
       </button>
+      <div class="topbar__module">
+        <span>GEU ERP</span><strong>{{ currentModule() }}</strong>
+      </div>
       <div class="topbar__spacer"></div>
       <a class="student-link" routerLink="/admin/admission/student">New student admission</a>
+      <button class="topbar__icon" type="button" aria-label="Notifications">
+        <svg lucideBell size="19" aria-hidden="true"></svg>
+      </button>
       <div class="profile">
         <span>{{ (auth.admin()?.name || 'A').charAt(0) }}</span>
         <div>

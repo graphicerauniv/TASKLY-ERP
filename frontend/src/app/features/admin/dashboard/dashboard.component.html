@@ -1,44 +1,43 @@
-<header class="page-heading">
-  <div>
-    <span>Overview</span>
-    <h1>Admin Dashboard</h1>
-    <p>Manage master data, admission forms, and student applications.</p>
-  </div>
-</header>
-<section class="stats">
-  <article>
-    <span class="icon blue">◇</span>
+<erp-admin-page
+  eyebrow="Overview"
+  title="Admin Dashboard"
+  description="Manage master data, admission forms, and student applications."
+>
+  <section class="erp-kpi-grid">
+    <article class="erp-kpi-card">
+      <span class="erp-kpi-card__icon"><svg lucideDatabase size="20" aria-hidden="true"></svg></span>
+      <div>
+        <small>Master values</small><strong>{{ stats()['masterValues'] }}</strong>
+      </div>
+    </article>
+    <article class="erp-kpi-card">
+      <span class="erp-kpi-card__icon erp-kpi-card__icon--purple"><svg lucideFileText size="20" aria-hidden="true"></svg></span>
+      <div>
+        <small>Admission forms</small><strong>{{ stats()['forms'] }}</strong>
+      </div>
+    </article>
+    <article class="erp-kpi-card">
+      <span class="erp-kpi-card__icon erp-kpi-card__icon--orange"><svg lucideClock3 size="20" aria-hidden="true"></svg></span>
+      <div>
+        <small>Draft applications</small><strong>{{ stats()['drafts'] }}</strong>
+      </div>
+    </article>
+    <article class="erp-kpi-card">
+      <span class="erp-kpi-card__icon erp-kpi-card__icon--green"><svg lucideCircleCheck size="20" aria-hidden="true"></svg></span>
+      <div>
+        <small>Submitted</small><strong>{{ stats()['submitted'] }}</strong>
+      </div>
+    </article>
+  </section>
+  <section class="welcome">
     <div>
-      <small>Master values</small><strong>{{ stats()['masterValues'] }}</strong>
+      <span>Database-driven admission</span>
+      <h2>Your complete form is controlled from one workspace.</h2>
+      <p>
+        Update master values, arrange fields, publish a form, and students see it
+        immediately—without changing frontend code.
+      </p>
     </div>
-  </article>
-  <article>
-    <span class="icon purple">▤</span>
-    <div>
-      <small>Admission forms</small><strong>{{ stats()['forms'] }}</strong>
-    </div>
-  </article>
-  <article>
-    <span class="icon orange">◷</span>
-    <div>
-      <small>Draft applications</small><strong>{{ stats()['drafts'] }}</strong>
-    </div>
-  </article>
-  <article>
-    <span class="icon green">✓</span>
-    <div>
-      <small>Submitted</small><strong>{{ stats()['submitted'] }}</strong>
-    </div>
-  </article>
-</section>
-<section class="welcome">
-  <div>
-    <span>Database-driven admission</span>
-    <h2>Your complete form is controlled from one workspace.</h2>
-    <p>
-      Update master values, arrange fields, publish a form, and students see it immediately—without
-      changing frontend code.
-    </p>
-  </div>
-  <div class="flow">Master Data <b>→</b> Form Builder <b>→</b> Student Admission</div>
-</section>
+    <div class="flow">Master Data <b>→</b> Form Builder <b>→</b> Student Admission</div>
+  </section>
+</erp-admin-page>

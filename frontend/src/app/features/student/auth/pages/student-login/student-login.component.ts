@@ -19,7 +19,6 @@ import {
     LucideUserRound,
   ],
   templateUrl: './student-login.component.html',
-  styleUrl: './student-login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentLoginComponent {

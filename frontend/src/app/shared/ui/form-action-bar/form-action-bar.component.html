@@ -1,0 +1,31 @@
+<footer class="erp-form-action-bar">
+  <span class="erp-form-action-bar__status" aria-live="polite">{{ saveStatus() }}</span>
+  <div class="erp-form-action-bar__actions">
+    @if (showBack()) {
+      <button class="erp-button erp-button--secondary" type="button" (click)="back.emit()">
+        <svg lucideArrowLeft size="16" aria-hidden="true"></svg>
+        Back
+      </button>
+    }
+    @if (showSaveDraft()) {
+      <button
+        class="erp-button erp-button--secondary"
+        type="button"
+        [disabled]="saving()"
+        (click)="saveDraft.emit()"
+      >
+        <svg lucideSave size="16" aria-hidden="true"></svg>
+        Save draft
+      </button>
+    }
+    <button
+      class="erp-button erp-button--primary"
+      type="button"
+      [disabled]="saving()"
+      (click)="primary.emit()"
+    >
+      {{ primaryLabel() }}
+      <svg lucideArrowRight size="16" aria-hidden="true"></svg>
+    </button>
+  </div>
+</footer>

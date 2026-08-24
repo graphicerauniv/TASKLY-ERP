@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { LucideCircleCheck, LucideClock3, LucideDatabase, LucideFileText } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
+import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 @Component({
   selector: 'erp-dashboard',
+  imports: [AdminPageComponent, LucideCircleCheck, LucideClock3, LucideDatabase, LucideFileText],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent {

@@ -1,0 +1,391 @@
+/* Taskly ERP design tokens.
+ * Foundation only: no component selectors and no page styling.
+ * Visual direction: supplied GEU admin ERP reference.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --erp-blue-50: #e3f2fd;
+  --erp-blue-100: #cfe8ff;
+  --erp-blue-200: #90caf9;
+  --erp-blue-500: #2196f3;
+  --erp-blue-600: #1976d2;
+  --erp-blue-700: #1565c0;
+  --erp-blue-800: #0b57a4;
+  --erp-blue-900: #073b7a;
+  --erp-sidebar-gradient-start: #0868cc;
+  --erp-sidebar-gradient-end: #0057b8;
+
+  /* Surfaces */
+  --erp-canvas: #f6f8f2;
+  --erp-canvas-soft: #f1f7f3;
+  --erp-surface: #fbfcf6;
+  --erp-surface-raised: #fdfdf9;
+  --erp-surface-overlay: #ffffff;
+  --erp-surface-page-panel: #fbfdff;
+  --erp-surface-detail: #f7fafc;
+  --erp-surface-detail-soft: #fafcfd;
+  --erp-surface-translucent: rgb(251 252 246 / 58%);
+  --erp-surface-selected: #e3f2fd;
+  --erp-surface-hover: #eef8fe;
+  --erp-surface-neutral: #eef2f5;
+  --erp-border-subtle: #e7f3fb;
+  --erp-border-default: #d8eaf7;
+  --erp-border-strong: #90caf9;
+  --erp-focus-ring: rgb(33 150 243 / 28%);
+  --erp-backdrop: rgb(16 42 67 / 34%);
+
+  /* Text */
+  --erp-text-heading: #102a43;
+  --erp-text-strong: #243b53;
+  --erp-text-body: #486581;
+  --erp-text-muted: #627d98;
+  --erp-text-light: #829ab1;
+  --erp-text-disabled: #9fb3c8;
+  --erp-text-link: #1976d2;
+  --erp-text-on-primary: #ffffff;
+  --erp-text-on-primary-muted: rgb(255 255 255 / 70%);
+  --erp-text-on-primary-soft: #bfe0ff;
+  --erp-surface-on-primary-subtle: rgb(255 255 255 / 10%);
+  --erp-border-on-primary-subtle: rgb(255 255 255 / 15%);
+  --erp-text-on-sidebar: #ffffff;
+  --erp-text-sidebar-muted: rgb(255 255 255 / 78%);
+  --erp-text-sidebar-active: #075fbf;
+
+  /* Semantic */
+  --erp-success: #1f9d63;
+  --erp-success-bg: #e9f9f0;
+  --erp-success-text: #137a49;
+  --erp-warning: #f59e0b;
+  --erp-warning-bg: #fff7df;
+  --erp-warning-text: #a55b00;
+  --erp-warning-border: #f6d7ae;
+  --erp-warning-icon-bg: #ffedd3;
+  --erp-warning-strong-text: #87440d;
+  --erp-warning-body-text: #9b641f;
+  --erp-danger: #e85d5d;
+  --erp-danger-bg: #fff0ee;
+  --erp-danger-text: #b9382e;
+  --erp-danger-border-soft: #f1bcbc;
+  --erp-info: #2196f3;
+  --erp-info-bg: #e3f2fd;
+  --erp-info-text: #1976d2;
+
+  /* Typography: Manrope throughout the ERP */
+  --erp-font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --erp-font-display: 28px;
+  --erp-font-page-title: 22px;
+  --erp-font-section-title: 18px;
+  --erp-font-body: 14px;
+  --erp-font-label: 13px;
+  --erp-font-caption: 12px;
+  --erp-font-size-2xs: 10px;
+  --erp-font-size-xs: 11px;
+  --erp-font-size-sm: 12px;
+  --erp-font-size-md: 14px;
+  --erp-font-size-lg: 18px;
+  --erp-font-size-xl: 22px;
+  --erp-line-display: 36px;
+  --erp-line-page-title: 30px;
+  --erp-line-section-title: 26px;
+  --erp-line-body: 22px;
+  --erp-line-label: 18px;
+  --erp-line-caption: 16px;
+  --erp-weight-regular: 400;
+  --erp-weight-medium: 500;
+  --erp-weight-semibold: 600;
+  --erp-weight-bold: 700;
+  --erp-letter-tight: -0.02em;
+  --erp-letter-normal: 0;
+
+  /* Lucide icon system */
+  --erp-icon-stroke: 1.8px;
+  --erp-icon-xs: 14px;
+  --erp-icon-sm: 16px;
+  --erp-icon-md: 20px;
+  --erp-icon-lg: 24px;
+  --erp-icon-default: var(--erp-icon-md);
+  --erp-icon-default-colour: var(--erp-text-muted);
+  --erp-icon-active-colour: var(--erp-blue-600);
+  --erp-icon-disabled-colour: var(--erp-text-disabled);
+
+  /* Spacing */
+  --erp-space-0: 0;
+  --erp-space-1: 4px;
+  --erp-space-2: 8px;
+  --erp-space-3: 12px;
+  --erp-space-4: 16px;
+  --erp-space-5: 20px;
+  --erp-space-6: 24px;
+  --erp-space-8: 32px;
+  --erp-space-10: 40px;
+  --erp-space-12: 48px;
+  --erp-page-padding-desktop: 24px;
+  --erp-page-padding-tablet: 16px;
+  --erp-page-padding-mobile: 12px;
+  --erp-grid-gutter-desktop: 24px;
+  --erp-grid-gutter-mobile: 16px;
+
+  /* Application shell */
+  --erp-sidebar-width: 280px;
+  --erp-sidebar-collapsed-width: 76px;
+  --erp-form-structure-width: 320px;
+  --erp-inspector-width: 360px;
+  --erp-sidebar-item-height: 44px;
+  --erp-sidebar-item-radius: 10px;
+  --erp-sidebar-inline-padding: 12px;
+  --erp-sidebar-icon-column: 48px;
+  --erp-sidebar-bg: linear-gradient(
+    180deg,
+    var(--erp-sidebar-gradient-start),
+    var(--erp-sidebar-gradient-end)
+  );
+  --erp-sidebar-layer: rgb(144 202 249 / 24%);
+  --erp-sidebar-pattern: rgb(144 202 249 / 42%);
+  --erp-sidebar-active-bg: rgb(255 255 255 / 88%);
+  --erp-sidebar-hover-bg: rgb(255 255 255 / 12%);
+  --erp-sidebar-active-edge: #56b5ff;
+  --erp-sidebar-divider: rgb(255 255 255 / 18%);
+  --erp-sidebar-surface: #e3f2fd;
+  --erp-sidebar-text: #486581;
+  --erp-sidebar-text-muted: #627d98;
+  --erp-sidebar-hover-light: rgb(144 202 249 / 26%);
+  --erp-sidebar-active-light: #2196f3;
+  --erp-sidebar-panel-width: 360px;
+  --erp-sidebar-mobile-width: 304px;
+  --erp-header-height: 64px;
+  --erp-header-bg: rgb(253 253 249 / 94%);
+  --erp-header-border: var(--erp-border-default);
+  --erp-header-padding-inline: 20px;
+  --erp-header-search-width: 360px;
+  --erp-content-max-width: 1600px;
+  --erp-admin-workspace-max-width: 1480px;
+  --erp-admin-main-min-width: 0;
+  --erp-admin-context-width: var(--erp-inspector-width);
+  --erp-admin-workspace-gap: 20px;
+  --erp-admin-section-gap: 18px;
+  --erp-admin-page-header-gap: 16px;
+  --erp-admin-sticky-top: calc(var(--erp-header-height) + 20px);
+
+  /* Radius and elevation */
+  --erp-radius-xs: 4px;
+  --erp-radius-control: 8px;
+  --erp-radius-compact: 10px;
+  --erp-radius-chip: 999px;
+  --erp-radius-pill: 999px;
+  --erp-radius-card: 14px;
+  --erp-radius-overlay: 16px;
+  --erp-radius-avatar: 999px;
+  --erp-shadow-card: 0 4px 14px rgb(33 150 243 / 8%);
+  --erp-shadow-enterprise-card: 0 4px 18px rgb(16 42 67 / 6%);
+  --erp-shadow-card-hover: 0 10px 24px rgb(33 150 243 / 13%);
+  --erp-shadow-header: 0 1px 0 var(--erp-header-border);
+  --erp-shadow-sidebar: 8px 0 24px rgb(7 59 122 / 14%);
+  --erp-shadow-overlay: 0 20px 44px rgb(16 42 67 / 14%);
+
+  /* Cards and overlays */
+  --erp-card-padding: 20px;
+  --erp-card-padding-compact: 16px;
+  --erp-card-padding-dense: 14px;
+  --erp-kpi-card-min-width: 260px;
+  --erp-kpi-card-height: 126px;
+  --erp-kpi-purple-text: #7652c7;
+  --erp-kpi-purple-bg: #f0ebff;
+  --erp-kpi-orange-text: #c66c00;
+  --erp-kpi-orange-bg: #fff3df;
+  --erp-chart-card-min-height: 320px;
+  --erp-drawer-width: 420px;
+  --erp-modal-width: 560px;
+  --erp-workflow-navigator-width: 280px;
+  --erp-workflow-content-max-width: 1440px;
+  --erp-workflow-subgroup-gap: 24px;
+  --erp-workflow-field-gap: 16px;
+  --erp-workflow-mobile-sheet-height: 78dvh;
+
+  /* Controls, tables and chips */
+  --erp-control-height: 40px;
+  --erp-control-height-large: 48px;
+  --erp-control-height-compact: 36px;
+  --erp-control-height-mobile: 44px;
+  --erp-button-primary-bg: #2196f3;
+  --erp-button-primary-hover: #1976d2;
+  --erp-button-primary-pressed: #1565c0;
+  --erp-button-secondary-bg: #fbfcf6;
+  --erp-button-secondary-border: #90caf9;
+  --erp-input-bg: #fbfcf6;
+  --erp-input-border: #d8eaf7;
+  --erp-input-focus-border: #2196f3;
+  --erp-table-header-height: 44px;
+  --erp-table-row-height: 52px;
+  --erp-table-row-height-compact: 44px;
+  --erp-table-header-bg: #f1f8fd;
+  --erp-table-row-hover: #e3f2fd;
+  --erp-table-divider: #e7f3fb;
+  --erp-chip-height: 24px;
+  --erp-chip-padding-inline: 8px;
+
+  /* Charts */
+  --erp-chart-primary: #2196f3;
+  --erp-chart-secondary: #90caf9;
+  --erp-chart-area-fill: rgb(144 202 249 / 28%);
+  --erp-chart-grid: #d8eaf7;
+  --erp-chart-baseline: #829ab1;
+
+  /* Layer order */
+  --erp-z-content: 1;
+  --erp-z-header: 100;
+  --erp-z-sidebar: 200;
+  --erp-z-dropdown: 400;
+  --erp-z-drawer: 600;
+  --erp-z-modal: 800;
+  --erp-z-toast: 1000;
+
+  /* Interaction contracts */
+  --erp-standard-transition: 180ms ease-out;
+  --erp-overlay-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --erp-sidebar-expand-transition: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Taskly ERP motion contract.
+ * These variables define timing and easing only; components consume them later.
+ */
+
+:root {
+  /* Durations */
+  --erp-duration-instant: 80ms;
+  --erp-duration-fast: 140ms;
+  --erp-duration-standard: 180ms;
+  --erp-duration-emphasized: 280ms;
+  --erp-duration-slow: 360ms;
+
+  /* Easings */
+  --erp-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --erp-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --erp-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --erp-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Sidebar hover behavior */
+  --erp-sidebar-expand-delay: 90ms;
+  --erp-sidebar-collapse-delay: 180ms;
+  --erp-sidebar-expand-duration: 240ms;
+  --erp-sidebar-collapse-duration: 240ms;
+  --erp-sidebar-expand-easing: var(--erp-ease-enter);
+  --erp-sidebar-collapse-easing: var(--erp-ease-standard);
+  --erp-sidebar-label-enter-delay: 70ms;
+  --erp-sidebar-label-exit-duration: 100ms;
+  --erp-sidebar-label-shift: -6px;
+
+  /* Header and navigation */
+  --erp-header-transition: var(--erp-duration-standard) var(--erp-ease-standard);
+  --erp-nav-active-transition: var(--erp-duration-fast) var(--erp-ease-standard);
+  --erp-search-focus-duration: var(--erp-duration-standard);
+
+  /* Controls and surfaces */
+  --erp-control-transition: var(--erp-duration-fast) var(--erp-ease-standard);
+  --erp-card-hover-duration: var(--erp-duration-standard);
+  --erp-card-hover-translate-y: -2px;
+  --erp-press-scale: 0.98;
+
+  /* Overlays */
+  --erp-dropdown-enter-duration: 160ms;
+  --erp-dropdown-exit-duration: 120ms;
+  --erp-drawer-enter-duration: 220ms;
+  --erp-drawer-exit-duration: 220ms;
+  --erp-modal-enter-duration: 220ms;
+  --erp-modal-exit-duration: 160ms;
+  --erp-toast-enter-duration: 240ms;
+  --erp-toast-exit-duration: 180ms;
+  --erp-overlay-enter-shift: 8px;
+  --erp-drawer-enter-shift: 24px;
+
+  /* Feedback */
+  --erp-skeleton-duration: 1400ms;
+  --erp-progress-duration: 400ms;
+  --erp-status-pulse-duration: 1800ms;
+}
+
+/* Motion is reduced globally when the operating system requests it. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --erp-duration-instant: 1ms;
+    --erp-duration-fast: 1ms;
+    --erp-duration-standard: 1ms;
+    --erp-duration-emphasized: 1ms;
+    --erp-duration-slow: 1ms;
+    --erp-sidebar-expand-delay: 0ms;
+    --erp-sidebar-collapse-delay: 0ms;
+    --erp-sidebar-expand-duration: 1ms;
+    --erp-sidebar-collapse-duration: 1ms;
+    --erp-sidebar-label-enter-delay: 0ms;
+    --erp-sidebar-label-exit-duration: 1ms;
+    --erp-dropdown-enter-duration: 1ms;
+    --erp-dropdown-exit-duration: 1ms;
+    --erp-drawer-enter-duration: 1ms;
+    --erp-drawer-exit-duration: 1ms;
+    --erp-modal-enter-duration: 1ms;
+    --erp-modal-exit-duration: 1ms;
+    --erp-toast-enter-duration: 1ms;
+    --erp-toast-exit-duration: 1ms;
+    --erp-card-hover-translate-y: 0;
+    --erp-press-scale: 1;
+  }
+}
+/* Global data-view tokens for tables, lists, pagination, selection and loading. */
+
+:root {
+  /* Pagination */
+  --erp-pagination-height: 48px;
+  --erp-pagination-gap: var(--erp-space-2);
+  --erp-pagination-button-size: 36px;
+  --erp-pagination-button-radius: var(--erp-radius-control);
+  --erp-pagination-bg: var(--erp-surface-raised);
+  --erp-pagination-border: var(--erp-border-default);
+  --erp-pagination-text: var(--erp-text-body);
+  --erp-pagination-active-bg: var(--erp-blue-500);
+  --erp-pagination-active-text: var(--erp-text-on-primary);
+  --erp-pagination-disabled-opacity: 0.46;
+
+  /* Selection */
+  --erp-selection-bg: rgb(33 150 243 / 10%);
+  --erp-selection-hover-bg: rgb(33 150 243 / 15%);
+  --erp-selection-border: var(--erp-blue-500);
+  --erp-selection-indicator-width: 3px;
+  --erp-selection-toolbar-height: 48px;
+  --erp-selection-toolbar-bg: var(--erp-blue-50);
+
+  /* Loading and skeletons */
+  --erp-loading-overlay-bg: rgb(251 252 246 / 76%);
+  --erp-loading-backdrop-blur: 2px;
+  --erp-loading-spinner-size: 32px;
+  --erp-loading-spinner-track: var(--erp-blue-100);
+  --erp-loading-spinner-active: var(--erp-blue-600);
+  --erp-skeleton-base: #e8f0f5;
+  --erp-skeleton-highlight: #f7fbfd;
+  --erp-skeleton-radius: var(--erp-radius-control);
+  --erp-skeleton-line-height: 14px;
+  --erp-skeleton-shimmer-width: 45%;
+
+  /* Auth surfaces */
+  --erp-auth-page-bg: var(--erp-canvas);
+  --erp-auth-artwork-bg: var(--erp-surface-overlay);
+  --erp-auth-bg-image: url('/assets/images/auth/geu-login-background.svg');
+  --erp-auth-bg-opacity: 0.34;
+  --erp-auth-bg-size: max(1180px, 100vw) auto;
+  --erp-auth-bg-position: center;
+
+  /* Empty, error and refresh states */
+  --erp-state-panel-min-height: 240px;
+  --erp-state-icon-size: 40px;
+  --erp-state-content-width: 420px;
+  --erp-stale-data-opacity: 0.7;
+  --erp-refresh-indicator-size: 18px;
+
+  /* Data density and rendering */
+  --erp-data-row-height-comfortable: 52px;
+  --erp-data-row-height-compact: 44px;
+  --erp-data-row-height-dense: 36px;
+  --erp-data-cell-padding-inline: 12px;
+  --erp-virtual-scroll-buffer: 320px;
+  --erp-content-visibility-size: 52px;
+}

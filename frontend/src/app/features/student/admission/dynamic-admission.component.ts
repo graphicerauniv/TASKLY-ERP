@@ -1,22 +1,41 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { LucideCheck } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
 import {
   Admission,
   AdmissionForm,
   FormField,
+  FormSection,
   FormSubsection,
   MasterValue,
   VisibilityCondition,
 } from '../../../core/models';
+import { AdmissionFormWorkspaceComponent } from '../../../shared/ui/admission-form-workspace/admission-form-workspace.component';
+import { DynamicFieldRendererComponent } from '../../../shared/ui/dynamic-field-renderer/dynamic-field-renderer.component';
+import { DynamicSectionRendererComponent } from '../../../shared/ui/dynamic-section-renderer/dynamic-section-renderer.component';
+import { FormActionBarComponent } from '../../../shared/ui/form-action-bar/form-action-bar.component';
+import { FormProgressHeaderComponent } from '../../../shared/ui/form-progress-header/form-progress-header.component';
+import { FormSectionNavigatorComponent } from '../../../shared/ui/form-section-navigator/form-section-navigator.component';
+import { FormSubGroupComponent } from '../../../shared/ui/form-sub-group/form-sub-group.component';
+import { FormSectionNavigationItem } from '../../../shared/ui/form-workflow.models';
+import { MobileSectionNavigatorSheetComponent } from '../../../shared/ui/mobile-section-navigator-sheet/mobile-section-navigator-sheet.component';
 
 @Component({
   selector: 'erp-dynamic-admission',
-  imports: [FormsModule, NgTemplateOutlet, RouterLink],
+  imports: [
+    RouterLink,
+    LucideCheck,
+    AdmissionFormWorkspaceComponent,
+    DynamicFieldRendererComponent,
+    DynamicSectionRendererComponent,
+    FormActionBarComponent,
+    FormProgressHeaderComponent,
+    FormSectionNavigatorComponent,
+    FormSubGroupComponent,
+    MobileSectionNavigatorSheetComponent,
+  ],
   templateUrl: './dynamic-admission.component.html',
-  styleUrl: './dynamic-admission.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.embedded]': 'embedded()' },
 })
@@ -27,10 +46,13 @@ export class DynamicAdmissionComponent {
   readonly admission = signal<Admission | null>(null);
   readonly activeIndex = signal(0);
   readonly optionsState = signal<Record<string, MasterValue[]>>({});
+  readonly openSubsectionIds = signal<Set<string>>(new Set());
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly message = signal('');
   readonly error = signal('');
+  readonly dirty = signal(false);
+  readonly mobileNavigatorOpen = signal(false);
   private accessKey = '';
   constructor() {
     this.initialize();
@@ -71,7 +93,9 @@ export class DynamicAdmissionComponent {
     );
     this.activeIndex.set(Math.max(0, index));
     this.loading.set(false);
+    this.dirty.set(false);
     this.loadSectionOptions();
+    this.resetOpenSubsections();
   }
   section() {
     return this.form()?.sections[this.activeIndex()];
@@ -80,6 +104,125 @@ export class DynamicAdmissionComponent {
     return (this.section()?.subsections || []).filter((sub) =>
       this.matches(sub.visibilityCondition, this.admission()?.responses || {}),
     );
+  }
+  progressPercent() {
+    const sections = this.form()?.sections || [];
+    if (!sections.length) return 0;
+    const progress = sections.reduce((sum, section) => {
+      const total = this.totalFields(section);
+      if (!total) return sum;
+      return sum + Math.min(1, this.completedFields(section) / total);
+    }, 0);
+    return Math.round((progress / sections.length) * 100);
+  }
+  completedSectionCount() {
+    return (this.form()?.sections || []).filter(
+      (section, index) => this.sectionState(index, section) === 'complete',
+    ).length;
+  }
+  activeSectionNumber() {
+    return String(this.activeIndex() + 1).padStart(2, '0');
+  }
+  completedFields(section = this.section()) {
+    if (!section) return 0;
+    let completed = 0;
+    for (const sub of section.subsections) {
+      if (!this.matches(sub.visibilityCondition, this.admission()?.responses || {})) continue;
+      if (sub.isRepeatable) {
+        const entries = this.entries(sub);
+        for (const entry of entries) {
+          for (const field of sub.fields) {
+            if (field.isActive && this.visible(field, entry) && this.hasValue(this.value(field, entry))) {
+              completed += 1;
+            }
+          }
+        }
+      } else {
+        for (const field of sub.fields) {
+          if (field.isActive && this.visible(field) && this.hasValue(this.value(field))) {
+            completed += 1;
+          }
+        }
+      }
+    }
+    return completed;
+  }
+  totalFields(section = this.section()) {
+    if (!section) return 0;
+    return section.subsections.reduce(
+      (count, sub) =>
+        count +
+        (this.matches(sub.visibilityCondition, this.admission()?.responses || {})
+          ? sub.fields.filter((field) => field.isActive).length
+          : 0),
+      0,
+    );
+  }
+  requiredMissingFields(section = this.section()) {
+    if (!section) return 0;
+    let missing = 0;
+    for (const sub of section.subsections) {
+      if (!this.matches(sub.visibilityCondition, this.admission()?.responses || {})) continue;
+      const entries = sub.isRepeatable ? this.entries(sub) : [this.admission()?.responses || {}];
+      for (const entry of entries.length ? entries : [{}]) {
+        for (const field of sub.fields) {
+          if (field.isActive && field.isRequired && this.visible(field, entry) && !this.hasValue(entry[field.id])) {
+            missing += 1;
+          }
+        }
+      }
+    }
+    return missing;
+  }
+  sectionStatus(index: number, section?: FormSection) {
+    const currentSection = section || this.form()?.sections[index];
+    if (!currentSection) return 'Not started';
+    const missing = this.requiredMissingFields(currentSection);
+    if (index < this.activeIndex()) return missing ? `${missing} required` : 'Complete';
+    if (index === this.activeIndex()) return missing ? `${missing} required` : 'In progress';
+    return 'Not started';
+  }
+  sectionState(index: number, section?: FormSection) {
+    const currentSection = section || this.form()?.sections[index];
+    if (index === this.activeIndex()) return 'current';
+    if (currentSection && this.requiredMissingFields(currentSection) && index < this.activeIndex()) {
+      return 'attention';
+    }
+    if (index < this.activeIndex()) return 'complete';
+    return 'upcoming';
+  }
+  sectionNavigationItems(): FormSectionNavigationItem[] {
+    return (this.form()?.sections || []).map((section, index) => ({
+      id: section.id,
+      index,
+      title: section.name,
+      status: this.sectionStatus(index, section),
+      state: this.sectionState(index, section),
+    }));
+  }
+  requestSections() {
+    this.openMobileNavigator();
+  }
+  openMobileNavigator() {
+    this.mobileNavigatorOpen.set(true);
+  }
+  closeMobileNavigator() {
+    this.mobileNavigatorOpen.set(false);
+  }
+  saveStatusText() {
+    if (this.saving()) return 'Saving...';
+    if (this.dirty()) return 'Unsaved changes';
+    return this.message() || 'Draft saved just now';
+  }
+  primaryActionLabel() {
+    const finalSection = this.activeIndex() === (this.form()?.sections.length || 1) - 1;
+    if (!finalSection) return 'Save & Continue';
+    return this.embedded() ? 'Save Student Record' : 'Submit Application';
+  }
+  primaryAction() {
+    const finalSection = this.activeIndex() === (this.form()?.sections.length || 1) - 1;
+    if (finalSection) this.submit();
+    else this.save(true);
   }
   value(field: FormField, entry?: Record<string, unknown>) {
     return (entry || this.admission()?.responses || {})[field.id];
@@ -91,24 +234,9 @@ export class DynamicAdmissionComponent {
       if (admission) admission.responses[field.id] = value;
     }
     this.admission.update((v) => (v ? structuredClone(v) : v));
+    this.dirty.set(true);
+    this.message.set('');
     this.reloadDependents(field.id, entry, entryIndex);
-  }
-  checked(field: FormField, option: string, entry?: Record<string, unknown>) {
-    const current = this.value(field, entry);
-    return Array.isArray(current) && current.includes(option);
-  }
-  toggleChoice(
-    field: FormField,
-    option: string,
-    checked: boolean,
-    entry?: Record<string, unknown>,
-    entryIndex?: number,
-  ) {
-    const current = Array.isArray(this.value(field, entry))
-      ? [...(this.value(field, entry) as unknown[])]
-      : [];
-    const next = checked ? [...new Set([...current, option])] : current.filter((v) => v !== option);
-    this.setValue(field, next, entry, entryIndex);
   }
   entries(sub: FormSubsection) {
     return this.admission()?.repeatableResponses[sub.id] || [];
@@ -123,6 +251,8 @@ export class DynamicAdmissionComponent {
       if (field.defaultValue != null) entry[field.id] = field.defaultValue;
     entries.push(entry);
     this.admission.set(structuredClone(admission));
+    this.dirty.set(true);
+    this.message.set('');
     this.loadSubsectionOptions(sub, entries.length - 1, entry);
   }
   removeEntry(sub: FormSubsection, index: number) {
@@ -130,6 +260,8 @@ export class DynamicAdmissionComponent {
     if (!admission) return;
     admission.repeatableResponses[sub.id]?.splice(index, 1);
     this.admission.set(structuredClone(admission));
+    this.dirty.set(true);
+    this.message.set('');
   }
   matches(condition: VisibilityCondition | null, values: Record<string, unknown>) {
     if (!condition) return true;
@@ -170,13 +302,17 @@ export class DynamicAdmissionComponent {
         this.optionsState.update((v) => ({ ...v, [this.optionKey(field, index)]: items })),
       );
   }
-  search(field: FormField, event: Event, entry?: Record<string, unknown>, index?: number) {
-    this.loadOptions(field, entry, index, (event.target as HTMLInputElement).value);
+  searchOptions(
+    field: FormField,
+    query: string,
+    entry?: Record<string, unknown>,
+    index?: number,
+  ) {
+    this.loadOptions(field, entry, index, query);
   }
-  upload(field: FormField, event: Event, entry?: Record<string, unknown>, index?: number) {
-    const file = (event.target as HTMLInputElement).files?.[0],
-      admission = this.admission();
-    if (!file || !admission) return;
+  upload(field: FormField, file: File, entry?: Record<string, unknown>, index?: number) {
+    const admission = this.admission();
+    if (!admission) return;
     const maxSizeMb = field.uploadConfig?.maxSizeMb || 5;
     if (file.size > maxSizeMb * 1024 * 1024) {
       this.error.set(`${field.name} must be ${maxSizeMb} MB or smaller.`);
@@ -208,13 +344,6 @@ export class DynamicAdmissionComponent {
       )
       .join(',');
   }
-  uploadHelp(field: FormField) {
-    const labels = (field.uploadConfig?.allowedTypes ||
-      (field.type === 'file' ? ['image', 'pdf', 'word'] : ['image']))
-      .map((type) => ({ image: 'JPG/PNG/WebP', pdf: 'PDF', word: 'DOC/DOCX' })[type])
-      .join(', ');
-    return `${labels} · Maximum ${field.uploadConfig?.maxSizeMb || 5} MB`;
-  }
   save(next = false) {
     const admission = this.admission(),
       section = this.section();
@@ -232,6 +361,7 @@ export class DynamicAdmissionComponent {
           if (current) item.currentSectionId = current.id;
           window.scrollTo({ top: 0, behavior: 'smooth' });
           this.loadSectionOptions();
+          this.resetOpenSubsections();
         }
       },
       error: (e) => {
@@ -244,6 +374,7 @@ export class DynamicAdmissionComponent {
     if (this.activeIndex() > 0) {
       this.activeIndex.update((v) => v - 1);
       this.loadSectionOptions();
+      this.resetOpenSubsections();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
@@ -281,6 +412,53 @@ export class DynamicAdmissionComponent {
         this.entries(sub).forEach((entry, index) => this.loadSubsectionOptions(sub, index, entry));
       else this.loadSubsectionOptions(sub, undefined, undefined);
     }
+  }
+  goToStep(index: number) {
+    if (index === this.activeIndex()) return;
+    this.activeIndex.set(index);
+    this.closeMobileNavigator();
+    this.loadSectionOptions();
+    this.resetOpenSubsections();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  stepStatus(index: number) {
+    if (index < this.activeIndex()) return 'Complete';
+    if (index === this.activeIndex()) return 'In progress';
+    return 'Not started';
+  }
+  stepIconName(name: string) {
+    const normalized = name.toLowerCase();
+    if (normalized.includes('qualification') || normalized.includes('education'))
+      return 'graduation';
+    if (normalized.includes('document')) return 'document';
+    if (normalized.includes('address')) return 'address';
+    if (normalized.includes('payment') || normalized.includes('fee')) return 'payment';
+    if (normalized.includes('review') || normalized.includes('submit')) return 'review';
+    return 'personal';
+  }
+  fieldCount(sub: FormSubsection) {
+    return sub.fields.filter((field) => field.isActive).length;
+  }
+  requiredFieldCount(sub: FormSubsection) {
+    return sub.fields.filter((field) => field.isActive && field.isRequired).length;
+  }
+  private hasValue(value: unknown) {
+    return value !== null && value !== undefined && value !== '' && (!Array.isArray(value) || value.length > 0);
+  }
+  subsectionOpen(id: string) {
+    return this.openSubsectionIds().has(id);
+  }
+  toggleSubsection(id: string) {
+    this.openSubsectionIds.update((ids) => {
+      const next = new Set(ids);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  private resetOpenSubsections() {
+    const first = this.visibleSubsections()[0]?.id;
+    this.openSubsectionIds.set(new Set(first ? [first] : []));
   }
   private loadSubsectionOptions(
     sub: FormSubsection,

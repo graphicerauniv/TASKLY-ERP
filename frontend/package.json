@@ -8,7 +8,8 @@
     "ng": "ng",
     "config": "node scripts/write-runtime-config.js",
     "start": "npm run config && ng serve",
-    "build": "npm run config && ng build",
+    "check:ui": "node scripts/check-ui-rules.js",
+    "build": "npm run config && npm run check:ui && ng build",
     "test": "ng test",
     "e2e": "playwright test"
   },

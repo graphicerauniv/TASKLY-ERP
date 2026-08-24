@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -6,6 +13,11 @@ import { map } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
 import { MasterDataStore } from '../../../core/master-data.store';
 import { MasterValue } from '../../../core/models';
+import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import {
+  CompactActionItem,
+  CompactActionMenuComponent,
+} from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
 const DEPENDENCY_CHAINS: Record<string, string[]> = {
   level: ['college', 'department'],
@@ -18,9 +30,8 @@ const DEPENDENCY_CHAINS: Record<string, string[]> = {
 
 @Component({
   selector: 'erp-master-data',
-  imports: [FormsModule],
+  imports: [AdminPageComponent, CompactActionMenuComponent, FormsModule],
   templateUrl: './master-data.component.html',
-  styleUrl: './master-data.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MasterDataComponent {
@@ -31,12 +42,17 @@ export class MasterDataComponent {
     { initialValue: '' },
   );
   readonly types = this.masterDataStore.types;
+  readonly customTypeCount = computed(() => this.types().filter((type) => type.isCustom).length);
   readonly values = signal<MasterValue[]>([]);
   readonly dependencyValues = signal<Record<string, MasterValue[]>>({});
   readonly loading = signal(false);
   readonly message = signal('');
   readonly error = signal('');
   readonly editingId = signal<string | null>(null);
+  readonly rowActions: CompactActionItem[] = [
+    { id: 'edit', label: 'Edit', icon: 'edit' },
+    { id: 'delete', label: 'Delete', icon: 'delete', destructive: true, separator: true },
+  ];
   name = '';
   selectedDependencies: Record<string, string> = {};
   search = '';
@@ -149,6 +165,10 @@ export class MasterDataComponent {
     this.api
       .updateMasterValue(this.slug(), item._id, { isActive: !item.isActive })
       .subscribe(() => this.loadValues());
+  }
+  handleRowAction(action: string, item: MasterValue) {
+    if (action === 'edit') this.edit(item);
+    if (action === 'delete') this.remove(item);
   }
   remove(item: MasterValue) {
     if (!confirm(`Delete ${item.name}?`)) return;

@@ -1,0 +1,27 @@
+<button
+  class="erp-form-subgroup__header"
+  type="button"
+  [attr.aria-expanded]="open()"
+  (click)="toggled.emit()"
+>
+  <span>
+    <strong>{{ title() }}</strong>
+    @if (description()) {
+      <small>{{ description() }}</small>
+    }
+  </span>
+  <span class="erp-form-subgroup__meta">
+    @if (requiredCount()) {
+      {{ requiredCount() }} required
+    } @else {
+      {{ fieldCount() }} fields
+    }
+    <svg lucideChevronDown size="17" aria-hidden="true"></svg>
+  </span>
+</button>
+
+@if (open()) {
+  <div class="erp-form-subgroup__body">
+    <ng-content />
+  </div>
+}

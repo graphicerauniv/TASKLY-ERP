@@ -1,0 +1,96 @@
+<span class="erp-dynamic-field__label">
+  {{ field().name }}
+  @if (field().isRequired) {
+    <b aria-hidden="true">*</b>
+    <span class="erp-sr-only">required</span>
+  }
+</span>
+
+@if (field().type === 'textarea') {
+  <textarea
+    [id]="controlId()"
+    rows="4"
+    [placeholder]="field().placeholder"
+    [ngModel]="modelValue()"
+    (ngModelChange)="modelChanged.emit($event)"
+  ></textarea>
+} @else if (['dropdown', 'multi-select'].includes(field().type)) {
+  @if (field().searchable) {
+    <input
+      class="erp-dynamic-field__option-search"
+      type="search"
+      placeholder="Search options..."
+      aria-label="Search options"
+      (input)="requestSearch($event)"
+    />
+  }
+  <select
+    [id]="controlId()"
+    [multiple]="field().type === 'multi-select'"
+    [ngModel]="modelValue()"
+    (ngModelChange)="modelChanged.emit($event)"
+  >
+    <option [ngValue]="field().type === 'multi-select' ? [] : ''">Select {{ field().name }}</option>
+    @if (field().dataSource) {
+      @for (option of options(); track option._id) {
+        <option [value]="option._id">{{ option.label || option.name }}</option>
+      }
+    } @else {
+      @for (option of field().options; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    }
+  </select>
+} @else if (field().type === 'radio') {
+  <div class="erp-choice-group" role="radiogroup" [attr.aria-label]="field().name">
+    @for (option of field().options; track option.value) {
+      <label>
+        <input
+          type="radio"
+          [name]="field().id + '-' + entryKey()"
+          [value]="option.value"
+          [ngModel]="modelValue()"
+          (ngModelChange)="modelChanged.emit($event)"
+        />
+        <span>{{ option.label }}</span>
+      </label>
+    }
+  </div>
+} @else if (field().type === 'checkbox') {
+  <div class="erp-choice-group" [attr.aria-label]="field().name">
+    @for (option of field().options; track option.value) {
+      <label>
+        <input
+          type="checkbox"
+          [checked]="isChecked(option.value)"
+          (change)="toggleChoice(option.value, $any($event.target).checked)"
+        />
+        <span>{{ option.label }}</span>
+      </label>
+    }
+  </div>
+} @else if (['file', 'image', 'signature'].includes(field().type)) {
+  <erp-upload-field
+    [field]="field()"
+    [value]="modelValue()"
+    (fileSelected)="fileSelected.emit($event)"
+    (removed)="uploadRemoved.emit()"
+  />
+} @else {
+  <input
+    [id]="controlId()"
+    [type]="field().type === 'mobile' ? 'tel' : field().type"
+    [placeholder]="field().placeholder"
+    [ngModel]="modelValue()"
+    (ngModelChange)="modelChanged.emit($event)"
+    [attr.min]="field().validation.min"
+    [attr.max]="field().validation.max"
+    [attr.minlength]="field().validation.minLength"
+    [attr.maxlength]="field().validation.maxLength"
+    [attr.pattern]="field().validation.pattern || null"
+  />
+}
+
+@if (field().helpText) {
+  <small class="erp-dynamic-field__help">{{ field().helpText }}</small>
+}

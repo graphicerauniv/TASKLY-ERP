@@ -1,0 +1,46 @@
+<header class="erp-section-navigator__header">
+  <div>
+    <strong>Application sections</strong>
+    <small>{{ completedCount() }} of {{ totalCount() }} complete</small>
+  </div>
+  <button
+    class="erp-section-navigator__collapse"
+    type="button"
+    [attr.aria-expanded]="!collapsed()"
+    [attr.aria-label]="collapsed() ? 'Expand section navigator' : 'Collapse section navigator'"
+    (click)="collapsed.update((value) => !value)"
+  >
+    <svg lucideChevronDown size="16" aria-hidden="true"></svg>
+  </button>
+</header>
+
+@if (!collapsed()) {
+  @if (items().length > 10) {
+    <label class="erp-section-navigator__search">
+      <svg lucideSearch size="15" aria-hidden="true"></svg>
+      <input
+        type="search"
+        placeholder="Find a section"
+        aria-label="Find a section"
+        [value]="query()"
+        (input)="setQuery($event)"
+      />
+    </label>
+  }
+
+  <div class="erp-section-navigator__list">
+    @for (group of groupedItems(); track group.title) {
+      @if (group.title) {
+        <p class="erp-section-navigator__group">{{ group.title }}</p>
+      }
+      @for (item of group.items; track item.id) {
+        <erp-form-section-nav-item
+          [item]="item"
+          (selected)="sectionSelected.emit($event)"
+        />
+      }
+    } @empty {
+      <p class="erp-section-navigator__empty">No sections found.</p>
+    }
+  </div>
+}

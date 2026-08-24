@@ -1,0 +1,93 @@
+<main class="canvas">
+  @if (subsection(); as activeSubsection) {
+    <section class="canvas-heading erp-card">
+      <div class="canvas-heading__identity">
+        <span class="canvas-heading__icon">
+          <svg lucideRows3 size="19" aria-hidden="true"></svg>
+        </span>
+        <div>
+          <small>{{ section()?.name }} / {{ activeSubsection.name }}</small>
+          <h2>{{ activeSubsection.name }}</h2>
+          <p>{{ activeSubsection.description || 'Configure fields for this section.' }}</p>
+        </div>
+      </div>
+      <div class="canvas-heading__actions">
+        @if (!structureVisible()) {
+          <button
+            class="erp-button erp-button--secondary erp-button--compact"
+            type="button"
+            (click)="structureRequested.emit()"
+          >
+            <svg lucideListTree size="17" aria-hidden="true"></svg>
+            Structure
+          </button>
+        }
+        <span class="erp-status" [class.erp-status--warning]="!activeSubsection.isActive">
+          {{ activeSubsection.isActive ? 'Enabled' : 'Disabled' }}
+        </span>
+      </div>
+    </section>
+
+    <section class="fields-panel erp-card">
+      <header class="panel-header">
+        <div>
+          <h2>Fields</h2>
+          <p>{{ activeSubsection.fields.length }} configured</p>
+        </div>
+        <button
+          class="erp-button erp-button--secondary erp-button--compact"
+          type="button"
+          (click)="addFieldRequested.emit()"
+        >
+          <svg lucidePlus size="16" aria-hidden="true"></svg>
+          Add field
+        </button>
+      </header>
+
+      <div class="field-list">
+        @for (field of activeSubsection.fields; track field.id; let fieldIndex = $index) {
+          <div class="field-row" [class.selected]="field.id === selectedFieldId()">
+            <span class="drag-handle" aria-hidden="true">
+              <svg lucideGripVertical size="17"></svg>
+            </span>
+            <span class="field-order">{{ fieldIndex + 1 }}</span>
+            <span class="field-icon">
+              <erp-field-type-icon [type]="field.type" [size]="17" />
+            </span>
+            <button class="field-row__content" type="button" (click)="fieldSelected.emit(field)">
+              <strong>{{ field.name }}</strong>
+              <small>{{ field.type }}{{ field.isRequired ? ' · Required' : '' }}</small>
+            </button>
+            <span class="erp-status field-status" [class.erp-status--warning]="!field.isActive">
+              {{ field.isActive ? 'Active' : 'Hidden' }}
+            </span>
+            <erp-compact-action-menu
+              [items]="fieldActions"
+              (selected)="fieldAction.emit({ action: $event, field, index: fieldIndex })"
+            />
+          </div>
+        } @empty {
+          <div class="compact-empty">
+            <svg lucideTextCursorInput size="24" aria-hidden="true"></svg>
+            <strong>No fields yet</strong>
+            <p>Add the first field to this section.</p>
+            <button
+              class="erp-button erp-button--secondary erp-button--compact"
+              type="button"
+              (click)="addFieldRequested.emit()"
+            >
+              <svg lucidePlus size="16" aria-hidden="true"></svg>
+              Add field
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+  } @else {
+    <section class="erp-card compact-empty canvas-empty">
+      <svg lucideRows3 size="28" aria-hidden="true"></svg>
+      <strong>Select a section</strong>
+      <p>Choose a section from the structure panel to configure its fields.</p>
+    </section>
+  }
+</main>

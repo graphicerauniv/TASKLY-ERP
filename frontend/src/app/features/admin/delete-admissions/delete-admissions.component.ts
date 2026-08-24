@@ -3,12 +3,24 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { LucideSearch, LucideTrash2, LucideTriangleAlert, LucideX } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
 import { Admission } from '../../../core/models';
+import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import {
+  CompactActionItem,
+  CompactActionMenuComponent,
+} from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
 @Component({
   selector: 'erp-delete-admissions',
-  imports: [DatePipe, LucideSearch, LucideTrash2, LucideTriangleAlert, LucideX],
+  imports: [
+    AdminPageComponent,
+    CompactActionMenuComponent,
+    DatePipe,
+    LucideSearch,
+    LucideTrash2,
+    LucideTriangleAlert,
+    LucideX,
+  ],
   templateUrl: './delete-admissions.component.html',
-  styleUrl: './delete-admissions.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeleteAdmissionsComponent {
@@ -20,6 +32,9 @@ export class DeleteAdmissionsComponent {
   readonly deleteTarget = signal<Admission | null>(null);
   readonly message = signal('');
   readonly error = signal('');
+  readonly rowActions: CompactActionItem[] = [
+    { id: 'delete', label: 'Delete record', icon: 'delete', destructive: true },
+  ];
   readonly filteredItems = computed(() => {
     const query = this.query().trim().toLowerCase();
     if (!query) return this.items();
@@ -51,6 +66,10 @@ export class DeleteAdmissionsComponent {
     this.message.set('');
     this.error.set('');
     this.deleteTarget.set(item);
+  }
+
+  handleRowAction(action: string, item: Admission) {
+    if (action === 'delete') this.requestDelete(item);
   }
 
   cancelDelete() {
