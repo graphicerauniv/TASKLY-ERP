@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LucideCheck,
@@ -18,7 +25,7 @@ import {
   MasterType,
 } from '../../../core/models';
 import { SettingsModalComponent } from '../../../shared/ui/settings-modal/settings-modal.component';
-import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { BuilderPageHeaderComponent } from './components/builder-page-header.component';
 import { FormBuilderToolbarComponent } from './components/form-builder-toolbar.component';
 import {
   FormStructurePanelComponent,
@@ -53,7 +60,7 @@ type NameDialog = {
 };
 
 type DeleteDialog = {
-  kind: 'section' | 'subsection' | 'field';
+  kind: 'form' | 'section' | 'subsection' | 'field';
   targetId: string;
   title: string;
   message: string;
@@ -62,7 +69,7 @@ type DeleteDialog = {
 @Component({
   selector: 'erp-form-builder',
   imports: [
-    AdminPageComponent,
+    BuilderPageHeaderComponent,
     FormBuilderToolbarComponent,
     FormStructurePanelComponent,
     FormCanvasComponent,
@@ -81,6 +88,7 @@ type DeleteDialog = {
 })
 export class FormBuilderComponent {
   private readonly api = inject(ApiService);
+  private compactStructureLayout = false;
   readonly forms = signal<AdmissionForm[]>([]);
   readonly form = signal<AdmissionForm | null>(null);
   readonly types = signal<MasterType[]>([]);
@@ -90,14 +98,24 @@ export class FormBuilderComponent {
   readonly expandedSectionIds = signal<Set<string>>(new Set());
   readonly fieldTypes = FIELD_TYPES;
   readonly saving = signal(false);
+  readonly dirty = signal(false);
   readonly message = signal('');
   readonly error = signal('');
   readonly nameDialog = signal<NameDialog | null>(null);
   readonly fieldDialog = signal<{ mode: 'add' | 'edit'; draft: FormField } | null>(null);
   readonly deleteDialog = signal<DeleteDialog | null>(null);
+  readonly deleting = signal(false);
+  readonly deleteError = signal('');
   readonly createFormDialog = signal(false);
+  readonly creatingForm = signal(false);
+  readonly createFormError = signal('');
   readonly inspectorVisible = signal(false);
   readonly structureVisible = signal(true);
+  readonly saveStateText = computed(() => {
+    if (this.saving()) return 'Saving changes…';
+    if (this.dirty()) return 'Unsaved changes';
+    return 'Saved just now';
+  });
   readonly inspectorTitle = computed(() => {
     const dialog = this.fieldDialog();
     if (dialog)
@@ -115,13 +133,21 @@ export class FormBuilderComponent {
   dialogDescription = '';
   dialogOptionText = '';
   constructor() {
-    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
-      this.structureVisible.set(false);
+    if (typeof window !== 'undefined') {
+      this.compactStructureLayout = window.innerWidth < 1440;
+      if (this.compactStructureLayout) this.structureVisible.set(false);
     }
     this.load();
     this.api
       .masterTypes()
       .subscribe(({ items }) => this.types.set(items.filter((t) => t.isActive)));
+  }
+  @HostListener('window:resize')
+  handleViewportResize() {
+    const compact = window.innerWidth < 1440;
+    if (compact === this.compactStructureLayout) return;
+    this.compactStructureLayout = compact;
+    this.structureVisible.set(!compact);
   }
   load() {
     this.api.forms().subscribe(({ items }) => {
@@ -141,23 +167,56 @@ export class FormBuilderComponent {
     this.expandedSectionIds.set(new Set());
     this.fieldDialog.set(null);
     this.inspectorVisible.set(false);
+    this.dirty.set(false);
   }
   createForm() {
-    if (!this.newFormName.trim()) return;
+    const name = this.newFormName.trim();
+    if (!name || this.creatingForm()) return;
+    this.creatingForm.set(true);
+    this.createFormError.set('');
     this.api
       .createForm({
-        name: this.newFormName,
+        name,
         description: '',
         status: 'draft',
         isActive: true,
         sections: [],
       })
-      .subscribe(({ item }) => {
-        this.newFormName = '';
-        this.createFormDialog.set(false);
-        this.forms.update((v) => [item, ...v]);
-        this.choose(item);
+      .subscribe({
+        next: ({ item }) => {
+          this.newFormName = '';
+          this.createFormDialog.set(false);
+          this.forms.update((v) => [item, ...v]);
+          this.choose(item);
+          this.creatingForm.set(false);
+        },
+        error: (error) => {
+          this.createFormError.set(error.error?.message || 'Unable to create form. Try again.');
+          this.creatingForm.set(false);
+        },
       });
+  }
+  openCreateFormDialog() {
+    this.newFormName = '';
+    this.createFormError.set('');
+    this.createFormDialog.set(true);
+  }
+  closeCreateFormDialog() {
+    if (this.creatingForm()) return;
+    this.createFormDialog.set(false);
+    this.createFormError.set('');
+  }
+  handleFormAction(action: string) {
+    if (action !== 'delete') return;
+    const form = this.form();
+    if (!form) return;
+    this.deleteError.set('');
+    this.deleteDialog.set({
+      kind: 'form',
+      targetId: form._id,
+      title: 'Delete admission form?',
+      message: `${form.name} and its complete form structure will be permanently deleted.`,
+    });
   }
   section() {
     return this.form()?.sections.find((s) => s.id === this.selectedSectionId());
@@ -181,7 +240,7 @@ export class FormBuilderComponent {
     this.selectedSubsectionId.set('');
     this.selectedFieldId.set('');
     this.fieldDialog.set(null);
-    this.inspectorVisible.set(true);
+    this.inspectorVisible.set(false);
     this.closeStructureOnCompactScreen();
   }
   sectionExpanded(sectionId: string) {
@@ -219,7 +278,7 @@ export class FormBuilderComponent {
     this.selectedSubsectionId.set(subsection.id);
     this.selectedFieldId.set('');
     this.fieldDialog.set(null);
-    this.inspectorVisible.set(true);
+    this.inspectorVisible.set(false);
     this.closeStructureOnCompactScreen();
   }
   renameSubsection(sub: FormSubsection) {
@@ -408,11 +467,23 @@ export class FormBuilderComponent {
     this.handleSubsectionAction(event.action, event.section, event.subsection, event.index);
   }
   handleStructureFieldAction(event: StructureFieldActionEvent) {
-    this.selectFieldFromTree(event.section, event.subsection, event.field);
+    this.selectedSectionId.set(event.section.id);
+    this.selectedSubsectionId.set(event.subsection.id);
     this.handleFieldAction(event.action, event.field, event.index);
   }
   handleCanvasFieldAction(event: CanvasFieldActionEvent) {
     this.handleFieldAction(event.action, event.field, event.index);
+  }
+  handleCanvasSectionAction(action: string) {
+    const section = this.section();
+    const subsection = this.subsection();
+    if (!section || !subsection) return;
+    this.handleSubsectionAction(
+      action,
+      section,
+      subsection,
+      section.subsections.indexOf(subsection),
+    );
   }
   duplicateCurrentSelection() {
     const dialog = this.fieldDialog();
@@ -478,6 +549,7 @@ export class FormBuilderComponent {
     if (action === 'duplicate') this.duplicateField(subsection, field, index);
     if (action === 'up') this.move(subsection.fields, index, -1);
     if (action === 'down') this.move(subsection.fields, index, 1);
+    if (action === 'disable') this.change(() => (field.isActive = !field.isActive));
     if (action === 'delete') this.removeField(field);
   }
   private duplicateSection(section: FormSection, index: number) {
@@ -505,7 +577,7 @@ export class FormBuilderComponent {
     this.change(() => subsection.fields.splice(index + 1, 0, copy));
   }
   private closeStructureOnCompactScreen() {
-    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+    if (typeof window !== 'undefined' && window.innerWidth < 1440) {
       this.structureVisible.set(false);
     }
   }
@@ -557,6 +629,33 @@ export class FormBuilderComponent {
   confirmDelete() {
     const dialog = this.deleteDialog();
     if (!dialog) return;
+    if (dialog.kind === 'form') {
+      if (this.deleting()) return;
+      this.deleting.set(true);
+      this.deleteError.set('');
+      this.api.deleteForm(dialog.targetId).subscribe({
+        next: () => {
+          const remaining = this.forms().filter((form) => form._id !== dialog.targetId);
+          this.forms.set(remaining);
+          this.deleteDialog.set(null);
+          this.deleting.set(false);
+          if (remaining[0]) this.choose(remaining[0]);
+          else {
+            this.form.set(null);
+            this.selectedSectionId.set('');
+            this.selectedSubsectionId.set('');
+            this.selectedFieldId.set('');
+          }
+        },
+        error: (error) => {
+          this.deleteError.set(
+            error.error?.message || 'Unable to delete this form. Try again.',
+          );
+          this.deleting.set(false);
+        },
+      });
+      return;
+    }
     if (dialog.kind === 'section') {
       this.change((form) => {
         form.sections = form.sections.filter((section) => section.id !== dialog.targetId);
@@ -609,6 +708,7 @@ export class FormBuilderComponent {
               ? 'Live form changes saved. Draft admissions will refresh to this structure.'
               : 'Draft saved.',
         );
+        this.dirty.set(false);
         this.saving.set(false);
       },
       error: (e) => {
@@ -622,6 +722,7 @@ export class FormBuilderComponent {
     if (!form) return;
     action(form);
     this.form.set(structuredClone(form));
+    this.dirty.set(true);
   }
   private uid(prefix: string) {
     return `${prefix}_${crypto.randomUUID()}`;

@@ -43,12 +43,20 @@ export class FormCanvasComponent {
   readonly addFieldRequested = output<void>();
   readonly fieldSelected = output<FormField>();
   readonly fieldAction = output<CanvasFieldActionEvent>();
+  readonly sectionAction = output<string>();
+
+  readonly sectionActions: CompactActionItem[] = [
+    { id: 'rename', label: 'Edit section', icon: 'edit' },
+    { id: 'duplicate', label: 'Duplicate', icon: 'duplicate' },
+    { id: 'delete', label: 'Delete', icon: 'delete', destructive: true, separator: true },
+  ];
 
   readonly fieldActions: CompactActionItem[] = [
-    { id: 'edit', label: 'Configure', icon: 'edit' },
+    { id: 'edit', label: 'Edit settings', icon: 'edit' },
     { id: 'duplicate', label: 'Duplicate', icon: 'duplicate' },
     { id: 'up', label: 'Move up', icon: 'up' },
     { id: 'down', label: 'Move down', icon: 'down' },
+    { id: 'disable', label: 'Disable', icon: 'view' },
     { id: 'delete', label: 'Delete', icon: 'delete', destructive: true, separator: true },
   ];
 }

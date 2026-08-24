@@ -57,7 +57,7 @@ export interface CompactActionItem {
         type="button"
         aria-label="More actions"
         [attr.aria-expanded]="open()"
-        (click)="$event.stopPropagation(); open.update((value) => !value)"
+        (click)="toggle($event)"
       >
         @if (variant() === 'add') {
           <svg lucidePlus size="16" aria-hidden="true"></svg><span>{{ label() }}</span>
@@ -177,14 +177,32 @@ export interface CompactActionItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CompactActionMenuComponent {
+  private static activeMenu: CompactActionMenuComponent | null = null;
+
   readonly items = input.required<CompactActionItem[]>();
   readonly variant = input<'more' | 'add'>('more');
   readonly label = input('Add');
   readonly selected = output<string>();
   readonly open = signal(false);
 
+  toggle(event: MouseEvent) {
+    event.stopPropagation();
+    const next = !this.open();
+    if (next && CompactActionMenuComponent.activeMenu !== this) {
+      CompactActionMenuComponent.activeMenu?.open.set(false);
+      CompactActionMenuComponent.activeMenu = this;
+    }
+    this.open.set(next);
+    if (!next && CompactActionMenuComponent.activeMenu === this) {
+      CompactActionMenuComponent.activeMenu = null;
+    }
+  }
+
   choose(id: string) {
     this.open.set(false);
+    if (CompactActionMenuComponent.activeMenu === this) {
+      CompactActionMenuComponent.activeMenu = null;
+    }
     this.selected.emit(id);
   }
 
@@ -195,6 +213,9 @@ export class CompactActionMenuComponent {
   @HostListener('document:click')
   close() {
     this.open.set(false);
+    if (CompactActionMenuComponent.activeMenu === this) {
+      CompactActionMenuComponent.activeMenu = null;
+    }
   }
 
   @HostListener('document:keydown.escape')

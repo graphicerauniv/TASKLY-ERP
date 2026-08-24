@@ -1,21 +1,18 @@
-<erp-admin-page
-  class="form-builder-page"
-  eyebrow="Admission"
-  title="Dynamic Form Builder"
-  description="Create and maintain admission form sections and fields."
->
-  @if (form()) {
-    <div page-actions class="save-actions">
-      <button class="secondary" type="button" (click)="save()" [disabled]="saving()">
-        <svg lucideSave size="16" aria-hidden="true"></svg>
-        {{ form()?.status === 'published' ? 'Save live changes' : 'Save draft' }}
-      </button>
-      <button class="primary" type="button" (click)="save(true)" [disabled]="saving()">
-        <svg lucideSend size="16" aria-hidden="true"></svg>
-        {{ form()?.status === 'published' ? 'Republish form' : 'Publish form' }}
-      </button>
-    </div>
-  }
+<section class="form-builder-page">
+  <erp-builder-page-header [saveState]="saveStateText()">
+    @if (form()) {
+      <div class="save-actions">
+        <button class="secondary" type="button" (click)="save()" [disabled]="saving()">
+          <svg lucideSave size="16" aria-hidden="true"></svg>
+          {{ form()?.status === 'published' ? 'Save live changes' : 'Save draft' }}
+        </button>
+        <button class="primary" type="button" (click)="save(true)" [disabled]="saving()">
+          <svg lucideSend size="16" aria-hidden="true"></svg>
+          {{ form()?.status === 'published' ? 'Republish form' : 'Publish form' }}
+        </button>
+      </div>
+    }
+  </erp-builder-page-header>
 
   @if (message()) {
     <p class="notice success">{{ message() }}</p>
@@ -28,7 +25,8 @@
     [forms]="forms()"
     [form]="form()"
     (formSelected)="chooseForm($event)"
-    (createRequested)="createFormDialog.set(true)"
+    (createRequested)="openCreateFormDialog()"
+    (formAction)="handleFormAction($event)"
   />
 
   @if (form(); as current) {
@@ -39,6 +37,14 @@
     </div>
 
     <div class="builder-grid" [class.builder-grid--structure-hidden]="!structureVisible()">
+      @if (structureVisible()) {
+        <button
+          class="builder-structure-backdrop"
+          type="button"
+          aria-label="Close form structure"
+          (click)="structureVisible.set(false)"
+        ></button>
+      }
       <erp-form-structure-panel
         [form]="current"
         [open]="structureVisible()"
@@ -67,6 +73,7 @@
         (addFieldRequested)="addField()"
         (fieldSelected)="selectField($event)"
         (fieldAction)="handleCanvasFieldAction($event)"
+        (sectionAction)="handleCanvasSectionAction($event)"
       />
 
       @if (inspectorVisible()) {
@@ -477,7 +484,7 @@
       <strong>Create an admission form to begin.</strong>
     </section>
   }
-</erp-admin-page>
+</section>
 
 @if (createFormDialog()) {
   <div class="dialog-layer">
@@ -485,43 +492,43 @@
       class="dialog-backdrop"
       type="button"
       aria-label="Close dialog"
-      (click)="createFormDialog.set(false)"
+      (click)="closeCreateFormDialog()"
     ></button>
-    <section
+    <form
       class="dialog dialog--small"
       role="dialog"
       aria-modal="true"
       aria-labelledby="create-form-title"
+      (ngSubmit)="createForm()"
     >
       <header class="dialog__header">
         <div>
           <small>Admission</small>
           <h2 id="create-form-title">Create form</h2>
         </div>
-        <button type="button" aria-label="Close dialog" (click)="createFormDialog.set(false)">
-          ×
-        </button>
+        <button type="button" aria-label="Close dialog" (click)="closeCreateFormDialog()">×</button>
       </header>
       <div class="dialog__body dialog-form">
         <label
           ><span>Form name *</span
-          ><input [(ngModel)]="newFormName" placeholder="e.g. Undergraduate Admission 2027"
+          ><input
+            name="formName"
+            [(ngModel)]="newFormName"
+            placeholder="e.g. Undergraduate Admission 2027"
+            autocomplete="off"
+            autofocus
         /></label>
+        @if (createFormError()) {
+          <p class="dialog-form__error" role="alert">{{ createFormError() }}</p>
+        }
       </div>
       <footer class="dialog__footer">
-        <button class="secondary" type="button" (click)="createFormDialog.set(false)">
-          Cancel
-        </button>
-        <button
-          class="primary"
-          type="button"
-          [disabled]="!newFormName.trim()"
-          (click)="createForm()"
-        >
-          Create form
+        <button class="secondary" type="button" (click)="closeCreateFormDialog()">Cancel</button>
+        <button class="primary" type="submit" [disabled]="!newFormName.trim() || creatingForm()">
+          {{ creatingForm() ? 'Creating…' : 'Create form' }}
         </button>
       </footer>
-    </section>
+    </form>
   </div>
 }
 
@@ -587,10 +594,26 @@
         <span class="confirm-icon">!</span>
         <h2 id="delete-dialog-title">{{ dialog.title }}</h2>
         <p>{{ dialog.message }}</p>
+        @if (deleteError()) {
+          <p class="dialog-form__error" role="alert">{{ deleteError() }}</p>
+        }
       </div>
       <footer class="dialog__footer">
-        <button class="secondary" type="button" (click)="deleteDialog.set(null)">Cancel</button
-        ><button class="danger-button" type="button" (click)="confirmDelete()">Delete</button>
+        <button
+          class="secondary"
+          type="button"
+          [disabled]="deleting()"
+          (click)="deleteDialog.set(null); deleteError.set('')"
+        >
+          Cancel</button
+        ><button
+          class="danger-button"
+          type="button"
+          [disabled]="deleting()"
+          (click)="confirmDelete()"
+        >
+          {{ deleting() ? 'Deleting…' : 'Delete permanently' }}
+        </button>
       </footer>
     </section>
   </div>

@@ -1,6 +1,9 @@
 <aside class="structure-panel" aria-label="Form structure">
   <header class="panel-header">
-    <h2>Form structure</h2>
+    <div>
+      <h2>Form structure</h2>
+      <p>Tabs &amp; sections</p>
+    </div>
     <div class="panel-header__actions">
       <erp-compact-action-menu
         variant="add"
@@ -8,12 +11,12 @@
         (selected)="addRequested.emit($event)"
       />
       <button
-        class="panel-collapse"
+        class="structure-close"
         type="button"
-        aria-label="Collapse form structure"
+        aria-label="Close form structure"
         (click)="closeRequested.emit()"
       >
-        <svg lucidePanelRightOpen size="17" aria-hidden="true"></svg>
+        <svg lucideX size="18" aria-hidden="true"></svg>
       </button>
     </div>
   </header>
@@ -21,12 +24,16 @@
   <div class="tree" role="tree" aria-label="Form structure hierarchy">
     @for (section of form().sections; track section.id; let sectionIndex = $index) {
       <div class="tree-group">
-        <div class="tree-row tree-row--section" [class.selected]="section.id === selectedSectionId()">
+        <div
+          class="tree-row tree-row--section"
+          [class.selected]="section.id === selectedSectionId()"
+        >
           <button
-            class="tree-row__main"
+            class="tree-row__toggle"
             type="button"
+            aria-label="Toggle section"
             [attr.aria-expanded]="sectionExpanded(section.id)"
-            (click)="sectionToggled.emit(section); sectionSelected.emit(section)"
+            (click)="sectionToggled.emit(section)"
           >
             <svg
               class="tree-row__chevron"
@@ -35,6 +42,8 @@
               size="15"
               aria-hidden="true"
             ></svg>
+          </button>
+          <button class="tree-row__main" type="button" (click)="sectionSelected.emit(section)">
             <svg lucideFileText size="17" aria-hidden="true"></svg>
             <span>{{ section.name }}</span>
           </button>
@@ -73,34 +82,6 @@
                     })
                   "
                 />
-              </div>
-
-              <div class="tree-fields">
-                @for (field of subsection.fields; track field.id; let fieldIndex = $index) {
-                  <div class="tree-field-row" [class.selected]="field.id === selectedFieldId()">
-                    <button
-                      class="tree-field"
-                      type="button"
-                      (click)="fieldSelected.emit({ section, subsection, field })"
-                    >
-                      <span class="tree-connector" aria-hidden="true"></span>
-                      <erp-field-type-icon [type]="field.type" [size]="14" />
-                      <span>{{ field.name }}</span>
-                    </button>
-                    <erp-compact-action-menu
-                      [items]="fieldActions"
-                      (selected)="
-                        fieldAction.emit({
-                          action: $event,
-                          section,
-                          subsection,
-                          field,
-                          index: fieldIndex,
-                        })
-                      "
-                    />
-                  </div>
-                }
               </div>
             }
             <button class="tree-add" type="button" (click)="addSubsectionRequested.emit(section)">

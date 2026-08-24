@@ -3,16 +3,15 @@ import {
   LucideChevronRight,
   LucideFileText,
   LucideListTree,
-  LucidePanelRightOpen,
   LucidePlus,
   LucideRows3,
+  LucideX,
 } from '@lucide/angular';
 import { AdmissionForm, FormField, FormSection, FormSubsection } from '../../../../core/models';
 import {
   CompactActionItem,
   CompactActionMenuComponent,
 } from '../../../../shared/ui/compact-action-menu/compact-action-menu.component';
-import { FieldTypeIconComponent } from '../../../../shared/ui/field-type-icon/field-type-icon.component';
 
 export interface StructureSubsectionEvent {
   section: FormSection;
@@ -43,13 +42,12 @@ export interface StructureFieldActionEvent extends StructureFieldEvent {
   selector: 'erp-form-structure-panel',
   imports: [
     CompactActionMenuComponent,
-    FieldTypeIconComponent,
     LucideChevronRight,
     LucideFileText,
     LucideListTree,
-    LucidePanelRightOpen,
     LucidePlus,
     LucideRows3,
+    LucideX,
   ],
   templateUrl: './form-structure-panel.component.html',
   host: {
@@ -98,7 +96,7 @@ export class FormStructurePanelComponent {
     { id: 'delete', label: 'Delete', icon: 'delete', destructive: true, separator: true },
   ];
   readonly fieldActions: CompactActionItem[] = [
-    { id: 'edit', label: 'Configure', icon: 'edit' },
+    { id: 'edit', label: 'Edit settings', icon: 'edit' },
     { id: 'duplicate', label: 'Duplicate', icon: 'duplicate' },
     { id: 'up', label: 'Move up', icon: 'up' },
     { id: 'down', label: 'Move down', icon: 'down' },
