@@ -1,22 +1,10 @@
-<div class="shell" [class.shell--open]="menuOpen()" [class.shell--collapsed]="sidebarCollapsed()">
+<div class="shell shell--collapsed" [class.shell--open]="menuOpen()">
   <aside class="sidebar" aria-label="Admin sidebar">
     <div class="brand">
       <span class="brand__mark">
         <img src="assets/images/brand/graphic-era-mark.png" alt="Graphic Era University" />
       </span>
       <span class="brand__copy"><strong>GEU ERP</strong><small>Operations Console</small></span>
-      <button
-        class="brand__toggle"
-        type="button"
-        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
-        (click)="sidebarCollapsed.update((value) => !value)"
-      >
-        @if (sidebarCollapsed()) {
-          <svg lucidePanelLeftOpen size="18" aria-hidden="true"></svg>
-        } @else {
-          <svg lucidePanelLeftClose size="18" aria-hidden="true"></svg>
-        }
-      </button>
       <button
         class="brand__mobile-close"
         type="button"

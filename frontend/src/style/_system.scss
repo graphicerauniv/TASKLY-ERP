@@ -2762,19 +2762,6 @@ erp-admin-shell {
   gap: 11px;
 }
 
-.shell--collapsed .sidebar:hover .brand__toggle,
-.shell--collapsed .sidebar:focus-within .brand__toggle {
-  position: static;
-  width: 34px;
-  min-width: 34px;
-  margin-left: auto;
-  border: 1px solid var(--erp-border-default);
-  border-radius: 9px;
-  box-shadow: none;
-  opacity: 1;
-  pointer-events: auto;
-}
-
 .shell--collapsed .nav-section-label {
   height: 12px;
   margin-block: 8px;

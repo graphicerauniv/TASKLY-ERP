@@ -27,8 +27,6 @@ import {
   LucideMapPinned,
   LucideMenu,
   LucideNetwork,
-  LucidePanelLeftClose,
-  LucidePanelLeftOpen,
   LucideFilePenLine,
   LucidePlus,
   LucideSearch,
@@ -66,8 +64,6 @@ import { filter } from 'rxjs';
     LucideMapPinned,
     LucideMenu,
     LucideNetwork,
-    LucidePanelLeftClose,
-    LucidePanelLeftOpen,
     LucideFilePenLine,
     LucidePlus,
     LucideSearch,
@@ -86,7 +82,6 @@ export class AdminShellComponent {
   private readonly router = inject(Router);
   readonly masterTypes = this.masterDataStore.types;
   readonly menuOpen = signal(false);
-  readonly sidebarCollapsed = signal(false);
   readonly navigationSearch = signal('');
   readonly masterMenuOpen = signal(false);
   readonly admissionMenuOpen = signal(false);
@@ -128,9 +123,6 @@ export class AdminShellComponent {
       .filter((group) => group.items.length > 0 || group.title === 'Custom Masters');
   });
   constructor() {
-    if (typeof window !== 'undefined' && window.innerWidth > 850 && window.innerWidth < 1280) {
-      this.sidebarCollapsed.set(true);
-    }
     this.updateCurrentModule(this.router.url);
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
