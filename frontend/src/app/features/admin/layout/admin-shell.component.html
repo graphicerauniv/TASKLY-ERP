@@ -51,7 +51,7 @@
             type="button"
             aria-controls="master-data-menu"
             [attr.aria-expanded]="masterMenuOpen()"
-            (click)="toggleMasterMenu()"
+            (click)="toggleMasterMenu($event)"
           >
             <span class="nav-button__icon"
               ><svg lucideDatabase size="20" [strokeWidth]="1.8" aria-hidden="true"></svg></span
@@ -63,6 +63,7 @@
           @if (masterMenuOpen()) {
             <section
               class="master-flyout"
+              [class.master-flyout--child-open]="hostelMenuOpen()"
               id="master-data-menu"
               role="dialog"
               aria-modal="true"
@@ -76,7 +77,7 @@
                 <button
                   type="button"
                   aria-label="Close Master Data menu"
-                  (click)="masterMenuOpen.set(false)"
+                  (click)="closeMasterMenu()"
                 >
                   <svg lucideX size="16" aria-hidden="true"></svg>
                 </button>
@@ -98,10 +99,11 @@
                     <h3>Campus Operations</h3>
                     <button
                       class="master-group__item"
+                      [class.active]="isHostelRoute()"
                       type="button"
                       aria-controls="hostel-menu"
                       [attr.aria-expanded]="hostelMenuOpen()"
-                      (click)="toggleHostelMenu()"
+                      (click)="toggleHostelMenu($event)"
                     >
                       <span class="master-item__icon"
                         ><svg lucideHouse aria-hidden="true"></svg
@@ -211,14 +213,22 @@
                 aria-labelledby="hostel-menu-title"
               >
                 <header class="master-flyout__header">
+                  <button
+                    class="hostel-flyout__back"
+                    type="button"
+                    aria-label="Back to Master Data"
+                    (click)="closeHostelMenu()"
+                  >
+                    <svg lucideArrowLeft size="18" aria-hidden="true"></svg>
+                  </button>
                   <div>
                     <strong id="hostel-menu-title">Hostel</strong
-                    ><small>Configure structure, rooms and allocations</small>
+                    ><small>Rooms, beds and allocations</small>
                   </div>
                   <button
                     type="button"
                     aria-label="Close Hostel menu"
-                    (click)="hostelMenuOpen.set(false)"
+                    (click)="closeHostelMenu()"
                   >
                     <svg lucideX size="16" aria-hidden="true"></svg>
                   </button>
@@ -229,6 +239,7 @@
                     <a
                       routerLink="/admin/master-data/hostel/details"
                       routerLinkActive="active"
+                      ariaCurrentWhenActive="page"
                       (click)="closeNavigation()"
                     >
                       <span class="master-item__icon"
@@ -236,7 +247,7 @@
                       ></span>
                       <span
                         ><strong>Hostel Details</strong
-                        ><small>Name, type, blocks, floors and rooms</small></span
+                        ><small>Name, type and planning</small></span
                       >
                       <svg
                         class="master-item__arrow"
@@ -248,14 +259,15 @@
                     <a
                       routerLink="/admin/master-data/hostel/structure"
                       routerLinkActive="active"
+                      ariaCurrentWhenActive="page"
                       (click)="closeNavigation()"
                     >
                       <span class="master-item__icon"
                         ><svg lucideLayers aria-hidden="true"></svg
                       ></span>
                       <span
-                        ><strong>Hostel Wise Block, Floor</strong
-                        ><small>Name blocks and floors</small></span
+                        ><strong>Hostel Structure</strong
+                        ><small>Blocks and floors</small></span
                       >
                       <svg
                         class="master-item__arrow"
@@ -267,13 +279,14 @@
                     <a
                       routerLink="/admin/master-data/hostel/rooms"
                       routerLinkActive="active"
+                      ariaCurrentWhenActive="page"
                       (click)="closeNavigation()"
                     >
                       <span class="master-item__icon"
-                        ><svg lucideBuilding2 aria-hidden="true"></svg
+                        ><svg lucideDoorOpen aria-hidden="true"></svg
                       ></span>
                       <span
-                        ><strong>Hostel Room Detail</strong
+                        ><strong>Rooms</strong
                         ><small>Create or generate rooms</small></span
                       >
                       <svg
@@ -286,14 +299,15 @@
                     <a
                       routerLink="/admin/master-data/hostel/capacity"
                       routerLinkActive="active"
+                      ariaCurrentWhenActive="page"
                       (click)="closeNavigation()"
                     >
                       <span class="master-item__icon"
-                        ><svg lucideDatabase aria-hidden="true"></svg
+                        ><svg lucideBedDouble aria-hidden="true"></svg
                       ></span>
                       <span
-                        ><strong>Room Capacity Detail</strong
-                        ><small>Session-wise seater and type</small></span
+                        ><strong>Room Capacity</strong
+                        ><small>Session-wise capacity</small></span
                       >
                       <svg
                         class="master-item__arrow"
@@ -308,6 +322,7 @@
                     <a
                       routerLink="/admin/master-data/hostel/allocation"
                       routerLinkActive="active"
+                      ariaCurrentWhenActive="page"
                       (click)="closeNavigation()"
                     >
                       <span class="master-item__icon"
@@ -315,7 +330,7 @@
                       ></span>
                       <span
                         ><strong>Student Allocation</strong
-                        ><small>Assign, transfer or vacate rooms</small></span
+                        ><small>Allocate or transfer beds</small></span
                       >
                       <svg
                         class="master-item__arrow"
@@ -327,6 +342,7 @@
                     <a
                       routerLink="/admin/master-data/hostel/overview"
                       routerLinkActive="active"
+                      ariaCurrentWhenActive="page"
                       (click)="closeNavigation()"
                     >
                       <span class="master-item__icon"
@@ -334,7 +350,7 @@
                       ></span>
                       <span
                         ><strong>Occupancy Overview</strong
-                        ><small>Monitor beds and availability</small></span
+                        ><small>Monitor bed availability</small></span
                       >
                       <svg
                         class="master-item__arrow"

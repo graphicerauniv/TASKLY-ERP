@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
+  LucideArrowLeft,
+  LucideBedDouble,
   LucideBookOpen,
   LucideBookOpenCheck,
   LucideBookPlus,
@@ -17,6 +19,7 @@ import {
   LucideChevronRight,
   LucideClipboardList,
   LucideDatabase,
+  LucideDoorOpen,
   LucideGlobe,
   LucideHouse,
   LucideLandmark,
@@ -51,6 +54,8 @@ import { filter } from 'rxjs';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
+    LucideArrowLeft,
+    LucideBedDouble,
     LucideBookOpen,
     LucideBookOpenCheck,
     LucideBookPlus,
@@ -59,6 +64,7 @@ import { filter } from 'rxjs';
     LucideChevronRight,
     LucideClipboardList,
     LucideDatabase,
+    LucideDoorOpen,
     LucideGlobe,
     LucideHouse,
     LucideLandmark,
@@ -99,6 +105,8 @@ export class AdminShellComponent {
   readonly feeMenuOpen = signal(false);
   readonly masterSearch = signal('');
   readonly currentModule = signal('Dashboard');
+  private masterMenuTrigger: HTMLElement | null = null;
+  private hostelMenuTrigger: HTMLElement | null = null;
   readonly masterGroups = computed(() => {
     const types = this.masterTypes();
     const bySlug = new Map(types.map((type) => [type.slug, type]));
@@ -144,17 +152,19 @@ export class AdminShellComponent {
     this.auth.clear();
     void this.router.navigate(['/login']);
   }
-  toggleMasterMenu() {
+  toggleMasterMenu(event?: Event) {
+    this.masterMenuTrigger = (event?.currentTarget as HTMLElement | null) || this.masterMenuTrigger;
+    if (this.masterMenuOpen()) {
+      this.closeMasterMenu();
+      return;
+    }
     this.admissionMenuOpen.set(false);
     this.feeMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
-    this.masterMenuOpen.update((open) => !open);
-    if (!this.masterMenuOpen()) this.masterSearch.set('');
-    if (this.masterMenuOpen()) {
-      setTimeout(() =>
-        this.host.nativeElement.querySelector<HTMLInputElement>('.master-search input')?.focus(),
-      );
-    }
+    this.masterMenuOpen.set(true);
+    setTimeout(() =>
+      this.host.nativeElement.querySelector<HTMLInputElement>('.master-search input')?.focus(),
+    );
   }
   toggleAdmissionMenu() {
     this.masterMenuOpen.set(false);
@@ -168,16 +178,39 @@ export class AdminShellComponent {
     this.admissionMenuOpen.set(false);
     this.feeMenuOpen.set(false);
     this.menuOpen.set(false);
+    this.masterSearch.set('');
   }
   closeFlyouts() {
+    const restoreMasterFocus = this.masterMenuOpen();
     this.masterMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
     this.feeMenuOpen.set(false);
     this.masterSearch.set('');
+    if (restoreMasterFocus) setTimeout(() => this.masterMenuTrigger?.focus());
   }
-  toggleHostelMenu() {
-    this.hostelMenuOpen.update((open) => !open);
+  closeMasterMenu(restoreFocus = true) {
+    this.masterMenuOpen.set(false);
+    this.hostelMenuOpen.set(false);
+    this.masterSearch.set('');
+    if (restoreFocus) setTimeout(() => this.masterMenuTrigger?.focus());
+  }
+  toggleHostelMenu(event?: Event) {
+    this.hostelMenuTrigger = (event?.currentTarget as HTMLElement | null) || this.hostelMenuTrigger;
+    if (this.hostelMenuOpen()) {
+      this.closeHostelMenu();
+      return;
+    }
+    this.hostelMenuOpen.set(true);
+    setTimeout(() =>
+      this.host.nativeElement
+        .querySelector<HTMLElement>('.hostel-flyout a')
+        ?.focus(),
+    );
+  }
+  closeHostelMenu(restoreFocus = true) {
+    this.hostelMenuOpen.set(false);
+    if (restoreFocus) setTimeout(() => this.hostelMenuTrigger?.focus());
   }
   toggleFeeMenu() {
     this.masterMenuOpen.set(false);
@@ -191,16 +224,29 @@ export class AdminShellComponent {
   }
   @HostListener('document:keydown.escape')
   closeOnEscape() {
-    if (
-      this.masterMenuOpen() ||
-      this.hostelMenuOpen() ||
-      this.admissionMenuOpen() ||
-      this.feeMenuOpen() ||
-      this.menuOpen()
-    ) {
+    if (this.hostelMenuOpen()) {
+      this.closeHostelMenu();
+      return;
+    }
+    if (this.masterMenuOpen()) {
+      this.closeMasterMenu();
+      return;
+    }
+    if (this.admissionMenuOpen()) {
+      this.admissionMenuOpen.set(false);
+      return;
+    }
+    if (this.feeMenuOpen()) {
+      this.feeMenuOpen.set(false);
+      return;
+    }
+    if (this.menuOpen()) {
       this.closeNavigation();
       this.masterSearch.set('');
     }
+
+    }
+    if (this.menuOpen()) this.menuOpen.set(false);
   }
   @HostListener('document:keydown.tab', ['$event'])
   keepFocusInOpenPanel(event: Event) {
@@ -227,6 +273,9 @@ export class AdminShellComponent {
   }
   isMasterRoute() {
     return this.router.url.startsWith('/admin/master-data/');
+  }
+  isHostelRoute() {
+    return this.router.url.startsWith('/admin/master-data/hostel/');
   }
   isAdmissionRoute() {
     return (

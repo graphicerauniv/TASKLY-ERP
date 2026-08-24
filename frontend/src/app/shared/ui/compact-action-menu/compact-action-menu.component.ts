@@ -70,7 +70,13 @@ export interface CompactActionItem {
         }
       </button>
       @if (open()) {
-        <div class="action-menu__panel" role="menu">
+        <div
+          class="action-menu__panel"
+          role="menu"
+          [style.top.px]="panelTop()"
+          [style.left.px]="panelLeft()"
+          (click)="$event.stopPropagation()"
+        >
           @for (item of items(); track item.id) {
             <button
               type="button"
@@ -127,10 +133,8 @@ export interface CompactActionItem {
       gap: 5px;
     }
     .action-menu__panel {
-      position: absolute;
+      position: fixed;
       z-index: var(--erp-z-dropdown);
-      top: calc(100% + 5px);
-      right: 0;
       display: grid;
       width: 168px;
       padding: 6px;
@@ -138,6 +142,7 @@ export interface CompactActionItem {
       border-radius: var(--erp-radius-compact);
       background: var(--erp-surface-overlay);
       box-shadow: var(--erp-shadow-overlay);
+      animation: action-menu-enter var(--erp-duration-standard) var(--erp-ease-enter);
     }
     .action-menu__panel button {
       display: grid;
@@ -177,6 +182,17 @@ export interface CompactActionItem {
       border-top: 1px solid var(--erp-border-subtle) !important;
       border-radius: 0 0 7px 7px !important;
     }
+    @keyframes action-menu-enter {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .action-menu__panel {
+        animation-duration: 1ms;
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -188,10 +204,13 @@ export class CompactActionMenuComponent {
   readonly label = input('Add');
   readonly selected = output<string>();
   readonly open = signal(false);
+  readonly panelTop = signal(0);
+  readonly panelLeft = signal(0);
 
   toggle(event: MouseEvent) {
     event.stopPropagation();
     const next = !this.open();
+    if (next) this.positionPanel(event.currentTarget as HTMLElement);
     if (next && CompactActionMenuComponent.activeMenu !== this) {
       CompactActionMenuComponent.activeMenu?.open.set(false);
       CompactActionMenuComponent.activeMenu = this;
@@ -200,6 +219,26 @@ export class CompactActionMenuComponent {
     if (!next && CompactActionMenuComponent.activeMenu === this) {
       CompactActionMenuComponent.activeMenu = null;
     }
+  }
+
+  private positionPanel(trigger: HTMLElement) {
+    const rect = trigger.getBoundingClientRect();
+    const panelWidth = 168;
+    const panelHeight = Math.min(360, this.items().length * 42 + 12);
+    const gap = 5;
+    const viewportPadding = 8;
+    const opensUp = rect.bottom + gap + panelHeight > window.innerHeight;
+    this.panelTop.set(
+      opensUp
+        ? Math.max(viewportPadding, rect.top - gap - panelHeight)
+        : Math.min(rect.bottom + gap, window.innerHeight - panelHeight - viewportPadding),
+    );
+    this.panelLeft.set(
+      Math.max(
+        viewportPadding,
+        Math.min(rect.right - panelWidth, window.innerWidth - panelWidth - viewportPadding),
+      ),
+    );
   }
 
   choose(id: string) {
@@ -225,5 +264,11 @@ export class CompactActionMenuComponent {
   @HostListener('document:keydown.escape')
   closeOnEscape() {
     this.open.set(false);
+  }
+
+  @HostListener('window:resize')
+  @HostListener('window:scroll')
+  closeOnViewportChange() {
+    this.close();
   }
 }
