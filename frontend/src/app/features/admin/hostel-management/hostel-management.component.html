@@ -1,157 +1,212 @@
 <erp-admin-page eyebrow="Hostel" [title]="pageTitle()" [description]="pageDescription()">
-  <button
-    page-actions
-    class="erp-button erp-button--secondary"
-    type="button"
-    (click)="loadHostels()"
-  >
-    Refresh
-  </button>
+  <div page-actions class="hostel-page-actions">
+    <button
+      class="erp-icon-button"
+      type="button"
+      aria-label="Refresh hostel data"
+      title="Refresh"
+      (click)="loadHostels()"
+      [disabled]="loading()"
+    >
+      <svg lucideRefreshCw size="18" aria-hidden="true"></svg>
+    </button>
+    @if (section() === 'details') {
+      <button class="erp-button erp-button--primary" type="button" (click)="openHostelEditor()">
+        <svg lucidePlus size="17" aria-hidden="true"></svg><span>Create hostel</span>
+      </button>
+    } @else if (section() === 'structure') {
+      <erp-compact-action-menu
+        variant="add"
+        label="Add structure item"
+        [items]="structureAddActions"
+        (selected)="handleStructureAdd($event)"
+      />
+    } @else if (section() === 'rooms') {
+      <button
+        class="erp-button erp-button--primary"
+        type="button"
+        [disabled]="!locationReady()"
+        [attr.title]="locationReady() ? 'Add rooms' : 'Select a hostel, block and floor first.'"
+        (click)="openRoomEditor()"
+      >
+        <svg lucidePlus size="17" aria-hidden="true"></svg><span>Add rooms</span>
+      </button>
+    } @else if (section() === 'allocation') {
+      <button class="erp-button erp-button--primary" type="button" (click)="openAllocationDrawer()">
+        <svg lucideUserRoundPlus size="17" aria-hidden="true"></svg>
+        <span>Allocate student</span>
+      </button>
+    }
+  </div>
 
   @if (message()) {
     <p class="erp-notice erp-notice--success" role="status">{{ message() }}</p>
   }
-  @if (error()) {
+  @if (
+    error() &&
+    !roomsLoadFailed() &&
+    !allocationLoadFailed() &&
+    !allocationDrawerOpen() &&
+    !vacateTarget()
+  ) {
     <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
   }
 
   @if (section() === 'details') {
-    <section class="erp-card erp-card--padded">
-      <div class="erp-card__header">
-        <div>
-          <h2>{{ editingHostel() ? 'Edit hostel' : 'Add hostel' }}</h2>
-          <p>Enter the planned room count; created rooms are tracked separately.</p>
-        </div>
-      </div>
-      <div class="hostel-form-grid">
-        <label class="erp-field-stack"
-          ><span>Hostel name *</span
-          ><input
-            class="erp-control"
-            [(ngModel)]="hostelName"
-            placeholder="e.g. Nanda Devi Girls Hostel"
-        /></label>
-        <label class="erp-field-stack"
-          ><span>Hostel type *</span
-          ><select class="erp-control" [(ngModel)]="hostelType">
-            <option value="boys">Boys</option>
-            <option value="girls">Girls</option>
-            <option value="co-ed">Co-ed</option>
-          </select></label
+    <section class="erp-metric-strip" aria-label="Hostel directory summary">
+      <article class="erp-metric-strip__item">
+        <span class="erp-metric-strip__icon"
+          ><svg lucideBuilding2 size="20" aria-hidden="true"></svg
+        ></span>
+        <span
+          ><small>Total hostels</small><strong>{{ totalHostels() }}</strong></span
         >
-        <label class="erp-field-stack"
-          ><span>Number of blocks *</span
-          ><input
-            class="erp-control"
-            type="number"
-            min="0"
-            max="30"
-            [(ngModel)]="blockCount"
-            [disabled]="!!editingHostel()"
-        /></label>
-        <label class="erp-field-stack"
-          ><span>Number of floors *</span
-          ><input
-            class="erp-control"
-            type="number"
-            min="0"
-            max="30"
-            [(ngModel)]="floorCount"
-            [disabled]="!!editingHostel()"
-        /></label>
-        <label class="erp-field-stack"
-          ><span>Total number of rooms *</span
-          ><input
-            class="erp-control"
-            type="number"
-            min="0"
-            max="5000"
-            [(ngModel)]="plannedRoomCount"
-        /></label>
-      </div>
-      <div class="hostel-form-actions">
-        <button
-          class="erp-button erp-button--primary"
-          type="button"
-          (click)="saveHostel()"
-          [disabled]="saving()"
+      </article>
+      <article class="erp-metric-strip__item">
+        <span class="erp-metric-strip__icon"
+          ><svg lucideCheckCircle2 size="20" aria-hidden="true"></svg
+        ></span>
+        <span
+          ><small>Active hostels</small><strong>{{ activeHostels() }}</strong></span
         >
-          {{ editingHostel() ? 'Save hostel' : 'Create hostel' }}
-        </button>
-        @if (editingHostel()) {
-          <button
-            class="erp-button erp-button--secondary"
-            type="button"
-            (click)="resetHostelForm()"
-          >
-            Cancel
-          </button>
-        }
-      </div>
+      </article>
+      <article class="erp-metric-strip__item">
+        <span class="erp-metric-strip__icon"
+          ><svg lucideBedDouble size="20" aria-hidden="true"></svg
+        ></span>
+        <span
+          ><small>Planned rooms</small><strong>{{ plannedRooms() }}</strong></span
+        >
+      </article>
+      <article class="erp-metric-strip__item">
+        <span class="erp-metric-strip__icon"
+          ><svg lucideDoorOpen size="20" aria-hidden="true"></svg
+        ></span>
+        <span
+          ><small>Created rooms</small><strong>{{ createdRooms() }}</strong></span
+        >
+      </article>
     </section>
 
-    <section class="erp-card erp-table-shell hostel-section-gap">
-      <div class="erp-table-toolbar">
-        <h2>
-          Configured hostels <small>{{ hostels().length }}</small>
-        </h2>
+    <section class="erp-card hostel-directory">
+      <div class="erp-command-bar">
+        <label class="erp-search-control hostel-directory__search">
+          <svg lucideSearch size="18" aria-hidden="true"></svg>
+          <span class="erp-sr-only">Search hostels</span>
+          <input [(ngModel)]="hostelSearch" placeholder="Search by hostel name or code" />
+        </label>
+        <button
+          class="erp-button erp-button--secondary hostel-filter-toggle"
+          type="button"
+          [attr.aria-expanded]="mobileFiltersOpen()"
+          (click)="mobileFiltersOpen.set(!mobileFiltersOpen())"
+        >
+          <svg lucideFilter size="17" aria-hidden="true"></svg><span>Filters</span>
+        </button>
+        <div
+          class="hostel-directory__filters"
+          [class.hostel-directory__filters--open]="mobileFiltersOpen()"
+        >
+          <label>
+            <span class="erp-sr-only">Hostel type</span>
+            <select class="erp-control" [(ngModel)]="hostelTypeFilter">
+              <option value="all">All types</option>
+              <option value="boys">Boys</option>
+              <option value="girls">Girls</option>
+              <option value="co-ed">Co-ed</option>
+            </select>
+          </label>
+          <label>
+            <span class="erp-sr-only">Hostel status</span>
+            <select class="erp-control" [(ngModel)]="hostelStatusFilter">
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </label>
+        </div>
+        <span class="hostel-directory__count">{{ visibleHostels().length }} results</span>
       </div>
-      <div class="erp-table-shell__scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Hostel</th>
-              <th>Type</th>
-              <th>Blocks</th>
-              <th>Floors</th>
-              <th>Planned rooms</th>
-              <th>Created rooms</th>
-              <th>Status</th>
-              <th class="erp-table-shell__actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (hostel of hostels(); track hostel._id) {
+
+      @if (loading()) {
+        <div class="erp-state-panel" role="status">
+          <span class="erp-spinner" aria-hidden="true"></span><span>Loading hostels…</span>
+        </div>
+      } @else if (!hostels().length) {
+        <div class="erp-empty-panel">
+          <span class="erp-empty-panel__icon"
+            ><svg lucideBuilding2 size="24" aria-hidden="true"></svg
+          ></span>
+          <h2>No hostels configured</h2>
+          <p>Create the first hostel before adding blocks, floors and rooms.</p>
+          <button class="erp-button erp-button--primary" type="button" (click)="openHostelEditor()">
+            <svg lucidePlus size="17" aria-hidden="true"></svg><span>Create hostel</span>
+          </button>
+        </div>
+      } @else {
+        <div class="erp-table-shell erp-table-shell__scroll hostel-directory__table">
+          <table>
+            <thead>
               <tr>
-                <td>
-                  <strong>{{ hostel.name }}</strong
-                  ><small>{{ hostel.code }}</small>
-                </td>
-                <td>{{ hostel.type }}</td>
-                <td>{{ hostel.blockCount }}</td>
-                <td>{{ hostel.floorCount || 0 }}</td>
-                <td>{{ hostel.plannedRoomCount || 0 }}</td>
-                <td>{{ hostel.roomCount }}</td>
-                <td>
-                  <span class="erp-status" [class.erp-status--neutral]="!hostel.isActive">{{
-                    hostel.isActive ? 'Active' : 'Disabled'
-                  }}</span>
-                </td>
-                <td class="erp-table-shell__actions">
-                  <erp-compact-action-menu
-                    [items]="hostelActions(hostel)"
-                    (selected)="handleHostelAction($event, hostel)"
-                  />
-                </td>
+                <th>Hostel</th>
+                <th>Type</th>
+                <th>Structure</th>
+                <th>Rooms</th>
+                @if (section() === 'rooms') {
+                  <th>Status</th>
+                }
+                <th class="erp-table-shell__actions">Actions</th>
               </tr>
-            } @empty {
-              <tr>
-                <td colspan="8" class="erp-empty-state">
-                  {{ loading() ? 'Loading…' : 'No hostels configured.' }}
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              @for (hostel of visibleHostels(); track hostel._id) {
+                <tr>
+                  <td>
+                    <strong>{{ hostel.name }}</strong
+                    ><small>{{ hostel.code }}</small>
+                  </td>
+                  <td>
+                    <span class="hostel-type">{{ hostel.type }}</span>
+                  </td>
+                  <td>
+                    <strong>{{ hostel.blockCount }} blocks</strong
+                    ><small>{{ hostel.floorCount || 0 }} floors</small>
+                  </td>
+                  <td>
+                    <strong>{{ hostel.roomCount }} created</strong
+                    ><small>{{ hostel.plannedRoomCount || 0 }} planned</small>
+                  </td>
+                  <td>
+                    <span class="erp-status" [class.erp-status--neutral]="!hostel.isActive">
+                      {{ hostel.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="erp-table-shell__actions">
+                    <erp-compact-action-menu
+                      [items]="hostelActions(hostel)"
+                      (selected)="handleHostelAction($event, hostel)"
+                    />
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="erp-empty-state erp-empty-state--compact">
+                    No hostels match the current filters.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </section>
   }
 
   @if (section() === 'structure') {
-    <section class="erp-card erp-card--padded">
-      <label class="erp-field-stack hostel-select"
-        ><span>Hostel *</span
-        ><select
+    <section class="erp-card erp-command-bar hostel-structure-command">
+      <label class="erp-field-stack hostel-structure-command__select">
+        <span>Hostel</span>
+        <select
           class="erp-control"
           [(ngModel)]="selectedHostelId"
           (ngModelChange)="hostelSelectionChanged()"
@@ -160,151 +215,255 @@
           @for (hostel of hostels(); track hostel._id) {
             <option [value]="hostel._id">{{ hostel.name }}</option>
           }
-        </select></label
-      >
+        </select>
+      </label>
+      @if (selectedHostel(); as hostel) {
+        <div class="hostel-structure-command__summary">
+          <strong>{{ hostel.name }}</strong>
+          <span
+            >{{ blocks().length }} blocks · {{ floors().length }} floors ·
+            {{ rooms().length }} rooms</span
+          >
+        </div>
+      } @else {
+        <p class="hostel-structure-command__hint">
+          Choose a hostel to manage its blocks and floors.
+        </p>
+      }
     </section>
-    <div class="hostel-two-column hostel-section-gap">
-      <section class="erp-card erp-card--padded">
-        <div class="erp-card__header">
-          <div>
-            <h2>Blocks</h2>
-            <p>Create the hostel's block list manually.</p>
-          </div>
-        </div>
-        <div class="hostel-inline-form">
-          <label class="erp-field-stack"
-            ><span>Block name *</span
-            ><input
-              class="erp-control"
-              [(ngModel)]="blockName"
-              placeholder="e.g. Main Block" /></label
-          ><button
-            class="erp-button erp-button--primary"
-            type="button"
-            (click)="saveBlock()"
-            [disabled]="saving()"
-          >
-            {{ editingBlock() ? 'Save name' : 'Add block' }}
-          </button>
-          @if (editingBlock()) {
-            <button
-              class="erp-button erp-button--secondary"
-              type="button"
-              (click)="cancelStructureEdit()"
-            >
-              Cancel
-            </button>
-          }
-        </div>
-        <div class="erp-table-shell__scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Block</th>
-                <th class="erp-table-shell__actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (block of blocks(); track block._id) {
-                <tr>
-                  <td>
-                    <strong>{{ block.name }}</strong>
-                  </td>
-                  <td class="erp-table-shell__actions">
-                    <erp-compact-action-menu
-                      [items]="blockActions"
-                      (selected)="handleBlockAction($event, block)"
-                    />
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="2" class="erp-empty-state">No blocks created for this hostel.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+
+    @if (!selectedHostelId) {
+      <section class="erp-card erp-empty-panel hostel-section-gap">
+        <span class="erp-empty-panel__icon"
+          ><svg lucideBuilding2 size="24" aria-hidden="true"></svg
+        ></span>
+        <h2>Select a hostel</h2>
+        <p>Choose a hostel to manage its blocks and floors.</p>
       </section>
-      <section class="erp-card erp-card--padded">
-        <div class="erp-card__header">
-          <div>
-            <h2>Floors</h2>
-            <p>Create the hostel's floor list manually.</p>
-          </div>
-        </div>
-        <div class="hostel-inline-form">
-          <label class="erp-field-stack"
-            ><span>Floor name *</span
-            ><input class="erp-control" [(ngModel)]="floorName" placeholder="e.g. Ground Floor"
-          /></label>
-          <button
-            class="erp-button erp-button--primary"
-            type="button"
-            (click)="saveFloor()"
-            [disabled]="saving()"
-          >
-            {{ editingFloor() ? 'Save name' : 'Add floor' }}
-          </button>
-          @if (editingFloor()) {
-            <button
-              class="erp-button erp-button--secondary"
-              type="button"
-              (click)="cancelStructureEdit()"
-            >
-              Cancel
-            </button>
+    } @else {
+      <section class="erp-card hostel-structure-workspace hostel-section-gap">
+        <aside class="hostel-structure-tree" aria-label="Hostel structure navigator">
+          <header class="hostel-structure-tree__header">
+            <div>
+              <h2>Structure</h2>
+              <p>Blocks and hostel-wide floors</p>
+            </div>
+            <erp-compact-action-menu
+              variant="add"
+              label="Add"
+              [items]="structureAddActions"
+              (selected)="handleStructureAdd($event)"
+            />
+          </header>
+
+          @if (loading()) {
+            <div class="erp-state-panel" role="status">
+              <span class="erp-spinner" aria-hidden="true"></span>
+            </div>
+          } @else {
+            <div class="hostel-structure-tree__scroll">
+              <section class="hostel-tree-group">
+                <button
+                  class="hostel-tree-group__toggle"
+                  type="button"
+                  [attr.aria-expanded]="blocksExpanded()"
+                  (click)="blocksExpanded.set(!blocksExpanded())"
+                >
+                  <svg lucideChevronDown size="17" aria-hidden="true"></svg>
+                  <span>Blocks</span><small>{{ blocks().length }}</small>
+                </button>
+                @if (blocksExpanded()) {
+                  <div class="hostel-tree-group__items">
+                    @for (block of blocks(); track block._id) {
+                      <div
+                        class="hostel-tree-row hostel-tree-row--parent"
+                        [class.hostel-tree-row--selected]="
+                          selectedStructureKind() === 'block' && selectedStructureId() === block._id
+                        "
+                      >
+                        <button type="button" (click)="selectStructure('block', block._id)">
+                          <svg lucideLayers3 size="17" aria-hidden="true"></svg
+                          ><span>{{ block.name }}</span>
+                        </button>
+                        <erp-compact-action-menu
+                          [items]="blockActions"
+                          (selected)="handleBlockAction($event, block)"
+                        />
+                      </div>
+                    } @empty {
+                      <button
+                        class="hostel-tree-empty"
+                        type="button"
+                        (click)="openStructureDialog('block')"
+                      >
+                        No blocks configured <span>Add first block</span>
+                      </button>
+                    }
+                  </div>
+                }
+              </section>
+
+              <section class="hostel-tree-group">
+                <button
+                  class="hostel-tree-group__toggle"
+                  type="button"
+                  [attr.aria-expanded]="floorsExpanded()"
+                  (click)="floorsExpanded.set(!floorsExpanded())"
+                >
+                  <svg lucideChevronDown size="17" aria-hidden="true"></svg>
+                  <span>Hostel-wide floors</span><small>{{ floors().length }}</small>
+                </button>
+                @if (floorsExpanded()) {
+                  <div class="hostel-tree-group__items hostel-tree-group__items--children">
+                    @for (floor of floors(); track floor._id) {
+                      <div
+                        class="hostel-tree-row hostel-tree-row--child"
+                        [class.hostel-tree-row--selected]="
+                          selectedStructureKind() === 'floor' && selectedStructureId() === floor._id
+                        "
+                      >
+                        <button type="button" (click)="selectStructure('floor', floor._id)">
+                          <svg lucideDoorOpen size="16" aria-hidden="true"></svg
+                          ><span>{{ floor.name }}</span>
+                        </button>
+                        <erp-compact-action-menu
+                          [items]="floorActions"
+                          (selected)="handleFloorAction($event, floor)"
+                        />
+                      </div>
+                    } @empty {
+                      <button
+                        class="hostel-tree-empty"
+                        type="button"
+                        (click)="openStructureDialog('floor')"
+                      >
+                        No floors configured <span>Add first floor</span>
+                      </button>
+                    }
+                  </div>
+                }
+              </section>
+            </div>
           }
-        </div>
-        <div class="erp-table-shell__scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Floor</th>
-                <th class="erp-table-shell__actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        </aside>
+
+        <div class="hostel-structure-detail">
+          @if (selectedBlock(); as block) {
+            <header class="hostel-structure-detail__header">
+              <span class="erp-empty-panel__icon"
+                ><svg lucideLayers3 size="22" aria-hidden="true"></svg
+              ></span>
+              <div>
+                <h2>{{ block.name }}</h2>
+                <p>Block · {{ selectedHostel()?.name }}</p>
+              </div>
+              <erp-compact-action-menu
+                [items]="blockActions"
+                (selected)="handleBlockAction($event, block)"
+              />
+            </header>
+            <div class="hostel-structure-detail__metrics">
+              <span
+                ><small>Hostel-wide floors</small><strong>{{ floors().length }}</strong></span
+              >
+              <span
+                ><small>Rooms in block</small><strong>{{ roomsForBlock(block) }}</strong></span
+              >
+              <span
+                ><small>Status</small
+                ><strong>{{ selectedHostel()?.isActive ? 'Active' : 'Inactive' }}</strong></span
+              >
+            </div>
+            <section class="hostel-structure-detail__list">
+              <div>
+                <h3>Available floor definitions</h3>
+                <button
+                  class="erp-button erp-button--secondary erp-button--compact"
+                  type="button"
+                  (click)="openStructureDialog('floor')"
+                >
+                  <svg lucidePlus size="15" aria-hidden="true"></svg>Add floor
+                </button>
+              </div>
+              <p>
+                Floors are currently defined at hostel level and can be used with any block when
+                rooms are created.
+              </p>
               @for (floor of floors(); track floor._id) {
-                <tr>
-                  <td>
-                    <strong>{{ floor.name }}</strong>
-                  </td>
-                  <td class="erp-table-shell__actions">
-                    <erp-compact-action-menu
-                      [items]="floorActions"
-                      (selected)="handleFloorAction($event, floor)"
-                    />
-                  </td>
-                </tr>
+                <button type="button" (click)="selectStructure('floor', floor._id)">
+                  <svg lucideDoorOpen size="16" aria-hidden="true"></svg
+                  ><span>{{ floor.name }}</span
+                  ><small>{{ roomsForFloor(floor) }} rooms</small>
+                </button>
               } @empty {
-                <tr>
-                  <td colspan="2" class="erp-empty-state">No floors created for this hostel.</td>
-                </tr>
+                <div class="erp-empty-state erp-empty-state--compact">
+                  No floor definitions yet.
+                </div>
               }
-            </tbody>
-          </table>
+            </section>
+          } @else if (selectedFloor(); as floor) {
+            <header class="hostel-structure-detail__header">
+              <span class="erp-empty-panel__icon"
+                ><svg lucideDoorOpen size="22" aria-hidden="true"></svg
+              ></span>
+              <div>
+                <h2>{{ floor.name }}</h2>
+                <p>Hostel-wide floor · {{ selectedHostel()?.name }}</p>
+              </div>
+              <erp-compact-action-menu
+                [items]="floorActions"
+                (selected)="handleFloorAction($event, floor)"
+              />
+            </header>
+            <div class="hostel-structure-detail__metrics">
+              <span
+                ><small>Rooms on floor</small><strong>{{ roomsForFloor(floor) }}</strong></span
+              >
+              <span
+                ><small>Available blocks</small><strong>{{ blocks().length }}</strong></span
+              >
+              <span
+                ><small>Status</small
+                ><strong>{{ selectedHostel()?.isActive ? 'Active' : 'Inactive' }}</strong></span
+              >
+            </div>
+            <div class="erp-empty-panel hostel-structure-detail__guidance">
+              <p>
+                This floor is available across the selected hostel. Room-to-block assignment happens
+                during room creation.
+              </p>
+            </div>
+          } @else {
+            <div class="erp-empty-panel hostel-structure-detail__empty">
+              <span class="erp-empty-panel__icon"
+                ><svg lucideLayers3 size="24" aria-hidden="true"></svg
+              ></span>
+              <h2>Select a block or floor</h2>
+              <p>Choose an item from the structure navigator to view its details.</p>
+            </div>
+          }
         </div>
       </section>
-    </div>
+    }
   }
 
   @if (section() === 'rooms' || section() === 'capacity') {
-    <section class="erp-card erp-card--padded">
-      <div class="hostel-filter-grid">
+    <section class="erp-card hostel-room-command">
+      <div class="erp-command-bar hostel-room-command__controls">
         @if (section() === 'capacity') {
-          <label class="erp-field-stack"
-            ><span>Academic session *</span
-            ><input
+          <label class="erp-field-stack hostel-room-command__session">
+            <span>Academic session *</span>
+            <input
               class="erp-control"
               [(ngModel)]="academicSession"
               list="hostel-session-options"
               (change)="sessionChanged()"
-          /></label>
+            />
+          </label>
         }
-        <label class="erp-field-stack"
-          ><span>Hostel *</span
-          ><select
+        <label class="erp-field-stack hostel-room-command__hostel">
+          <span>Hostel *</span>
+          <select
             class="erp-control"
             [(ngModel)]="selectedHostelId"
             (ngModelChange)="hostelSelectionChanged()"
@@ -313,373 +472,416 @@
             @for (hostel of hostels(); track hostel._id) {
               <option [value]="hostel._id">{{ hostel.name }}</option>
             }
-          </select></label
-        >
-        <label class="erp-field-stack"
-          ><span>Block *</span
-          ><select
+          </select>
+        </label>
+        <label class="erp-field-stack hostel-room-command__block">
+          <span>Block *</span>
+          <select
             class="erp-control"
             [(ngModel)]="selectedBlockId"
+            [disabled]="!selectedHostelId"
+            [attr.title]="!selectedHostelId ? 'Select a hostel first.' : null"
             (ngModelChange)="blockSelectionChanged()"
           >
             <option value="">Select block</option>
             @for (block of blocks(); track block._id) {
               <option [value]="block._id">{{ block.name }}</option>
             }
-          </select></label
-        >
-        <label class="erp-field-stack"
-          ><span>Floor *</span
-          ><select class="erp-control" [(ngModel)]="selectedFloorId">
+          </select>
+        </label>
+        <label class="erp-field-stack hostel-room-command__floor">
+          <span>Floor *</span>
+          <select
+            class="erp-control"
+            [(ngModel)]="selectedFloorId"
+            [disabled]="!selectedBlockId"
+            [attr.title]="!selectedBlockId ? 'Select a block first.' : null"
+            (ngModelChange)="floorSelectionChanged()"
+          >
             <option value="">Select floor</option>
             @for (floor of floorOptions(); track floor._id) {
               <option [value]="floor._id">{{ floor.name }}</option>
             }
-          </select></label
+          </select>
+        </label>
+        <label class="erp-search-control hostel-room-command__search">
+          <svg lucideSearch size="18" aria-hidden="true"></svg>
+          <span class="erp-sr-only">Search room number</span>
+          <input [(ngModel)]="roomSearch" placeholder="Search room number" />
+        </label>
+        <button
+          class="erp-button erp-button--secondary hostel-room-filter-toggle"
+          type="button"
+          [attr.aria-expanded]="roomFiltersOpen()"
+          (click)="roomFiltersOpen.set(!roomFiltersOpen())"
         >
+          <svg lucideFilter size="17" aria-hidden="true"></svg><span>Filters</span>
+        </button>
+        <div
+          class="hostel-room-command__secondary"
+          [class.hostel-room-command__secondary--open]="roomFiltersOpen()"
+        >
+          <label>
+            <span class="erp-sr-only">Configuration status</span>
+            <select class="erp-control" [(ngModel)]="roomConfigurationFilter">
+              <option value="all">All rooms</option>
+              <option value="configured">Configured</option>
+              <option value="unconfigured">Not configured</option>
+              @if (section() === 'capacity') {
+                <option value="disabled">Disabled</option>
+              }
+            </select>
+          </label>
+          @if (section() === 'rooms') {
+            <label>
+              <span class="erp-sr-only">Room status</span>
+              <select class="erp-control" [(ngModel)]="roomStatusFilter">
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </label>
+          }
+        </div>
       </div>
+      @if (!locationReady()) {
+        <p class="hostel-room-command__helper">
+          Select a hostel, block and floor to view rooms and enable contextual actions.
+        </p>
+      }
     </section>
 
-    @if (section() === 'rooms') {
-      <section class="erp-card erp-card--padded hostel-section-gap">
-        <div class="erp-card__header">
-          <div>
-            <h2>Create rooms</h2>
-            <p>Create one room manually or generate a numbered sequence.</p>
-          </div>
+    @if (section() === 'rooms' && locationReady()) {
+      <section class="erp-card hostel-location-summary hostel-section-gap">
+        <span class="erp-empty-panel__icon">
+          <svg lucideBuilding2 size="21" aria-hidden="true"></svg>
+        </span>
+        <div class="hostel-location-summary__copy">
+          <strong>{{ selectedHostel()?.name }}</strong>
+          <span>{{ selectedBlockOption()?.name }} / {{ selectedFloorOption()?.name }}</span>
         </div>
-        <div class="hostel-mode-picker">
-          <label
-            ><input type="radio" name="roomMode" value="manual" [(ngModel)]="roomMode" />
-            Manual</label
-          ><label
-            ><input type="radio" name="roomMode" value="automatic" [(ngModel)]="roomMode" /> Auto
-            generate</label
+        <div class="hostel-location-summary__metrics">
+          <strong>{{ locationRooms().length }} rooms · {{ locationBedCount() }} beds</strong>
+          <span
+            >{{ configuredRoomCount() }} configured ·
+            {{ locationRooms().length - configuredRoomCount() }} need capacity</span
           >
         </div>
-        @if (roomMode === 'manual') {
-          <div class="hostel-inline-form">
-            <label class="erp-field-stack"
-              ><span>Room number *</span
-              ><input
-                class="erp-control"
-                [(ngModel)]="roomNumber"
-                placeholder="e.g. A-101" /></label
-            ><button
-              class="erp-button erp-button--primary"
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="openRoomEditor('automatic')"
+        >
+          Generate rooms
+        </button>
+      </section>
+    }
+
+    @if (
+      section() === 'capacity' && academicSession && locationReady() && locationRooms().length
+    ) {
+      <section class="erp-card hostel-capacity-progress hostel-section-gap">
+        <div>
+          <span>Room capacity setup</span>
+          <strong
+            >{{ configuredRoomCount() }} of {{ locationRooms().length }} rooms configured</strong
+          >
+          <small
+            >{{ locationRooms().length - configuredRoomCount() }} rooms still require capacity
+            configuration.</small
+          >
+        </div>
+        <div
+          class="hostel-capacity-progress__bar"
+          role="progressbar"
+          aria-label="Room capacity configuration progress"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="capacityProgress()"
+        >
+          <span [style.width.%]="capacityProgress()"></span>
+        </div>
+        <strong class="hostel-capacity-progress__value">{{ capacityProgress() }}%</strong>
+        @if (nextUnconfiguredRoom(); as room) {
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="openCapacity(room)"
+          >
+            Configure next room
+          </button>
+        } @else {
+          <span class="erp-status">Setup complete</span>
+        }
+      </section>
+    }
+
+    @if (section() === 'capacity' && !academicSession) {
+      <section class="erp-card erp-empty-panel hostel-section-gap">
+        <span class="erp-empty-panel__icon">
+          <svg lucideBedDouble size="24" aria-hidden="true"></svg>
+        </span>
+        <h2>Select an academic session</h2>
+        <p>Capacity is configured independently for each academic session.</p>
+      </section>
+    } @else if (!locationReady()) {
+      <section class="erp-card erp-empty-panel hostel-section-gap">
+        <span class="erp-empty-panel__icon">
+          <svg lucideMapPin size="24" aria-hidden="true"></svg>
+        </span>
+        <h2>{{ section() === 'capacity' ? 'Select hostel location' : 'Select a room location' }}</h2>
+        <p>Choose a hostel, block and floor to view or create rooms.</p>
+      </section>
+    } @else if (loading()) {
+      <section class="erp-card hostel-room-loading hostel-section-gap" role="status">
+        @for (row of [1, 2, 3, 4]; track row) {
+          <span class="erp-skeleton"></span>
+        }
+        <span class="erp-sr-only">Loading rooms…</span>
+      </section>
+    } @else if (roomsLoadFailed()) {
+      <section class="erp-card erp-empty-panel hostel-section-gap" role="alert">
+        <span class="erp-empty-panel__icon">
+          <svg lucideRefreshCw size="24" aria-hidden="true"></svg>
+        </span>
+        <h2>Rooms could not be loaded</h2>
+        <p>{{ error() || 'Check your connection and try loading this location again.' }}</p>
+        <button class="erp-button erp-button--secondary" type="button" (click)="loadRooms()">
+          Retry
+        </button>
+      </section>
+    } @else if (!locationRooms().length) {
+      <section class="erp-card erp-empty-panel hostel-section-gap">
+        <span class="erp-empty-panel__icon">
+          <svg lucideDoorOpen size="24" aria-hidden="true"></svg>
+        </span>
+        <h2>No rooms on this floor</h2>
+        <p>
+          {{
+            section() === 'capacity'
+              ? 'Create rooms before configuring capacity.'
+              : 'Create one room manually or generate a room sequence.'
+          }}
+        </p>
+        @if (section() === 'rooms') {
+          <div class="hostel-empty-actions">
+            <button
+              class="erp-button erp-button--secondary"
               type="button"
-              (click)="saveRooms()"
-              [disabled]="saving()"
+              (click)="openRoomEditor('manual')"
             >
               Create room
             </button>
-          </div>
-        } @else {
-          <div class="hostel-filter-grid">
-            <label class="erp-field-stack"
-              ><span>Prefix</span
-              ><input class="erp-control" [(ngModel)]="roomPrefix" placeholder="e.g. A-" /></label
-            ><label class="erp-field-stack"
-              ><span>Start number *</span
-              ><input
-                class="erp-control"
-                type="number"
-                min="1"
-                [(ngModel)]="roomStartNumber" /></label
-            ><label class="erp-field-stack"
-              ><span>Number of rooms *</span
-              ><input
-                class="erp-control"
-                type="number"
-                min="1"
-                max="500"
-                [(ngModel)]="roomGenerationCount" /></label
-            ><button
-              class="erp-button erp-button--primary hostel-filter-action"
+            <button
+              class="erp-button erp-button--primary"
               type="button"
-              (click)="saveRooms()"
-              [disabled]="saving()"
+              (click)="openRoomEditor('automatic')"
             >
               Generate rooms
             </button>
           </div>
+        } @else {
+          <a
+            class="erp-button erp-button--secondary"
+            routerLink="/admin/master-data/hostel/rooms"
+            [queryParams]="{
+              hostel: selectedHostelId,
+              block: selectedBlockId,
+              floor: selectedFloorId
+            }"
+          >
+            Go to Rooms
+          </a>
         }
       </section>
-      @if (editingRoom()) {
-        <section class="erp-card erp-card--padded hostel-section-gap">
-          <div class="hostel-inline-form">
-            <label class="erp-field-stack"
-              ><span>Edit room number</span
-              ><input class="erp-control" [(ngModel)]="editedRoomNumber" /></label
-            ><button
-              class="erp-button erp-button--primary"
-              type="button"
-              (click)="saveRoomNumber()"
-            >
-              Save</button
-            ><button
-              class="erp-button erp-button--secondary"
-              type="button"
-              (click)="editingRoom.set(null); editedRoomNumber = ''"
-            >
-              Cancel
-            </button>
-          </div>
-        </section>
-      }
-    }
-
-    @if (section() === 'capacity' && capacityRoom(); as room) {
-      <section class="erp-card erp-card--padded hostel-section-gap">
-        <div class="erp-card__header">
-          <div>
-            <h2>Configure room {{ room.roomNumber }}</h2>
-            <p>This setting is saved for academic session {{ academicSession }}.</p>
-          </div>
+    } @else {
+      <section class="erp-card erp-table-shell hostel-room-directory hostel-section-gap">
+        <div class="erp-table-toolbar">
+          <h2>
+            {{ section() === 'capacity' ? 'Room capacity' : 'Room directory' }}
+            <small>{{ visibleRooms().length }}</small>
+          </h2>
+          <span>{{ locationLabel() }}</span>
         </div>
-        <div class="hostel-form-grid">
-          <label class="erp-field-stack"
-            ><span>Room seater *</span
-            ><select class="erp-control" [(ngModel)]="capacityChoice">
-              @for (seater of savedSeaters(); track seater) {
-                <option [value]="seater">{{ seater }}-Seater</option>
-              }
-              <option value="custom">Custom</option>
-            </select></label
-          >
-          @if (capacityChoice === 'custom') {
-            <label class="erp-field-stack"
-              ><span>Custom capacity *</span
-              ><input
-                class="erp-control"
-                type="number"
-                min="1"
-                max="50"
-                [(ngModel)]="customCapacity"
-            /></label>
-          }
-          <label class="erp-field-stack"
-            ><span>Room type *</span
-            ><select class="erp-control" [(ngModel)]="roomTypeChoice">
-              @for (type of savedRoomTypes(); track type) {
-                <option [value]="type">{{ type }}</option>
-              }
-              <option value="custom">Custom</option>
-            </select></label
-          >
-          @if (roomTypeChoice === 'custom') {
-            <label class="erp-field-stack"
-              ><span>Custom room type *</span
-              ><input class="erp-control" [(ngModel)]="customRoomType" placeholder="e.g. Deluxe AC"
-            /></label>
-          }
-        </div>
-        <div class="hostel-form-actions">
-          <button
-            class="erp-button erp-button--primary"
-            type="button"
-            (click)="saveCapacity()"
-            [disabled]="saving()"
-          >
-            Save capacity</button
-          ><button
-            class="erp-button erp-button--secondary"
-            type="button"
-            (click)="capacityRoom.set(null)"
-          >
-            Cancel
-          </button>
-        </div>
-      </section>
-    }
-
-    <section class="erp-card erp-table-shell hostel-section-gap">
-      <div class="erp-table-toolbar">
-        <h2>
-          Rooms <small>{{ filteredRooms().length }}</small>
-        </h2>
-      </div>
-      <div class="erp-table-shell__scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Room</th>
-              <th>Location</th>
-              <th>Room type</th>
-              <th>Seater</th>
-              @if (section() === 'capacity') {
-                <th>Session status</th>
-              }
-              <th>Status</th>
-              <th class="erp-table-shell__actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (room of filteredRooms(); track room._id) {
+        <div class="erp-table-shell__scroll">
+          <table>
+            <thead>
               <tr>
-                <td>
-                  <strong>{{ room.roomNumber }}</strong>
-                </td>
-                <td>{{ room.blockName }} · {{ room.floorName }}</td>
-                <td>{{ room.roomType }}</td>
-                <td>{{ room.capacity ? room.capacity + ' beds' : 'Not assigned' }}</td>
+                <th>Room</th>
+                <th>Location</th>
+                <th>Room type</th>
+                <th>{{ section() === 'capacity' ? 'Seater' : 'Capacity' }}</th>
                 @if (section() === 'capacity') {
+                  <th>Academic session</th>
+                  <th>Occupancy</th>
+                }
+                <th>Configuration</th>
+                <th>Status</th>
+                <th class="erp-table-shell__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (room of visibleRooms(); track room._id) {
+                <tr>
+                  <td><strong>{{ room.roomNumber }}</strong></td>
+                  <td><strong>{{ room.blockName }}</strong><small>{{ room.floorName }}</small></td>
+                  <td>{{ room.configuredForSession ? room.roomType : '—' }}</td>
+                  <td>
+                    {{ room.configuredForSession ? room.capacity + ' seater' : '—' }}
+                  </td>
+                  @if (section() === 'capacity') {
+                    <td>{{ academicSession }}</td>
+                    <td>
+                      {{ room.occupiedBeds.length }} / {{ room.capacity || 0 }} occupied
+                    </td>
+                  }
                   <td>
                     <span
                       class="erp-status"
-                      [class.erp-status--neutral]="!room.configuredForSession"
-                      >{{ room.configuredForSession ? 'Configured' : 'Not configured' }}</span
+                      [class.erp-status--warning]="room.isActive && !room.configuredForSession"
+                      [class.erp-status--neutral]="!room.isActive"
                     >
+                      {{
+                        !room.isActive
+                          ? 'Disabled'
+                          : room.configuredForSession
+                            ? 'Configured'
+                            : 'Needs configuration'
+                      }}
+                    </span>
                   </td>
-                }
-                <td>
-                  <span class="erp-status" [class.erp-status--neutral]="!room.isActive">{{
-                    room.isActive ? 'Active' : 'Disabled'
-                  }}</span>
-                </td>
-                <td class="erp-table-shell__actions">
-                  <erp-compact-action-menu
-                    [items]="section() === 'rooms' ? roomActions(room) : capacityActions"
-                    (selected)="
-                      section() === 'rooms' ? handleRoomAction($event, room) : openCapacity(room)
-                    "
-                  />
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td [attr.colspan]="section() === 'capacity' ? 7 : 6" class="erp-empty-state">
-                  Select a hostel, block and floor to view rooms.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
+                  @if (section() === 'rooms') {
+                    <td>
+                      <span class="erp-status" [class.erp-status--neutral]="!room.isActive">
+                        {{ room.isActive ? 'Active' : 'Disabled' }}
+                      </span>
+                    </td>
+                  }
+                  <td class="erp-table-shell__actions">
+                    <erp-compact-action-menu
+                      [items]="section() === 'rooms' ? roomActions(room) : capacityActions(room)"
+                      (selected)="
+                        section() === 'rooms'
+                          ? handleRoomAction($event, room)
+                          : handleCapacityAction($event, room)
+                      "
+                    />
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td
+                    [attr.colspan]="section() === 'capacity' ? 8 : 7"
+                    class="erp-empty-state erp-empty-state--compact"
+                  >
+                    No rooms match the current search and filters.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
   }
 
   @if (section() === 'allocation') {
-    <section class="erp-card erp-card--padded">
-      <div class="erp-card__header">
-        <div>
-          <h2>{{ transferTarget() ? 'Transfer student' : 'Allocate student room' }}</h2>
-          <p>Only rooms configured for the selected session have beds available.</p>
-        </div>
-      </div>
-      @if (transferTarget(); as transfer) {
-        <p class="erp-notice erp-notice--success">
-          Transferring {{ transfer.studentName }} from {{ transfer.hostelName }} /
-          {{ transfer.roomNumber }} / Bed {{ transfer.bedNumber }}.
-        </p>
-      }
-      <div class="hostel-filter-grid">
-        <label class="erp-field-stack"
-          ><span>Academic session *</span
-          ><input
+    <section class="erp-card hostel-allocation-command">
+      <div class="erp-command-bar hostel-allocation-command__controls">
+        <label class="erp-field-stack hostel-allocation-command__session">
+          <span>Academic session</span>
+          <input
             class="erp-control"
-            [(ngModel)]="academicSession"
+            [(ngModel)]="allocationBrowseSession"
             list="hostel-session-options"
-            (change)="sessionChanged()" /></label
-        ><label class="erp-field-stack"
-          ><span>Student *</span
-          ><select
-            class="erp-control"
-            [(ngModel)]="selectedStudentId"
-            [disabled]="!!transferTarget()"
-          >
-            <option value="">Select submitted student</option>
-            @for (student of students(); track student._id) {
-              <option [value]="student._id" [disabled]="allocatedStudentIds().has(student._id)">
-                {{ student.name }} · {{ student.applicationNumber }}
-              </option>
-            }
-          </select></label
-        ><label class="erp-field-stack"
-          ><span>Hostel *</span
-          ><select
-            class="erp-control"
-            [(ngModel)]="selectedHostelId"
-            (ngModelChange)="hostelSelectionChanged()"
-          >
-            <option value="">Select hostel</option>
-            @for (hostel of hostels(); track hostel._id) {
-              @if (hostel.isActive) {
+            (change)="allocationBrowseChanged()"
+          />
+        </label>
+        <label class="erp-search-control hostel-allocation-command__search">
+          <svg lucideSearch size="18" aria-hidden="true"></svg>
+          <span class="erp-sr-only">Search active allocations</span>
+          <input
+            [(ngModel)]="allocationSearch"
+            placeholder="Search student, application, hostel or room"
+          />
+        </label>
+        <button
+          class="erp-button erp-button--secondary hostel-allocation-filter-toggle"
+          type="button"
+          [attr.aria-expanded]="allocationFiltersOpen()"
+          (click)="allocationFiltersOpen.set(!allocationFiltersOpen())"
+        >
+          <svg lucideFilter size="17" aria-hidden="true"></svg><span>Filters</span>
+        </button>
+        <div
+          class="hostel-allocation-command__filters"
+          [class.hostel-allocation-command__filters--open]="allocationFiltersOpen()"
+        >
+          <label>
+            <span class="erp-sr-only">Filter by hostel</span>
+            <select
+              class="erp-control"
+              [(ngModel)]="allocationBrowseHostelId"
+              (ngModelChange)="allocationBrowseChanged()"
+            >
+              <option value="">All hostels</option>
+              @for (hostel of hostels(); track hostel._id) {
                 <option [value]="hostel._id">{{ hostel.name }}</option>
               }
-            }
-          </select></label
-        ><label class="erp-field-stack"
-          ><span>Block</span
-          ><select
-            class="erp-control"
-            [(ngModel)]="selectedBlockId"
-            (ngModelChange)="blockSelectionChanged()"
-          >
-            <option value="">All blocks</option>
-            @for (block of blocks(); track block._id) {
-              <option [value]="block._id">{{ block.name }}</option>
-            }
-          </select></label
-        ><label class="erp-field-stack"
-          ><span>Floor</span
-          ><select class="erp-control" [(ngModel)]="selectedFloorId">
-            <option value="">All floors</option>
-            @for (floor of floorOptions(); track floor._id) {
-              <option [value]="floor._id">{{ floor.name }}</option>
-            }
-          </select></label
-        ><label class="erp-field-stack"
-          ><span>Room *</span
-          ><select class="erp-control" [(ngModel)]="selectedRoomId" (ngModelChange)="roomChanged()">
-            <option value="">Select configured room</option>
-            @for (room of filteredRooms(); track room._id) {
-              @if (room.isActive && room.capacity && room.occupiedBeds.length < room.capacity) {
-                <option [value]="room._id">
-                  {{ room.roomNumber }} · {{ room.roomType }} ({{
-                    room.capacity - room.occupiedBeds.length
-                  }}
-                  free)
-                </option>
-              }
-            }
-          </select></label
-        ><label class="erp-field-stack"
-          ><span>Bed *</span
-          ><select class="erp-control" [(ngModel)]="selectedBedNumber" [disabled]="!selectedRoomId">
-            <option [ngValue]="null">Select available bed</option>
-            @for (bed of availableBeds(); track bed) {
-              <option [ngValue]="bed">Bed {{ bed }}</option>
-            }
-          </select></label
-        >
-        @if (transferTarget()) {
-          <label class="erp-field-stack"
-            ><span>Transfer reason</span
-            ><input class="erp-control" [(ngModel)]="transferReason" placeholder="Optional reason"
-          /></label>
-        }
-      </div>
-      <div class="hostel-form-actions">
-        <button
-          class="erp-button erp-button--primary"
-          type="button"
-          (click)="createOrTransferAllocation()"
-          [disabled]="saving()"
-        >
-          {{ transferTarget() ? 'Confirm transfer' : 'Allocate room' }}
-        </button>
-        @if (transferTarget()) {
-          <button class="erp-button erp-button--secondary" type="button" (click)="cancelTransfer()">
-            Cancel transfer
-          </button>
-        }
+            </select>
+          </label>
+          <label>
+            <span class="erp-sr-only">Filter by allocation status</span>
+            <select
+              class="erp-control"
+              [(ngModel)]="allocationStatusFilter"
+              (ngModelChange)="allocationBrowseChanged()"
+            >
+              <option value="active">Active allocations</option>
+              <option value="vacated">Vacated allocations</option>
+              <option value="all">All statuses</option>
+            </select>
+          </label>
+        </div>
       </div>
     </section>
-    <section class="erp-card erp-table-shell hostel-section-gap">
+
+    @if (allocationLoading()) {
+      <section class="erp-card hostel-room-loading hostel-section-gap" role="status">
+        @for (row of [1, 2, 3, 4]; track row) {
+          <span class="erp-skeleton"></span>
+        }
+        <span class="erp-sr-only">Loading hostel allocations…</span>
+      </section>
+    } @else if (allocationLoadFailed()) {
+      <section class="erp-card erp-empty-panel hostel-section-gap" role="alert">
+        <span class="erp-empty-panel__icon"><svg lucideRefreshCw size="24" aria-hidden="true"></svg></span>
+        <h2>Allocations could not be loaded</h2>
+        <p>{{ error() || 'Check your connection and try again.' }}</p>
+        <button class="erp-button erp-button--secondary" type="button" (click)="loadAllocations()">Retry</button>
+      </section>
+    } @else if (!allocations().length) {
+      <section class="erp-card erp-empty-panel hostel-section-gap">
+        <span class="erp-empty-panel__icon"><svg lucideBedDouble size="24" aria-hidden="true"></svg></span>
+        <h2>No {{ allocationStatusFilter === 'active' ? 'active hostel ' : '' }}allocations</h2>
+        <p>Allocate a configured room and available bed to an eligible student.</p>
+        <button class="erp-button erp-button--primary" type="button" (click)="openAllocationDrawer()">
+          <svg lucideUserRoundPlus size="17" aria-hidden="true"></svg><span>Allocate student</span>
+        </button>
+      </section>
+    } @else if (!visibleAllocations().length) {
+      <section class="erp-card erp-empty-panel hostel-section-gap">
+        <span class="erp-empty-panel__icon"><svg lucideSearch size="24" aria-hidden="true"></svg></span>
+        <h2>No matching allocations</h2>
+        <p>Adjust your search or browse filters.</p>
+        <button class="erp-button erp-button--secondary" type="button" (click)="clearAllocationFilters()">Clear filters</button>
+      </section>
+    } @else {
+    <section class="erp-card erp-table-shell hostel-allocation-directory hostel-section-gap">
       <div class="erp-table-toolbar">
         <h2>
-          Active allocations <small>{{ allocations().length }}</small>
+          {{ allocationStatusFilter === 'active' ? 'Active allocations' : 'Allocation directory' }}
+          <small>{{ visibleAllocations().length }}</small>
         </h2>
       </div>
       <div class="erp-table-shell__scroll">
@@ -691,11 +893,12 @@
               <th>Hostel</th>
               <th>Room / Bed</th>
               <th>Allocated</th>
+              <th>Status</th>
               <th class="erp-table-shell__actions">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (allocation of allocations(); track allocation._id) {
+            @for (allocation of visibleAllocations(); track allocation._id) {
               <tr>
                 <td>
                   <strong>{{ allocation.studentName }}</strong
@@ -706,19 +909,18 @@
                   {{ allocation.hostelName
                   }}<small>{{ allocation.blockName }} · {{ allocation.floorName }}</small>
                 </td>
-                <td>{{ allocation.roomNumber }} · Bed {{ allocation.bedNumber }}</td>
+                <td><strong>{{ allocation.roomNumber }}</strong><small>Bed {{ allocation.bedNumber }}</small></td>
                 <td>{{ allocation.allocatedAt | date: 'mediumDate' }}</td>
+                <td>
+                  <span class="erp-status" [class.erp-status--neutral]="allocation.status !== 'active'">
+                    {{ allocation.status === 'active' ? 'Active' : 'Vacated' }}
+                  </span>
+                </td>
                 <td class="erp-table-shell__actions">
                   <erp-compact-action-menu
-                    [items]="allocationActions"
+                    [items]="allocationActions(allocation)"
                     (selected)="handleAllocationAction($event, allocation)"
                   />
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="erp-empty-state">
-                  No active allocations for this hostel and session.
                 </td>
               </tr>
             }
@@ -726,6 +928,28 @@
         </table>
       </div>
     </section>
+
+    <section class="hostel-allocation-cards hostel-section-gap" aria-label="Allocation directory">
+      @for (allocation of visibleAllocations(); track allocation._id) {
+        <article class="erp-card hostel-allocation-card">
+          <div class="hostel-allocation-card__head">
+            <span class="hostel-student-avatar">{{ allocation.studentName.slice(0, 1) }}</span>
+            <div>
+              <strong>{{ allocation.studentName }}</strong>
+              <small>{{ allocation.studentApplicationNumber }} · {{ allocation.academicSession }}</small>
+            </div>
+            <erp-compact-action-menu [items]="allocationActions(allocation)" (selected)="handleAllocationAction($event, allocation)" />
+          </div>
+          <dl>
+            <div><dt>Hostel</dt><dd>{{ allocation.hostelName }}</dd></div>
+            <div><dt>Location</dt><dd>{{ allocation.blockName }} · {{ allocation.floorName }}</dd></div>
+            <div><dt>Room / Bed</dt><dd>{{ allocation.roomNumber }} · Bed {{ allocation.bedNumber }}</dd></div>
+            <div><dt>Status</dt><dd>{{ allocation.status === 'active' ? 'Active' : 'Vacated' }}</dd></div>
+          </dl>
+        </article>
+      }
+    </section>
+    }
   }
 
   @if (section() === 'overview') {
@@ -813,54 +1037,998 @@
   </datalist>
 </erp-admin-page>
 
-@if (vacateTarget(); as allocation) {
-  <div class="hostel-dialog-layer">
+@if (hostelEditorOpen()) {
+  <div class="erp-drawer-layer">
     <button
-      class="hostel-dialog-backdrop"
+      class="erp-drawer-backdrop"
       type="button"
-      aria-label="Cancel vacating room"
-      (click)="vacateTarget.set(null)"
+      aria-label="Close hostel editor"
+      (click)="closeHostelEditor()"
     ></button>
     <section
-      class="hostel-dialog"
-      role="alertdialog"
+      class="erp-drawer"
+      role="dialog"
       aria-modal="true"
-      aria-labelledby="vacate-title"
+      aria-labelledby="hostel-editor-title"
     >
-      <div class="erp-card__header">
+      <header class="erp-drawer__header">
+        <span class="erp-drawer__icon"
+          ><svg lucideBuilding2 size="21" aria-hidden="true"></svg
+        ></span>
         <div>
-          <h2 id="vacate-title">Vacate room?</h2>
+          <small>{{ editingHostel() ? 'Update record' : 'New hostel' }}</small>
+          <h2 id="hostel-editor-title">{{ editingHostel() ? 'Edit hostel' : 'Create hostel' }}</h2>
           <p>
-            This releases {{ allocation.roomNumber }} / Bed {{ allocation.bedNumber }} for another
-            student.
+            {{
+              editingHostel()
+                ? 'Update the hostel identity and planned capacity.'
+                : 'Add basic identity and planned structure.'
+            }}
           </p>
         </div>
+        <button
+          class="erp-icon-button"
+          type="button"
+          aria-label="Close hostel editor"
+          (click)="closeHostelEditor()"
+        >
+          <svg lucideX size="18" aria-hidden="true"></svg>
+        </button>
+      </header>
+      <form class="erp-drawer__body hostel-editor-form" (ngSubmit)="saveHostel()">
+        <label class="erp-field-stack">
+          <span>Hostel name *</span>
+          <input
+            class="erp-control"
+            name="hostelName"
+            [(ngModel)]="hostelName"
+            required
+            maxlength="120"
+            placeholder="e.g. Nanda Devi Girls Hostel"
+            autofocus
+          />
+        </label>
+        <label class="erp-field-stack">
+          <span>Hostel type *</span>
+          <select class="erp-control" name="hostelType" [(ngModel)]="hostelType">
+            <option value="boys">Boys</option>
+            <option value="girls">Girls</option>
+            <option value="co-ed">Co-ed</option>
+          </select>
+        </label>
+        <label class="erp-field-stack">
+          <span>Number of blocks *</span>
+          <input
+            class="erp-control"
+            name="blockCount"
+            type="number"
+            min="0"
+            max="30"
+            [(ngModel)]="blockCount"
+            [disabled]="!!editingHostel()"
+          />
+          @if (editingHostel()) {
+            <small>Structure counts cannot be changed while editing.</small>
+          }
+        </label>
+        <label class="erp-field-stack">
+          <span>Number of floors *</span>
+          <input
+            class="erp-control"
+            name="floorCount"
+            type="number"
+            min="0"
+            max="30"
+            [(ngModel)]="floorCount"
+            [disabled]="!!editingHostel()"
+          />
+        </label>
+        <label class="erp-field-stack">
+          <span>Planned rooms *</span>
+          <input
+            class="erp-control"
+            name="plannedRoomCount"
+            type="number"
+            min="0"
+            max="5000"
+            [(ngModel)]="plannedRoomCount"
+          />
+        </label>
+        @if (error()) {
+          <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+        }
+        <footer class="erp-drawer__footer">
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="closeHostelEditor()"
+          >
+            Cancel
+          </button>
+          <button
+            class="erp-button erp-button--primary"
+            type="submit"
+            [disabled]="
+              saving() ||
+              hostelName.trim().length < 2 ||
+              blockCount < 0 ||
+              floorCount < 0 ||
+              plannedRoomCount < 0
+            "
+          >
+            @if (saving()) {
+              <span class="erp-spinner erp-spinner--button" aria-hidden="true"></span>
+            }
+            {{ saving() ? 'Saving…' : editingHostel() ? 'Save changes' : 'Create hostel' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (allocationDrawerOpen()) {
+  <div class="erp-drawer-layer">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      aria-label="Close allocation workflow"
+      (click)="closeAllocationDrawer()"
+    ></button>
+    <section
+      class="erp-drawer hostel-allocation-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="allocation-editor-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="erp-drawer__header">
+        <span class="erp-drawer__icon">
+          @if (transferTarget()) {
+            <svg lucideArrowRightLeft size="21" aria-hidden="true"></svg>
+          } @else {
+            <svg lucideUserRoundPlus size="21" aria-hidden="true"></svg>
+          }
+        </span>
+        <div>
+          <small>{{ transferTarget() ? 'Transfer workflow' : 'Guided allocation' }}</small>
+          <h2 id="allocation-editor-title">
+            {{ transferTarget() ? 'Transfer hostel room' : 'Allocate hostel room' }}
+          </h2>
+          <p>
+            {{
+              transferTarget()
+                ? 'Select and confirm a new available bed.'
+                : 'Select a student and assign an available bed.'
+            }}
+          </p>
+        </div>
+        <button class="erp-icon-button" type="button" aria-label="Close allocation workflow" (click)="closeAllocationDrawer()">
+          <svg lucideX size="18" aria-hidden="true"></svg>
+        </button>
+      </header>
+
+      <div class="erp-drawer__body hostel-allocation-editor">
+        @if (transferTarget(); as transfer) {
+          <section class="hostel-transfer-banner" role="status">
+            <span>Transfer mode</span>
+            <strong>Current room remains active until transfer is confirmed.</strong>
+            <button type="button" (click)="cancelTransfer()">Cancel transfer</button>
+          </section>
+          <section class="hostel-current-allocation">
+            <span>Current allocation</span>
+            <strong>{{ transfer.studentName }}</strong>
+            <p>{{ transfer.hostelName }} / {{ transfer.blockName }} / {{ transfer.floorName }}</p>
+            <small>Room {{ transfer.roomNumber }} · Bed {{ transfer.bedNumber }}</small>
+          </section>
+        } @else {
+          <ol class="hostel-allocation-stages" aria-label="Allocation progress">
+            @for (stage of [1, 2, 3]; track stage) {
+              <li
+                [class.hostel-allocation-stages__item--active]="allocationStage() === stage"
+                [class.hostel-allocation-stages__item--complete]="allocationStage() > stage"
+                [attr.aria-current]="allocationStage() === stage ? 'step' : null"
+              >
+                <span>
+                  @if (allocationStage() > stage) {
+                    <svg lucideCheck size="14" aria-hidden="true"></svg>
+                  } @else {
+                    {{ stage }}
+                  }
+                </span>
+                {{ stage === 1 ? 'Student' : stage === 2 ? 'Room & Bed' : 'Review' }}
+              </li>
+            }
+          </ol>
+        }
+
+        @if (allocationStage() === 1 && !transferTarget()) {
+          <section class="hostel-allocation-stage" aria-labelledby="allocation-stage-student">
+            <div class="hostel-allocation-stage__heading">
+              <small>Stage 1 of 3</small>
+              <h3 id="allocation-stage-student">Select student</h3>
+              <p>Choose the session and submitted student record.</p>
+            </div>
+            <label class="erp-field-stack">
+              <span>Academic session *</span>
+              <input
+                class="erp-control"
+                [(ngModel)]="academicSession"
+                list="hostel-session-options"
+                (change)="allocationFormSessionChanged()"
+              />
+            </label>
+            <label class="erp-field-stack">
+              <span>Search student *</span>
+              <span class="erp-search-control">
+                <svg lucideSearch size="18" aria-hidden="true"></svg>
+                <input
+                  [(ngModel)]="studentSearch"
+                  (ngModelChange)="selectedStudentId = ''"
+                  placeholder="Search name or application number"
+                  autocomplete="off"
+                />
+              </span>
+            </label>
+            @if (studentSearch && !selectedStudentId) {
+              <div class="hostel-student-results" role="listbox" aria-label="Student results">
+                @for (student of visibleStudents(); track student._id) {
+                  <button
+                    type="button"
+                    role="option"
+                    [attr.aria-selected]="selectedStudentId === student._id"
+                    (click)="selectAllocationStudent(student)"
+                  >
+                    <span class="hostel-student-avatar">{{ student.name.slice(0, 1) }}</span>
+                    <span><strong>{{ student.name }}</strong><small>{{ student.applicationNumber }}</small></span>
+                  </button>
+                } @empty {
+                  <p>No submitted students match this search.</p>
+                }
+              </div>
+            }
+            @if (selectedStudent(); as student) {
+              <section class="hostel-selected-student">
+                <span class="hostel-student-avatar">{{ selectedStudentInitials() }}</span>
+                <div>
+                  <strong>{{ student.name }}</strong>
+                  <small>{{ student.applicationNumber }}</small>
+                </div>
+                @if (activeAllocationForSelectedStudent(); as current) {
+                  <span class="erp-status erp-status--warning">Already allocated</span>
+                  <p>
+                    Current allocation: {{ current.hostelName }} / {{ current.blockName }} /
+                    {{ current.roomNumber }} / Bed {{ current.bedNumber }}
+                  </p>
+                  <div>
+                    <button class="erp-button erp-button--secondary" type="button" (click)="viewAllocation(current)">View allocation</button>
+                    <button class="erp-button erp-button--secondary" type="button" (click)="startTransfer(current)">Start transfer</button>
+                  </div>
+                } @else {
+                  <span class="erp-status">Eligible for allocation</span>
+                }
+              </section>
+            }
+          </section>
+        }
+
+        @if (allocationStage() === 2) {
+          <section class="hostel-allocation-stage" aria-labelledby="allocation-stage-room">
+            <div class="hostel-allocation-stage__heading">
+              <small>{{ transferTarget() ? 'New allocation' : 'Stage 2 of 3' }}</small>
+              <h3 id="allocation-stage-room">Select room and bed</h3>
+              <p>Only active rooms configured for {{ academicSession }} are available.</p>
+            </div>
+            @if (!transferTarget() && selectedStudent(); as student) {
+              <div class="hostel-pinned-student">
+                <span class="hostel-student-avatar">{{ selectedStudentInitials() }}</span>
+                <span><strong>{{ student.name }}</strong><small>{{ student.applicationNumber }}</small></span>
+              </div>
+            }
+            <div class="hostel-allocation-location">
+              <label class="erp-field-stack">
+                <span>Hostel *</span>
+                <select class="erp-control" [(ngModel)]="selectedHostelId" (ngModelChange)="allocationHostelSelectionChanged()">
+                  <option value="">Select active hostel</option>
+                  @for (hostel of hostels(); track hostel._id) {
+                    @if (hostel.isActive) {
+                      <option [value]="hostel._id">{{ hostel.name }}</option>
+                    }
+                  }
+                </select>
+              </label>
+              <label class="erp-field-stack">
+                <span>Block *</span>
+                <select class="erp-control" [(ngModel)]="selectedBlockId" [disabled]="!selectedHostelId" (ngModelChange)="allocationBlockSelectionChanged()">
+                  <option value="">Select block</option>
+                  @for (block of blocks(); track block._id) {
+                    <option [value]="block._id">{{ block.name }}</option>
+                  }
+                </select>
+              </label>
+              <label class="erp-field-stack">
+                <span>Floor *</span>
+                <select class="erp-control" [(ngModel)]="selectedFloorId" [disabled]="!selectedBlockId" (ngModelChange)="allocationFloorSelectionChanged()">
+                  <option value="">Select floor</option>
+                  @for (floor of floors(); track floor._id) {
+                    <option [value]="floor._id">{{ floor.name }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            @if (allocationRoomLoading()) {
+              <div class="hostel-room-results-loading" role="status">
+                <span class="erp-spinner" aria-hidden="true"></span> Loading available rooms…
+              </div>
+            } @else if (allocationLocationReady()) {
+              <label class="erp-search-control hostel-room-finder-search">
+                <svg lucideSearch size="18" aria-hidden="true"></svg>
+                <span class="erp-sr-only">Search available rooms</span>
+                <input [(ngModel)]="allocationRoomSearch" placeholder="Search room number" />
+              </label>
+              @if (!allocationAvailableRooms().length) {
+                <div class="hostel-allocation-blocked">
+                  @if (!allocationConfiguredRooms().length) {
+                    <span class="erp-empty-panel__icon"><svg lucideSettings2 size="22" aria-hidden="true"></svg></span>
+                    <strong>No configured rooms available</strong>
+                    <p>Rooms must have capacity and type configured before allocation.</p>
+                    <a class="erp-button erp-button--secondary" routerLink="/admin/master-data/hostel/capacity" [queryParams]="{ session: academicSession, hostel: selectedHostelId, block: selectedBlockId, floor: selectedFloorId }" (click)="closeAllocationDrawer()">Go to Room Capacity</a>
+                  } @else if (allocationRoomSearch) {
+                    <span class="erp-empty-panel__icon"><svg lucideSearch size="22" aria-hidden="true"></svg></span>
+                    <strong>No rooms match this search</strong>
+                    <p>Clear the room search or try another location.</p>
+                  } @else {
+                    <span class="erp-empty-panel__icon"><svg lucideBedDouble size="22" aria-hidden="true"></svg></span>
+                    <strong>No beds available</strong>
+                    <p>Every configured room at this location is currently full.</p>
+                  }
+                </div>
+              } @else {
+                <div class="hostel-room-finder" role="listbox" aria-label="Available rooms">
+                  @for (room of allocationAvailableRooms(); track room._id) {
+                    <button
+                      type="button"
+                      role="option"
+                      [attr.aria-selected]="selectedRoomId === room._id"
+                      [class.hostel-room-option--selected]="selectedRoomId === room._id"
+                      (click)="selectAllocationRoom(room)"
+                    >
+                      <span><strong>{{ room.roomNumber }}</strong><small>{{ room.roomType }} · {{ room.capacity }} seater</small></span>
+                      <span>{{ room.capacity - room.occupiedBeds.length }} beds available</span>
+                    </button>
+                  }
+                </div>
+              }
+            }
+
+            @if (selectedRoom(); as room) {
+              <section class="hostel-selected-room">
+                <div>
+                  <span>Selected room</span>
+                  <strong>{{ room.roomNumber }} · {{ room.roomType }} · {{ room.capacity }} seater</strong>
+                  <small>{{ room.hostelName }} / {{ room.blockName }} / {{ room.floorName }}</small>
+                </div>
+                <p>{{ room.capacity - room.occupiedBeds.length }} of {{ room.capacity }} beds available</p>
+                <div class="hostel-bed-selector" role="listbox" aria-label="Select an available bed">
+                  @for (bed of room.beds; track bed) {
+                    <button
+                      type="button"
+                      role="option"
+                      [disabled]="room.occupiedBeds.includes(bed)"
+                      [attr.aria-selected]="selectedBedNumber === bed"
+                      [class.hostel-bed-selector__bed--selected]="selectedBedNumber === bed"
+                      (click)="selectAllocationBed(bed)"
+                    >
+                      Bed {{ bed }}
+                      <small>{{ room.occupiedBeds.includes(bed) ? 'Occupied' : 'Available' }}</small>
+                    </button>
+                  }
+                </div>
+              </section>
+            }
+          </section>
+        }
+
+        @if (allocationStage() === 3) {
+          <section class="hostel-allocation-stage" aria-labelledby="allocation-stage-review">
+            <div class="hostel-allocation-stage__heading">
+              <small>{{ transferTarget() ? 'Transfer review' : 'Stage 3 of 3' }}</small>
+              <h3 id="allocation-stage-review">
+                {{ transferTarget() ? 'Review transfer' : 'Review allocation' }}
+              </h3>
+              <p>Confirm the exact student, room and bed before saving.</p>
+            </div>
+            <div class="hostel-allocation-review">
+              <div>
+                <span>Student</span>
+                <strong>{{ transferTarget()?.studentName || selectedStudent()?.name }}</strong>
+                <small>{{ transferTarget()?.studentApplicationNumber || selectedStudent()?.applicationNumber }}</small>
+              </div>
+              <div><span>Academic session</span><strong>{{ academicSession }}</strong></div>
+              @if (transferTarget(); as transfer) {
+                <div><span>From</span><strong>{{ transfer.hostelName }} · {{ transfer.roomNumber }} · Bed {{ transfer.bedNumber }}</strong></div>
+              }
+              @if (selectedRoom(); as room) {
+                <div>
+                  <span>{{ transferTarget() ? 'To' : 'Allocation' }}</span>
+                  <strong>{{ room.hostelName }} · {{ room.roomNumber }} · Bed {{ selectedBedNumber }}</strong>
+                  <small>{{ room.blockName }} / {{ room.floorName }} · {{ room.capacity }} seater · {{ room.roomType }}</small>
+                </div>
+              }
+            </div>
+            @if (transferTarget()) {
+              <label class="erp-field-stack">
+                <span>Transfer reason</span>
+                <input class="erp-control" [(ngModel)]="transferReason" placeholder="Optional reason" />
+              </label>
+              <p class="erp-notice erp-notice--warning">The current bed will be released only after a successful transfer.</p>
+            } @else {
+              <p class="erp-notice erp-notice--warning">Confirm the student and bed carefully. This action creates an active hostel allocation.</p>
+            }
+          </section>
+        }
+
+        @if (error()) {
+          <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+        }
+
+        <footer class="erp-drawer__footer hostel-allocation-footer">
+          @if (allocationStage() === 1) {
+            <button class="erp-button erp-button--secondary" type="button" (click)="closeAllocationDrawer()">Cancel</button>
+            <button class="erp-button erp-button--primary" type="button" (click)="continueAllocation()" [disabled]="!academicSession || !selectedStudentId || !!activeAllocationForSelectedStudent()">
+              Continue to room selection <svg lucideArrowRight size="17" aria-hidden="true"></svg>
+            </button>
+          } @else if (allocationStage() === 2) {
+            <button class="erp-button erp-button--secondary" type="button" (click)="transferTarget() ? cancelTransfer() : previousAllocationStage()">
+              <svg lucideArrowLeft size="17" aria-hidden="true"></svg>{{ transferTarget() ? 'Cancel' : 'Back' }}
+            </button>
+            <button class="erp-button erp-button--primary" type="button" (click)="continueAllocation()" [disabled]="!selectedRoomId || !selectedBedNumber">
+              Continue to review <svg lucideArrowRight size="17" aria-hidden="true"></svg>
+            </button>
+          } @else {
+            <button class="erp-button erp-button--secondary" type="button" (click)="previousAllocationStage()">
+              <svg lucideArrowLeft size="17" aria-hidden="true"></svg>Back
+            </button>
+            <button class="erp-button erp-button--primary" type="button" (click)="createOrTransferAllocation()" [disabled]="saving()">
+              {{ saving() ? (transferTarget() ? 'Transferring…' : 'Allocating…') : (transferTarget() ? 'Confirm transfer' : 'Confirm allocation') }}
+            </button>
+          }
+        </footer>
       </div>
-      <label class="erp-field-stack"
-        ><span>Reason</span
-        ><textarea
-          class="erp-control"
-          rows="3"
-          [(ngModel)]="vacateReason"
-          placeholder="Graduated, withdrawn, room transfer…"
-        ></textarea>
-      </label>
-      <div class="hostel-form-actions">
+    </section>
+  </div>
+}
+
+@if (allocationDetail(); as allocation) {
+  <div class="erp-drawer-layer">
+    <button class="erp-drawer-backdrop" type="button" aria-label="Close allocation details" (click)="closeAllocationDetail()"></button>
+    <section class="erp-drawer hostel-allocation-detail" role="dialog" aria-modal="true" aria-labelledby="allocation-detail-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+      <header class="erp-drawer__header">
+        <span class="erp-drawer__icon"><svg lucideUserRound size="21" aria-hidden="true"></svg></span>
+        <div><small>Allocation record</small><h2 id="allocation-detail-title">{{ allocation.studentName }}</h2><p>{{ allocation.studentApplicationNumber }}</p></div>
+        <button class="erp-icon-button" type="button" aria-label="Close allocation details" (click)="closeAllocationDetail()"><svg lucideX size="18" aria-hidden="true"></svg></button>
+      </header>
+      <div class="erp-drawer__body hostel-room-details">
+        <dl>
+          <div><dt>Academic session</dt><dd>{{ allocation.academicSession }}</dd></div>
+          <div><dt>Status</dt><dd>{{ allocation.status === 'active' ? 'Active' : 'Vacated' }}</dd></div>
+          <div><dt>Hostel</dt><dd>{{ allocation.hostelName }}</dd></div>
+          <div><dt>Block</dt><dd>{{ allocation.blockName }}</dd></div>
+          <div><dt>Floor</dt><dd>{{ allocation.floorName }}</dd></div>
+          <div><dt>Room</dt><dd>{{ allocation.roomNumber }}</dd></div>
+          <div><dt>Bed</dt><dd>Bed {{ allocation.bedNumber }}</dd></div>
+          <div><dt>Allocated</dt><dd>{{ allocation.allocatedAt | date: 'mediumDate' }}</dd></div>
+        </dl>
+        <footer class="erp-drawer__footer">
+          <button class="erp-button erp-button--secondary" type="button" (click)="closeAllocationDetail()">Close</button>
+          @if (allocation.status === 'active') {
+            <button class="erp-button erp-button--secondary" type="button" (click)="startTransfer(allocation)"><svg lucideArrowRightLeft size="17" aria-hidden="true"></svg>Transfer room</button>
+            <button class="erp-button erp-button--danger" type="button" (click)="closeAllocationDetail(); vacateTarget.set(allocation)"><svg lucideLogOut size="17" aria-hidden="true"></svg>Vacate room</button>
+          }
+        </footer>
+      </div>
+    </section>
+  </div>
+}
+
+@if (roomEditorOpen()) {
+  <div class="erp-drawer-layer">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      aria-label="Close room editor"
+      (click)="closeRoomEditor()"
+    ></button>
+    <section
+      class="erp-drawer hostel-room-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="room-editor-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="erp-drawer__header">
+        <span class="erp-drawer__icon">
+          <svg lucideDoorOpen size="21" aria-hidden="true"></svg>
+        </span>
+        <div>
+          <small>{{ editingRoom() ? 'Room settings' : 'Room creation' }}</small>
+          <h2 id="room-editor-title">
+            {{ editingRoom() ? 'Edit room number' : 'Add rooms' }}
+          </h2>
+          <p>{{ locationLabel() }}</p>
+        </div>
+        <button
+          class="erp-icon-button"
+          type="button"
+          aria-label="Close room editor"
+          (click)="closeRoomEditor()"
+        >
+          <svg lucideX size="18" aria-hidden="true"></svg>
+        </button>
+      </header>
+
+      @if (editingRoom()) {
+        <form class="erp-drawer__body hostel-room-editor" (ngSubmit)="saveRoomNumber()">
+          <label class="erp-field-stack">
+            <span>Room number *</span>
+            <input
+              class="erp-control"
+              name="editedRoomNumber"
+              [(ngModel)]="editedRoomNumber"
+              required
+              maxlength="40"
+              autofocus
+            />
+            <small>Use a clear identifier that is unique for this location.</small>
+          </label>
+          @if (error()) {
+            <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+          }
+          <footer class="erp-drawer__footer">
+            <button class="erp-button erp-button--secondary" type="button" (click)="closeRoomEditor()">
+              Cancel
+            </button>
+            <button
+              class="erp-button erp-button--primary"
+              type="submit"
+              [disabled]="saving() || !editedRoomNumber.trim()"
+            >
+              {{ saving() ? 'Saving…' : 'Save changes' }}
+            </button>
+          </footer>
+        </form>
+      } @else {
+        <form class="erp-drawer__body hostel-room-editor" (ngSubmit)="saveRooms()">
+          <div class="hostel-segmented" aria-label="Room creation method">
+            <button
+              type="button"
+              [class.hostel-segmented__item--active]="roomMode === 'manual'"
+              [attr.aria-pressed]="roomMode === 'manual'"
+              (click)="roomMode = 'manual'"
+            >
+              Create one room
+            </button>
+            <button
+              type="button"
+              [class.hostel-segmented__item--active]="roomMode === 'automatic'"
+              [attr.aria-pressed]="roomMode === 'automatic'"
+              (click)="roomMode = 'automatic'"
+            >
+              Generate sequence
+            </button>
+          </div>
+
+          @if (roomMode === 'manual') {
+            <label class="erp-field-stack">
+              <span>Room number *</span>
+              <input
+                class="erp-control"
+                name="roomNumber"
+                [(ngModel)]="roomNumber"
+                required
+                maxlength="40"
+                placeholder="e.g. A-101"
+                autofocus
+              />
+              <small>Create a single room in the selected hostel location.</small>
+            </label>
+          } @else {
+            <div class="hostel-generation-grid">
+              <label class="erp-field-stack">
+                <span>Prefix</span>
+                <input
+                  class="erp-control"
+                  name="roomPrefix"
+                  [(ngModel)]="roomPrefix"
+                  maxlength="12"
+                  placeholder="e.g. A-"
+                />
+              </label>
+              <label class="erp-field-stack">
+                <span>Start number *</span>
+                <input
+                  class="erp-control"
+                  name="roomStartNumber"
+                  type="number"
+                  min="1"
+                  [(ngModel)]="roomStartNumber"
+                />
+              </label>
+              <label class="erp-field-stack">
+                <span>Number of rooms *</span>
+                <input
+                  class="erp-control"
+                  name="roomGenerationCount"
+                  type="number"
+                  min="1"
+                  max="500"
+                  [(ngModel)]="roomGenerationCount"
+                />
+              </label>
+            </div>
+            <section class="hostel-generation-preview" aria-live="polite">
+              <span>Generation preview</span>
+              <strong>{{ roomGenerationCount || 0 }} rooms in {{ locationLabel() }}</strong>
+              <div>
+                @for (room of generationPreview(); track room) {
+                  <small>{{ room }}</small>
+                }
+              </div>
+            </section>
+          }
+
+          @if (error()) {
+            <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+          }
+          <footer class="erp-drawer__footer">
+            <button class="erp-button erp-button--secondary" type="button" (click)="closeRoomEditor()">
+              Cancel
+            </button>
+            <button
+              class="erp-button erp-button--primary"
+              type="submit"
+              [disabled]="
+                saving() ||
+                (roomMode === 'manual'
+                  ? !roomNumber.trim()
+                  : roomStartNumber < 1 || roomGenerationCount < 1 || roomGenerationCount > 500)
+              "
+            >
+              {{
+                saving()
+                  ? 'Saving…'
+                  : roomMode === 'manual'
+                    ? 'Create room'
+                    : 'Generate rooms'
+              }}
+            </button>
+          </footer>
+        </form>
+      }
+    </section>
+  </div>
+}
+
+@if (viewingRoom(); as room) {
+  <div class="erp-drawer-layer">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      aria-label="Close room details"
+      (click)="viewingRoom.set(null)"
+    ></button>
+    <section
+      class="erp-drawer hostel-room-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="room-details-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="erp-drawer__header">
+        <span class="erp-drawer__icon"><svg lucideDoorOpen size="21" aria-hidden="true"></svg></span>
+        <div>
+          <small>Room details</small>
+          <h2 id="room-details-title">Room {{ room.roomNumber }}</h2>
+          <p>{{ room.blockName }} / {{ room.floorName }}</p>
+        </div>
+        <button class="erp-icon-button" type="button" aria-label="Close room details" (click)="viewingRoom.set(null)">
+          <svg lucideX size="18" aria-hidden="true"></svg>
+        </button>
+      </header>
+      <div class="erp-drawer__body hostel-room-details">
+        <dl>
+          <div><dt>Hostel</dt><dd>{{ selectedHostel()?.name }}</dd></div>
+          <div><dt>Block</dt><dd>{{ room.blockName }}</dd></div>
+          <div><dt>Floor</dt><dd>{{ room.floorName }}</dd></div>
+          <div><dt>Room type</dt><dd>{{ room.configuredForSession ? room.roomType : 'Not configured' }}</dd></div>
+          <div><dt>Capacity</dt><dd>{{ room.configuredForSession ? room.capacity + ' beds' : 'Not configured' }}</dd></div>
+          <div><dt>Occupancy</dt><dd>{{ room.occupiedBeds.length }} occupied</dd></div>
+          <div><dt>Status</dt><dd>{{ room.isActive ? 'Active' : 'Disabled' }}</dd></div>
+          <div><dt>Session</dt><dd>{{ academicSession }}</dd></div>
+        </dl>
+        <footer class="erp-drawer__footer">
+          <button class="erp-button erp-button--secondary" type="button" (click)="viewingRoom.set(null)">Close</button>
+          <button class="erp-button erp-button--primary" type="button" (click)="viewingRoom.set(null); openCapacity(room)">
+            {{ room.configuredForSession ? 'Edit capacity' : 'Configure capacity' }}
+          </button>
+        </footer>
+      </div>
+    </section>
+  </div>
+}
+
+@if (capacityRoom(); as room) {
+  <div class="erp-drawer-layer">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      aria-label="Close capacity editor"
+      (click)="closeCapacityEditor()"
+    ></button>
+    <section
+      class="erp-drawer hostel-room-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="capacity-editor-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="erp-drawer__header">
+        <span class="erp-drawer__icon"><svg lucideBedDouble size="21" aria-hidden="true"></svg></span>
+        <div>
+          <small>{{ room.configuredForSession ? 'Update configuration' : 'New configuration' }}</small>
+          <h2 id="capacity-editor-title">Room {{ room.roomNumber }} capacity</h2>
+          <p>{{ room.blockName }} / {{ room.floorName }} · {{ academicSession }}</p>
+        </div>
+        <button class="erp-icon-button" type="button" aria-label="Close capacity editor" (click)="closeCapacityEditor()">
+          <svg lucideX size="18" aria-hidden="true"></svg>
+        </button>
+      </header>
+      <form class="erp-drawer__body hostel-capacity-editor" (ngSubmit)="saveCapacity()">
+        <label class="erp-field-stack">
+          <span>Academic session *</span>
+          <input class="erp-control" [value]="academicSession" readonly />
+        </label>
+        <label class="erp-field-stack">
+          <span>Room type *</span>
+          <select class="erp-control" name="roomTypeChoice" [(ngModel)]="roomTypeChoice">
+            @for (type of savedRoomTypes(); track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+            <option value="custom">Custom room type</option>
+          </select>
+        </label>
+        @if (roomTypeChoice === 'custom') {
+          <label class="erp-field-stack">
+            <span>Custom room type *</span>
+            <input class="erp-control" name="customRoomType" [(ngModel)]="customRoomType" maxlength="60" placeholder="e.g. Premium AC" />
+          </label>
+        }
+        <label class="erp-field-stack">
+          <span>Seater / bed capacity *</span>
+          <select class="erp-control" name="capacityChoice" [(ngModel)]="capacityChoice">
+            @for (seater of savedSeaters(); track seater) {
+              <option [value]="seater">{{ seater }} seater</option>
+            }
+            <option value="custom">Custom capacity</option>
+          </select>
+        </label>
+        @if (capacityChoice === 'custom') {
+          <label class="erp-field-stack">
+            <span>Custom capacity *</span>
+            <input class="erp-control" name="customCapacity" type="number" min="1" max="30" [(ngModel)]="customCapacity" />
+          </label>
+        }
+        <section class="hostel-capacity-summary">
+          <span>Configuration summary</span>
+          <strong>
+            {{ roomTypeChoice === 'custom' ? customRoomType || 'Custom type' : roomTypeChoice }} ·
+            {{ capacityChoice === 'custom' ? customCapacity || 0 : capacityChoice }} beds
+          </strong>
+          <small>Bed slots are applied only to {{ academicSession }}.</small>
+        </section>
+        @if (error()) {
+          <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+        }
+        <footer class="erp-drawer__footer">
+          <button class="erp-button erp-button--secondary" type="button" (click)="closeCapacityEditor()">Cancel</button>
+          <button class="erp-button erp-button--primary" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : room.configuredForSession ? 'Save changes' : 'Configure room' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (generationConfirmOpen()) {
+  <div class="dialog-layer">
+    <button class="dialog-backdrop" type="button" aria-label="Cancel room generation" (click)="generationConfirmOpen.set(false)"></button>
+    <section class="dialog dialog--confirm" role="alertdialog" aria-modal="true" aria-labelledby="room-generation-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+      <div class="dialog__body confirm-body">
+        <span class="confirm-icon" aria-hidden="true">!</span>
+        <h2 id="room-generation-title">Generate {{ roomGenerationCount }} rooms?</h2>
+        <p>This creates a large room sequence in {{ locationLabel() }}. Review the prefix and numbering before continuing.</p>
+      </div>
+      <footer class="dialog__footer">
+        <button class="erp-button erp-button--secondary" type="button" (click)="generationConfirmOpen.set(false)">Review settings</button>
+        <button class="erp-button erp-button--primary" type="button" (click)="confirmRoomGeneration()" [disabled]="saving()">Confirm generation</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (structureDialog(); as dialog) {
+  <div class="dialog-layer">
+    <button
+      class="dialog-backdrop"
+      type="button"
+      aria-label="Close structure dialog"
+      (click)="closeStructureDialog()"
+    ></button>
+    <section
+      class="dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="structure-dialog-title"
+    >
+      <header class="dialog__header">
+        <div>
+          <small>{{ dialog.mode === 'edit' ? 'Rename' : 'Add structure' }}</small>
+          <h2 id="structure-dialog-title">
+            {{ dialog.mode === 'edit' ? 'Edit' : 'Add' }} {{ dialog.kind }}
+          </h2>
+        </div>
+        <button type="button" aria-label="Close dialog" (click)="closeStructureDialog()">
+          <svg lucideX size="18" aria-hidden="true"></svg>
+        </button>
+      </header>
+      <form (ngSubmit)="submitStructureDialog()">
+        <div class="dialog__body dialog-form">
+          <label class="erp-field-stack"
+            ><span>Hostel</span
+            ><input class="erp-control" [value]="selectedHostel()?.name || ''" readonly
+          /></label>
+          @if (dialog.kind === 'block') {
+            <label class="erp-field-stack"
+              ><span>Block name *</span
+              ><input
+                class="erp-control"
+                name="blockName"
+                [(ngModel)]="blockName"
+                required
+                maxlength="80"
+                placeholder="e.g. Main Block"
+                autofocus
+            /></label>
+          } @else {
+            <label class="erp-field-stack"
+              ><span>Floor name *</span
+              ><input
+                class="erp-control"
+                name="floorName"
+                [(ngModel)]="floorName"
+                required
+                maxlength="80"
+                placeholder="e.g. Ground Floor"
+                autofocus
+            /></label>
+            <small
+              >Floors are currently stored at hostel level and are available to every block.</small
+            >
+          }
+          @if (error()) {
+            <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+          }
+        </div>
+        <footer class="dialog__footer">
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="closeStructureDialog()"
+          >
+            Cancel
+          </button>
+          <button
+            class="erp-button erp-button--primary"
+            type="submit"
+            [disabled]="
+              saving() || (dialog.kind === 'block' ? !blockName.trim() : !floorName.trim())
+            "
+          >
+            {{
+              saving()
+                ? 'Saving…'
+                : dialog.mode === 'edit'
+                  ? 'Save changes'
+                  : dialog.kind === 'block'
+                    ? 'Add block'
+                    : 'Add floor'
+            }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (deleteTarget()) {
+  <div class="dialog-layer">
+    <button
+      class="dialog-backdrop"
+      type="button"
+      aria-label="Cancel deletion"
+      (click)="closeDeleteDialog()"
+    ></button>
+    <section
+      class="dialog dialog--confirm"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="hostel-delete-title"
+    >
+      <div class="dialog__body confirm-body">
+        <span class="confirm-icon" aria-hidden="true">!</span>
+        <h2 id="hostel-delete-title">{{ deleteTitle() }}</h2>
+        <p>{{ deleteDescription() }}</p>
+        @if (error()) {
+          <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+        }
+      </div>
+      <footer class="dialog__footer">
         <button
           class="erp-button erp-button--secondary"
           type="button"
-          (click)="vacateTarget.set(null)"
+          (click)="closeDeleteDialog()"
         >
-          Cancel</button
-        ><button
+          Cancel
+        </button>
+        <button
           class="erp-button erp-button--danger"
           type="button"
-          (click)="confirmVacate()"
+          (click)="confirmDelete()"
           [disabled]="saving()"
         >
-          Confirm vacate
+          {{ saving() ? 'Deleting…' : 'Delete' }}
         </button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (vacateTarget(); as allocation) {
+  <div class="dialog-layer">
+    <button class="dialog-backdrop" type="button" aria-label="Cancel vacating room" (click)="vacateTarget.set(null)"></button>
+    <section class="dialog hostel-vacate-dialog" role="alertdialog" aria-modal="true" aria-labelledby="vacate-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+      <header class="dialog__header">
+        <div><small>Destructive action</small><h2 id="vacate-title">Vacate hostel bed?</h2></div>
+        <button type="button" aria-label="Close vacate confirmation" (click)="vacateTarget.set(null)"><svg lucideX size="18" aria-hidden="true"></svg></button>
+      </header>
+      <div class="dialog__body hostel-vacate-body">
+        <span class="hostel-vacate-body__icon"><svg lucideLogOut size="22" aria-hidden="true"></svg></span>
+        <dl>
+          <div><dt>Student</dt><dd>{{ allocation.studentName }} · {{ allocation.studentApplicationNumber }}</dd></div>
+          <div><dt>Current allocation</dt><dd>{{ allocation.hostelName }} / {{ allocation.blockName }} / {{ allocation.floorName }}<small>Room {{ allocation.roomNumber }} · Bed {{ allocation.bedNumber }}</small></dd></div>
+          <div><dt>Academic session</dt><dd>{{ allocation.academicSession }}</dd></div>
+        </dl>
+        <p>Vacating will end the student’s active hostel allocation and release the bed.</p>
+        <label class="erp-field-stack">
+          <span>Reason <small>(optional)</small></span>
+          <textarea class="erp-control" rows="3" [(ngModel)]="vacateReason" placeholder="Graduated, withdrawn or another reason"></textarea>
+        </label>
+        @if (error()) {
+          <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+        }
       </div>
+      <footer class="dialog__footer">
+        <button class="erp-button erp-button--secondary" type="button" autofocus (click)="vacateTarget.set(null)">Cancel</button>
+        <button class="erp-button erp-button--danger" type="button" (click)="confirmVacate()" [disabled]="saving()">
+          {{ saving() ? 'Vacating…' : 'Vacate room' }}
+        </button>
+      </footer>
     </section>
   </div>
 }
