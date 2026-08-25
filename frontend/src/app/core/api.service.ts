@@ -317,10 +317,10 @@ export class ApiService {
       params: bookId ? { bookId } : {},
     });
   }
-  createFeeHead(body: { bookId: string; name: string; category: FeeHead['category'] }) {
+  createFeeHead(body: { bookId: string; name: string; category: FeeHead['category']; placement?: string; referenceHeadId?: string }) {
     return this.http.post<{ item: FeeHead }>(`${API_BASE_URL}/fees/heads`, body);
   }
-  updateFeeHead(id: string, body: Partial<FeeHead>) {
+  updateFeeHead(id: string, body: Partial<FeeHead> & { placement?: string; referenceHeadId?: string }) {
     return this.http.patch<{ item: FeeHead }>(`${API_BASE_URL}/fees/heads/${id}`, body);
   }
   deleteFeeHead(id: string) {
@@ -337,23 +337,27 @@ export class ApiService {
   deleteHostelFee(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/hostel-fees/${id}`);
   }
-  courseFees(bookId = '', courseId = '', domicileId = '') {
+  courseFees(bookId = '', courseId = '', domicileId = '', studentTypeId = '', countryId = '') {
     let params = new HttpParams();
     if (bookId) params = params.set('bookId', bookId);
     if (courseId) params = params.set('courseId', courseId);
     if (domicileId) params = params.set('domicileId', domicileId);
+    if (studentTypeId) params = params.set('studentTypeId', studentTypeId);
+    if (countryId) params = params.set('countryId', countryId);
     return this.http.get<{ items: CourseFee[] }>(`${API_BASE_URL}/fees/course-fees`, { params });
   }
-  createCourseFee(body: Omit<CourseFee, '_id' | 'bookCode' | 'courseName' | 'domicileName' | 'feeHeadName' | 'academicName' | 'category' | 'source' | 'sourceSheet'>) {
+  createCourseFee(body: Omit<CourseFee, '_id' | 'bookCode' | 'courseName' | 'domicileName' | 'studentTypeName' | 'countryName' | 'feeHeadName' | 'academicName' | 'category' | 'source' | 'sourceSheet'>) {
     return this.http.post<{ item: CourseFee }>(`${API_BASE_URL}/fees/course-fees`, body);
   }
   deleteCourseFee(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/course-fees/${id}`);
   }
-  previewCourseFeeImport(bookId: string, domicileId: string, file: File) {
+  previewCourseFeeImport(bookId: string, domicileId: string, studentTypeId: string, countryId: string, file: File) {
     const data = new FormData();
     data.append('bookId', bookId);
     data.append('domicileId', domicileId);
+    data.append('studentTypeId', studentTypeId);
+    if (countryId) data.append('countryId', countryId);
     data.append('file', file);
     return this.http.post<{ preview: FeeImportPreview }>(
       `${API_BASE_URL}/fees/course-fees/import/preview`,

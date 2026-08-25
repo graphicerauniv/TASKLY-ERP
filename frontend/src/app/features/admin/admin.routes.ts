@@ -56,22 +56,49 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'fees',
         pathMatch: 'full',
-        redirectTo: 'fees/books',
+        redirectTo: 'fees/books/create',
       },
       ...[
-        ['books', 'books'],
-        ['heads', 'heads'],
-        ['hostel-fees', 'hostel-fees'],
-        ['course-fees', 'course-fees'],
-        ['course-fee-view', 'course-fee-view'],
-      ].map(([path, section]) => ({
+        ['books/create', 'books', 'create'],
+        ['books/view', 'books', 'view'],
+        ['books/:id/edit', 'books', 'create'],
+        ['heads/create', 'heads', 'create'],
+        ['heads/view', 'heads', 'view'],
+        ['heads/:id/edit', 'heads', 'create'],
+        ['hostel-fees/create', 'hostel-fees', 'create'],
+        ['hostel-fees/view', 'hostel-fees', 'view'],
+        ['course-fees/create', 'course-fees', 'create'],
+        ['course-fees/import', 'course-fees', 'import'],
+        ['course-fees/view', 'course-fee-view', 'view'],
+      ].map(([path, section, mode]) => ({
         path: `fees/${path}`,
         component: FeeManagementComponent,
-        data: { section },
+        data: { section, mode },
+      })),
+      ...[
+        ['books', 'books/create'],
+        ['heads', 'heads/create'],
+        ['hostel-fees', 'hostel-fees/create'],
+        ['course-fees', 'course-fees/create'],
+        ['course-fee-view', 'course-fees/view'],
+      ].map(([path, redirectTo]) => ({
+        path: `fees/${path}`,
+        pathMatch: 'full' as const,
+        redirectTo: `fees/${redirectTo}`,
+      })),
+      ...[
+        [':typeSlug/create', 'create'],
+        [':typeSlug/view', 'view'],
+        [':typeSlug/:id/edit', 'create'],
+      ].map(([path, mode]) => ({
+        path: `master-data/${path}`,
+        component: MasterDataComponent,
+        data: { mode },
       })),
       {
         path: 'master-data/:typeSlug',
-        component: MasterDataComponent,
+        pathMatch: 'full',
+        redirectTo: 'master-data/:typeSlug/view',
       },
       {
         path: 'form-builder',

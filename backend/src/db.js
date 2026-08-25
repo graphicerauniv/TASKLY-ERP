@@ -92,7 +92,7 @@ async function ensureIndexes(databaseInstance) {
       { unique: true },
     ),
     databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1 }),
-    databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1, domicileId: 1 }),
+    databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),
     databaseInstance.collection('courseFees').createIndex({ importPreviewId: 1 }),
     databaseInstance.collection('feeImportPreviews').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]);

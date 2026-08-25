@@ -31,6 +31,9 @@ const headSchema = z.object({
   bookId: z.string(),
   name: z.string().trim().min(2).max(120),
   category: z.enum(['fee', 'discount', 'payment-option']).optional().default('fee'),
+  priority: z.coerce.number().int().min(1).max(9999).optional(),
+  placement: z.enum(['top', 'bottom', 'before', 'after']).optional().default('bottom'),
+  referenceHeadId: z.string().optional().nullable(),
   isActive: z.boolean().optional().default(true),
 });
 const hostelFeeSchema = z.object({
@@ -47,6 +50,8 @@ const courseFeeSchema = z.object({
   courseId: z.string(),
   feeHeadId: z.string(),
   domicileId: z.string(),
+  studentTypeId: z.string(),
+  countryId: z.string().nullable().optional(),
   academicId: z.string().nullable().optional(),
   academicYear: z.coerce.number().int().min(1).max(10).nullable().optional(),
   semester: z.coerce.number().int().min(1).max(20).nullable().optional(),
@@ -137,24 +142,60 @@ feesRouter.delete('/books/:bookId', asyncHandler(async (request, response) => {
 
 feesRouter.get('/heads', asyncHandler(async (request, response) => {
   const filter = request.query.bookId ? { bookId: id(request.query.bookId, 'bookId') } : {};
-  const items = await db().collection('feeHeads').find(filter).sort({ name: 1 }).toArray();
+  const items = await db().collection('feeHeads').find(filter).sort({ priority: 1, createdAt: 1, name: 1 }).toArray();
   response.json({ items: items.map(serialize) });
 }));
+
+async function nextFeeHeadPriority(bookId) {
+  const last = await db().collection('feeHeads').find({ bookId }).sort({ priority: -1 }).limit(1).next();
+  return Number(last?.priority || 0) + 1;
+}
+
+function requiresCountryForStudentType(studentType) {
+  return /foreign|international|nri/i.test(studentType?.name || '');
+}
+
+async function normalizeFeeHeadPriority(bookId) {
+  const heads = await db().collection('feeHeads').find({ bookId }).sort({ priority: 1, createdAt: 1, name: 1 }).toArray();
+  await Promise.all(heads.map((head, index) =>
+    db().collection('feeHeads').updateOne({ _id: head._id }, { $set: { priority: index + 1 } }),
+  ));
+}
+
+async function resolveFeeHeadPriority(bookId, placement, referenceHeadId) {
+  if (placement === 'top') return 0;
+  if ((placement === 'before' || placement === 'after') && referenceHeadId) {
+    const reference = await db().collection('feeHeads').findOne({ _id: id(referenceHeadId, 'referenceHeadId'), bookId });
+    if (reference) return Number(reference.priority || 1) + (placement === 'after' ? 0.5 : -0.5);
+  }
+  return nextFeeHeadPriority(bookId);
+}
 
 feesRouter.post('/heads', asyncHandler(async (request, response) => {
   const data = headSchema.parse(request.body);
   const book = await feeBook(data.bookId);
   const now = new Date();
-  const document = { ...data, bookId: book._id, bookCode: book.code, normalizedName: normalizeFeeName(data.name), createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
+  const priority = data.priority || await resolveFeeHeadPriority(book._id, data.placement, data.referenceHeadId);
+  const { placement, referenceHeadId, ...headData } = data;
+  const document = { ...headData, bookId: book._id, bookCode: book.code, priority, normalizedName: normalizeFeeName(data.name), createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
   const result = await db().collection('feeHeads').insertOne(document);
-  response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
+  await normalizeFeeHeadPriority(book._id);
+  const item = await db().collection('feeHeads').findOne({ _id: result.insertedId });
+  response.status(201).json({ item: serialize(item) });
 }));
 
 feesRouter.patch('/heads/:headId', asyncHandler(async (request, response) => {
   const data = headSchema.omit({ bookId: true }).partial().parse(request.body);
   if (data.name) data.normalizedName = normalizeFeeName(data.name);
-  const result = await db().collection('feeHeads').findOneAndUpdate({ _id: id(request.params.headId) }, { $set: { ...data, updatedAt: new Date() } }, { returnDocument: 'after' });
-  if (!result) return response.status(404).json({ message: 'Fee head was not found.' });
+  const current = await db().collection('feeHeads').findOne({ _id: id(request.params.headId) });
+  if (!current) return response.status(404).json({ message: 'Fee head was not found.' });
+  if (data.placement) {
+    data.priority = await resolveFeeHeadPriority(current.bookId, data.placement, data.referenceHeadId);
+  }
+  const { placement, referenceHeadId, ...headData } = data;
+  await db().collection('feeHeads').updateOne({ _id: current._id }, { $set: { ...headData, updatedAt: new Date() } });
+  await normalizeFeeHeadPriority(current.bookId);
+  const result = await db().collection('feeHeads').findOne({ _id: current._id });
   response.json({ item: serialize(result) });
 }));
 
@@ -195,7 +236,9 @@ feesRouter.get('/course-fees', asyncHandler(async (request, response) => {
   const filter = request.query.bookId ? { bookId: id(request.query.bookId, 'bookId') } : {};
   if (request.query.courseId) filter.courseId = id(request.query.courseId, 'courseId');
   if (request.query.domicileId) filter.domicileId = id(request.query.domicileId, 'domicileId');
-  const items = await db().collection('courseFees').find(filter).sort({ courseName: 1, domicileName: 1, academicYear: 1, semester: 1, feeHeadName: 1 }).limit(5000).toArray();
+  if (request.query.studentTypeId) filter.studentTypeId = id(request.query.studentTypeId, 'studentTypeId');
+  if (request.query.countryId) filter.countryId = id(request.query.countryId, 'countryId');
+  const items = await db().collection('courseFees').find(filter).sort({ courseName: 1, domicileName: 1, studentTypeName: 1, countryName: 1, academicYear: 1, semester: 1, feeHeadName: 1 }).limit(5000).toArray();
   response.json({ items: items.map(serialize) });
 }));
 
@@ -205,11 +248,16 @@ feesRouter.post('/course-fees', asyncHandler(async (request, response) => {
   const course = await masterValue(data.courseId, 'course', 'courseId');
   const head = await feeHead(data.feeHeadId, book._id);
   const domicile = await masterValue(data.domicileId, 'domicile', 'domicileId');
+  const studentType = await masterValue(data.studentTypeId, 'student-type', 'studentTypeId');
+  if (requiresCountryForStudentType(studentType) && !data.countryId) {
+    return response.status(400).json({ message: 'Country is required for foreign student type fees.' });
+  }
+  const country = data.countryId ? await masterValue(data.countryId, 'country', 'countryId') : null;
   const academic = data.academicId
     ? await masterValue(data.academicId, 'academic', 'academicId')
     : null;
   const now = new Date();
-  const document = { ...data, bookId: book._id, bookCode: book.code, courseId: course._id, courseName: course.name, feeHeadId: head._id, feeHeadName: head.name, domicileId: domicile._id, domicileName: domicile.name, academicId: academic?._id || null, academicName: academic?.name || null, category: head.category, source: 'manual', createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
+  const document = { ...data, bookId: book._id, bookCode: book.code, courseId: course._id, courseName: course.name, feeHeadId: head._id, feeHeadName: head.name, domicileId: domicile._id, domicileName: domicile.name, studentTypeId: studentType._id, studentTypeName: studentType.name, countryId: country?._id || null, countryName: country?.name || null, academicId: academic?._id || null, academicName: academic?.name || null, category: head.category, source: 'manual', createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
   const result = await db().collection('courseFees').insertOne(document);
   response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
 }));
@@ -224,6 +272,11 @@ feesRouter.post('/course-fees/import/preview', upload.single('file'), asyncHandl
   if (!request.file) return response.status(400).json({ message: 'Choose an .xlsx fee workbook.' });
   const book = await feeBook(request.body.bookId);
   const domicile = await masterValue(request.body.domicileId, 'domicile', 'domicileId');
+  const studentType = await masterValue(request.body.studentTypeId, 'student-type', 'studentTypeId');
+  if (requiresCountryForStudentType(studentType) && !request.body.countryId) {
+    return response.status(400).json({ message: 'Country is required for foreign student type imports.' });
+  }
+  const country = request.body.countryId ? await masterValue(request.body.countryId, 'country', 'countryId') : null;
   const courses = await db().collection('masterValues').find({ typeSlug: 'course', isActive: true }).sort({ name: 1 }).toArray();
   const heads = await db().collection('feeHeads').find({ bookId: book._id, isActive: true }).toArray();
   const workbook = new ExcelJS.Workbook();
@@ -235,7 +288,7 @@ feesRouter.post('/course-fees/import/preview', upload.single('file'), asyncHandl
     return { sourceHead, status: matches.length === 1 ? 'matched' : matches.length ? 'ambiguous' : 'unmatched', feeHeadId: matches.length === 1 ? String(matches[0]._id) : null, feeHeadName: matches.length === 1 ? matches[0].name : null };
   });
   const now = new Date();
-  const preview = { bookId: book._id, bookCode: book.code, domicileId: domicile._id, domicileName: domicile.name, fileName: request.file.originalname, sheets, headMappings, createdBy: id(request.admin._id), createdAt: now, expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), status: 'pending' };
+  const preview = { bookId: book._id, bookCode: book.code, domicileId: domicile._id, domicileName: domicile.name, studentTypeId: studentType._id, studentTypeName: studentType.name, countryId: country?._id || null, countryName: country?.name || null, fileName: request.file.originalname, sheets, headMappings, createdBy: id(request.admin._id), createdAt: now, expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), status: 'pending' };
   const result = await db().collection('feeImportPreviews').insertOne(preview);
   response.status(201).json({ preview: serialize({ ...preview, _id: result.insertedId, sheets: sheets.map(({ lines, ...sheet }) => sheet) }) });
 }));
@@ -292,6 +345,10 @@ feesRouter.post('/course-fees/import/commit', asyncHandler(async (request, respo
           courseName: course.name,
           domicileId: preview.domicileId,
           domicileName: preview.domicileName,
+          studentTypeId: preview.studentTypeId,
+          studentTypeName: preview.studentTypeName,
+          countryId: preview.countryId || null,
+          countryName: preview.countryName || null,
           source: 'excel',
           sourceFile: preview.fileName,
           sourceSheet: sheet.sheetName,
@@ -308,6 +365,8 @@ feesRouter.post('/course-fees/import/commit', asyncHandler(async (request, respo
     await db().collection('courseFees').deleteMany({
       bookId: preview.bookId,
       domicileId: preview.domicileId,
+      studentTypeId: preview.studentTypeId,
+      ...(preview.countryId ? { countryId: preview.countryId } : {}),
       source: 'excel',
       sourceSheet: { $in: mappedSheetNames },
     });

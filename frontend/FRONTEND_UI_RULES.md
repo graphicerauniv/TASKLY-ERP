@@ -45,6 +45,24 @@ Required route behavior:
 
 Legacy route aliases may redirect through Angular Router. They must not reload the browser.
 
+Configuration modules with both data entry and record management must use separate routes:
+
+```text
+/create       focused creation form
+/view         searchable, filterable record directory
+/:id/edit     focused edit form
+/import       optional bulk-import workflow
+```
+
+Do not place an unbounded records table below a creation form.
+Master Data modules must follow the same route split:
+
+```text
+/admin/master-data/:typeSlug/create
+/admin/master-data/:typeSlug/view
+/admin/master-data/:typeSlug/:id/edit
+```
+
 ## 3. Official Folder Backbone
 
 ```text
@@ -207,7 +225,24 @@ Every new row action menu must:
 - keep business behavior in the feature component,
 - avoid custom per-page action button CSS.
 
-## 9. Long Workflow and Dynamic Form Rule
+## 9. Navigation Flyout Rule
+
+Sidebar flyouts with more than one category must use the shared accordion
+navigation pattern. Groups are closed by default and expand only on user action
+or active search.
+
+Use this for:
+
+- Master Data groups such as Campus Operations, Academic Masters, Location Masters,
+  and Custom Masters.
+- Fee Management create/view/import groups.
+- Future large ERP module menus.
+
+Do not render long flat lists in flyout panels. Parent groups must show a clear
+icon, compact label, count/context text, chevron rotation, active parent state,
+and nested child links with a subtle blue hierarchy line.
+
+## 10. Long Workflow and Dynamic Form Rule
 
 Any workflow with more than five top-level sections must use the shared schema-driven pattern:
 
@@ -256,7 +291,63 @@ Field rules:
 Use this pattern for Admission, Hostel, Scholarship, Document Verification,
 Fee Concession, Employee Onboarding, and every future long workflow.
 
-## 10. Tailwind Rule
+## 11. Page Header Rule
+
+All admin pages must use the shared page header system. Do not create custom
+large headings, repeated module labels, or page intro blocks inside feature
+templates.
+
+Use:
+
+```html
+<erp-admin-page title="Fee Books" variant="minimal">
+  ...
+</erp-admin-page>
+```
+
+Header variants:
+
+- `module`: only for true module landing pages such as Dashboard or a future
+  Fee Management overview.
+- `compact`: for standard operational pages that need a short title and one
+  useful line of context.
+- `minimal`: default for create/view/list/table-heavy pages where vertical
+  working space matters.
+
+Rules:
+
+- Do not show the same module eyebrow on every inner page.
+- Keep module context in the topbar breadcrumb or sidebar active state.
+- Page descriptions are optional and must be removed when they only repeat the
+  obvious page purpose.
+- Feature pages must place actions in the shared `[page-actions]` slot.
+- Do not hand-code page header spacing, typography, or margins in feature SCSS.
+
+## 12. Data Directory and Pagination Rule
+
+Record directories must reuse the global data-view contracts and tokens:
+
+```text
+src/app/core/config/data-view.constants.ts
+src/app/core/contracts/data-view.contracts.ts
+```
+
+Every potentially growing table must provide:
+
+- search relevant to its visible columns,
+- useful domain filters,
+- result count,
+- page-size control using `ERP_PAGINATION.pageSizeOptions`,
+- previous/next controls with bounded page state,
+- loading, filtered-empty, and no-data states,
+- stable row tracking,
+- compact three-dot actions.
+
+Client-side pagination is allowed only while the API returns a deliberately bounded dataset.
+Large production datasets require server-side `page`, `pageSize`, `search`, filter, sort,
+and pagination metadata support. Do not fake server pagination by downloading every record.
+
+## 13. Tailwind Rule
 
 Tailwind is allowed for small, readable layout helpers only.
 
@@ -272,7 +363,7 @@ Not allowed:
 - utility duplication of the ERP card/button/input/table system,
 - large unreadable utility strings replacing shared components.
 
-## 11. Final Verification
+## 14. Final Verification
 
 Before handoff run:
 

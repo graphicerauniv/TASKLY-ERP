@@ -10,6 +10,7 @@ export const BUILTIN_MASTERS = [
   ['level', 'Level', 'department'],
   ['course', 'Course', 'level'],
   ['domicile', 'Domicile', null],
+  ['student-type', 'Student Type', null],
   ['country', 'Country', null],
   ['state', 'State', 'country'],
   ['district', 'District', 'state'],

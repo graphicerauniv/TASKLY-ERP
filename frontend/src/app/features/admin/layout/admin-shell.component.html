@@ -95,110 +95,139 @@
                 @if (
                   !masterSearch() || 'hostel'.includes(masterSearch().trim().toLocaleLowerCase())
                 ) {
-                  <div class="master-group">
-                    <h3>Campus Operations</h3>
-                    <button
-                      class="master-group__item"
-                      [class.active]="isHostelRoute()"
-                      type="button"
-                      aria-controls="hostel-menu"
-                      [attr.aria-expanded]="hostelMenuOpen()"
-                      (click)="toggleHostelMenu($event)"
-                    >
-                      <span class="master-item__icon"
-                        ><svg lucideHouse aria-hidden="true"></svg
-                      ></span>
-                      <span><strong>Hostel</strong><small>Rooms, beds and allocations</small></span>
-                      <svg
-                        class="master-item__arrow"
-                        lucideChevronRight
-                        size="15"
-                        aria-hidden="true"
-                      ></svg>
+                  <div class="master-group master-navigation-group">
+                    <button class="master-navigation-group__trigger" [class.active]="isHostelRoute()" type="button" aria-controls="master-campus-links" [attr.aria-expanded]="isMasterGroupExpanded('campus')" (click)="toggleMasterGroup('campus')">
+                      <span class="master-item__icon"><svg lucideHouse aria-hidden="true"></svg></span>
+                      <span><strong>Campus Operations</strong><small>Hostel and campus setup</small></span>
+                      <svg class="master-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg>
                     </button>
+                    @if (isMasterGroupExpanded('campus')) {
+                      <div class="master-navigation-group__links" id="master-campus-links">
+                        <button
+                          class="master-group__item"
+                          [class.active]="isHostelRoute()"
+                          type="button"
+                          aria-controls="hostel-menu"
+                          [attr.aria-expanded]="hostelMenuOpen()"
+                          (click)="toggleHostelMenu($event)"
+                        >
+                          <span class="master-item__icon"><svg lucideHouse aria-hidden="true"></svg></span>
+                          <span><strong>Hostel</strong><small>Rooms, beds and allocations</small></span>
+                          <svg class="master-item__arrow" lucideChevronRight size="15" aria-hidden="true"></svg>
+                        </button>
+                      </div>
+                    }
                   </div>
                 }
                 @for (group of filteredMasterGroups(); track group.title) {
-                  <div class="master-group">
-                    <h3>{{ group.title }}</h3>
-                    @for (type of group.items; track type.slug) {
-                      <a
-                        [routerLink]="['/admin/master-data', type.slug]"
-                        routerLinkActive="active"
-                        (click)="closeNavigation()"
-                      >
-                        <span class="master-item__icon">
-                          @switch (type.slug) {
-                            @case ('academic') {
-                              <svg lucideBookOpenCheck aria-hidden="true"></svg>
+                  <div class="master-group master-navigation-group">
+                    <button class="master-navigation-group__trigger" [class.active]="isMasterGroupRoute(group)" type="button" [attr.aria-controls]="'master-' + group.title" [attr.aria-expanded]="isMasterGroupExpanded(group.title)" (click)="toggleMasterGroup(group.title)">
+                      <span class="master-item__icon">
+                        @if (group.title === 'Academic Masters') {
+                          <svg lucideBookOpenCheck aria-hidden="true"></svg>
+                        } @else if (group.title === 'Location Masters') {
+                          <svg lucideMapPinned aria-hidden="true"></svg>
+                        } @else {
+                          <svg lucideDatabase aria-hidden="true"></svg>
+                        }
+                      </span>
+                      <span><strong>{{ group.title }}</strong><small>{{ group.items.length }} master records</small></span>
+                      <svg class="master-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg>
+                    </button>
+                    @if (isMasterGroupExpanded(group.title)) {
+                      <div class="master-navigation-group__links" [id]="'master-' + group.title">
+                        @for (type of group.items; track type.slug) {
+                          <div class="master-type-folder">
+                            <button
+                              class="master-type-folder__trigger"
+                              [class.active]="isMasterTypeExpanded(type.slug)"
+                              type="button"
+                              [attr.aria-controls]="'master-type-' + type.slug"
+                              [attr.aria-expanded]="isMasterTypeExpanded(type.slug)"
+                              (click)="toggleMasterType(type.slug)"
+                            >
+                            <span class="master-item__icon">
+                              @switch (type.slug) {
+                                @case ('academic') {
+                                  <svg lucideBookOpenCheck aria-hidden="true"></svg>
+                                }
+                                @case ('university') {
+                                  <svg lucideLandmark aria-hidden="true"></svg>
+                                }
+                                @case ('college') {
+                                  <svg lucideUniversity aria-hidden="true"></svg>
+                                }
+                                @case ('department') {
+                                  <svg lucideDatabase aria-hidden="true"></svg>
+                                }
+                                @case ('level') {
+                                  <svg lucideLayers aria-hidden="true"></svg>
+                                }
+                                @case ('course') {
+                                  <svg lucideBookOpen aria-hidden="true"></svg>
+                                }
+                                @case ('country') {
+                                  <svg lucideGlobe aria-hidden="true"></svg>
+                                }
+                                @case ('state') {
+                                  <svg lucideMap aria-hidden="true"></svg>
+                                }
+                                @case ('district') {
+                                  <svg lucideMapPinned aria-hidden="true"></svg>
+                                }
+                                @case ('city') {
+                                  <svg lucideBuilding2 aria-hidden="true"></svg>
+                                }
+                                @default {
+                                  <svg lucideDatabase aria-hidden="true"></svg>
+                                }
+                              }
+                            </span>
+                              <span><strong>{{ type.name }}</strong><small>Create or view records</small></span>
+                              <svg class="master-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg>
+                            </button>
+                            @if (isMasterTypeExpanded(type.slug)) {
+                              <div class="master-type-folder__links" [id]="'master-type-' + type.slug">
+                                <a [routerLink]="['/admin/master-data', type.slug, 'create']" routerLinkActive="active" (click)="closeNavigation()">
+                                  <span class="master-item__icon"><svg lucidePlus aria-hidden="true"></svg></span>
+                                  <span><strong>Create</strong><small>Add new {{ type.name }}</small></span>
+                                </a>
+                                <a [routerLink]="['/admin/master-data', type.slug, 'view']" routerLinkActive="active" (click)="closeNavigation()">
+                                  <span class="master-item__icon"><svg lucideTableProperties aria-hidden="true"></svg></span>
+                                  <span><strong>View</strong><small>Search and manage {{ type.name }}</small></span>
+                                </a>
+                              </div>
                             }
-                            @case ('university') {
-                              <svg lucideLandmark aria-hidden="true"></svg>
-                            }
-                            @case ('college') {
-                              <svg lucideUniversity aria-hidden="true"></svg>
-                            }
-                            @case ('department') {
-                              <svg lucideNetwork aria-hidden="true"></svg>
-                            }
-                            @case ('level') {
-                              <svg lucideLayers aria-hidden="true"></svg>
-                            }
-                            @case ('course') {
-                              <svg lucideBookOpen aria-hidden="true"></svg>
-                            }
-                            @case ('country') {
-                              <svg lucideGlobe aria-hidden="true"></svg>
-                            }
-                            @case ('state') {
-                              <svg lucideMap aria-hidden="true"></svg>
-                            }
-                            @case ('district') {
-                              <svg lucideMapPinned aria-hidden="true"></svg>
-                            }
-                            @case ('city') {
-                              <svg lucideBuilding2 aria-hidden="true"></svg>
-                            }
-                            @default {
-                              <svg lucideDatabase aria-hidden="true"></svg>
-                            }
+                          </div>
+                        } @empty {
+                          <p class="master-group__empty">No custom masters created yet.</p>
+                        }
+                        @if (group.title === 'Custom Masters') {
+                          <button
+                            class="master-type-folder__trigger master-item--create"
+                            type="button"
+                            [attr.aria-expanded]="isMasterTypeExpanded('custom')"
+                            aria-controls="master-type-custom"
+                            (click)="toggleMasterType('custom')"
+                          >
+                            <span class="master-item__icon"><svg lucidePlus aria-hidden="true"></svg></span>
+                            <span><strong>Custom Master</strong><small>Create or view reusable sources</small></span>
+                            <svg class="master-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg>
+                          </button>
+                          @if (isMasterTypeExpanded('custom')) {
+                            <div class="master-type-folder__links" id="master-type-custom">
+                              <a routerLink="/admin/master-data/custom/create" routerLinkActive="active" (click)="closeNavigation()">
+                                <span class="master-item__icon"><svg lucidePlus aria-hidden="true"></svg></span>
+                                <span><strong>Create</strong><small>Add reusable source</small></span>
+                              </a>
+                              <a routerLink="/admin/master-data/custom/view" routerLinkActive="active" (click)="closeNavigation()">
+                                <span class="master-item__icon"><svg lucideTableProperties aria-hidden="true"></svg></span>
+                                <span><strong>View</strong><small>Review custom masters</small></span>
+                              </a>
+                            </div>
                           }
-                        </span>
-                        <span
-                          ><strong>{{ type.name }}</strong
-                          ><small>Manage values</small></span
-                        >
-                        <svg
-                          class="master-item__arrow"
-                          lucideChevronRight
-                          size="15"
-                          aria-hidden="true"
-                        ></svg>
-                      </a>
-                    } @empty {
-                      <p class="master-group__empty">No custom masters created yet.</p>
-                    }
-                    @if (group.title === 'Custom Masters') {
-                      <a
-                        class="master-item--create"
-                        routerLink="/admin/master-data/custom"
-                        routerLinkActive="active"
-                        (click)="closeNavigation()"
-                      >
-                        <span class="master-item__icon"
-                          ><svg lucidePlus aria-hidden="true"></svg
-                        ></span>
-                        <span
-                          ><strong>Create Custom Master</strong
-                          ><small>Add a reusable data source</small></span
-                        >
-                        <svg
-                          class="master-item__arrow"
-                          lucideChevronRight
-                          size="15"
-                          aria-hidden="true"
-                        ></svg>
-                      </a>
+                        }
+                      </div>
                     }
                   </div>
                 }
@@ -491,16 +520,37 @@
             <section class="master-flyout admission-flyout" id="fee-management-menu" role="dialog" aria-modal="true" aria-labelledby="fee-menu-title">
               <header class="master-flyout__header">
                 <div><strong id="fee-menu-title">Fee Management</strong><small>Books, heads and fee configuration</small></div>
-                <button type="button" aria-label="Close Fee Management menu" (click)="feeMenuOpen.set(false)"><svg lucideX size="16" aria-hidden="true"></svg></button>
+                <button type="button" aria-label="Close Fee Management menu" (click)="feeMenuOpen.set(false); feeGroupOpen.set(null)"><svg lucideX size="16" aria-hidden="true"></svg></button>
               </header>
               <div class="master-flyout__groups admission-flyout__groups">
-                <div class="master-group">
-                  <h3>Fee Configuration</h3>
-                  <a routerLink="/admin/fees/books" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideBookPlus aria-hidden="true"></svg></span><span><strong>Book Creation</strong><small>College, session and validity</small></span><svg class="master-item__arrow" lucideChevronRight size="15" aria-hidden="true"></svg></a>
-                  <a routerLink="/admin/fees/heads" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideTags aria-hidden="true"></svg></span><span><strong>Fee Head</strong><small>Payable, discount and payment heads</small></span><svg class="master-item__arrow" lucideChevronRight size="15" aria-hidden="true"></svg></a>
-                  <a routerLink="/admin/fees/hostel-fees" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideWalletCards aria-hidden="true"></svg></span><span><strong>Hostel Fee</strong><small>Hostel, seater and room-type fees</small></span><svg class="master-item__arrow" lucideChevronRight size="15" aria-hidden="true"></svg></a>
-                  <a routerLink="/admin/fees/course-fees" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideReceiptIndianRupee aria-hidden="true"></svg></span><span><strong>Course Wise Fee</strong><small>Manual setup and Excel import</small></span><svg class="master-item__arrow" lucideChevronRight size="15" aria-hidden="true"></svg></a>
-                  <a routerLink="/admin/fees/course-fee-view" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideTableProperties aria-hidden="true"></svg></span><span><strong>Course Fee View</strong><small>Year-wise fee-head matrix</small></span><svg class="master-item__arrow" lucideChevronRight size="15" aria-hidden="true"></svg></a>
+                <div class="master-group fee-navigation-group">
+                  <button class="fee-navigation-group__trigger" [class.active]="isFeeGroupRoute('books')" type="button" aria-controls="fee-books-links" [attr.aria-expanded]="feeGroupOpen() === 'books'" (click)="toggleFeeGroup('books')"><span class="master-item__icon"><svg lucideBookOpen aria-hidden="true"></svg></span><span><strong>Fee Books</strong><small>Create and manage fee books</small></span><svg class="fee-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg></button>
+                  @if (feeGroupOpen() === 'books') {<div class="fee-navigation-group__links" id="fee-books-links">
+                    <a routerLink="/admin/fees/books/create" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideBookPlus aria-hidden="true"></svg></span><span><strong>Create Book</strong><small>College, session and validity</small></span></a>
+                    <a routerLink="/admin/fees/books/view" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideBookOpen aria-hidden="true"></svg></span><span><strong>View Books</strong><small>Review and manage fee books</small></span></a>
+                  </div>}
+                </div>
+                <div class="master-group fee-navigation-group">
+                  <button class="fee-navigation-group__trigger" [class.active]="isFeeGroupRoute('heads')" type="button" aria-controls="fee-head-links" [attr.aria-expanded]="feeGroupOpen() === 'heads'" (click)="toggleFeeGroup('heads')"><span class="master-item__icon"><svg lucideTags aria-hidden="true"></svg></span><span><strong>Fee Heads</strong><small>Reusable fee definitions</small></span><svg class="fee-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg></button>
+                  @if (feeGroupOpen() === 'heads') {<div class="fee-navigation-group__links" id="fee-head-links">
+                    <a routerLink="/admin/fees/heads/create" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideTags aria-hidden="true"></svg></span><span><strong>Create Fee Head</strong><small>Payable, discount or payment head</small></span></a>
+                    <a routerLink="/admin/fees/heads/view" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideTableProperties aria-hidden="true"></svg></span><span><strong>View Fee Heads</strong><small>Manage heads by fee book</small></span></a>
+                  </div>}
+                </div>
+                <div class="master-group fee-navigation-group">
+                  <button class="fee-navigation-group__trigger" [class.active]="isFeeGroupRoute('hostel')" type="button" aria-controls="hostel-fee-links" [attr.aria-expanded]="feeGroupOpen() === 'hostel'" (click)="toggleFeeGroup('hostel')"><span class="master-item__icon"><svg lucideWalletCards aria-hidden="true"></svg></span><span><strong>Hostel Fees</strong><small>Hostel charge configuration</small></span><svg class="fee-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg></button>
+                  @if (feeGroupOpen() === 'hostel') {<div class="fee-navigation-group__links" id="hostel-fee-links">
+                    <a routerLink="/admin/fees/hostel-fees/create" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideWalletCards aria-hidden="true"></svg></span><span><strong>Create Hostel Fee</strong><small>Assign hostel charges</small></span></a>
+                    <a routerLink="/admin/fees/hostel-fees/view" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideTableProperties aria-hidden="true"></svg></span><span><strong>View Hostel Fees</strong><small>Review configured charges</small></span></a>
+                  </div>}
+                </div>
+                <div class="master-group fee-navigation-group">
+                  <button class="fee-navigation-group__trigger" [class.active]="isFeeGroupRoute('course')" type="button" aria-controls="course-fee-links" [attr.aria-expanded]="feeGroupOpen() === 'course'" (click)="toggleFeeGroup('course')"><span class="master-item__icon"><svg lucideReceiptIndianRupee aria-hidden="true"></svg></span><span><strong>Course Fees</strong><small>Create, import and review</small></span><svg class="fee-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg></button>
+                  @if (feeGroupOpen() === 'course') {<div class="fee-navigation-group__links" id="course-fee-links">
+                    <a routerLink="/admin/fees/course-fees/create" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideReceiptIndianRupee aria-hidden="true"></svg></span><span><strong>Create Course Fee</strong><small>Manual course fee setup</small></span></a>
+                    <a routerLink="/admin/fees/course-fees/import" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideFilePenLine aria-hidden="true"></svg></span><span><strong>Import Course Fees</strong><small>Review and map Excel workbook</small></span></a>
+                    <a routerLink="/admin/fees/course-fees/view" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideTableProperties aria-hidden="true"></svg></span><span><strong>View Course Fees</strong><small>Year-wise fee-head matrix</small></span></a>
+                  </div>}
                 </div>
               </div>
             </section>

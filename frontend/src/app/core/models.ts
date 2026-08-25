@@ -210,6 +210,7 @@ export interface FeeHead {
   bookCode: string;
   name: string;
   category: 'fee' | 'discount' | 'payment-option';
+  priority: number;
   isActive: boolean;
 }
 
@@ -235,6 +236,10 @@ export interface CourseFee {
   courseName: string;
   domicileId: string;
   domicileName: string;
+  studentTypeId: string;
+  studentTypeName: string;
+  countryId: string | null;
+  countryName: string | null;
   feeHeadId: string;
   feeHeadName: string;
   category: FeeHead['category'];
@@ -272,6 +277,10 @@ export interface FeeImportPreview {
   bookCode: string;
   domicileId: string;
   domicileName: string;
+  studentTypeId: string;
+  studentTypeName: string;
+  countryId: string | null;
+  countryName: string | null;
   fileName: string;
   sheets: FeeImportSheet[];
   headMappings: Array<{

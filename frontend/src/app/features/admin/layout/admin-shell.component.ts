@@ -101,6 +101,9 @@ export class AdminShellComponent {
   readonly hostelMenuOpen = signal(false);
   readonly admissionMenuOpen = signal(false);
   readonly feeMenuOpen = signal(false);
+  readonly feeGroupOpen = signal<'books' | 'heads' | 'hostel' | 'course' | null>(null);
+  readonly masterGroupOpen = signal<string | null>(null);
+  readonly masterTypeOpen = signal<string | null>(null);
   readonly masterSearch = signal('');
   readonly currentModule = signal('Dashboard');
   private masterMenuTrigger: HTMLElement | null = null;
@@ -121,6 +124,7 @@ export class AdminShellComponent {
         'level',
         'course',
         'domicile',
+        'student-type',
       ]),
       group('Location Masters', ['country', 'state', 'district', 'city']),
       {
@@ -159,6 +163,7 @@ export class AdminShellComponent {
     }
     this.admissionMenuOpen.set(false);
     this.feeMenuOpen.set(false);
+    this.feeGroupOpen.set(null);
     this.hostelMenuOpen.set(false);
     this.masterMenuOpen.set(true);
     setTimeout(() =>
@@ -169,6 +174,7 @@ export class AdminShellComponent {
     this.masterMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
     this.feeMenuOpen.set(false);
+    this.feeGroupOpen.set(null);
     this.admissionMenuOpen.update((open) => !open);
   }
   closeNavigation() {
@@ -176,8 +182,11 @@ export class AdminShellComponent {
     this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
     this.feeMenuOpen.set(false);
+    this.feeGroupOpen.set(null);
     this.menuOpen.set(false);
     this.masterSearch.set('');
+    this.masterGroupOpen.set(null);
+    this.masterTypeOpen.set(null);
   }
   closeFlyouts() {
     const restoreMasterFocus = this.masterMenuOpen();
@@ -185,13 +194,18 @@ export class AdminShellComponent {
     this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
     this.feeMenuOpen.set(false);
+    this.feeGroupOpen.set(null);
     this.masterSearch.set('');
+    this.masterGroupOpen.set(null);
+    this.masterTypeOpen.set(null);
     if (restoreMasterFocus) setTimeout(() => this.masterMenuTrigger?.focus());
   }
   closeMasterMenu(restoreFocus = true) {
     this.masterMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
     this.masterSearch.set('');
+    this.masterGroupOpen.set(null);
+    this.masterTypeOpen.set(null);
     if (restoreFocus) setTimeout(() => this.masterMenuTrigger?.focus());
   }
   toggleHostelMenu(event?: Event) {
@@ -215,7 +229,28 @@ export class AdminShellComponent {
     this.masterMenuOpen.set(false);
     this.hostelMenuOpen.set(false);
     this.admissionMenuOpen.set(false);
-    this.feeMenuOpen.update((open) => !open);
+    const nextOpen = !this.feeMenuOpen();
+    this.feeMenuOpen.set(nextOpen);
+    if (!nextOpen) this.feeGroupOpen.set(null);
+  }
+  toggleFeeGroup(group: 'books' | 'heads' | 'hostel' | 'course') {
+    this.feeGroupOpen.update((open) => open === group ? null : group);
+  }
+  toggleMasterGroup(group: string) {
+    this.masterGroupOpen.update((open) => open === group ? null : group);
+    this.masterTypeOpen.set(null);
+  }
+  isMasterGroupExpanded(group: string) {
+    return this.masterSearch().trim().length > 0 || this.masterGroupOpen() === group;
+  }
+  toggleMasterType(slug: string) {
+    this.masterTypeOpen.update((open) => open === slug ? null : slug);
+  }
+  isMasterTypeExpanded(slug: string) {
+    return this.masterSearch().trim().length > 0 || this.masterTypeOpen() === slug;
+  }
+  isMasterGroupRoute(group: { items: MasterType[] }) {
+    return group.items.some((type) => this.router.url.startsWith(`/admin/master-data/${type.slug}`));
   }
   matchesNavigation(label: string) {
     const query = this.navigationSearch().trim().toLocaleLowerCase();
@@ -237,6 +272,7 @@ export class AdminShellComponent {
     }
     if (this.feeMenuOpen()) {
       this.feeMenuOpen.set(false);
+      this.feeGroupOpen.set(null);
       return;
     }
     if (this.menuOpen()) {
@@ -283,6 +319,15 @@ export class AdminShellComponent {
   }
   isFeeRoute() {
     return this.router.url.startsWith('/admin/fees/');
+  }
+  isFeeGroupRoute(group: 'books' | 'heads' | 'hostel' | 'course') {
+    const path = ({
+      books: '/admin/fees/books/',
+      heads: '/admin/fees/heads/',
+      hostel: '/admin/fees/hostel-fees/',
+      course: '/admin/fees/course-fees/',
+    })[group];
+    return this.router.url.startsWith(path);
   }
   private updateCurrentModule(url: string) {
     if (url.includes('/fees/')) this.currentModule.set('Fee Management');

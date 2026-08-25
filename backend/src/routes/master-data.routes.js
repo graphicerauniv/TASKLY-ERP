@@ -21,10 +21,25 @@ const valueSchema = z.object({
   isActive: z.boolean().optional().default(true),
   metadata: z.record(z.string(), z.unknown()).optional().default({}),
 });
+const BUILTIN_MASTER_TYPES = [
+  ['academic', 'Academic', null],
+  ['university', 'University', null],
+  ['college', 'College', 'university'],
+  ['department', 'Department', 'college'],
+  ['level', 'Level', 'department'],
+  ['course', 'Course', 'level'],
+  ['domicile', 'Domicile', null],
+  ['student-type', 'Student Type', null],
+  ['country', 'Country', null],
+  ['state', 'State', 'country'],
+  ['district', 'District', 'state'],
+  ['city', 'City', 'district'],
+];
 
 masterDataRouter.get(
   '/types',
   asyncHandler(async (request, response) => {
+    await ensureBuiltinMasterTypes();
     const items = await db()
       .collection('masterTypes')
       .find({ slug: { $ne: 'course-specialization' } })
@@ -161,12 +176,14 @@ masterDataRouter.delete(
         .status(409)
         .json({ message: 'This value is used as a parent and cannot be deleted.' });
     if (
-      request.params.typeSlug === 'domicile' &&
-      (await db().collection('courseFees').countDocuments({ domicileId: valueId }))
+      ['domicile', 'student-type'].includes(request.params.typeSlug) &&
+      (await db().collection('courseFees').countDocuments(
+        request.params.typeSlug === 'domicile' ? { domicileId: valueId } : { studentTypeId: valueId },
+      ))
     )
       return response
         .status(409)
-        .json({ message: 'This domicile is used by course fees. Disable it instead of deleting it.' });
+        .json({ message: 'This master value is used by course fees. Disable it instead of deleting it.' });
     const result = await db()
       .collection('masterValues')
       .deleteOne({ _id: valueId, typeSlug: request.params.typeSlug });
@@ -230,12 +247,62 @@ masterDataRouter.post(
 );
 
 async function requireType(slug) {
-  const type = await db().collection('masterTypes').findOne({ slug });
+  const type = await ensureBuiltinMasterType(slug);
   if (!type) {
     const error = new Error('Master-data type not found.');
     error.status = 404;
     throw error;
   }
   return type;
+}
+
+async function ensureBuiltinMasterTypes() {
+  const now = new Date();
+  await Promise.all(
+    BUILTIN_MASTER_TYPES.map(([slug, name, parentTypeSlug], order) =>
+      db().collection('masterTypes').updateOne(
+        { slug },
+        {
+          $setOnInsert: {
+            name,
+            slug,
+            parentTypeSlug,
+            isCustom: false,
+            isActive: true,
+            order,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        { upsert: true },
+      ),
+    ),
+  );
+}
+
+async function ensureBuiltinMasterType(slug) {
+  const existing = await db().collection('masterTypes').findOne({ slug });
+  if (existing) return existing;
+  const index = BUILTIN_MASTER_TYPES.findIndex(([builtInSlug]) => builtInSlug === slug);
+  if (index < 0) return null;
+  const [builtInSlug, name, parentTypeSlug] = BUILTIN_MASTER_TYPES[index];
+  const now = new Date();
+  await db().collection('masterTypes').updateOne(
+    { slug: builtInSlug },
+    {
+      $setOnInsert: {
+        name,
+        slug: builtInSlug,
+        parentTypeSlug,
+        isCustom: false,
+        isActive: true,
+        order: index,
+        createdAt: now,
+        updatedAt: now,
+      },
+    },
+    { upsert: true },
+  );
+  return db().collection('masterTypes').findOne({ slug: builtInSlug });
 }
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

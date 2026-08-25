@@ -5,6 +5,12 @@
   min-width: 0;
 }
 
+.fee-page-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-space-2);
+}
+
 .fee-form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -28,6 +34,83 @@
 
 .fee-book-selector {
   width: min(620px, 100%);
+}
+
+.fee-picker-control {
+  display: flex;
+  height: auto;
+  min-height: var(--erp-control-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fee-picker-control span,
+.fee-picker-control small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fee-picker-control small {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+}
+
+.fee-head-picker__search {
+  margin-bottom: var(--erp-space-2);
+}
+
+.fee-head-picker__all {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  border-style: dashed;
+}
+
+.fee-head-picker__row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.fee-picker-check {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-sm);
+  color: var(--erp-primary);
+  background: var(--erp-surface-detail);
+  font-size: var(--erp-font-size-sm);
+  font-weight: var(--erp-weight-bold);
+}
+
+.erp-record-picker__option.active .fee-picker-check {
+  border-color: var(--erp-primary);
+  color: var(--erp-text-on-primary);
+  background: var(--erp-primary);
+}
+
+.fee-head-picker__count {
+  margin-right: auto;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.fee-priority-pill {
+  display: inline-grid;
+  min-width: 34px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-pill);
+  color: var(--erp-primary);
+  background: var(--erp-surface-selected);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-bold);
 }
 
 .fee-form-actions,
@@ -324,6 +407,15 @@
 }
 
 @media (max-width: 720px) {
+  .fee-page-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fee-page-actions .erp-button {
+    width: 100%;
+  }
   .fee-form-grid,
   .fee-mapping-summary {
     grid-template-columns: 1fr;

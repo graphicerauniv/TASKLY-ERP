@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
@@ -29,17 +29,25 @@ const DEPENDENCY_CHAINS: Record<string, string[]> = {
 
 @Component({
   selector: 'erp-master-data',
-  imports: [AdminPageComponent, CompactActionMenuComponent, FormsModule],
+  imports: [AdminPageComponent, CompactActionMenuComponent, FormsModule, RouterLink],
   templateUrl: './master-data.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MasterDataComponent {
   private readonly api = inject(ApiService);
   private readonly masterDataStore = inject(MasterDataStore);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly slug = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(map((params) => params.get('typeSlug') || '')),
+    this.route.paramMap.pipe(map((params) => params.get('typeSlug') || '')),
     { initialValue: '' },
   );
+  readonly editId = toSignal(this.route.paramMap.pipe(map((params) => params.get('id') || '')), {
+    initialValue: '',
+  });
+  readonly mode = toSignal(this.route.data.pipe(map((data) => data['mode'] || 'view')), {
+    initialValue: 'view',
+  });
   readonly types = this.masterDataStore.types;
   readonly customTypeCount = computed(() => this.types().filter((type) => type.isCustom).length);
   readonly values = signal<MasterValue[]>([]);
@@ -59,9 +67,22 @@ export class MasterDataComponent {
   customParent = '';
   private editingValue: MasterValue | null = null;
   readonly currentType = () => this.types().find((type) => type.slug === this.slug());
+  readonly isCreatePage = computed(() => this.mode() === 'create');
+  readonly isViewPage = computed(() => this.mode() === 'view');
+  readonly pageTitle = computed(() => {
+    const type = this.currentType()?.name || this.titleFromSlug(this.slug());
+    if (this.slug() === 'custom') return this.isCreatePage() ? 'Create Custom Master' : 'Custom Masters';
+    if (this.editId()) return `Edit ${type}`;
+    return this.isCreatePage() ? `Create ${type}` : type;
+  });
+  readonly createRoute = computed(() => ['/admin/master-data', this.slug(), 'create']);
+  readonly viewRoute = computed(() => ['/admin/master-data', this.slug(), 'view']);
   constructor() {
     effect(() => {
       const slug = this.slug();
+      const editId = this.editId();
+      this.mode();
+      if (!editId) this.reset();
       this.loadTypes(() => {
         if (slug !== 'custom') this.loadValues();
       });
@@ -80,6 +101,7 @@ export class MasterDataComponent {
       next: ({ items }) => {
         this.values.set(items);
         this.loading.set(false);
+        this.syncEditRoute(items);
       },
       error: (e) => this.fail(e),
     });
@@ -109,6 +131,7 @@ export class MasterDataComponent {
         this.reset();
         this.message.set('Value saved successfully.');
         this.loadValues();
+        void this.router.navigate(this.viewRoute());
       },
       error: (e) => this.fail(e),
     });
@@ -166,7 +189,7 @@ export class MasterDataComponent {
       .subscribe(() => this.loadValues());
   }
   handleRowAction(action: string, item: MasterValue) {
-    if (action === 'edit') this.edit(item);
+    if (action === 'edit') void this.router.navigate(['/admin/master-data', this.slug(), item._id, 'edit']);
     if (action === 'delete') this.remove(item);
   }
   remove(item: MasterValue) {
@@ -196,6 +219,7 @@ export class MasterDataComponent {
           this.customParent = '';
           this.message.set('Custom master created.');
           this.loadTypes();
+          void this.router.navigate(['/admin/master-data/custom/view']);
         },
         error: (e) => this.fail(e),
       });
@@ -216,5 +240,20 @@ export class MasterDataComponent {
         null;
     }
     this.selectedDependencies = selected;
+  }
+  private syncEditRoute(items: MasterValue[]) {
+    const id = this.editId();
+    if (!id) return;
+    const item = items.find((value) => value._id === id);
+    if (item) this.edit(item);
+  }
+  private titleFromSlug(slug: string) {
+    return slug
+      ? slug
+          .split('-')
+          .filter(Boolean)
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ')
+      : 'Master Data';
   }
 }

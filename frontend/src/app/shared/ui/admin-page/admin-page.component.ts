@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
+export type AdminPageHeaderVariant = 'module' | 'compact' | 'minimal';
+
 /**
  * Global route-page frame for the admin application.
  * Feature pages provide only their unique content and optional `[page-actions]` controls.
@@ -7,14 +9,24 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 @Component({
   selector: 'erp-admin-page',
   template: `
-    <section class="erp-page">
-      <header class="erp-page-header">
+    <section
+      class="erp-page"
+      [class.erp-page--module]="variant() === 'module'"
+      [class.erp-page--compact]="variant() === 'compact'"
+      [class.erp-page--minimal]="variant() === 'minimal'"
+    >
+      <header
+        class="erp-page-header"
+        [class.erp-page-header--module]="variant() === 'module'"
+        [class.erp-page-header--compact]="variant() === 'compact'"
+        [class.erp-page-header--minimal]="variant() === 'minimal'"
+      >
         <div>
-          @if (eyebrow()) {
+          @if (eyebrow() && variant() !== 'minimal') {
             <span class="erp-page-header__eyebrow">{{ eyebrow() }}</span>
           }
           <h1>{{ title() }}</h1>
-          @if (description()) {
+          @if (description() && variant() !== 'minimal') {
             <p>{{ description() }}</p>
           }
         </div>
@@ -35,4 +47,5 @@ export class AdminPageComponent {
   readonly eyebrow = input('');
   readonly title = input.required<string>();
   readonly description = input('');
+  readonly variant = input<AdminPageHeaderVariant>('minimal');
 }

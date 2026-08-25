@@ -1,244 +1,168 @@
 @if (slug() === 'custom') {
   <erp-admin-page
     eyebrow="Master Data"
-    title="Custom Fields"
+    [title]="pageTitle()"
     description="Create reusable data sources for dynamic dropdowns."
+    variant="minimal"
   >
+    <div page-actions class="master-page-actions">
+      @if (isViewPage()) {
+        <a class="erp-button erp-button--primary" routerLink="/admin/master-data/custom/create">Create custom</a>
+      } @else {
+        <a class="erp-button erp-button--secondary" routerLink="/admin/master-data/custom/view">View custom masters</a>
+      }
+    </div>
     @if (message()) {
       <p class="erp-notice erp-notice--success">{{ message() }}</p>
     }
     @if (error()) {
       <p class="erp-notice erp-notice--error">{{ error() }}</p>
     }
-    <div class="erp-workspace-grid">
+    <div class="master-data-workspace">
       <main class="erp-main-column">
-        <section class="erp-card erp-card--padded form-card">
-          <div class="erp-card__header">
-            <div>
-              <h2>Create custom master</h2>
-              <p>Use clear reusable names so future forms stay easy to maintain.</p>
+        @if (isCreatePage()) {
+          <section class="erp-card erp-card--padded master-create-card">
+            <div class="erp-card__header">
+              <div>
+                <h2>Create custom master</h2>
+                <p>Use clear reusable names so future forms stay easy to maintain.</p>
+              </div>
             </div>
-          </div>
-          <div class="erp-form-grid">
-            <label
-              ><span>Name</span
-              ><input class="erp-control" [(ngModel)]="customName" placeholder="e.g. Board, Religion, Category"
-            /></label>
-            <label
-              ><span>Parent master (optional)</span
-              ><select class="erp-control" [(ngModel)]="customParent">
-                <option value="">No parent</option>
-                @for (type of types(); track type.slug) {
-                  <option [value]="type.slug">{{ type.name }}</option>
-                }
-              </select></label
-            >
-            <button class="erp-button erp-button--primary" type="button" (click)="createCustom()">Create master</button>
-          </div>
-        </section>
-        <section class="erp-card erp-table-shell table-card">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Slug</th>
-                <th>Parent</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (type of types(); track type.slug) {
-                @if (type.isCustom) {
-                  <tr>
-                    <td>
-                      <strong>{{ type.name }}</strong>
-                    </td>
-                    <td>{{ type.slug }}</td>
-                    <td>{{ type.parentTypeSlug || '—' }}</td>
-                    <td><span class="erp-status">Active</span></td>
-                  </tr>
-                }
-              } @empty {
+            <div class="erp-form-grid master-value-grid">
+              <label><span>Name</span><input class="erp-control" [(ngModel)]="customName" placeholder="e.g. Board, Religion, Category" /></label>
+              <label><span>Parent master (optional)</span><select class="erp-control" [(ngModel)]="customParent">
+                  <option value="">No parent</option>
+                  @for (type of types(); track type.slug) {
+                    <option [value]="type.slug">{{ type.name }}</option>
+                  }
+                </select></label>
+              <button class="erp-button erp-button--primary" type="button" (click)="createCustom()">Create master</button>
+            </div>
+          </section>
+        } @else {
+          <section class="erp-card erp-table-shell master-table-card">
+            <div class="erp-table-toolbar">
+              <div><h2>Custom masters <small>{{ customTypeCount() }}</small></h2><p>Review custom dropdown data sources separately from creation.</p></div>
+            </div>
+            <table>
+              <thead>
                 <tr>
-                  <td colspan="4" class="erp-empty-state">No custom masters created.</td>
+                  <th>Name</th>
+                  <th>Slug</th>
+                  <th>Parent</th>
+                  <th>Status</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </section>
+              </thead>
+              <tbody>
+                @for (type of types(); track type.slug) {
+                  @if (type.isCustom) {
+                    <tr>
+                      <td><strong>{{ type.name }}</strong></td>
+                      <td>{{ type.slug }}</td>
+                      <td>{{ type.parentTypeSlug || '—' }}</td>
+                      <td><span class="erp-status">Active</span></td>
+                    </tr>
+                  }
+                } @empty {
+                  <tr><td colspan="4" class="erp-empty-state">No custom masters created.</td></tr>
+                }
+              </tbody>
+            </table>
+          </section>
+        }
       </main>
-      <aside class="erp-context-column" aria-label="Custom fields context">
-        <section class="erp-context-card">
-          <h2>Master setup guide</h2>
-          <p>
-            Keep custom masters short, reusable, and connected only when the value depends on
-            another master.
-          </p>
-          <ul class="erp-context-list">
-            <li><span>Use nouns such as board, category, quota, religion.</span></li>
-            <li><span>Choose a parent only for dependent dropdowns.</span></li>
-            <li><span>Review slug names before using values in forms.</span></li>
-          </ul>
-        </section>
-        <section class="erp-context-card">
-          <h2>Workspace summary</h2>
-          <div class="erp-stat-grid">
-            <div class="erp-stat">
-              <strong>{{ types().length }}</strong>
-              <span>Total masters</span>
-            </div>
-            <div class="erp-stat">
-              <strong>{{ customTypeCount() }}</strong>
-              <span>Custom</span>
-            </div>
-          </div>
-        </section>
-      </aside>
     </div>
   </erp-admin-page>
 } @else {
   <erp-admin-page
     eyebrow="Master Data"
-    [title]="currentType()?.name || 'Master Data'"
+    [title]="pageTitle()"
     description="Add, edit, activate, import, and organize database values."
+    variant="minimal"
   >
-    <label page-actions class="erp-button erp-button--primary upload"
-      >Bulk upload<input type="file" accept=".csv,.xlsx,.xls" (change)="importFile($event)"
-    /></label>
+    <div page-actions class="master-page-actions">
+      @if (isViewPage()) {
+        <a class="erp-button erp-button--primary" [routerLink]="createRoute()">Create value</a>
+        <label class="erp-button erp-button--secondary upload">Bulk upload<input type="file" accept=".csv,.xlsx,.xls" (change)="importFile($event)" /></label>
+      } @else {
+        <a class="erp-button erp-button--secondary" [routerLink]="viewRoute()">View values</a>
+      }
+    </div>
     @if (message()) {
       <p class="erp-notice erp-notice--success">{{ message() }}</p>
     }
     @if (error()) {
       <p class="erp-notice erp-notice--error">{{ error() }}</p>
     }
-    <div class="erp-workspace-grid">
+    <div class="master-data-workspace">
       <main class="erp-main-column">
-        <section class="erp-card erp-card--padded form-card">
-          <div class="erp-card__header">
-            <div>
-              <h2>{{ editingId() ? 'Edit value' : 'Add value' }}</h2>
-              <p>Keep values consistent because these records power form dropdowns and filters.</p>
+        @if (isCreatePage()) {
+          <section class="erp-card erp-card--padded master-create-card">
+            <div class="erp-card__header">
+              <div>
+                <h2>{{ editingId() ? 'Edit value' : 'Add value' }}</h2>
+                <p>Keep values consistent because these records power form dropdowns and filters.</p>
+              </div>
             </div>
-          </div>
-          <div class="erp-form-grid master-value-grid">
-            <label
-              ><span>Name *</span><input class="erp-control" [(ngModel)]="name" placeholder="Enter value name"
-            /></label>
-            @for (dependencySlug of dependencySlugs(); track dependencySlug; let index = $index) {
-              <label>
-                <span>{{ dependencyLabel(dependencySlug) }} *</span>
-                <select
-                  class="erp-control"
-                  [(ngModel)]="selectedDependencies[dependencySlug]"
-                  (ngModelChange)="dependencyChanged(index)"
-                >
-                  <option value="">Select {{ dependencyLabel(dependencySlug) }}</option>
-                  @for (option of dependencyOptions(index); track option._id) {
-                    <option [value]="option._id">{{ option.name }}</option>
-                  }
-                </select>
-              </label>
-            }
-            <button class="erp-button erp-button--primary" type="button" (click)="save()">
-              {{ editingId() ? 'Save changes' : 'Add value' }}
-            </button>
-            @if (editingId()) {
-              <button class="erp-button erp-button--secondary" type="button" (click)="reset()">Cancel</button>
-            }
-          </div>
-        </section>
-        <section class="erp-card erp-table-shell table-card">
-          <div class="erp-table-toolbar">
-            <h2>
-              Saved values <small>{{ values().length }}</small>
-            </h2>
-            <div class="erp-table-toolbar__actions">
-              <input
-                class="erp-control"
-                [(ngModel)]="search"
-                placeholder="Search values"
-                (keyup.enter)="loadValues()"
-              /><button class="erp-button erp-button--secondary" type="button" (click)="loadValues()">Search</button>
-            </div>
-          </div>
-          <div class="erp-table-shell__scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  @if (dependencySlugs().length) {
-                    <th>Depends on</th>
-                  }
-                  <th>Status</th>
-                  <th class="erp-table-shell__actions">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of values(); track item._id) {
-                  <tr>
-                    <td>
-                      <strong>{{ item.name }}</strong>
-                    </td>
-                    @if (dependencySlugs().length) {
-                      <td>{{ parentPath(item) }}</td>
+            <div class="erp-form-grid master-value-grid">
+              <label><span>Name *</span><input class="erp-control" [(ngModel)]="name" placeholder="Enter value name" /></label>
+              @for (dependencySlug of dependencySlugs(); track dependencySlug; let index = $index) {
+                <label>
+                  <span>{{ dependencyLabel(dependencySlug) }} *</span>
+                  <select class="erp-control" [(ngModel)]="selectedDependencies[dependencySlug]" (ngModelChange)="dependencyChanged(index)">
+                    <option value="">Select {{ dependencyLabel(dependencySlug) }}</option>
+                    @for (option of dependencyOptions(index); track option._id) {
+                      <option [value]="option._id">{{ option.name }}</option>
                     }
-                    <td>
-                      <button
-                        class="erp-status"
-                        [class.erp-status--neutral]="!item.isActive"
-                        type="button"
-                        (click)="toggle(item)"
-                      >
-                        {{ item.isActive ? 'Enabled' : 'Disabled' }}
-                      </button>
-                    </td>
-                    <td class="erp-table-shell__actions">
-                      <erp-compact-action-menu
-                        [items]="rowActions"
-                        (selected)="handleRowAction($event, item)"
-                      />
-                    </td>
-                  </tr>
-                } @empty {
+                  </select>
+                </label>
+              }
+              <button class="erp-button erp-button--primary" type="button" (click)="save()">{{ editingId() ? 'Save changes' : 'Add value' }}</button>
+              @if (editingId()) {
+                <button class="erp-button erp-button--secondary" type="button" (click)="reset()">Cancel</button>
+              }
+            </div>
+          </section>
+        } @else {
+          <section class="erp-card erp-table-shell master-table-card">
+            <div class="erp-table-toolbar">
+              <div><h2>Saved values <small>{{ values().length }}</small></h2><p>Search, review and manage this master list separately from creation.</p></div>
+              <div class="erp-table-toolbar__actions">
+                <input class="erp-control" [(ngModel)]="search" placeholder="Search values" (keyup.enter)="loadValues()" />
+                <button class="erp-button erp-button--secondary" type="button" (click)="loadValues()">Search</button>
+              </div>
+            </div>
+            <div class="erp-table-shell__scroll">
+              <table>
+                <thead>
                   <tr>
-                    <td [attr.colspan]="dependencySlugs().length ? 4 : 3" class="erp-empty-state">
-                      {{ loading() ? 'Loading…' : 'No values found.' }}
-                    </td>
+                    <th>Name</th>
+                    @if (dependencySlugs().length) {
+                      <th>Depends on</th>
+                    }
+                    <th>Status</th>
+                    <th class="erp-table-shell__actions">Actions</th>
                   </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
+                </thead>
+                <tbody>
+                  @for (item of values(); track item._id) {
+                    <tr>
+                      <td><strong>{{ item.name }}</strong></td>
+                      @if (dependencySlugs().length) {
+                        <td>{{ parentPath(item) }}</td>
+                      }
+                      <td><button class="erp-status" [class.erp-status--neutral]="!item.isActive" type="button" (click)="toggle(item)">{{ item.isActive ? 'Enabled' : 'Disabled' }}</button></td>
+                      <td class="erp-table-shell__actions"><erp-compact-action-menu [items]="rowActions" (selected)="handleRowAction($event, item)" /></td>
+                    </tr>
+                  } @empty {
+                    <tr><td [attr.colspan]="dependencySlugs().length ? 4 : 3" class="erp-empty-state">{{ loading() ? 'Loading…' : 'No values found.' }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
       </main>
-      <aside class="erp-context-column" aria-label="Master data context">
-        <section class="erp-context-card">
-          <h2>{{ currentType()?.name || 'Master' }} behavior</h2>
-          <p>
-            This page should remain the single source for reusable dropdown and selection values.
-          </p>
-          <ul class="erp-context-list">
-            <li><span>Search before adding to avoid duplicate records.</span></li>
-            <li>
-              <span>Disable values instead of deleting when records may already use them.</span>
-            </li>
-            <li><span>Use bulk upload only after verifying the column format.</span></li>
-          </ul>
-        </section>
-        <section class="erp-context-card">
-          <h2>Current view</h2>
-          <div class="erp-stat-grid">
-            <div class="erp-stat">
-              <strong>{{ values().length }}</strong>
-              <span>Saved</span>
-            </div>
-            <div class="erp-stat">
-              <strong>{{ dependencySlugs().length }}</strong>
-              <span>Depends on</span>
-            </div>
-          </div>
-        </section>
-      </aside>
     </div>
   </erp-admin-page>
 }
