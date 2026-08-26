@@ -1,13 +1,12 @@
-import { MongoClient, ObjectId } from 'mongodb';
+import { ObjectId } from 'bson';
 import { config } from './config.js';
+import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
-let client;
 let database;
 
 export async function connectDatabase() {
-  client = new MongoClient(config.mongoUrl);
-  await client.connect();
-  database = client.db(config.mongoDbName);
+  database = new PostgresDocumentDatabase(config.databaseUrl);
+  await database.connect();
   await ensureIndexes(database);
   return database;
 }
@@ -18,7 +17,8 @@ export function db() {
 }
 
 export async function closeDatabase() {
-  await client?.close();
+  await database?.close();
+  database = undefined;
 }
 
 export function id(value, field = 'id') {
@@ -34,6 +34,7 @@ export function serialize(document) {
   if (!document) return document;
   const walk = (item) => {
     if (item instanceof ObjectId) return item.toHexString();
+    if (item instanceof Date) return item.toISOString();
     if (Array.isArray(item)) return item.map(walk);
     if (item && typeof item === 'object') {
       const output = {};

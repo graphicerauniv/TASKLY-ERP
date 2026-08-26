@@ -14,8 +14,7 @@ export const config = Object.freeze({
   port: integer(process.env.PORT, 3000),
   apiPrefix: process.env.API_PREFIX || '/api/v1',
   appName: process.env.APP_NAME || 'Taskly ERP',
-  mongoUrl: process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017/taskly_erp',
-  mongoDbName: process.env.MONGODB_DB_NAME || 'taskly_erp',
+  databaseUrl: process.env.DATABASE_URL || '',
   jwtSecret: process.env.JWT_ACCESS_SECRET || '',
   jwtTtl: process.env.JWT_ACCESS_TTL || '8h',
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:4200')
@@ -43,6 +42,8 @@ export const config = Object.freeze({
 });
 
 export function validateConfig() {
+  if (!/^postgres(?:ql)?:\/\//i.test(config.databaseUrl))
+    throw new Error('DATABASE_URL must contain a valid PostgreSQL connection string.');
   if (config.jwtSecret.length < 32)
     throw new Error('JWT_ACCESS_SECRET must contain at least 32 characters.');
   if (!['local', 's3'].includes(config.storage.driver))

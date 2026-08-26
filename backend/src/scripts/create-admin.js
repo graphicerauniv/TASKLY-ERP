@@ -25,5 +25,5 @@ await db()
     },
     { upsert: true },
   );
-console.log(`Super Admin saved in MongoDB: ${email}`);
+console.log(`Super Admin saved in PostgreSQL: ${email}`);
 await closeDatabase();

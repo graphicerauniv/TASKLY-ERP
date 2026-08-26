@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { ObjectId } from 'bson';
 
 export async function generateStudentFeeLedgers(database, admission, createdBy) {
   if (admission.status !== 'approved' || !admission.isActive)

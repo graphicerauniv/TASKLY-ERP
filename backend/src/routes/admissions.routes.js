@@ -2,7 +2,7 @@ import express from 'express';
 import argon2 from 'argon2';
 import crypto from 'node:crypto';
 import multer from 'multer';
-import { ObjectId } from 'mongodb';
+import { ObjectId } from 'bson';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { db, id, serialize } from '../db.js';

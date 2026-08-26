@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { ObjectId } from 'mongodb';
+import { ObjectId } from 'bson';
 
 export function admissionContext(form, responses = {}) {
   const fields = allFields(form);
