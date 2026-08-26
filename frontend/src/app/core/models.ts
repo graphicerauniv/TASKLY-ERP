@@ -124,6 +124,11 @@ export interface StudentSession {
   studentId: string;
   name: string;
   mustChangePassword: boolean;
+  academicSession?: string;
+  courseName?: string;
+  currentAcademicYear?: number;
+  currentSemester?: number;
+  feeFrequency?: 'year' | 'semester';
 }
 
 export interface StudentFeeEntry {
@@ -393,6 +398,26 @@ export interface FeeProgressionCandidate extends Admission {
   nextPeriodLabel: string;
 }
 
+export interface StudentPromotion {
+  _id: string;
+  studentAdmissionId: string;
+  studentId: string;
+  studentName: string;
+  courseId: string;
+  courseName: string;
+  academicSession: string;
+  mode: 'semester' | 'year';
+  fromAcademicYear: number;
+  fromSemester: number;
+  toAcademicYear: number;
+  toSemester: number | null;
+  targetPeriodLabel: string;
+  feeLedgerId: string;
+  status: 'pending' | 'promoting' | 'promoted' | 'cancelled';
+  createdAt: string;
+  promotedAt?: string;
+}
+
 export interface FeePaymentAllocation {
   ledgerId: string;
   ledgerKind: 'academic' | 'hostel';
@@ -410,6 +435,8 @@ export interface FeePayment {
   studentName: string;
   razorpayOrderId: string;
   razorpayPaymentId?: string;
+  targetLedgerId?: string;
+  targetPeriodLabel?: string;
   amount: number;
   currency: 'INR';
   method?: string;

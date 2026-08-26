@@ -46,7 +46,11 @@ export class FeeProgressionComponent {
 
   changeMode(mode: 'semester' | 'year') {
     this.mode = mode;
-    this.message.set('');
+    this.message.set(
+      mode === 'semester'
+        ? 'Showing students eligible for their next semester. Select students or use the row action.'
+        : 'Showing students eligible for their next academic year. Select students or use the row action.',
+    );
     this.load();
   }
 
@@ -64,7 +68,11 @@ export class FeeProgressionComponent {
   }
 
   createFees() {
-    if (!this.selected().size || this.saving()) return;
+    if (this.saving()) return;
+    if (!this.selected().size) {
+      this.error.set('Select at least one eligible student before creating the next fee period.');
+      return;
+    }
     if (
       this.penaltyEnabled &&
       (!this.penaltyDueDate || !this.penaltyDailyAmount || !this.penaltyMaxAmount)
@@ -86,20 +94,26 @@ export class FeeProgressionComponent {
         },
       })
       .subscribe({
-        next: ({ created, studentsProcessed, results }) => {
+        next: ({ created, promotionsCreated, studentsProcessed, results }) => {
           const failures = results
             .flatMap((result) => [result.reason, ...result.skippedKinds.map((item) => item.reason)])
             .filter(Boolean);
-          this.message.set(
-            `${created} next-period ledger(s) created for ${studentsProcessed} student(s).${failures.length ? ` ${failures.join(' ')}` : ''}`,
-          );
+          const resultMessage = `${created} next-period ledger(s) and ${promotionsCreated} pending promotion record(s) prepared for ${studentsProcessed} student(s).${failures.length ? ` ${failures.join(' ')}` : ''}`;
+          if (created || promotionsCreated) this.message.set(resultMessage);
+          else this.error.set(resultMessage);
           this.saving.set(false);
-          this.load();
+          if (created || promotionsCreated) this.load();
         },
         error: (error) => {
           this.error.set(error.error?.message || 'Could not create the next-period fees.');
           this.saving.set(false);
         },
       });
+  }
+
+  createFor(item: FeeProgressionCandidate) {
+    if (this.saving()) return;
+    this.selected.set(new Set([item._id]));
+    this.createFees();
   }
 }

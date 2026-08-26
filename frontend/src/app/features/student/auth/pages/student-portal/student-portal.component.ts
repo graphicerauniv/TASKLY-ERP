@@ -25,6 +25,7 @@ export class StudentPortalComponent {
   readonly paying = signal(false);
   readonly paymentMessage = signal('');
   paymentAmount: number | null = null;
+  paymentLedgerId = '';
   readonly totalOutstanding = computed(() =>
     this.feeLedgers().reduce((sum, item) => sum + Number(item.balanceAmount || 0), 0),
   );
@@ -39,20 +40,38 @@ export class StudentPortalComponent {
     this.loadPayments(token);
   }
 
-  ledger(kind: 'academic' | 'hostel') {
-    return this.feeLedgers().filter((item) => item.kind === kind)[0] || null;
+  ledgers(kind: 'academic' | 'hostel') {
+    return this.feeLedgers().filter((item) => item.kind === kind);
+  }
+
+  payableLedgers() {
+    return this.feeLedgers().filter((item) => Number(item.balanceAmount || 0) > 0);
+  }
+
+  paymentLimit() {
+    return Number(
+      this.feeLedgers().find((item) => item._id === this.paymentLedgerId)?.balanceAmount || 0,
+    );
+  }
+
+  paymentTarget() {
+    return this.feeLedgers().find((item) => item._id === this.paymentLedgerId) || null;
   }
 
   pay() {
     const token = localStorage.getItem('taskly_student_token');
     const amount = Number(this.paymentAmount || 0);
-    if (!token || amount <= 0 || amount > this.totalOutstanding() || this.paying()) {
-      this.feeError.set('Enter a valid amount up to your total outstanding balance.');
+    if (!this.paymentLedgerId) {
+      this.feeError.set('Select the semester, year, or hostel fee period you want to pay.');
+      return;
+    }
+    if (!token || amount <= 0 || amount > this.paymentLimit() || this.paying()) {
+      this.feeError.set('Enter a valid amount up to the selected fee-period balance.');
       return;
     }
     this.paying.set(true);
     this.feeError.set('');
-    this.api.createStudentPaymentOrder(token, amount).subscribe({
+    this.api.createStudentPaymentOrder(token, amount, this.paymentLedgerId).subscribe({
       next: async (order) => {
         if (!(await loadRazorpay())) {
           this.feeError.set('Razorpay Checkout could not be loaded. Check your connection.');
@@ -65,7 +84,7 @@ export class StudentPortalComponent {
           currency: order.currency,
           order_id: order.orderId,
           name: 'Taskly ERP',
-          description: `Fee payment for ${order.student.studentId}`,
+          description: `${this.paymentTarget()?.periodLabel || 'Fee'} payment for ${order.student.studentId}`,
           prefill: { name: order.student.name },
           handler: (result: RazorpayResult) => this.verifyPayment(token, result),
           modal: { ondismiss: () => this.paying.set(false) },
@@ -100,8 +119,13 @@ export class StudentPortalComponent {
     this.loadingFees.set(true);
     this.feeError.set('');
     this.api.studentFees(token).subscribe({
-      next: ({ items }) => {
+      next: ({ items, student }) => {
         this.feeLedgers.set(items);
+        this.student.set(student);
+        localStorage.setItem('taskly_student_profile', JSON.stringify(student));
+        const payable = items.filter((item) => Number(item.balanceAmount || 0) > 0);
+        if (!payable.some((item) => item._id === this.paymentLedgerId))
+          this.paymentLedgerId = payable.length === 1 ? payable[0]._id : '';
         this.loadingFees.set(false);
       },
       error: (error) => {

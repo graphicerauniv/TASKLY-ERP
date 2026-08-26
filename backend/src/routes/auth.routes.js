@@ -124,7 +124,7 @@ authRouter.get(
       (left, right) =>
         left.kind.localeCompare(right.kind) || new Date(right.createdAt) - new Date(left.createdAt),
     );
-    response.json({ items: items.map(serialize) });
+    response.json({ items: items.map(serialize), student: publicStudent(request.student) });
   }),
 );
 
@@ -149,5 +149,12 @@ function publicStudent(student) {
     studentId: student.studentId,
     name: student.studentName || 'Student',
     mustChangePassword: student.mustChangePassword !== false,
+    academicSession: student.academicSession || '',
+    courseName: student.courseName || '',
+    currentAcademicYear: Number(student.currentAcademicYear || 1),
+    currentSemester: Number(
+      student.currentSemester || Number(student.currentAcademicYear || 1) * 2 - 1,
+    ),
+    feeFrequency: student.feeFrequency === 'semester' ? 'semester' : 'year',
   };
 }

@@ -13,6 +13,7 @@ import {
   recalculateStudentAcademicLedger,
   removeStudentFeeLedgers,
 } from '../services/student-fee-ledger.js';
+import { promoteStudentProgression } from '../services/student-promotion.js';
 
 export const feesRouter = express.Router();
 const upload = multer({
@@ -25,6 +26,7 @@ const upload = multer({
 });
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const amount = z.coerce.number().nonnegative().max(1_000_000_000);
+const promotionSchema = z.object({ progressionIds: z.array(z.string()).min(1).max(500) });
 const bookSchema = z.object({
   collegeId: z.string(),
   startDate: dateString,
@@ -239,6 +241,10 @@ feesRouter.post(
   }),
 );
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 feesRouter.get(
   '/student-ledgers/progression-candidates',
   asyncHandler(async (request, response) => {
@@ -270,7 +276,76 @@ feesRouter.post(
     }
     response.json({
       created: results.reduce((total, result) => total + result.createdKinds.length, 0),
+      promotionsCreated: results.filter((result) => result.promotionCreated).length,
       studentsProcessed: results.length,
+      results: results.map(serialize),
+    });
+  }),
+);
+
+feesRouter.get(
+  '/student-promotions',
+  asyncHandler(async (request, response) => {
+    const filter = {};
+    if (request.query.mode)
+      filter.mode = z.enum(['semester', 'year']).parse(request.query.mode);
+    if (request.query.status && request.query.status !== 'all')
+      filter.status = z
+        .enum(['pending', 'promoting', 'promoted', 'cancelled'])
+        .parse(request.query.status);
+    if (request.query.academicSession)
+      filter.academicSession = String(request.query.academicSession);
+    if (request.query.courseId) filter.courseId = id(request.query.courseId, 'courseId');
+    if (request.query.currentAcademicYear)
+      filter.fromAcademicYear = z.coerce.number().int().min(1).max(10).parse(
+        request.query.currentAcademicYear,
+      );
+    if (request.query.currentSemester)
+      filter.fromSemester = z.coerce.number().int().min(1).max(20).parse(
+        request.query.currentSemester,
+      );
+    if (request.query.search) {
+      const match = { $regex: escapeRegex(request.query.search), $options: 'i' };
+      filter.$or = [
+        { studentName: match },
+        { studentId: match },
+        { courseName: match },
+        { academicSession: match },
+      ];
+    }
+    const items = await db()
+      .collection('studentProgressions')
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(5000)
+      .toArray();
+    response.json({ items: items.map(serialize) });
+  }),
+);
+
+feesRouter.post(
+  '/student-promotions/promote',
+  asyncHandler(async (request, response) => {
+    const data = promotionSchema.parse(request.body);
+    const progressionIds = [...new Set(data.progressionIds)].map((value) =>
+      id(value, 'progressionId'),
+    );
+    const results = [];
+    for (const progressionId of progressionIds) {
+      try {
+        const item = await promoteStudentProgression(
+          db(),
+          progressionId,
+          id(request.admin._id),
+        );
+        results.push({ progressionId, success: true, item });
+      } catch (error) {
+        results.push({ progressionId, success: false, reason: error.message });
+      }
+    }
+    response.json({
+      promoted: results.filter((result) => result.success).length,
+      requested: progressionIds.length,
       results: results.map(serialize),
     });
   }),

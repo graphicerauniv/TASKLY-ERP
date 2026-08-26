@@ -1,0 +1,183 @@
+<erp-admin-page
+  eyebrow="Admissions"
+  title="Student Promotion"
+  description="Promote students only after their next semester or year fee period has been prepared."
+  variant="minimal"
+>
+  <div page-actions class="erp-table-toolbar__actions">
+    <button
+      class="erp-button"
+      [class.erp-button--primary]="mode === 'semester'"
+      [class.erp-button--secondary]="mode !== 'semester'"
+      type="button"
+      (click)="changeMode('semester')"
+    >
+      Semester-wise
+    </button>
+    <button
+      class="erp-button"
+      [class.erp-button--primary]="mode === 'year'"
+      [class.erp-button--secondary]="mode !== 'year'"
+      type="button"
+      (click)="changeMode('year')"
+    >
+      Year-wise
+    </button>
+  </div>
+
+  @if (message()) {
+    <p class="erp-notice erp-notice--success">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="erp-notice erp-notice--error">{{ error() }}</p>
+  }
+
+  <section class="erp-card erp-card--padded">
+    <div class="erp-form-grid">
+      <label
+        ><span>Search</span
+        ><input
+          class="erp-control"
+          type="search"
+          placeholder="Student name or ID"
+          [(ngModel)]="search"
+      /></label>
+      <label
+        ><span>Status</span
+        ><select class="erp-control" [(ngModel)]="status">
+          <option value="pending">Pending</option>
+          <option value="promoted">Promoted</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="all">All</option>
+        </select></label
+      >
+      <label
+        ><span>Session</span
+        ><input class="erp-control" placeholder="e.g. 2026-2027" [(ngModel)]="academicSession"
+      /></label>
+      <label
+        ><span>Course</span
+        ><select class="erp-control" [(ngModel)]="courseId">
+          <option value="">All courses</option>
+          @for (course of courses(); track course._id) {
+            <option [value]="course._id">{{ course.name }}</option>
+          }
+        </select></label
+      >
+      <label
+        ><span>Current year</span
+        ><select class="erp-control" [(ngModel)]="currentAcademicYear">
+          <option [ngValue]="null">All years</option>
+          @for (year of academicYears; track year) {
+            <option [ngValue]="year">Year {{ year }}</option>
+          }
+        </select></label
+      >
+      @if (mode === 'semester') {
+        <label
+          ><span>Current semester</span
+          ><select class="erp-control" [(ngModel)]="currentSemester">
+            <option [ngValue]="null">All semesters</option>
+            @for (semester of semesters; track semester) {
+              <option [ngValue]="semester">Semester {{ semester }}</option>
+            }
+          </select></label
+        >
+      }
+    </div>
+    <div class="erp-table-toolbar__actions">
+      <button class="erp-button erp-button--primary" type="button" (click)="load()">
+        Apply filters
+      </button>
+      <button class="erp-button erp-button--secondary" type="button" (click)="resetFilters()">
+        Reset
+      </button>
+    </div>
+  </section>
+
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>Student records <small>{{ items().length }}</small></h2>
+        <p>Creating a fee does not change the academic period. Promotion happens only here.</p>
+      </div>
+      @if (status === 'pending' || status === 'all') {
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="saving()"
+          (click)="promoteSelected()"
+        >
+          {{ saving() ? 'Promoting…' : 'Promote selected' }}
+        </button>
+      }
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <input
+                type="checkbox"
+                aria-label="Select all pending promotions"
+                [checked]="selected().size > 0 && selected().size === items().length"
+                (change)="toggleAll($any($event.target).checked)"
+              />
+            </th>
+            <th>Student</th>
+            <th>Student ID</th>
+            <th>Course</th>
+            <th>Session</th>
+            <th>Current period</th>
+            <th>Prepared fee period</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td>
+                @if (item.status === 'pending') {
+                  <input
+                    type="checkbox"
+                    [checked]="selected().has(item._id)"
+                    [attr.aria-label]="'Select ' + item.studentName"
+                    (change)="toggle(item._id, $any($event.target).checked)"
+                  />
+                }
+              </td>
+              <td><strong>{{ item.studentName }}</strong></td>
+              <td>{{ item.studentId }}</td>
+              <td>{{ item.courseName }}</td>
+              <td>{{ item.academicSession }}</td>
+              <td>{{ currentPeriod(item) }}</td>
+              <td><span class="erp-status">{{ item.targetPeriodLabel }}</span></td>
+              <td><span class="erp-status">{{ item.status }}</span></td>
+              <td>
+                @if (item.status === 'pending') {
+                  <button
+                    class="erp-button erp-button--primary"
+                    type="button"
+                    [disabled]="saving()"
+                    (click)="promoteOne(item)"
+                  >
+                    Promote
+                  </button>
+                } @else {
+                  —
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="erp-empty-state">
+                {{ loading() ? 'Loading student promotions…' : 'No matching student promotions.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</erp-admin-page>

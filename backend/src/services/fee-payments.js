@@ -62,7 +62,11 @@ export async function refreshLedgerPenalty(database, ledger, asOf = new Date()) 
 }
 
 async function entriesWithCurrentPriorities(database, sourceEntries) {
-  const entries = sourceEntries.map(normalizeEntry);
+  const entries = sourceEntries
+    .map(normalizeEntry)
+    .filter(
+      (entry) => entry.isPenalty || Number(entry.amount || 0) > 0 || Number(entry.paidAmount || 0) > 0,
+    );
   const feeHeadIds = entries
     .filter((entry) => !entry.isPenalty && entry.feeHeadId)
     .map((entry) => entry.feeHeadId);
@@ -92,16 +96,20 @@ function compareEntriesByPriority(left, right) {
   );
 }
 
-export async function createRazorpayOrder(database, student, amountRupees) {
+export async function createRazorpayOrder(database, student, amountRupees, targetLedgerId) {
   if (!razorpayEnabled()) {
     const error = new Error('Online payments are not configured yet. Contact the accounts office.');
     error.status = 503;
     throw error;
   }
   const ledgers = await refreshStudentPenalties(database, student._id);
-  const outstanding = roundMoney(
-    ledgers.reduce((sum, ledger) => sum + Number(ledger.balanceAmount || 0), 0),
-  );
+  const targetLedger = ledgers.find((ledger) => String(ledger._id) === String(targetLedgerId));
+  if (!targetLedger) {
+    const error = new Error('The selected fee period was not found. Refresh the fee page.');
+    error.status = 404;
+    throw error;
+  }
+  const outstanding = roundMoney(Number(targetLedger.balanceAmount || 0));
   const amount = roundMoney(amountRupees);
   if (amount <= 0 || amount > outstanding) {
     const error = new Error(`Enter an amount between ₹1 and ₹${outstanding.toFixed(2)}.`);
@@ -119,7 +127,12 @@ export async function createRazorpayOrder(database, student, amountRupees) {
       amount: Math.round(amount * 100),
       currency: 'INR',
       receipt: localReceipt,
-      notes: { studentId: student.studentId, studentAdmissionId: String(student._id) },
+      notes: {
+        studentId: student.studentId,
+        studentAdmissionId: String(student._id),
+        feeLedgerId: String(targetLedger._id),
+        feePeriod: targetLedger.periodLabel,
+      },
     }),
   });
   const order = await result.json();
@@ -135,6 +148,8 @@ export async function createRazorpayOrder(database, student, amountRupees) {
     studentAdmissionId: student._id,
     studentId: student.studentId,
     studentName: student.studentName,
+    targetLedgerId: targetLedger._id,
+    targetPeriodLabel: targetLedger.periodLabel,
     razorpayOrderId: order.id,
     localReceipt,
     amount,
@@ -241,7 +256,16 @@ export async function completePayment(
     throw error;
   }
   payment = claimed;
-  const ledgers = await refreshStudentPenalties(database, payment.studentAdmissionId);
+  let ledgers = await refreshStudentPenalties(database, payment.studentAdmissionId);
+  if (payment.targetLedgerId)
+    ledgers = ledgers.filter(
+      (ledger) => String(ledger._id) === String(payment.targetLedgerId),
+    );
+  if (!ledgers.length) {
+    const error = new Error('The fee period selected for this payment is no longer active.');
+    error.status = 409;
+    throw error;
+  }
   let remaining = Number(payment.amount);
   const allocations = [];
   const targets = [];
@@ -329,7 +353,7 @@ export function paymentReceiptHtml(payment) {
         `<tr><td>${escapeHtml(item.feeHeadName)}</td><td>${escapeHtml(item.ledgerKind)}</td><td style="text-align:right">₹${Number(item.amount).toFixed(2)}</td></tr>`,
     )
     .join('');
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(payment.receiptNumber)}</title><style>body{font:14px Arial;color:#172033;max-width:760px;margin:40px auto;padding:24px}header{border-bottom:2px solid #172033;margin-bottom:24px}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:20px;text-align:right;margin-top:20px}</style></head><body><header><h1>Taskly ERP Fee Receipt</h1><p>Receipt ${escapeHtml(payment.receiptNumber)}</p></header><p><strong>Student:</strong> ${escapeHtml(payment.studentName)} (${escapeHtml(payment.studentId)})</p><p><strong>Payment ID:</strong> ${escapeHtml(payment.razorpayPaymentId)}</p><p><strong>Paid at:</strong> ${escapeHtml(new Date(payment.paidAt).toLocaleString('en-IN'))}</p><table><thead><tr><th>Fee head</th><th>Ledger</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><p class="total"><strong>Total paid: ₹${Number(payment.amount).toFixed(2)}</strong></p><p>This is a system-generated receipt.</p></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(payment.receiptNumber)}</title><style>body{font:14px Arial;color:#172033;max-width:760px;margin:40px auto;padding:24px}header{border-bottom:2px solid #172033;margin-bottom:24px}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:20px;text-align:right;margin-top:20px}</style></head><body><header><h1>Taskly ERP Fee Receipt</h1><p>Receipt ${escapeHtml(payment.receiptNumber)}</p></header><p><strong>Student:</strong> ${escapeHtml(payment.studentName)} (${escapeHtml(payment.studentId)})</p><p><strong>Fee period:</strong> ${escapeHtml(payment.targetPeriodLabel || 'Fee payment')}</p><p><strong>Payment ID:</strong> ${escapeHtml(payment.razorpayPaymentId)}</p><p><strong>Paid at:</strong> ${escapeHtml(new Date(payment.paidAt).toLocaleString('en-IN'))}</p><table><thead><tr><th>Fee head</th><th>Ledger</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><p class="total"><strong>Total paid: ₹${Number(payment.amount).toFixed(2)}</strong></p><p>This is a system-generated receipt.</p></body></html>`;
 }
 
 function normalizeEntry(entry) {

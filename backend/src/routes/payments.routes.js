@@ -16,7 +16,10 @@ import {
 } from '../services/fee-payments.js';
 
 export const paymentsRouter = express.Router();
-const orderSchema = z.object({ amount: z.coerce.number().positive().max(10_000_000) });
+const orderSchema = z.object({
+  amount: z.coerce.number().positive().max(10_000_000),
+  ledgerId: z.string().min(1),
+});
 const verificationSchema = z.object({
   razorpay_order_id: z.string().min(1),
   razorpay_payment_id: z.string().min(1),
@@ -28,7 +31,12 @@ paymentsRouter.post(
   requireStudent,
   asyncHandler(async (request, response) => {
     const data = orderSchema.parse(request.body);
-    const order = await createRazorpayOrder(db(), request.student, data.amount);
+    const order = await createRazorpayOrder(
+      db(),
+      request.student,
+      data.amount,
+      id(data.ledgerId, 'ledgerId'),
+    );
     response.status(201).json(order);
   }),
 );

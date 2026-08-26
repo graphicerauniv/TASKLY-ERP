@@ -72,6 +72,8 @@ const DOMAIN_TABLES = Object.freeze({
       'studentName',
       'razorpayOrderId',
       'razorpayPaymentId',
+      'targetLedgerId',
+      'targetPeriodLabel',
       'amount',
       'status',
     ],
@@ -159,6 +161,25 @@ const DOMAIN_TABLES = Object.freeze({
       'penaltyAmount',
     ],
   },
+  studentProgressions: {
+    table: 'student_progressions',
+    columns: [
+      'studentAdmissionId',
+      'studentId',
+      'studentName',
+      'courseId',
+      'courseName',
+      'academicSession',
+      'mode',
+      'fromAcademicYear',
+      'fromSemester',
+      'toAcademicYear',
+      'toSemester',
+      'targetPeriodLabel',
+      'feeLedgerId',
+      'status',
+    ],
+  },
 });
 
 async function createRuntimeMigrationsTable(pool) {
@@ -170,11 +191,15 @@ async function createRuntimeMigrationsTable(pool) {
   `);
 }
 
-async function createDomainTables(pool) {
+async function createDomainTables(pool, collectionNames) {
   const client = await pool.connect();
   try {
     await client.query('begin');
-    for (const definition of Object.values(DOMAIN_TABLES)) {
+    const definitions = collectionNames?.length
+      ? collectionNames.map((name) => DOMAIN_TABLES[name])
+      : Object.values(DOMAIN_TABLES);
+    for (const definition of definitions) {
+      if (!definition) throw new Error('Unknown collection requested for schema migration.');
       await client.query(`
         create table if not exists ${definition.table} (
           id text primary key,
@@ -227,6 +252,7 @@ export class PostgresDocumentDatabase {
     this.pool = new pg.Pool({
       connectionString: secureConnectionString(connectionString),
       max: 15,
+      connectionTimeoutMillis: 10_000,
       idleTimeoutMillis: 30_000,
     });
   }
@@ -244,9 +270,9 @@ export class PostgresDocumentDatabase {
     return result.rowCount > 0;
   }
 
-  async prepareSchema(name) {
+  async prepareSchema(name, collectionNames) {
     if (await this.hasRuntimeMigration(name)) return false;
-    await createDomainTables(this.pool);
+    await createDomainTables(this.pool, collectionNames);
     return true;
   }
 

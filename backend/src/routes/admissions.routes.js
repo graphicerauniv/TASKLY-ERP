@@ -95,6 +95,19 @@ admissionsRouter.patch(
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
     if (!['draft', 'pending_approval', 'approved'].includes(admission.status))
       return response.status(409).json({ message: 'This student record cannot be edited.' });
+    if (
+      admission.status === 'approved' &&
+      ['currentAcademicYear', 'currentSemester', 'feeFrequency'].some(
+        (field) => request.body[field] !== undefined,
+      ) &&
+      (await db()
+        .collection('studentProgressions')
+        .findOne({ studentAdmissionId: admissionId, status: 'pending' }))
+    )
+      return response.status(409).json({
+        message:
+          'This student has a pending academic promotion. Complete the promotion before changing the fee period settings.',
+      });
     const update = { hasSavedData: true, updatedAt: new Date() };
     if (request.body.currentSectionId !== undefined) {
       const sectionId = String(request.body.currentSectionId || '');
