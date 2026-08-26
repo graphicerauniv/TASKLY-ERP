@@ -48,7 +48,7 @@ test('captures the final responsive dashboard and verifies Phase 4 geometry', as
       const cards = await page.locator('.student-module-card').evaluateAll((items) =>
         items.map((item) => Math.round(item.getBoundingClientRect().height)),
       );
-      expect(cards.every((height) => height >= 96 && height <= 104)).toBe(true);
+      expect(cards.every((height) => height >= 72 && height <= 76)).toBe(true);
     } else {
       await expect(page.locator('.student-mobile-bottom-nav')).toBeVisible();
       await expect(page.locator('.student-mobile-bottom-nav a, .student-mobile-bottom-nav button')).toHaveCount(4);
@@ -63,6 +63,23 @@ test('captures the final responsive dashboard and verifies Phase 4 geometry', as
       fullPage: false,
       animations: 'disabled',
     });
+
+    if (viewport.width < 768) {
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await page.waitForTimeout(150);
+      const announcementBottom = await page
+        .locator('.student-operational-card--notices')
+        .evaluate((element) => element.getBoundingClientRect().bottom);
+      const navigationTop = await page
+        .locator('.student-mobile-bottom-nav')
+        .evaluate((element) => element.getBoundingClientRect().top);
+      expect(announcementBottom).toBeLessThanOrEqual(navigationTop - 8);
+      await page.screenshot({
+        path: join(screenshotDirectory, `${viewport.name}-page-end.png`),
+        fullPage: false,
+        animations: 'disabled',
+      });
+    }
   }
 
   await page.setViewportSize({ width: 1536, height: 1024 });
