@@ -36,6 +36,82 @@
   width: min(620px, 100%);
 }
 
+.fee-book-picker {
+  width: min(780px, 100%);
+}
+
+.fee-book-picker__body {
+  display: grid;
+  gap: var(--erp-space-4);
+}
+
+.fee-book-picker__filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+  padding-bottom: var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.fee-book-picker__results {
+  display: grid;
+  min-height: 112px;
+  max-height: min(42vh, 360px);
+  align-content: start;
+  gap: var(--erp-space-2);
+  overflow-y: auto;
+  scrollbar-color: var(--erp-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.course-fee-draft-state {
+  display: inline-flex;
+  min-height: var(--erp-control-height-compact);
+  align-items: center;
+  gap: var(--erp-space-2);
+  padding-inline: var(--erp-space-3);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-pill);
+  color: var(--erp-text-muted);
+  background: var(--erp-surface-detail-soft);
+  font-size: var(--erp-font-caption);
+  white-space: nowrap;
+}
+
+.course-fee-draft-state__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--erp-radius-pill);
+  background: var(--erp-primary);
+  animation: fee-draft-pulse var(--erp-status-pulse-duration) var(--erp-ease-standard) infinite alternate;
+}
+
+.course-fee-draft-state__check {
+  color: var(--erp-success);
+  font-weight: var(--erp-weight-bold);
+}
+
+.course-fee-draft-state--error {
+  border-color: var(--erp-danger-border-soft);
+  color: var(--erp-danger-text);
+  background: var(--erp-danger-bg);
+}
+
+.course-fee-drafts {
+  margin-bottom: var(--erp-space-4);
+}
+
+.course-fee-drafts td small {
+  display: block;
+  margin-top: var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+@keyframes fee-draft-pulse {
+  to { opacity: 0.4; }
+}
+
 .fee-picker-control {
   display: flex;
   height: auto;
@@ -364,6 +440,278 @@
   min-width: calc(var(--erp-control-height) * 4);
 }
 
+.fee-matrix-workspace {
+  display: grid;
+  gap: var(--erp-space-2);
+  margin-top: var(--erp-space-4);
+  padding-top: var(--erp-space-4);
+  border-top: 1px solid var(--erp-border-subtle);
+}
+
+.fee-matrix-workspace__header,
+.fee-matrix-workspace__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+}
+
+.fee-matrix-workspace__header h3 {
+  margin: 0;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-section-title);
+}
+
+.fee-matrix-workspace__header p,
+.fee-matrix-workspace__footer span {
+  margin: var(--erp-space-1) 0 0;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.fee-matrix-context {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--erp-space-2) var(--erp-space-4);
+  padding: var(--erp-space-2) var(--erp-space-3);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-control);
+  color: var(--erp-text-muted);
+  background: var(--erp-surface-detail-soft);
+  font-size: var(--erp-font-caption);
+}
+
+.fee-matrix-context strong {
+  color: var(--erp-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.fee-matrix-editor {
+  max-width: 100%;
+  max-height: min(56vh, 600px);
+  overflow: auto;
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-compact);
+  background: var(--erp-surface-raised);
+  scrollbar-color: var(--erp-border-strong) var(--erp-surface-detail);
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+
+.fee-matrix-editor::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.fee-matrix-editor::-webkit-scrollbar-track {
+  background: var(--erp-surface-detail);
+}
+
+.fee-matrix-editor::-webkit-scrollbar-thumb {
+  border: 2px solid var(--erp-surface-detail);
+  border-radius: var(--erp-radius-pill);
+  background: var(--erp-border-strong);
+}
+
+.fee-matrix-table--editable {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--erp-font-label);
+}
+
+.fee-matrix-table--editable th,
+.fee-matrix-table--editable td {
+  height: var(--erp-table-row-height-compact);
+  padding: var(--erp-space-2);
+  border-right: 1px solid var(--erp-border-default);
+  border-bottom: 1px solid var(--erp-border-default);
+  vertical-align: middle;
+}
+
+.fee-matrix-table--editable th:last-child,
+.fee-matrix-table--editable td:last-child {
+  border-right: 0;
+}
+
+.fee-matrix-table--editable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.fee-matrix-table--editable th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  white-space: nowrap;
+  color: var(--erp-text-muted);
+  background: var(--erp-table-header-bg);
+  font-size: var(--erp-font-size-xs);
+  font-weight: var(--erp-weight-bold);
+  letter-spacing: var(--erp-letter-normal);
+  text-transform: uppercase;
+}
+
+.fee-matrix-table--editable th:first-child,
+.fee-matrix-table--editable td:first-child,
+.fee-matrix-table--editable th:nth-child(2),
+.fee-matrix-table--editable td:nth-child(2) {
+  position: sticky;
+  z-index: 1;
+  background: var(--erp-surface-raised);
+}
+
+.fee-matrix-table--editable th:first-child,
+.fee-matrix-table--editable td:first-child {
+  left: 0;
+}
+
+.fee-matrix-table--editable th:nth-child(2),
+.fee-matrix-table--editable td:nth-child(2) {
+  left: 56px;
+  box-shadow: 1px 0 0 var(--erp-border-subtle);
+}
+
+.fee-matrix-table--editable thead th:first-child,
+.fee-matrix-table--editable thead th:nth-child(2) {
+  z-index: 3;
+  background: var(--erp-table-header-bg);
+}
+
+.fee-matrix-table__select {
+  width: 56px;
+  min-width: 56px !important;
+  text-align: center;
+}
+
+.fee-row-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--erp-space-2);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.fee-row-selector input,
+.fee-matrix-table__select input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--erp-primary);
+}
+
+.fee-matrix-head {
+  width: 220px;
+  min-width: 220px;
+}
+
+.fee-matrix-head strong {
+  overflow: hidden;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fee-matrix-head > span {
+  display: flex;
+  gap: var(--erp-space-2);
+  align-items: center;
+}
+
+.fee-matrix-head small + small::before {
+  content: '·';
+  margin-right: var(--erp-space-2);
+}
+
+.fee-matrix-period {
+  width: 118px;
+  min-width: 118px;
+  text-align: right;
+}
+
+.fee-matrix-period span,
+.fee-matrix-period small {
+  display: block;
+}
+
+.fee-matrix-period small {
+  margin-top: 2px;
+  font-size: var(--erp-font-size-2xs);
+  font-weight: var(--erp-weight-medium);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.fee-matrix-row--selected td {
+  background: var(--erp-surface-selected);
+}
+
+.fee-matrix-row--selected td:first-child,
+.fee-matrix-row--selected td:nth-child(2) {
+  background: var(--erp-surface-selected);
+}
+
+.fee-matrix-table--editable tbody tr:hover td {
+  background: var(--erp-table-row-hover);
+}
+
+.fee-matrix-table--editable tbody tr:hover td:first-child,
+.fee-matrix-table--editable tbody tr:hover td:nth-child(2) {
+  background: var(--erp-table-row-hover);
+}
+
+.fee-matrix-cell {
+  display: flex;
+  width: 112px;
+  height: 32px;
+  align-items: center;
+  gap: var(--erp-space-1);
+  padding-inline: var(--erp-space-2);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-xs);
+  color: var(--erp-text-muted);
+  background: var(--erp-surface-raised);
+  transition: border-color var(--erp-control-transition), background-color var(--erp-control-transition);
+}
+
+.fee-matrix-cell:focus-within,
+.fee-matrix-cell--active {
+  border-color: var(--erp-primary);
+  background: var(--erp-surface-overlay);
+}
+
+.fee-matrix-amount {
+  appearance: textfield;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: var(--erp-text-strong);
+  background: transparent;
+  font: inherit;
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fee-matrix-amount:focus {
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+}
+
+.fee-matrix-amount::-webkit-inner-spin-button,
+.fee-matrix-amount::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
 .fee-matrix-table td strong,
 .fee-matrix-table td small {
   display: block;
@@ -426,10 +774,16 @@
     grid-template-columns: 1fr;
   }
 
+  .fee-book-picker__filters {
+    grid-template-columns: 1fr;
+  }
+
   .fee-inline-form,
   .fee-upload-row,
   .fee-import-actions,
-  .fee-form-actions {
+  .fee-form-actions,
+  .fee-matrix-workspace__header,
+  .fee-matrix-workspace__footer {
     align-items: stretch;
     flex-direction: column;
   }

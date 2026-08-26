@@ -117,6 +117,14 @@
                   </select>
                 </label>
               }
+              @if (isCourseMaster()) {
+                <label><span>Exam pattern *</span><select class="erp-control" [(ngModel)]="courseExamPattern">
+                  <option value="semester">Semester-wise exams</option>
+                  <option value="year">Year-wise exams</option>
+                </select></label>
+                <label><span>Duration years *</span><input class="erp-control" type="number" min="1" max="10" [(ngModel)]="courseDurationYears" /></label>
+                <label><span>Total semesters *</span><input class="erp-control" type="number" min="1" max="20" [(ngModel)]="courseTotalSemesters" /></label>
+              }
               <button class="erp-button erp-button--primary" type="button" (click)="save()">{{ editingId() ? 'Save changes' : 'Add value' }}</button>
               @if (editingId()) {
                 <button class="erp-button erp-button--secondary" type="button" (click)="reset()">Cancel</button>
@@ -140,6 +148,9 @@
                     @if (dependencySlugs().length) {
                       <th>Depends on</th>
                     }
+                    @if (isCourseMaster()) {
+                      <th>Configuration</th>
+                    }
                     <th>Status</th>
                     <th class="erp-table-shell__actions">Actions</th>
                   </tr>
@@ -151,11 +162,17 @@
                       @if (dependencySlugs().length) {
                         <td>{{ parentPath(item) }}</td>
                       }
+                      @if (isCourseMaster()) {
+                        <td>
+                          <strong>{{ item.metadata?.['examPattern'] === 'year' ? 'Year-wise exams' : 'Semester-wise exams' }}</strong>
+                          <small>{{ item.metadata?.['durationYears'] || 4 }} years · {{ item.metadata?.['totalSemesters'] || 8 }} semesters · fee type selected during fee setup</small>
+                        </td>
+                      }
                       <td><button class="erp-status" [class.erp-status--neutral]="!item.isActive" type="button" (click)="toggle(item)">{{ item.isActive ? 'Enabled' : 'Disabled' }}</button></td>
-                      <td class="erp-table-shell__actions"><erp-compact-action-menu [items]="rowActions" (selected)="handleRowAction($event, item)" /></td>
+                      <td class="erp-table-shell__actions"><erp-compact-action-menu [items]="isCourseMaster() ? courseRowActions : baseRowActions" (selected)="handleRowAction($event, item)" /></td>
                     </tr>
                   } @empty {
-                    <tr><td [attr.colspan]="dependencySlugs().length ? 4 : 3" class="erp-empty-state">{{ loading() ? 'Loading…' : 'No values found.' }}</td></tr>
+                    <tr><td [attr.colspan]="(dependencySlugs().length ? 4 : 3) + (isCourseMaster() ? 1 : 0)" class="erp-empty-state">{{ loading() ? 'Loading…' : 'No values found.' }}</td></tr>
                   }
                 </tbody>
               </table>

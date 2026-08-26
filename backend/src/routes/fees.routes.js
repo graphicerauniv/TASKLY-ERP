@@ -51,6 +51,7 @@ const courseFeeSchema = z.object({
   feeHeadId: z.string(),
   domicileId: z.string(),
   studentTypeId: z.string(),
+  feeTypeId: z.string(),
   countryId: z.string().nullable().optional(),
   academicId: z.string().nullable().optional(),
   academicYear: z.coerce.number().int().min(1).max(10).nullable().optional(),
@@ -58,6 +59,35 @@ const courseFeeSchema = z.object({
   frequency: z.enum(['one-time', 'semester', 'half-yearly', 'yearly']),
   eligibilityBand: z.string().trim().max(500).optional().default('All candidates'),
   amount,
+});
+const courseFeeMatrixSchema = z.object({
+  bookId: z.string(),
+  courseId: z.string(),
+  domicileId: z.string(),
+  studentTypeId: z.string(),
+  feeTypeId: z.string(),
+  countryId: z.string().nullable().optional(),
+  replaceExisting: z.boolean().optional().default(true),
+  rows: z.array(z.object({
+    feeHeadId: z.string(),
+    amounts: z.array(z.object({
+      periodType: z.enum(['year', 'semester']),
+      periodNumber: z.coerce.number().int().min(1).max(20),
+      amount,
+    })).min(1),
+  })).min(1),
+});
+const courseFeeDraftSchema = z.object({
+  bookId: z.string(),
+  departmentId: z.string().optional().default(''),
+  levelId: z.string().optional().default(''),
+  courseId: z.string().optional().default(''),
+  domicileId: z.string().optional().default(''),
+  studentTypeId: z.string().optional().default(''),
+  feeTypeId: z.string().optional().default(''),
+  countryId: z.string().optional().default(''),
+  selectedFeeHeadIds: z.array(z.string()).max(500).optional().default([]),
+  matrixAmounts: z.record(z.union([z.number().nonnegative().max(1_000_000_000), z.null()])).optional().default({}),
 });
 
 async function masterValue(value, typeSlug, field) {
@@ -155,6 +185,16 @@ function requiresCountryForStudentType(studentType) {
   return /foreign|international|nri/i.test(studentType?.name || '');
 }
 
+function feeTypePeriod(feeType) {
+  if (/semester|sem/i.test(feeType?.name || '')) return 'semester';
+  if (/year|annual/i.test(feeType?.name || '')) return 'year';
+  const configured = feeType?.metadata?.periodType;
+  if (configured === 'year' || configured === 'semester') return configured;
+  const error = new Error('Selected fee type must represent Yearly or Semester fees.');
+  error.status = 400;
+  throw error;
+}
+
 async function normalizeFeeHeadPriority(bookId) {
   const heads = await db().collection('feeHeads').find({ bookId }).sort({ priority: 1, createdAt: 1, name: 1 }).toArray();
   await Promise.all(heads.map((head, index) =>
@@ -249,6 +289,8 @@ feesRouter.post('/course-fees', asyncHandler(async (request, response) => {
   const head = await feeHead(data.feeHeadId, book._id);
   const domicile = await masterValue(data.domicileId, 'domicile', 'domicileId');
   const studentType = await masterValue(data.studentTypeId, 'student-type', 'studentTypeId');
+  const feeType = await masterValue(data.feeTypeId, 'fee-type', 'feeTypeId');
+  const periodType = feeTypePeriod(feeType);
   if (requiresCountryForStudentType(studentType) && !data.countryId) {
     return response.status(400).json({ message: 'Country is required for foreign student type fees.' });
   }
@@ -257,9 +299,150 @@ feesRouter.post('/course-fees', asyncHandler(async (request, response) => {
     ? await masterValue(data.academicId, 'academic', 'academicId')
     : null;
   const now = new Date();
-  const document = { ...data, bookId: book._id, bookCode: book.code, courseId: course._id, courseName: course.name, feeHeadId: head._id, feeHeadName: head.name, domicileId: domicile._id, domicileName: domicile.name, studentTypeId: studentType._id, studentTypeName: studentType.name, countryId: country?._id || null, countryName: country?.name || null, academicId: academic?._id || null, academicName: academic?.name || null, category: head.category, source: 'manual', createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
+  const document = { ...data, bookId: book._id, bookCode: book.code, courseId: course._id, courseName: course.name, feeHeadId: head._id, feeHeadName: head.name, domicileId: domicile._id, domicileName: domicile.name, studentTypeId: studentType._id, studentTypeName: studentType.name, feeTypeId: feeType._id, feeTypeName: feeType.name, periodType, countryId: country?._id || null, countryName: country?.name || null, academicId: academic?._id || null, academicName: academic?.name || null, category: head.category, source: 'manual', createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
   const result = await db().collection('courseFees').insertOne(document);
   response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
+}));
+
+feesRouter.get('/course-fee-drafts', asyncHandler(async (request, response) => {
+  const filter = request.query.bookId ? { bookId: id(request.query.bookId, 'bookId') } : {};
+  const items = await db().collection('courseFeeDrafts').find(filter).sort({ updatedAt: -1 }).limit(250).toArray();
+  response.json({ items: items.map(serialize) });
+}));
+
+feesRouter.get('/course-fee-drafts/:draftId', asyncHandler(async (request, response) => {
+  const item = await db().collection('courseFeeDrafts').findOne({ _id: id(request.params.draftId, 'draftId') });
+  if (!item) return response.status(404).json({ message: 'Course fee draft was not found.' });
+  response.json({ item: serialize(item) });
+}));
+
+feesRouter.post('/course-fee-drafts', asyncHandler(async (request, response) => {
+  const data = courseFeeDraftSchema.parse(request.body);
+  const book = await feeBook(data.bookId);
+  const course = data.courseId
+    ? await db().collection('masterValues').findOne({ _id: id(data.courseId, 'courseId'), typeSlug: 'course' })
+    : null;
+  const now = new Date();
+  const document = {
+    ...data,
+    bookId: book._id,
+    bookCode: book.code,
+    collegeName: book.collegeName,
+    academicSession: book.academicSession,
+    courseName: course?.name || '',
+    status: 'draft',
+    createdBy: id(request.admin._id),
+    updatedBy: id(request.admin._id),
+    createdAt: now,
+    updatedAt: now,
+  };
+  const result = await db().collection('courseFeeDrafts').insertOne(document);
+  response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
+}));
+
+feesRouter.put('/course-fee-drafts/:draftId', asyncHandler(async (request, response) => {
+  const draftId = id(request.params.draftId, 'draftId');
+  const existing = await db().collection('courseFeeDrafts').findOne({ _id: draftId });
+  if (!existing) return response.status(404).json({ message: 'Course fee draft was not found.' });
+  const data = courseFeeDraftSchema.parse(request.body);
+  const book = await feeBook(data.bookId);
+  const course = data.courseId
+    ? await db().collection('masterValues').findOne({ _id: id(data.courseId, 'courseId'), typeSlug: 'course' })
+    : null;
+  const update = {
+    ...data,
+    bookId: book._id,
+    bookCode: book.code,
+    collegeName: book.collegeName,
+    academicSession: book.academicSession,
+    courseName: course?.name || '',
+    status: 'draft',
+    updatedBy: id(request.admin._id),
+    updatedAt: new Date(),
+  };
+  const item = await db().collection('courseFeeDrafts').findOneAndUpdate(
+    { _id: draftId },
+    { $set: update },
+    { returnDocument: 'after' },
+  );
+  response.json({ item: serialize(item) });
+}));
+
+feesRouter.delete('/course-fee-drafts/:draftId', asyncHandler(async (request, response) => {
+  const result = await db().collection('courseFeeDrafts').deleteOne({ _id: id(request.params.draftId, 'draftId') });
+  if (!result.deletedCount) return response.status(404).json({ message: 'Course fee draft was not found.' });
+  response.status(204).end();
+}));
+
+feesRouter.post('/course-fees/matrix', asyncHandler(async (request, response) => {
+  const data = courseFeeMatrixSchema.parse(request.body);
+  const book = await feeBook(data.bookId);
+  const course = await masterValue(data.courseId, 'course', 'courseId');
+  const domicile = await masterValue(data.domicileId, 'domicile', 'domicileId');
+  const studentType = await masterValue(data.studentTypeId, 'student-type', 'studentTypeId');
+  const feeType = await masterValue(data.feeTypeId, 'fee-type', 'feeTypeId');
+  const periodType = feeTypePeriod(feeType);
+  if (requiresCountryForStudentType(studentType) && !data.countryId) {
+    return response.status(400).json({ message: 'Country is required for foreign student type fees.' });
+  }
+  const country = data.countryId ? await masterValue(data.countryId, 'country', 'countryId') : null;
+  const headIds = data.rows.map((row) => id(row.feeHeadId, 'feeHeadId'));
+  const heads = await db().collection('feeHeads').find({ _id: { $in: headIds }, bookId: book._id, isActive: true }).toArray();
+  const headMap = new Map(heads.map((head) => [String(head._id), head]));
+  const now = new Date();
+  const documents = [];
+  for (const row of data.rows) {
+    const head = headMap.get(String(id(row.feeHeadId, 'feeHeadId')));
+    if (!head) continue;
+    for (const cell of row.amounts) {
+      if (cell.periodType !== periodType) {
+        return response.status(400).json({ message: `Fee matrix periods must match the selected ${feeType.name} fee type.` });
+      }
+      documents.push({
+        bookId: book._id,
+        bookCode: book.code,
+        courseId: course._id,
+        courseName: course.name,
+        feeHeadId: head._id,
+        feeHeadName: head.name,
+        domicileId: domicile._id,
+        domicileName: domicile.name,
+        studentTypeId: studentType._id,
+        studentTypeName: studentType.name,
+        feeTypeId: feeType._id,
+        feeTypeName: feeType.name,
+        periodType,
+        countryId: country?._id || null,
+        countryName: country?.name || null,
+        academicId: null,
+        academicName: null,
+        academicYear: cell.periodType === 'year' ? cell.periodNumber : Math.ceil(cell.periodNumber / 2),
+        semester: cell.periodType === 'semester' ? cell.periodNumber : null,
+        frequency: cell.periodType === 'semester' ? 'semester' : 'yearly',
+        eligibilityBand: 'All candidates',
+        amount: cell.amount,
+        category: head.category,
+        source: 'manual',
+        createdBy: id(request.admin._id),
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+  if (!documents.length) return response.status(400).json({ message: 'Select at least one active fee head and enter an amount.' });
+  if (data.replaceExisting) {
+    await db().collection('courseFees').deleteMany({
+      bookId: book._id,
+      courseId: course._id,
+      domicileId: domicile._id,
+      studentTypeId: studentType._id,
+      feeTypeId: feeType._id,
+      countryId: country?._id || null,
+      source: 'manual',
+    });
+  }
+  await db().collection('courseFees').insertMany(documents);
+  response.status(201).json({ saved: documents.length });
 }));
 
 feesRouter.delete('/course-fees/:feeId', asyncHandler(async (request, response) => {

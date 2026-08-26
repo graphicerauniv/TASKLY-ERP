@@ -15,6 +15,7 @@ import {
   MasterType,
   MasterValue,
   CourseFee,
+  CourseFeeDraft,
   FeeBook,
   FeeHead,
   FeeImportPreview,
@@ -348,6 +349,37 @@ export class ApiService {
   }
   createCourseFee(body: Omit<CourseFee, '_id' | 'bookCode' | 'courseName' | 'domicileName' | 'studentTypeName' | 'countryName' | 'feeHeadName' | 'academicName' | 'category' | 'source' | 'sourceSheet'>) {
     return this.http.post<{ item: CourseFee }>(`${API_BASE_URL}/fees/course-fees`, body);
+  }
+  saveCourseFeeMatrix(body: {
+    bookId: string;
+    courseId: string;
+    domicileId: string;
+    studentTypeId: string;
+    feeTypeId: string;
+    countryId?: string | null;
+    replaceExisting: boolean;
+    rows: Array<{
+      feeHeadId: string;
+      amounts: Array<{ periodType: 'year' | 'semester'; periodNumber: number; amount: number }>;
+    }>;
+  }) {
+    return this.http.post<{ saved: number }>(`${API_BASE_URL}/fees/course-fees/matrix`, body);
+  }
+  courseFeeDrafts(bookId = '') {
+    const params = bookId ? new HttpParams().set('bookId', bookId) : undefined;
+    return this.http.get<{ items: CourseFeeDraft[] }>(`${API_BASE_URL}/fees/course-fee-drafts`, { params });
+  }
+  courseFeeDraft(id: string) {
+    return this.http.get<{ item: CourseFeeDraft }>(`${API_BASE_URL}/fees/course-fee-drafts/${id}`);
+  }
+  createCourseFeeDraft(body: Omit<CourseFeeDraft, '_id' | 'bookCode' | 'collegeName' | 'academicSession' | 'courseName' | 'status' | 'createdAt' | 'updatedAt'>) {
+    return this.http.post<{ item: CourseFeeDraft }>(`${API_BASE_URL}/fees/course-fee-drafts`, body);
+  }
+  updateCourseFeeDraft(id: string, body: Omit<CourseFeeDraft, '_id' | 'bookCode' | 'collegeName' | 'academicSession' | 'courseName' | 'status' | 'createdAt' | 'updatedAt'>) {
+    return this.http.put<{ item: CourseFeeDraft }>(`${API_BASE_URL}/fees/course-fee-drafts/${id}`, body);
+  }
+  deleteCourseFeeDraft(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/fees/course-fee-drafts/${id}`);
   }
   deleteCourseFee(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/course-fees/${id}`);

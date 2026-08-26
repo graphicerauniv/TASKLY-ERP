@@ -30,6 +30,7 @@ const BUILTIN_MASTER_TYPES = [
   ['course', 'Course', 'level'],
   ['domicile', 'Domicile', null],
   ['student-type', 'Student Type', null],
+  ['fee-type', 'Fee Type', null],
   ['country', 'Country', null],
   ['state', 'State', 'country'],
   ['district', 'District', 'state'],
@@ -109,6 +110,7 @@ masterDataRouter.delete(
 masterDataRouter.get(
   '/:typeSlug/values',
   asyncHandler(async (request, response) => {
+    await ensureBuiltinMasterValues(request.params.typeSlug);
     const { page, limit, skip } = pagination(request.query);
     const filter = { typeSlug: request.params.typeSlug };
     if (request.query.active === 'true') filter.isActive = true;
@@ -176,9 +178,13 @@ masterDataRouter.delete(
         .status(409)
         .json({ message: 'This value is used as a parent and cannot be deleted.' });
     if (
-      ['domicile', 'student-type'].includes(request.params.typeSlug) &&
+      ['domicile', 'student-type', 'fee-type'].includes(request.params.typeSlug) &&
       (await db().collection('courseFees').countDocuments(
-        request.params.typeSlug === 'domicile' ? { domicileId: valueId } : { studentTypeId: valueId },
+        request.params.typeSlug === 'domicile'
+          ? { domicileId: valueId }
+          : request.params.typeSlug === 'student-type'
+            ? { studentTypeId: valueId }
+            : { feeTypeId: valueId },
       ))
     )
       return response
@@ -278,6 +284,32 @@ async function ensureBuiltinMasterTypes() {
       ),
     ),
   );
+}
+
+async function ensureBuiltinMasterValues(slug) {
+  if (slug !== 'fee-type') return;
+  await ensureBuiltinMasterType(slug);
+  const now = new Date();
+  const defaults = [
+    { name: 'Yearly', order: 1, metadata: { periodType: 'year' } },
+    { name: 'Semester', order: 2, metadata: { periodType: 'semester' } },
+  ];
+  await Promise.all(defaults.map((value) =>
+    db().collection('masterValues').updateOne(
+      { typeSlug: slug, name: value.name, parentId: null },
+      {
+        $setOnInsert: {
+          ...value,
+          typeSlug: slug,
+          parentId: null,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+      { upsert: true },
+    ),
+  ));
 }
 
 async function ensureBuiltinMasterType(slug) {

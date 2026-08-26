@@ -166,6 +166,9 @@
                                 @case ('course') {
                                   <svg lucideBookOpen aria-hidden="true"></svg>
                                 }
+                                @case ('fee-type') {
+                                  <svg lucideTags aria-hidden="true"></svg>
+                                }
                                 @case ('country') {
                                   <svg lucideGlobe aria-hidden="true"></svg>
                                 }
@@ -548,6 +551,7 @@
                   <button class="fee-navigation-group__trigger" [class.active]="isFeeGroupRoute('course')" type="button" aria-controls="course-fee-links" [attr.aria-expanded]="feeGroupOpen() === 'course'" (click)="toggleFeeGroup('course')"><span class="master-item__icon"><svg lucideReceiptIndianRupee aria-hidden="true"></svg></span><span><strong>Course Fees</strong><small>Create, import and review</small></span><svg class="fee-navigation-group__chevron" lucideChevronRight aria-hidden="true"></svg></button>
                   @if (feeGroupOpen() === 'course') {<div class="fee-navigation-group__links" id="course-fee-links">
                     <a routerLink="/admin/fees/course-fees/create" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideReceiptIndianRupee aria-hidden="true"></svg></span><span><strong>Create Course Fee</strong><small>Manual course fee setup</small></span></a>
+                    <a routerLink="/admin/fees/course-fees/drafts" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideFilePenLine aria-hidden="true"></svg></span><span><strong>Draft Course Fees</strong><small>Continue unsaved matrices</small></span></a>
                     <a routerLink="/admin/fees/course-fees/import" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideFilePenLine aria-hidden="true"></svg></span><span><strong>Import Course Fees</strong><small>Review and map Excel workbook</small></span></a>
                     <a routerLink="/admin/fees/course-fees/view" routerLinkActive="active" (click)="closeNavigation()"><span class="master-item__icon"><svg lucideTableProperties aria-hidden="true"></svg></span><span><strong>View Course Fees</strong><small>Year-wise fee-head matrix</small></span></a>
                   </div>}

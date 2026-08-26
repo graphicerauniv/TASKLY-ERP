@@ -11,6 +11,7 @@ export const BUILTIN_MASTERS = [
   ['course', 'Course', 'level'],
   ['domicile', 'Domicile', null],
   ['student-type', 'Student Type', null],
+  ['fee-type', 'Fee Type', null],
   ['country', 'Country', null],
   ['state', 'State', 'country'],
   ['district', 'District', 'state'],
@@ -41,6 +42,7 @@ export async function bootstrap() {
         ),
     ),
   );
+  await ensureDefaultFeeTypes(now);
   await migrateSpecializationsToCourses(now);
   await migrateFormSpecializationSources(now);
   const { email, password, name } = config.bootstrapAdmin;
@@ -58,6 +60,29 @@ export async function bootstrap() {
       });
     console.log(`Created bootstrap Super Admin: ${email}`);
   }
+}
+
+async function ensureDefaultFeeTypes(now) {
+  const defaults = [
+    { name: 'Yearly', order: 1, metadata: { periodType: 'year' } },
+    { name: 'Semester', order: 2, metadata: { periodType: 'semester' } },
+  ];
+  await Promise.all(defaults.map((value) =>
+    db().collection('masterValues').updateOne(
+      { typeSlug: 'fee-type', name: value.name, parentId: null },
+      {
+        $setOnInsert: {
+          ...value,
+          typeSlug: 'fee-type',
+          parentId: null,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+      { upsert: true },
+    ),
+  ));
 }
 
 async function migrateSpecializationsToCourses(now) {

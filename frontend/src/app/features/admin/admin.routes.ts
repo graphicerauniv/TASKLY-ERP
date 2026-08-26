@@ -69,6 +69,7 @@ export const ADMIN_ROUTES: Routes = [
         ['hostel-fees/view', 'hostel-fees', 'view'],
         ['course-fees/create', 'course-fees', 'create'],
         ['course-fees/import', 'course-fees', 'import'],
+        ['course-fees/drafts', 'course-fees', 'drafts'],
         ['course-fees/view', 'course-fee-view', 'view'],
       ].map(([path, section, mode]) => ({
         path: `fees/${path}`,

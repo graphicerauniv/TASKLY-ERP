@@ -56,11 +56,19 @@ export class MasterDataComponent {
   readonly message = signal('');
   readonly error = signal('');
   readonly editingId = signal<string | null>(null);
-  readonly rowActions: CompactActionItem[] = [
+  readonly baseRowActions: CompactActionItem[] = [
     { id: 'edit', label: 'Edit', icon: 'edit' },
     { id: 'delete', label: 'Delete', icon: 'delete', destructive: true, separator: true },
   ];
+  readonly courseRowActions: CompactActionItem[] = [
+    { id: 'configure', label: 'Configure course', icon: 'edit' },
+    { id: 'edit', label: 'Edit name', icon: 'edit' },
+    { id: 'delete', label: 'Delete', icon: 'delete', destructive: true, separator: true },
+  ];
   name = '';
+  courseExamPattern: 'year' | 'semester' = 'semester';
+  courseDurationYears = 4;
+  courseTotalSemesters = 8;
   selectedDependencies: Record<string, string> = {};
   search = '';
   customName = '';
@@ -69,6 +77,7 @@ export class MasterDataComponent {
   readonly currentType = () => this.types().find((type) => type.slug === this.slug());
   readonly isCreatePage = computed(() => this.mode() === 'create');
   readonly isViewPage = computed(() => this.mode() === 'view');
+  readonly isCourseMaster = computed(() => this.slug() === 'course');
   readonly pageTitle = computed(() => {
     const type = this.currentType()?.name || this.titleFromSlug(this.slug());
     if (this.slug() === 'custom') return this.isCreatePage() ? 'Create Custom Master' : 'Custom Masters';
@@ -122,7 +131,7 @@ export class MasterDataComponent {
       return;
     }
     const parentId = dependencies.length ? this.selectedDependencies[dependencies.at(-1)!] : null;
-    const body = { name: this.name, parentId };
+    const body = { name: this.name, parentId, metadata: this.isCourseMaster() ? this.courseMetadata() : {} };
     const request = this.editingId()
       ? this.api.updateMasterValue(this.slug(), this.editingId()!, body)
       : this.api.createMasterValue(this.slug(), body);
@@ -140,12 +149,16 @@ export class MasterDataComponent {
     this.editingId.set(item._id);
     this.name = item.name;
     this.editingValue = item;
+    if (this.slug() === 'course') this.applyCourseMetadata(item);
     this.resolveEditingDependencies();
   }
   reset() {
     this.editingId.set(null);
     this.editingValue = null;
     this.name = '';
+    this.courseExamPattern = 'semester';
+    this.courseDurationYears = 4;
+    this.courseTotalSemesters = 8;
     this.selectedDependencies = {};
   }
   dependencySlugs(): string[] {
@@ -189,7 +202,7 @@ export class MasterDataComponent {
       .subscribe(() => this.loadValues());
   }
   handleRowAction(action: string, item: MasterValue) {
-    if (action === 'edit') void this.router.navigate(['/admin/master-data', this.slug(), item._id, 'edit']);
+    if (action === 'edit' || action === 'configure') void this.router.navigate(['/admin/master-data', this.slug(), item._id, 'edit']);
     if (action === 'delete') this.remove(item);
   }
   remove(item: MasterValue) {
@@ -240,6 +253,19 @@ export class MasterDataComponent {
         null;
     }
     this.selectedDependencies = selected;
+  }
+  private courseMetadata() {
+    return {
+      examPattern: this.courseExamPattern,
+      durationYears: Number(this.courseDurationYears) || 1,
+      totalSemesters: Number(this.courseTotalSemesters) || Math.max(2, (Number(this.courseDurationYears) || 1) * 2),
+    };
+  }
+  private applyCourseMetadata(item: MasterValue) {
+    const metadata = item.metadata || {};
+    this.courseExamPattern = metadata['examPattern'] === 'year' ? 'year' : 'semester';
+    this.courseDurationYears = Number(metadata['durationYears'] || 4);
+    this.courseTotalSemesters = Number(metadata['totalSemesters'] || this.courseDurationYears * 2);
   }
   private syncEditRoute(items: MasterValue[]) {
     const id = this.editId();

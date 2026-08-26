@@ -125,6 +125,7 @@ export class AdminShellComponent {
         'course',
         'domicile',
         'student-type',
+        'fee-type',
       ]),
       group('Location Masters', ['country', 'state', 'district', 'city']),
       {
@@ -166,6 +167,7 @@ export class AdminShellComponent {
     this.feeGroupOpen.set(null);
     this.hostelMenuOpen.set(false);
     this.masterMenuOpen.set(true);
+    this.masterDataStore.load().subscribe();
     setTimeout(() =>
       this.host.nativeElement.querySelector<HTMLInputElement>('.master-search input')?.focus(),
     );

@@ -214,6 +214,27 @@ export interface FeeHead {
   isActive: boolean;
 }
 
+export interface CourseFeeDraft {
+  _id: string;
+  bookId: string;
+  bookCode: string;
+  collegeName: string;
+  academicSession: string;
+  departmentId: string;
+  levelId: string;
+  courseId: string;
+  courseName: string;
+  domicileId: string;
+  studentTypeId: string;
+  feeTypeId: string;
+  countryId: string;
+  selectedFeeHeadIds: string[];
+  matrixAmounts: Record<string, number | null>;
+  status: 'draft';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface HostelFee {
   _id: string;
   bookId: string;
@@ -238,6 +259,9 @@ export interface CourseFee {
   domicileName: string;
   studentTypeId: string;
   studentTypeName: string;
+  feeTypeId: string;
+  feeTypeName: string;
+  periodType: 'year' | 'semester';
   countryId: string | null;
   countryName: string | null;
   feeHeadId: string;
