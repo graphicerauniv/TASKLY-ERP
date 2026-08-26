@@ -107,12 +107,11 @@
     gap: var(--student-space-4);
     overflow: hidden;
     padding: 12px 20px;
-    border: 1px solid
-      color-mix(in srgb, var(--student-module-background) 72%, var(--student-color-border-strong));
-    border-radius: 19px;
+    border: 1px solid color-mix(in srgb, var(--student-module-accent) 18%, var(--student-color-border));
+    border-radius: 16px;
     color: var(--student-color-text);
     background: var(--student-module-background);
-    box-shadow: 0 4px 15px color-mix(in srgb, var(--student-module-background) 70%, transparent);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--student-color-text) 6%, transparent);
     isolation: isolate;
     transition:
       border-color var(--student-motion-standard) var(--student-ease-standard),
@@ -124,12 +123,12 @@
   .student-module-card::after {
     position: absolute;
     z-index: -1;
-    width: 92px;
-    height: 92px;
-    border-radius: 42% 58% 64% 36%;
+    width: 86px;
+    height: 86px;
+    border-radius: 46% 54% 62% 38%;
     background: color-mix(in srgb, var(--student-module-accent) 62%, white);
     content: '';
-    opacity: 0.72;
+    opacity: 0.45;
     pointer-events: none;
   }
 
@@ -147,7 +146,7 @@
 
   .student-module-card:not(.student-module-card--disabled):hover {
     border-color: var(--student-color-primary-middle);
-    box-shadow: var(--student-shadow-card);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--student-color-primary) 10%, transparent);
     transform: translateY(-2px);
   }
 
@@ -184,6 +183,155 @@
     font-weight: 800;
     line-height: 1.2;
   }
+
+  .student-dashboard-operational {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .student-dashboard-operational__primary {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 14px;
+    min-width: 0;
+  }
+
+  erp-upcoming-schedule-card {
+    grid-column: span 5;
+  }
+
+  erp-attendance-overview-card {
+    grid-column: span 3;
+  }
+
+  .student-dashboard-operational__utility {
+    display: grid;
+    grid-column: span 4;
+    gap: 12px;
+  }
+
+  .student-dashboard-operational__secondary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .student-operational-card {
+    display: flex;
+    min-width: 0;
+    min-height: 172px;
+    height: 100%;
+    flex-direction: column;
+    padding: 16px;
+    border: 1px solid var(--student-color-border);
+    border-radius: 16px;
+    background: var(--student-color-surface);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--student-color-text) 5%, transparent);
+  }
+
+  .student-operational-card--compact,
+  .student-operational-card--quick-actions {
+    min-height: 80px;
+    padding: 12px 14px;
+  }
+
+  .student-operational-card--secondary {
+    min-height: 136px;
+  }
+
+  .student-operational-card__header {
+    display: flex;
+    min-height: 24px;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--student-color-text);
+  }
+
+  .student-operational-card__header > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .student-operational-card__header svg {
+    color: var(--student-color-primary);
+  }
+
+  .student-operational-card__header strong {
+    font-size: 15px;
+    line-height: 1.3;
+  }
+
+  .student-widget-state {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 11px;
+    margin-top: 12px;
+    padding: 13px;
+    border-radius: 12px;
+    color: var(--student-color-text-secondary);
+    background: color-mix(in srgb, var(--student-color-primary-soft) 42%, white);
+  }
+
+  .student-widget-state__icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 11px;
+    color: var(--student-color-primary);
+    background: var(--student-color-surface);
+  }
+
+  .student-widget-state strong,
+  .student-widget-state small {
+    display: block;
+  }
+
+  .student-widget-state strong {
+    color: var(--student-color-text);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .student-widget-state small {
+    margin-top: 3px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .student-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .student-quick-actions button {
+    display: grid;
+    min-width: 0;
+    min-height: 48px;
+    place-items: center;
+    gap: 3px;
+    padding: 5px 3px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--student-color-text-secondary);
+    background: var(--student-color-primary-soft);
+    opacity: 0.72;
+  }
+
+  .student-quick-actions small {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 @media (min-width: 768px) and (max-width: 1199px) {
@@ -211,6 +359,24 @@
 
     .student-module-card__label {
       font-size: 15px;
+    }
+
+    .student-dashboard-operational__primary {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+    }
+
+    erp-upcoming-schedule-card,
+    erp-attendance-overview-card {
+      grid-column: span 4;
+    }
+
+    .student-dashboard-operational__utility {
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .student-dashboard-operational__secondary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 }
@@ -253,7 +419,12 @@
     }
 
     .student-dashboard-modules-section > h2 {
-      font-size: 19px;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
     }
 
     .student-dashboard-modules ul {
@@ -268,7 +439,7 @@
       justify-items: center;
       gap: 4px;
       padding: 10px 7px;
-      border-radius: 21px;
+      border-radius: 18px;
       text-align: center;
     }
 
@@ -289,6 +460,33 @@
     .student-module-card:not(.student-module-card--disabled):active {
       transform: scale(0.98);
       transition-duration: var(--student-motion-fast);
+    }
+
+    .student-dashboard-operational__primary,
+    .student-dashboard-operational__secondary,
+    .student-dashboard-operational__utility {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    erp-upcoming-schedule-card,
+    erp-attendance-overview-card,
+    .student-dashboard-operational__utility {
+      grid-column: auto;
+    }
+
+    .student-operational-card,
+    .student-operational-card--compact,
+    .student-operational-card--quick-actions,
+    .student-operational-card--secondary {
+      min-height: 128px;
+      padding: 14px;
+      border-radius: 16px;
+    }
+
+    .student-operational-card--quick-actions {
+      min-height: 92px;
     }
   }
 }
