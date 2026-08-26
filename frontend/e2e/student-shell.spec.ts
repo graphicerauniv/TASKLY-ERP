@@ -181,6 +181,12 @@ test.describe('Student portal shell', () => {
     const routeBeforeDisabledClick = page.url();
     await cards.first().dispatchEvent('click');
     expect(page.url()).toBe(routeBeforeDisabledClick);
+    const feesModule = page
+      .getByRole('navigation', { name: 'Student ERP modules' })
+      .getByLabel('Open fees');
+    await expect(feesModule).toHaveAttribute('href', '/student/fees');
+    await feesModule.click();
+    await expect(page).toHaveURL(/\/student\/fees$/);
     expect(failedAssets).toEqual([]);
   });
 
@@ -236,15 +242,24 @@ test.describe('Student portal shell', () => {
     await expect(page.locator('.student-header__profile-trigger .student-avatar')).toHaveText('AG');
   });
 
-  test('operational widgets expose honest independent unavailable states', async ({ page }) => {
+  test('dashboard uses the approved shared preview state without unsupported placeholders', async ({
+    page,
+  }) => {
     await page.goto('/student/dashboard');
 
     await expect(page.locator('.student-dashboard-operational')).toBeVisible();
-    await expect(page.locator('.student-widget-state[data-status="unavailable"]')).toHaveCount(7);
-    await expect(page.getByText('Schedule unavailable')).toBeVisible();
-    await expect(page.getByText('Attendance unavailable')).toBeVisible();
-    await expect(page.getByText('Fee status unavailable')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Pay fees — unavailable' })).toBeDisabled();
+    await expect(page.locator('.student-widget-state[data-status="unavailable"]')).toHaveCount(0);
+    await expect(page.locator('.student-schedule-desktop').getByText('Data Structures')).toBeVisible();
+    await expect(page.locator('.student-attendance-ring')).toContainText('82%');
+    await expect(page.locator('.student-fee-summary')).toContainText('₹30,000');
+    await expect(page.getByRole('link', { name: 'Pay fees' })).toHaveAttribute(
+      'href',
+      '/student/fees',
+    );
+    await expect(page.getByText('Mid-Sem Exam Timetable Released')).toBeVisible();
+    await expect(page.getByText('Academic progress unavailable')).toHaveCount(0);
+    await expect(page.getByText('Hostel allocation unavailable')).toHaveCount(0);
+    await expect(page.getByText('Documents unavailable')).toHaveCount(0);
     await expect(page.locator('.student-notification-button__badge')).toHaveCount(0);
   });
 });

@@ -1,24 +1,20 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { AcademicProgressCardComponent } from '../academic-progress-card/academic-progress-card.component';
 import { AttendanceOverviewCardComponent } from '../attendance-overview-card/attendance-overview-card.component';
+import { DashboardQuickUpdatesComponent } from '../dashboard-quick-updates/dashboard-quick-updates.component';
 import { DashboardQuickActionsComponent } from '../dashboard-quick-actions/dashboard-quick-actions.component';
 import { FeeStatusCardComponent } from '../fee-status-card/fee-status-card.component';
-import { HostelCampusSummaryCardComponent } from '../hostel-campus-summary-card/hostel-campus-summary-card.component';
 import { NoticesUpdatesCardComponent } from '../notices-updates-card/notices-updates-card.component';
-import { RecentDocumentsCardComponent } from '../recent-documents-card/recent-documents-card.component';
 import { UpcomingScheduleCardComponent } from '../upcoming-schedule-card/upcoming-schedule-card.component';
 import { StudentDashboardOperationalState } from '../../models/student-dashboard-operational.model';
 
 @Component({
   selector: 'erp-dashboard-operational-grid',
   imports: [
-    AcademicProgressCardComponent,
     AttendanceOverviewCardComponent,
+    DashboardQuickUpdatesComponent,
     DashboardQuickActionsComponent,
     FeeStatusCardComponent,
-    HostelCampusSummaryCardComponent,
     NoticesUpdatesCardComponent,
-    RecentDocumentsCardComponent,
     UpcomingScheduleCardComponent,
   ],
   template: `
@@ -31,12 +27,12 @@ import { StudentDashboardOperationalState } from '../../models/student-dashboard
           <erp-dashboard-quick-actions [actions]="state().quickActions" />
         </div>
       </div>
-      <div class="student-dashboard-operational__secondary">
-        <erp-academic-progress-card [state]="state().academics" />
-        <erp-hostel-campus-summary-card [state]="state().hostel" />
-        <erp-notices-updates-card [state]="state().notices" />
-        <erp-recent-documents-card [state]="state().documents" />
-      </div>
+      <erp-dashboard-quick-updates
+        [attendance]="state().attendance"
+        [fees]="state().fees"
+        [examination]="state().examinations"
+      />
+      <erp-notices-updates-card [state]="state().notices" />
     </section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

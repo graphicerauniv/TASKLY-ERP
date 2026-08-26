@@ -1,6 +1,21 @@
 export type DashboardWidgetStatus =
   'idle' | 'loading' | 'refreshing' | 'loaded' | 'empty' | 'error' | 'unavailable';
 
+export type DashboardDataSourceMode = 'backend' | 'preview' | 'hidden';
+
+export interface DashboardWidgetSourceConfig {
+  readonly profile: DashboardDataSourceMode;
+  readonly notifications: DashboardDataSourceMode;
+  readonly timetable: DashboardDataSourceMode;
+  readonly attendance: DashboardDataSourceMode;
+  readonly fees: DashboardDataSourceMode;
+  readonly examinations: DashboardDataSourceMode;
+  readonly hostel: DashboardDataSourceMode;
+  readonly notices: DashboardDataSourceMode;
+  readonly documents: DashboardDataSourceMode;
+  readonly academicProgress: DashboardDataSourceMode;
+}
+
 export interface DashboardWidgetState<T> {
   readonly status: DashboardWidgetStatus;
   readonly data: T | null;
@@ -23,6 +38,7 @@ export interface StudentScheduleItem {
   readonly endTime: string;
   readonly location: string | null;
   readonly faculty: string | null;
+  readonly relativeLabel: string;
   readonly type: 'class' | 'lab' | 'exam' | 'meeting' | 'event' | 'unknown';
   readonly status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
 }
@@ -52,6 +68,12 @@ export interface FeeStatusViewModel {
   readonly dueDate: string | null;
   readonly currency: string | null;
   readonly paymentStatus: string | null;
+}
+
+export interface ExaminationSummaryViewModel {
+  readonly title: string;
+  readonly date: string;
+  readonly relativeLabel: string;
 }
 
 export interface HostelSummaryViewModel {
@@ -97,11 +119,13 @@ export interface DashboardQuickAction {
 }
 
 export interface StudentDashboardOperationalState {
+  readonly sourceStatus: DashboardWidgetSourceConfig;
   readonly identity: DashboardWidgetState<StudentIdentityViewModel>;
   readonly schedule: DashboardWidgetState<readonly StudentScheduleItem[]>;
   readonly attendance: DashboardWidgetState<AttendanceDashboardViewModel>;
   readonly academics: DashboardWidgetState<AcademicProgressViewModel>;
   readonly fees: DashboardWidgetState<FeeStatusViewModel>;
+  readonly examinations: DashboardWidgetState<ExaminationSummaryViewModel>;
   readonly hostel: DashboardWidgetState<HostelSummaryViewModel>;
   readonly notices: DashboardWidgetState<readonly NoticeViewModel[]>;
   readonly documents: DashboardWidgetState<readonly StudentDocumentViewModel[]>;

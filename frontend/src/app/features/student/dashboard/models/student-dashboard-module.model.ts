@@ -1,3 +1,5 @@
+import { StudentDashboardOperationalState } from './student-dashboard-operational.model';
+
 export interface StudentDashboardModule {
   readonly id: string;
   readonly label: string;
@@ -14,4 +16,6 @@ export interface StudentDashboardModule {
 
 export interface StudentDashboardViewModel {
   readonly firstName: string | null;
+  readonly modules: readonly StudentDashboardModule[];
+  readonly operational: StudentDashboardOperationalState;
 }

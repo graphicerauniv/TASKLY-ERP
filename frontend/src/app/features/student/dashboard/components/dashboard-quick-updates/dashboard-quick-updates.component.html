@@ -1,0 +1,51 @@
+<section class="student-quick-updates" aria-labelledby="student-quick-updates-title">
+  <header>
+    <h2 id="student-quick-updates-title">Quick updates <span aria-hidden="true">⚡</span></h2>
+    <button type="button" disabled>View all <span aria-hidden="true">›</span></button>
+  </header>
+
+  <div
+    #quickUpdatesTrack
+    class="student-quick-updates__track"
+    tabindex="0"
+    aria-label="Student quick updates"
+    (scroll)="updateActiveCard($event)"
+  >
+    @if (fees().data; as fee) {
+      <article class="student-quick-update student-quick-update--fee">
+        <small>Fee due</small>
+        <strong>{{ fee.currentDue }}</strong>
+        <span>Due by {{ fee.dueDate }}</span>
+      </article>
+    }
+    @if (attendance().data; as attendanceData) {
+      <article class="student-quick-update student-quick-update--attendance">
+        <small>Attendance</small>
+        <strong>{{ attendanceData.percentage }}%</strong>
+        <span>This month</span>
+        <i
+          [style.--student-update-progress]="(attendanceData.percentage || 0) + '%'"
+          aria-hidden="true"
+        ></i>
+      </article>
+    }
+    @if (examination().data; as exam) {
+      <article class="student-quick-update student-quick-update--exam">
+        <small>Exam on</small>
+        <strong>{{ exam.date }}</strong>
+        <span>{{ exam.title }}</span>
+      </article>
+    }
+  </div>
+
+  <div class="student-quick-updates__pagination" aria-label="Quick update page">
+    @for (dot of [0, 1, 2]; track dot) {
+      <button
+        type="button"
+        [class.student-quick-updates__dot--active]="activeIndex() === dot"
+        [attr.aria-label]="'Show update ' + (dot + 1)"
+        (click)="focusCard(quickUpdatesTrack, dot)"
+      ></button>
+    }
+  </div>
+</section>

@@ -3,8 +3,9 @@
 
   <section class="student-dashboard-modules-section" aria-labelledby="campus-modules-title">
     <h2 id="campus-modules-title">Explore your campus</h2>
-    <erp-dashboard-module-grid [modules]="modules" />
+    <erp-dashboard-module-grid [modules]="viewModel().modules" />
   </section>
 
-  <erp-dashboard-operational-grid [state]="facade.state()" />
+  <erp-dashboard-operational-grid [state]="viewModel().operational" />
+  <erp-student-mobile-bottom-nav />
 </div>
