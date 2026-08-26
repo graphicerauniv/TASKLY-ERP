@@ -13,6 +13,8 @@ const DOMAIN_TABLES = Object.freeze({
       'status',
       'academicSession',
       'currentAcademicYear',
+      'currentSemester',
+      'feeFrequency',
       'courseId',
       'courseName',
       'departmentName',
@@ -50,9 +52,30 @@ const DOMAIN_TABLES = Object.freeze({
   },
   feeHeads: {
     table: 'fee_heads',
-    columns: ['bookId', 'bookCode', 'name', 'category', 'isActive'],
+    columns: [
+      'bookId',
+      'bookCode',
+      'name',
+      'category',
+      'priority',
+      'divideSemesterWise',
+      'isActive',
+    ],
   },
   feeImportPreviews: { table: 'fee_import_previews', columns: ['status', 'sourceFile'] },
+  feePayments: {
+    table: 'fee_payments',
+    columns: [
+      'receiptNumber',
+      'studentAdmissionId',
+      'studentId',
+      'studentName',
+      'razorpayOrderId',
+      'razorpayPaymentId',
+      'amount',
+      'status',
+    ],
+  },
   forms: { table: 'forms', columns: ['name', 'slug', 'status', 'version', 'isActive'] },
   hostelAllocations: {
     table: 'hostel_allocations',
@@ -122,15 +145,30 @@ const DOMAIN_TABLES = Object.freeze({
       'kind',
       'academicSession',
       'currentAcademicYear',
+      'currentSemester',
+      'feeFrequency',
+      'periodKey',
+      'periodLabel',
       'feeBookId',
       'feeBookCode',
       'totalAmount',
       'paidAmount',
       'balanceAmount',
       'status',
+      'paymentStatus',
+      'penaltyAmount',
     ],
   },
 });
+
+async function createRuntimeMigrationsTable(pool) {
+  await pool.query(`
+    create table if not exists erp_runtime_migrations (
+      name text primary key,
+      applied_at timestamptz not null default now()
+    )
+  `);
+}
 
 async function createDomainTables(pool) {
   const client = await pool.connect();
@@ -194,9 +232,31 @@ export class PostgresDocumentDatabase {
   }
 
   async connect() {
-    await this.pool.query('select 1');
-    await createDomainTables(this.pool);
+    await createRuntimeMigrationsTable(this.pool);
     return this;
+  }
+
+  async hasRuntimeMigration(name) {
+    const result = await this.pool.query(
+      'select 1 from erp_runtime_migrations where name = $1 limit 1',
+      [name],
+    );
+    return result.rowCount > 0;
+  }
+
+  async prepareSchema(name) {
+    if (await this.hasRuntimeMigration(name)) return false;
+    await createDomainTables(this.pool);
+    return true;
+  }
+
+  async markRuntimeMigration(name) {
+    await this.pool.query(
+      `insert into erp_runtime_migrations (name)
+       values ($1)
+       on conflict (name) do nothing`,
+      [name],
+    );
   }
 
   collection(name) {

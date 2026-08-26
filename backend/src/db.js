@@ -3,11 +3,15 @@ import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
 let database;
+const DATABASE_SCHEMA_VERSION = 'postgres-domain-schema-2026-08-27-v2';
 
 export async function connectDatabase() {
   database = new PostgresDocumentDatabase(config.databaseUrl);
   await database.connect();
-  await ensureIndexes(database);
+  if (await database.prepareSchema(DATABASE_SCHEMA_VERSION)) {
+    await ensureIndexes(database);
+    await database.markRuntimeMigration(DATABASE_SCHEMA_VERSION);
+  }
   return database;
 }
 
@@ -48,7 +52,11 @@ export function serialize(document) {
 
 async function ensureIndexes(databaseInstance) {
   await migrateHostelFloors(databaseInstance);
+  await migrateFeePeriods(databaseInstance);
   await removeLegacyApplicationNumberIndex(databaseInstance);
+  await databaseInstance
+    .collection('studentFeeLedgers')
+    .dropIndex('erp_studentfeeledgers_a13db7a69b67');
   await Promise.all([
     databaseInstance.collection('admins').createIndex({ email: 1 }, { unique: true }),
     databaseInstance.collection('masterTypes').createIndex({ slug: 1 }, { unique: true }),
@@ -103,7 +111,7 @@ async function ensureIndexes(databaseInstance) {
     databaseInstance
       .collection('studentFeeLedgers')
       .createIndex(
-        { studentAdmissionId: 1, feeBookId: 1, kind: 1 },
+        { studentAdmissionId: 1, feeBookId: 1, kind: 1, periodKey: 1 },
         { unique: true, partialFilterExpression: { status: 'active' } },
       ),
     databaseInstance
@@ -112,7 +120,109 @@ async function ensureIndexes(databaseInstance) {
     databaseInstance
       .collection('feeImportPreviews')
       .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    databaseInstance
+      .collection('feePayments')
+      .createIndex({ razorpayOrderId: 1 }, { unique: true }),
+    databaseInstance
+      .collection('feePayments')
+      .createIndex({ razorpayPaymentId: 1 }, { unique: true, sparse: true }),
+    databaseInstance
+      .collection('feePayments')
+      .createIndex({ receiptNumber: 1 }, { unique: true, sparse: true }),
+    databaseInstance
+      .collection('feePayments')
+      .createIndex({ studentAdmissionId: 1, createdAt: -1 }),
   ]);
+}
+
+async function migrateFeePeriods(databaseInstance) {
+  const courses = await databaseInstance
+    .collection('masterValues')
+    .find({ typeSlug: 'course', 'metadata.defaultAcademicYear': { $exists: false } })
+    .toArray();
+  await Promise.all(
+    courses.map((course) =>
+      databaseInstance
+        .collection('masterValues')
+        .updateOne({ _id: course._id }, { $set: { 'metadata.defaultAcademicYear': 1 } }),
+    ),
+  );
+  const admissions = await databaseInstance
+    .collection('admissions')
+    .find({
+      $or: [
+        { feeFrequency: { $exists: false } },
+        { currentAcademicYear: { $exists: false } },
+        { currentSemester: { $exists: false } },
+      ],
+    })
+    .toArray();
+  await Promise.all(
+    admissions.map((admission) => {
+      const currentAcademicYear = Number(admission.currentAcademicYear || 1);
+      return databaseInstance.collection('admissions').updateOne(
+        { _id: admission._id },
+        {
+          $set: {
+            feeFrequency: admission.feeFrequency === 'semester' ? 'semester' : 'year',
+            currentAcademicYear,
+            currentSemester: Number(admission.currentSemester || currentAcademicYear * 2 - 1),
+          },
+        },
+      );
+    }),
+  );
+  const ledgers = await databaseInstance
+    .collection('studentFeeLedgers')
+    .find({
+      $or: [
+        { feeFrequency: { $exists: false } },
+        { periodKey: { $exists: false } },
+        { paymentStatus: { $exists: false } },
+      ],
+    })
+    .toArray();
+  await Promise.all(
+    ledgers.map((ledger) => {
+      const feeFrequency = ledger.feeFrequency === 'semester' ? 'semester' : 'year';
+      const currentAcademicYear = Number(ledger.currentAcademicYear || 1);
+      const currentSemester = Number(ledger.currentSemester || currentAcademicYear * 2 - 1);
+      const periodKey =
+        ledger.periodKey ||
+        (ledger.kind === 'hostel'
+          ? `session:${ledger.academicSession}`
+          : feeFrequency === 'semester'
+            ? `semester:${currentSemester}`
+            : `year:${currentAcademicYear}`);
+      const entries = (ledger.entries || []).map((entry) => ({
+        ...entry,
+        paidAmount: Number(entry.paidAmount || 0),
+        balanceAmount: Number(
+          entry.balanceAmount ?? Number(entry.amount || 0) - Number(entry.paidAmount || 0),
+        ),
+      }));
+      return databaseInstance.collection('studentFeeLedgers').updateOne(
+        { _id: ledger._id },
+        {
+          $set: {
+            feeFrequency,
+            currentAcademicYear,
+            currentSemester: ledger.kind === 'academic' ? currentSemester : null,
+            periodKey,
+            periodLabel:
+              ledger.periodLabel ||
+              (ledger.kind === 'hostel'
+                ? 'Current session'
+                : feeFrequency === 'semester'
+                  ? `Semester ${currentSemester}`
+                  : `Year ${currentAcademicYear}`),
+            entries,
+            paymentStatus: Number(ledger.balanceAmount || 0) > 0 ? 'due' : 'paid',
+          },
+        },
+      );
+    }),
+  );
 }
 
 async function removeLegacyApplicationNumberIndex(databaseInstance) {

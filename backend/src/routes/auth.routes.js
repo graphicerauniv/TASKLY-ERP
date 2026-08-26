@@ -1,11 +1,12 @@
 import express from 'express';
 import argon2 from 'argon2';
-import { jwtVerify, SignJWT } from 'jose';
+import { SignJWT } from 'jose';
 import { z } from 'zod';
 import { config } from '../config.js';
-import { db, id, serialize } from '../db.js';
+import { db, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
-import { requireAdmin } from '../middleware/auth.js';
+import { requireAdmin, requireStudent } from '../middleware/auth.js';
+import { refreshStudentPenalties } from '../services/fee-payments.js';
 
 export const authRouter = express.Router();
 const loginSchema = z.object({
@@ -118,12 +119,11 @@ authRouter.get(
   '/student/fees',
   requireStudent,
   asyncHandler(async (request, response) => {
-    const items = await db()
-      .collection('studentFeeLedgers')
-      .find({ studentAdmissionId: request.student._id, status: 'active' })
-      .project({ createdBy: 0 })
-      .sort({ kind: 1, createdAt: -1 })
-      .toArray();
+    const items = await refreshStudentPenalties(db(), request.student._id);
+    items.sort(
+      (left, right) =>
+        left.kind.localeCompare(right.kind) || new Date(right.createdAt) - new Date(left.createdAt),
+    );
     response.json({ items: items.map(serialize) });
   }),
 );
@@ -131,29 +131,6 @@ authRouter.get(
 function publicAdmin(admin) {
   const value = serialize(admin);
   return { id: value._id, email: value.email, name: value.name, role: value.role };
-}
-
-async function requireStudent(request, response, next) {
-  try {
-    const token = request.headers.authorization?.replace(/^Bearer\s+/i, '');
-    if (!token) return response.status(401).json({ message: 'Student authentication required.' });
-    const { payload } = await jwtVerify(token, new TextEncoder().encode(config.jwtSecret), {
-      issuer: 'taskly-erp',
-    });
-    if (payload.role !== 'student') throw new Error('Invalid role');
-    const student = await db()
-      .collection('admissions')
-      .findOne({
-        _id: id(payload.sub),
-        status: 'approved',
-        isActive: true,
-      });
-    if (!student) return response.status(401).json({ message: 'Student account is unavailable.' });
-    request.student = student;
-    next();
-  } catch {
-    response.status(401).json({ message: 'Your student session is invalid or expired.' });
-  }
 }
 
 function studentToken(student) {

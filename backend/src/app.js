@@ -13,6 +13,7 @@ import { publicRouter } from './routes/public.routes.js';
 import { admissionsRouter } from './routes/admissions.routes.js';
 import { hostelsRouter } from './routes/hostels.routes.js';
 import { feesRouter } from './routes/fees.routes.js';
+import { paymentsRouter } from './routes/payments.routes.js';
 
 export function createApp() {
   const app = express();
@@ -26,7 +27,15 @@ export function createApp() {
       credentials: true,
     }),
   );
-  app.use(express.json({ limit: '2mb' }));
+  app.use(
+    express.json({
+      limit: '2mb',
+      verify(request, response, buffer) {
+        void response;
+        if (request.originalUrl.endsWith('/payments/razorpay/webhook')) request.rawBody = buffer;
+      },
+    }),
+  );
   app.use('/uploads', express.static(config.uploadDir));
   app.get('/health', (request, response) => response.json({ status: 'ok', app: config.appName }));
   app.use(
@@ -45,6 +54,7 @@ export function createApp() {
   app.use(`${config.apiPrefix}/admissions`, requireAdmin, admissionsRouter);
   app.use(`${config.apiPrefix}/hostels`, requireAdmin, hostelsRouter);
   app.use(`${config.apiPrefix}/fees`, requireAdmin, feesRouter);
+  app.use(`${config.apiPrefix}/payments`, paymentsRouter);
   app.use(notFound);
   app.use(errorHandler);
   return app;

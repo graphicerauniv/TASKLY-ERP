@@ -69,7 +69,9 @@
             @if (status() === 'approved') {
               <th>Domicile</th>
               <th>Student type</th>
+              <th>Fee mode</th>
               <th>Current year</th>
+              <th>Current semester</th>
               <th>Fee ledger</th>
             }
             <th>Saved</th>
@@ -104,16 +106,50 @@
                 <td>
                   <select
                     class="erp-control"
+                    aria-label="Fee calculation mode"
+                    [ngModel]="item.feeFrequency || 'year'"
+                    [disabled]="feeSaving()"
+                    (ngModelChange)="setFeePeriod(item, { feeFrequency: $event })"
+                  >
+                    <option value="year">Full year</option>
+                    <option value="semester">Semester-wise</option>
+                  </select>
+                </td>
+                <td>
+                  <select
+                    class="erp-control"
                     aria-label="Current academic year"
                     [ngModel]="item.currentAcademicYear || ''"
                     [disabled]="feeSaving()"
-                    (ngModelChange)="setAcademicYear(item, $event)"
+                    (ngModelChange)="setFeePeriod(item, { currentAcademicYear: +$event })"
                   >
                     <option value="" disabled>Select year</option>
                     @for (year of academicYearOptions; track year) {
                       <option [ngValue]="year">Year {{ year }}</option>
                     }
                   </select>
+                </td>
+                <td>
+                  @if ((item.feeFrequency || 'year') === 'semester') {
+                    <select
+                      class="erp-control"
+                      aria-label="Current semester"
+                      [ngModel]="item.currentSemester || 1"
+                      [disabled]="feeSaving()"
+                      (ngModelChange)="
+                        setFeePeriod(item, {
+                          currentSemester: +$event,
+                          currentAcademicYear: yearForSemester($event),
+                        })
+                      "
+                    >
+                      @for (semester of semesterOptions; track semester) {
+                        <option [ngValue]="semester">Semester {{ semester }}</option>
+                      }
+                    </select>
+                  } @else {
+                    —
+                  }
                 </td>
                 <td>
                   <span class="erp-status">{{ feeStatus(item) }}</span>
@@ -134,7 +170,7 @@
             </tr>
           } @empty {
             <tr>
-              <td [attr.colspan]="status() === 'approved' ? 12 : 7" class="erp-empty-state">
+              <td [attr.colspan]="status() === 'approved' ? 14 : 7" class="erp-empty-state">
                 {{ loading() ? 'Loading…' : 'No matching student records found.' }}
               </td>
             </tr>
@@ -234,6 +270,13 @@
           <div class="erp-form-grid">
             @if (credentialAction() === 'approve') {
               <label>
+                <span>Fee calculation mode *</span>
+                <select class="erp-control" [(ngModel)]="approvalFeeFrequency">
+                  <option value="year">Full-year fee</option>
+                  <option value="semester">Semester-wise fee</option>
+                </select>
+              </label>
+              <label>
                 <span>Current academic year *</span>
                 <select class="erp-control" [(ngModel)]="currentAcademicYear" required>
                   @for (year of academicYearOptions; track year) {
@@ -241,6 +284,16 @@
                   }
                 </select>
               </label>
+              @if (approvalFeeFrequency === 'semester') {
+                <label>
+                  <span>Current semester *</span>
+                  <select class="erp-control" [(ngModel)]="currentSemester">
+                    @for (semester of semesterOptions; track semester) {
+                      <option [ngValue]="semester">Semester {{ semester }}</option>
+                    }
+                  </select>
+                </label>
+              }
             }
             <label>
               <span>Temporary password option</span>

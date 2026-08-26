@@ -316,6 +316,8 @@ export class DynamicAdmissionComponent implements OnInit {
     this.admission.update((v) => (v ? structuredClone(v) : v));
     this.dirty.set(true);
     this.message.set('');
+    if (field.dataSource?.masterTypeSlug === 'course')
+      this.applyCourseAcademicYear(String(normalizedValue || ''));
     this.reloadDependents(field.id, entry, entryIndex);
   }
   entries(sub: FormSubsection) {
@@ -378,9 +380,13 @@ export class DynamicAdmissionComponent implements OnInit {
     }
     this.api
       .publicOptions(field.dataSource.masterTypeSlug, parent ? String(parent) : undefined, search)
-      .subscribe(({ items }) =>
-        this.optionsState.update((v) => ({ ...v, [this.optionKey(field, index)]: items })),
-      );
+      .subscribe(({ items }) => {
+        this.optionsState.update((v) => ({ ...v, [this.optionKey(field, index)]: items }));
+        if (field.dataSource?.masterTypeSlug === 'course') {
+          const selected = (entry || this.admission()?.responses || {})[field.id];
+          if (selected) this.applyCourseAcademicYear(String(selected), false);
+        }
+      });
   }
   searchOptions(field: FormField, query: string, entry?: Record<string, unknown>, index?: number) {
     this.loadOptions(field, entry, index, query);
@@ -577,6 +583,50 @@ export class DynamicAdmissionComponent implements OnInit {
   }
   private optionKey(field: FormField, index?: number) {
     return `${field.id}:${index ?? 'single'}`;
+  }
+  private applyCourseAcademicYear(courseId: string, useConfiguredDefault = true) {
+    const courseField = (this.form()?.sections || [])
+      .flatMap((section) => section.subsections)
+      .flatMap((subsection) => subsection.fields)
+      .find((field) => field.dataSource?.masterTypeSlug === 'course');
+    if (!courseField) return;
+    const course = Object.entries(this.optionsState())
+      .filter(([key]) => key.startsWith(`${courseField.id}:`))
+      .flatMap(([, options]) => options)
+      .find((option) => option._id === courseId);
+    if (!course) return;
+    const duration = Math.max(1, Number(course.metadata?.['durationYears'] || 1));
+    const defaultYear = Math.min(
+      duration,
+      Math.max(1, Number(course.metadata?.['defaultAcademicYear'] || 1)),
+    );
+    const yearField = (this.form()?.sections || [])
+      .flatMap((section) => section.subsections)
+      .flatMap((subsection) => subsection.fields)
+      .find((candidate) =>
+        [
+          'current academic year',
+          'current year',
+          'admission year of study',
+          'year of study',
+        ].includes(candidate.name.trim().toLocaleLowerCase()),
+      );
+    const admission = this.admission();
+    if (!yearField || !admission) return;
+    yearField.type = 'dropdown';
+    yearField.options = Array.from({ length: duration }, (_, index) => ({
+      label: `Year ${index + 1}`,
+      value: String(index + 1),
+    }));
+    const savedYear = Number(admission.responses[yearField.id] || admission.currentAcademicYear);
+    const selectedYear =
+      !useConfiguredDefault && Number.isInteger(savedYear) && savedYear >= 1 && savedYear <= duration
+        ? savedYear
+        : defaultYear;
+    admission.responses[yearField.id] = String(selectedYear);
+    admission.currentAcademicYear = selectedYear;
+    this.form.update((form) => (form ? structuredClone(form) : form));
+    this.admission.set(structuredClone(admission));
   }
   private allowedUploadMimeTypes(field: FormField) {
     return this.acceptFor(field).split(',');

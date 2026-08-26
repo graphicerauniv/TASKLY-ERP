@@ -1,5 +1,14 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -24,12 +33,7 @@ import {
 } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
 
-type FeeSection =
-  | 'books'
-  | 'heads'
-  | 'hostel-fees'
-  | 'course-fees'
-  | 'course-fee-view';
+type FeeSection = 'books' | 'heads' | 'hostel-fees' | 'course-fees' | 'course-fee-view';
 type FeePageMode = 'create' | 'view' | 'import' | 'drafts';
 
 interface FeeViewCell {
@@ -108,7 +112,15 @@ interface ConfirmDialogState {
 
 @Component({
   selector: 'erp-fee-management',
-  imports: [AdminPageComponent, CompactActionMenuComponent, ConfirmDialogComponent, FormsModule, CurrencyPipe, DatePipe, RouterLink],
+  imports: [
+    AdminPageComponent,
+    CompactActionMenuComponent,
+    ConfirmDialogComponent,
+    FormsModule,
+    CurrencyPipe,
+    DatePipe,
+    RouterLink,
+  ],
   templateUrl: './fee-management.component.html',
   styleUrl: './fee-management.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -133,38 +145,60 @@ export class FeeManagementComponent implements OnDestroy {
   readonly isViewPage = computed(() => this.mode() === 'view');
   readonly isImportPage = computed(() => this.mode() === 'import');
   readonly isDraftPage = computed(() => this.mode() === 'drafts');
-  readonly createRoute = computed(() => ({
-    books: '/admin/fees/books/create',
-    heads: '/admin/fees/heads/create',
-    'hostel-fees': '/admin/fees/hostel-fees/create',
-    'course-fees': '/admin/fees/course-fees/create',
-    'course-fee-view': '/admin/fees/course-fees/create',
-  })[this.section()]);
-  readonly viewRoute = computed(() => ({
-    books: '/admin/fees/books/view',
-    heads: '/admin/fees/heads/view',
-    'hostel-fees': '/admin/fees/hostel-fees/view',
-    'course-fees': '/admin/fees/course-fees/view',
-    'course-fee-view': '/admin/fees/course-fees/view',
-  })[this.section()]);
-  readonly pageTitle = computed(() => ({
-    books: this.isViewPage() ? 'Fee Books' : 'Create Fee Book',
-    heads: this.isViewPage() ? 'Fee Heads' : 'Create Fee Head',
-    'hostel-fees': this.isViewPage() ? 'Hostel Fees' : 'Create Hostel Fee',
-    'course-fees': this.isImportPage() ? 'Import Course Fees' : this.isDraftPage() ? 'Course Fee Drafts' : 'Create Course Fee',
-    'course-fee-view': 'Course Fee View',
-  })[this.section()]);
-  readonly pageDescription = computed(() => ({
-    books: this.isViewPage() ? 'Search, review and manage configured fee books.' : 'Create a college and academic-session fee book.',
-    heads: this.isViewPage() ? 'Review and manage fee heads for the selected book.' : 'Create a reusable payable, discount or payment-option head.',
-    'hostel-fees': this.isViewPage() ? 'Review configured hostel charges by fee book.' : 'Set a hostel charge by seater, room type and frequency.',
-    'course-fees': this.isImportPage()
-      ? 'Upload, review and map the GEU fee workbook.'
-      : this.isDraftPage()
-        ? 'Continue incomplete course-fee work without losing entered amounts.'
-        : 'Configure an individual course fee.',
-    'course-fee-view': 'Review a selected course in a clear year-wise fee-head matrix.',
-  })[this.section()]);
+  readonly createRoute = computed(
+    () =>
+      ({
+        books: '/admin/fees/books/create',
+        heads: '/admin/fees/heads/create',
+        'hostel-fees': '/admin/fees/hostel-fees/create',
+        'course-fees': '/admin/fees/course-fees/create',
+        'course-fee-view': '/admin/fees/course-fees/create',
+      })[this.section()],
+  );
+  readonly viewRoute = computed(
+    () =>
+      ({
+        books: '/admin/fees/books/view',
+        heads: '/admin/fees/heads/view',
+        'hostel-fees': '/admin/fees/hostel-fees/view',
+        'course-fees': '/admin/fees/course-fees/view',
+        'course-fee-view': '/admin/fees/course-fees/view',
+      })[this.section()],
+  );
+  readonly pageTitle = computed(
+    () =>
+      ({
+        books: this.isViewPage() ? 'Fee Books' : 'Create Fee Book',
+        heads: this.isViewPage() ? 'Fee Heads' : 'Create Fee Head',
+        'hostel-fees': this.isViewPage() ? 'Hostel Fees' : 'Create Hostel Fee',
+        'course-fees': this.isImportPage()
+          ? 'Import Course Fees'
+          : this.isDraftPage()
+            ? 'Course Fee Drafts'
+            : 'Create Course Fee',
+        'course-fee-view': 'Course Fee View',
+      })[this.section()],
+  );
+  readonly pageDescription = computed(
+    () =>
+      ({
+        books: this.isViewPage()
+          ? 'Search, review and manage configured fee books.'
+          : 'Create a college and academic-session fee book.',
+        heads: this.isViewPage()
+          ? 'Review and manage fee heads for the selected book.'
+          : 'Create a reusable payable, discount or payment-option head.',
+        'hostel-fees': this.isViewPage()
+          ? 'Review configured hostel charges by fee book.'
+          : 'Set a hostel charge by seater, room type and frequency.',
+        'course-fees': this.isImportPage()
+          ? 'Upload, review and map the GEU fee workbook.'
+          : this.isDraftPage()
+            ? 'Continue incomplete course-fee work without losing entered amounts.'
+            : 'Configure an individual course fee.',
+        'course-fee-view': 'Review a selected course in a clear year-wise fee-head matrix.',
+      })[this.section()],
+  );
   readonly books = signal<FeeBook[]>([]);
   readonly heads = signal<FeeHead[]>([]);
   readonly hostelFees = signal<HostelFee[]>([]);
@@ -233,6 +267,7 @@ export class FeeManagementComponent implements OnDestroy {
   headCategory: FeeHead['category'] = 'fee';
   headPlacement: 'top' | 'bottom' | 'before' | 'after' = 'bottom';
   headReferenceId = '';
+  headDivideSemesterWise = false;
   hostelId = '';
   hostelSeater = 2;
   hostelRoomType = 'Non AC';
@@ -275,10 +310,13 @@ export class FeeManagementComponent implements OnDestroy {
       ? this.colleges().filter((college) => college.parentId === this.bookPickerUniversityId)
       : [];
   readonly bookPickerBooks = () => {
-    if (!this.bookPickerUniversityId || !this.bookPickerCollegeId || !this.bookPickerSession) return [];
-    return this.books().filter((book) =>
-      book.collegeId === this.bookPickerCollegeId &&
-      book.academicSession.trim().toLocaleLowerCase() === this.bookPickerSession.trim().toLocaleLowerCase(),
+    if (!this.bookPickerUniversityId || !this.bookPickerCollegeId || !this.bookPickerSession)
+      return [];
+    return this.books().filter(
+      (book) =>
+        book.collegeId === this.bookPickerCollegeId &&
+        book.academicSession.trim().toLocaleLowerCase() ===
+          this.bookPickerSession.trim().toLocaleLowerCase(),
     );
   };
   readonly bookHeads = () => this.heads().filter((head) => head.bookId === this.selectedBookId);
@@ -290,31 +328,43 @@ export class FeeManagementComponent implements OnDestroy {
   readonly filteredBooks = computed(() => {
     const query = this.listSearch().trim().toLocaleLowerCase();
     const status = this.listStatus();
-    return this.books().filter((book) =>
-      (!query || [book.code, book.collegeName, book.academicSession].some((value) => value.toLocaleLowerCase().includes(query))) &&
-      (status === 'all' || (status === 'active' ? book.isActive : !book.isActive)),
+    return this.books().filter(
+      (book) =>
+        (!query ||
+          [book.code, book.collegeName, book.academicSession].some((value) =>
+            value.toLocaleLowerCase().includes(query),
+          )) &&
+        (status === 'all' || (status === 'active' ? book.isActive : !book.isActive)),
     );
   });
   readonly orderedBookHeads = computed(() =>
-    [...this.bookHeads()].sort((left, right) =>
-      (left.priority || 9999) - (right.priority || 9999) ||
-      left.name.localeCompare(right.name),
+    [...this.bookHeads()].sort(
+      (left, right) =>
+        (left.priority || 9999) - (right.priority || 9999) || left.name.localeCompare(right.name),
     ),
   );
   readonly filteredHeads = computed(() => {
     const query = this.listSearch().trim().toLocaleLowerCase();
     const status = this.listStatus();
-    return this.orderedBookHeads().filter((head) =>
-      (!query || [head.name, head.category, head.bookCode].some((value) => value.toLocaleLowerCase().includes(query))) &&
-      (status === 'all' || (status === 'active' ? head.isActive : !head.isActive)),
+    return this.orderedBookHeads().filter(
+      (head) =>
+        (!query ||
+          [head.name, head.category, head.bookCode].some((value) =>
+            value.toLocaleLowerCase().includes(query),
+          )) &&
+        (status === 'all' || (status === 'active' ? head.isActive : !head.isActive)),
     );
   });
   readonly filteredHostelFees = computed(() => {
     const query = this.listSearch().trim().toLocaleLowerCase();
     const frequency = this.hostelFrequencyFilter();
-    return this.hostelFees().filter((fee) =>
-      (!query || [fee.hostelName, fee.roomType, fee.feeHeadName, String(fee.seater)].some((value) => value.toLocaleLowerCase().includes(query))) &&
-      (frequency === 'all' || fee.frequency === frequency),
+    return this.hostelFees().filter(
+      (fee) =>
+        (!query ||
+          [fee.hostelName, fee.roomType, fee.feeHeadName, String(fee.seater)].some((value) =>
+            value.toLocaleLowerCase().includes(query),
+          )) &&
+        (frequency === 'all' || fee.frequency === frequency),
     );
   });
   readonly activeListCount = computed(() => {
@@ -323,7 +373,9 @@ export class FeeManagementComponent implements OnDestroy {
     if (this.section() === 'hostel-fees') return this.filteredHostelFees().length;
     return 0;
   });
-  readonly listTotalPages = computed(() => Math.max(1, Math.ceil(this.activeListCount() / this.listPageSize())));
+  readonly listTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.activeListCount() / this.listPageSize())),
+  );
   readonly safeListPage = computed(() => Math.min(this.listPage(), this.listTotalPages()));
   readonly pagedBooks = computed(() => this.pageSlice(this.filteredBooks()));
   readonly pagedHeads = computed(() => this.pageSlice(this.filteredHeads()));
@@ -385,7 +437,9 @@ export class FeeManagementComponent implements OnDestroy {
     const selectedIds = new Set(this.selectedCourseFeeHeadIds());
     return this.orderedBookHeads().filter((head) => selectedIds.has(head._id));
   });
-  readonly activeCourseFeeHeads = computed(() => this.orderedBookHeads().filter((head) => head.isActive));
+  readonly activeCourseFeeHeads = computed(() =>
+    this.orderedBookHeads().filter((head) => head.isActive),
+  );
   readonly courseFeePeriodType = computed<'year' | 'semester' | null>(() => {
     this.courseFeeContextVersion();
     const feeType = this.selectedCourseFeeType();
@@ -401,9 +455,10 @@ export class FeeManagementComponent implements OnDestroy {
     const metadata = this.selectedCourse()?.metadata || {};
     const feePattern = this.courseFeePeriodType();
     if (!feePattern) return [];
-    const configuredCount = feePattern === 'year'
-      ? Number(metadata['durationYears'] || 4)
-      : Number(metadata['totalSemesters'] || Number(metadata['durationYears'] || 4) * 2);
+    const configuredCount =
+      feePattern === 'year'
+        ? Number(metadata['durationYears'] || 4)
+        : Number(metadata['totalSemesters'] || Number(metadata['durationYears'] || 4) * 2);
     const count = Math.max(1, Math.min(20, configuredCount || 1));
     return Array.from({ length: count }, (_, index) => {
       const number = index + 1;
@@ -415,12 +470,13 @@ export class FeeManagementComponent implements OnDestroy {
       };
     });
   });
-  readonly allCourseFeeHeadsSelected = computed(() =>
-    !!this.activeCourseFeeHeads().length &&
-    this.selectedCourseFeeHeadIds().length === this.activeCourseFeeHeads().length,
+  readonly allCourseFeeHeadsSelected = computed(
+    () =>
+      !!this.activeCourseFeeHeads().length &&
+      this.selectedCourseFeeHeadIds().length === this.activeCourseFeeHeads().length,
   );
-  readonly populatedMatrixCellCount = computed(() =>
-    Object.values(this.feeMatrixAmounts()).filter((value) => Number(value) > 0).length,
+  readonly populatedMatrixCellCount = computed(
+    () => Object.values(this.feeMatrixAmounts()).filter((value) => Number(value) > 0).length,
   );
   readonly matrixGrandTotal = computed(() =>
     Object.values(this.feeMatrixAmounts()).reduce<number>(
@@ -443,8 +499,10 @@ export class FeeManagementComponent implements OnDestroy {
   });
   readonly filteredCourseFeeHeads = computed(() => {
     const query = this.feeHeadPickerSearch().trim().toLocaleLowerCase();
-    return this.activeCourseFeeHeads().filter((head) =>
-      !query || [head.name, head.category].some((value) => value.toLocaleLowerCase().includes(query)),
+    return this.activeCourseFeeHeads().filter(
+      (head) =>
+        !query ||
+        [head.name, head.category].some((value) => value.toLocaleLowerCase().includes(query)),
     );
   });
   readonly feeViewSummary = computed(() => {
@@ -459,7 +517,10 @@ export class FeeManagementComponent implements OnDestroy {
   readonly feeViewGroups = computed<FeeViewGroup[]>(() => {
     const records = this.courseFeeViewRecords();
     const headPriority = new Map(this.heads().map((head) => [head._id, head.priority || 9999]));
-    const groups = new Map<string, { label: string; description: string; order: number; fees: CourseFee[] }>();
+    const groups = new Map<
+      string,
+      { label: string; description: string; order: number; fees: CourseFee[] }
+    >();
     for (const fee of records) {
       let key = 'recurring';
       let label = 'Recurring and other charges';
@@ -487,32 +548,55 @@ export class FeeManagementComponent implements OnDestroy {
     }
     return [...groups.entries()]
       .map(([key, group]) => {
-        const eligibilityBands = [...new Set(group.fees.map((fee) => fee.eligibilityBand || 'All candidates'))]
-          .sort((left, right) => Number(left !== 'All candidates') - Number(right !== 'All candidates') || left.localeCompare(right));
+        const eligibilityBands = [
+          ...new Set(group.fees.map((fee) => fee.eligibilityBand || 'All candidates')),
+        ].sort(
+          (left, right) =>
+            Number(left !== 'All candidates') - Number(right !== 'All candidates') ||
+            left.localeCompare(right),
+        );
         const rowGroups = new Map<string, CourseFee[]>();
         for (const fee of group.fees) {
           const rowKey = `${fee.feeHeadId}|${fee.frequency}|${fee.semester || ''}`;
           rowGroups.set(rowKey, [...(rowGroups.get(rowKey) || []), fee]);
         }
-        const rows = [...rowGroups.entries()].map(([rowKey, fees]) => {
-          const first = fees[0];
-          return {
-            key: rowKey,
-            feeHeadName: first.feeHeadName,
-            category: first.category,
-            frequency: first.frequency,
-            semester: first.semester,
-            cells: eligibilityBands.map((eligibilityBand) => {
-              const amounts = [...new Set(fees.filter((fee) => (fee.eligibilityBand || 'All candidates') === eligibilityBand).map((fee) => fee.amount))].sort((a, b) => a - b);
-              return { eligibilityBand, amounts, conflict: amounts.length > 1 };
-            }),
-            sources: [...new Set(fees.map((fee) => fee.source === 'excel' ? `Excel: ${fee.sourceSheet}` : 'Manual'))],
-          } satisfies FeeViewRow;
-        }).sort((left, right) =>
-          Number(left.category === 'discount') - Number(right.category === 'discount') ||
-          (headPriority.get(left.key.split('|')[0]) || 9999) - (headPriority.get(right.key.split('|')[0]) || 9999) ||
-          left.feeHeadName.localeCompare(right.feeHeadName),
-        );
+        const rows = [...rowGroups.entries()]
+          .map(([rowKey, fees]) => {
+            const first = fees[0];
+            return {
+              key: rowKey,
+              feeHeadName: first.feeHeadName,
+              category: first.category,
+              frequency: first.frequency,
+              semester: first.semester,
+              cells: eligibilityBands.map((eligibilityBand) => {
+                const amounts = [
+                  ...new Set(
+                    fees
+                      .filter(
+                        (fee) => (fee.eligibilityBand || 'All candidates') === eligibilityBand,
+                      )
+                      .map((fee) => fee.amount),
+                  ),
+                ].sort((a, b) => a - b);
+                return { eligibilityBand, amounts, conflict: amounts.length > 1 };
+              }),
+              sources: [
+                ...new Set(
+                  fees.map((fee) =>
+                    fee.source === 'excel' ? `Excel: ${fee.sourceSheet}` : 'Manual',
+                  ),
+                ),
+              ],
+            } satisfies FeeViewRow;
+          })
+          .sort(
+            (left, right) =>
+              Number(left.category === 'discount') - Number(right.category === 'discount') ||
+              (headPriority.get(left.key.split('|')[0]) || 9999) -
+                (headPriority.get(right.key.split('|')[0]) || 9999) ||
+              left.feeHeadName.localeCompare(right.feeHeadName),
+          );
         return { key, ...group, eligibilityBands, rows };
       })
       .sort((left, right) => left.order - right.order);
@@ -531,23 +615,31 @@ export class FeeManagementComponent implements OnDestroy {
         const rows = new Map<string, FeeViewMatrixRow>();
 
         for (const fee of fees) {
-          const columnKey = periodType === 'semester'
-            ? `semester-${fee.semester || fee.academicYear || 0}`
-            : `year-${fee.academicYear || fee.semester || fee.academicName || 'one-time'}`;
-          const periodNumber = periodType === 'semester' ? fee.semester || fee.academicYear || 0 : fee.academicYear || fee.semester || 0;
-          const columnLabel = periodType === 'semester'
-            ? `Sem ${periodNumber || '—'}`
-            : fee.academicYear
-              ? `Year ${fee.academicYear}`
-              : fee.academicName || 'One-time';
+          const columnKey =
+            periodType === 'semester'
+              ? `semester-${fee.semester || fee.academicYear || 0}`
+              : `year-${fee.academicYear || fee.semester || fee.academicName || 'one-time'}`;
+          const periodNumber =
+            periodType === 'semester'
+              ? fee.semester || fee.academicYear || 0
+              : fee.academicYear || fee.semester || 0;
+          const columnLabel =
+            periodType === 'semester'
+              ? `Sem ${periodNumber || '—'}`
+              : fee.academicYear
+                ? `Year ${fee.academicYear}`
+                : fee.academicName || 'One-time';
           const columnHelper = periodType === 'semester' ? 'Semester fee' : 'Academic year fee';
-          columns.set(columnKey, columns.get(columnKey) || {
-            key: columnKey,
-            label: columnLabel,
-            helper: columnHelper,
-            order: periodNumber || 999,
-            total: 0,
-          });
+          columns.set(
+            columnKey,
+            columns.get(columnKey) || {
+              key: columnKey,
+              label: columnLabel,
+              helper: columnHelper,
+              order: periodNumber || 999,
+              total: 0,
+            },
+          );
 
           const eligibilityBand = fee.eligibilityBand || 'All candidates';
           const rowKey = `${fee.feeHeadId}|${eligibilityBand}`;
@@ -562,7 +654,10 @@ export class FeeManagementComponent implements OnDestroy {
           };
           const cell = row.cells[columnKey] || { amounts: [], conflict: false, sources: [] };
           if (!cell.amounts.includes(fee.amount)) cell.amounts.push(fee.amount);
-          const source = fee.source === 'excel' ? `Excel${fee.sourceSheet ? `: ${fee.sourceSheet}` : ''}` : 'Manual';
+          const source =
+            fee.source === 'excel'
+              ? `Excel${fee.sourceSheet ? `: ${fee.sourceSheet}` : ''}`
+              : 'Manual';
           if (!cell.sources.includes(source)) cell.sources.push(source);
           cell.amounts.sort((left, right) => left - right);
           cell.conflict = cell.amounts.length > 1;
@@ -570,34 +665,45 @@ export class FeeManagementComponent implements OnDestroy {
           rows.set(rowKey, row);
         }
 
-        const sortedColumns = [...columns.values()].sort((left, right) => left.order - right.order || left.label.localeCompare(right.label));
+        const sortedColumns = [...columns.values()].sort(
+          (left, right) => left.order - right.order || left.label.localeCompare(right.label),
+        );
         const sortedRows = [...rows.values()]
           .map((row) => ({
             ...row,
-            total: sortedColumns.reduce((total, column) =>
-              total + (row.cells[column.key]?.amounts || []).reduce((sum, amount) => sum + amount, 0),
-            0),
+            total: sortedColumns.reduce(
+              (total, column) =>
+                total +
+                (row.cells[column.key]?.amounts || []).reduce((sum, amount) => sum + amount, 0),
+              0,
+            ),
           }))
-          .sort((left, right) =>
-            Number(left.category === 'discount') - Number(right.category === 'discount') ||
-            left.priority - right.priority ||
-            left.feeHeadName.localeCompare(right.feeHeadName) ||
-            left.eligibilityBand.localeCompare(right.eligibilityBand),
+          .sort(
+            (left, right) =>
+              Number(left.category === 'discount') - Number(right.category === 'discount') ||
+              left.priority - right.priority ||
+              left.feeHeadName.localeCompare(right.feeHeadName) ||
+              left.eligibilityBand.localeCompare(right.eligibilityBand),
           );
 
         const columnsWithTotals = sortedColumns.map((column) => ({
           ...column,
-          total: sortedRows.reduce((total, row) =>
-            total + (row.cells[column.key]?.amounts || []).reduce((sum, amount) => sum + amount, 0),
-          0),
+          total: sortedRows.reduce(
+            (total, row) =>
+              total +
+              (row.cells[column.key]?.amounts || []).reduce((sum, amount) => sum + amount, 0),
+            0,
+          ),
         }));
 
         return {
           key: periodType,
-          title: periodType === 'semester' ? 'Semester-wise fee structure' : 'Year-wise fee structure',
-          description: periodType === 'semester'
-            ? 'Compare every fee head across semesters in one horizontal matrix.'
-            : 'Compare every fee head across academic years in one horizontal matrix.',
+          title:
+            periodType === 'semester' ? 'Semester-wise fee structure' : 'Year-wise fee structure',
+          description:
+            periodType === 'semester'
+              ? 'Compare every fee head across semesters in one horizontal matrix.'
+              : 'Compare every fee head across academic years in one horizontal matrix.',
           columns: columnsWithTotals,
           rows: sortedRows,
           grandTotal: sortedRows.reduce((total, row) => total + row.total, 0),
@@ -611,7 +717,8 @@ export class FeeManagementComponent implements OnDestroy {
       this.section();
       this.mode();
       const requestedDraftId = this.requestedCourseFeeDraftId();
-      const shouldResumeDraft = this.section() === 'course-fees' && this.isCreatePage() && !!requestedDraftId;
+      const shouldResumeDraft =
+        this.section() === 'course-fees' && this.isCreatePage() && !!requestedDraftId;
       if (!shouldResumeDraft) this.courseFeeDraftResumePending.set(false);
       if (shouldResumeDraft && requestedDraftId !== this.currentCourseFeeDraftId) {
         this.courseFeeDraftResumePending.set(true);
@@ -650,17 +757,34 @@ export class FeeManagementComponent implements OnDestroy {
       },
       error: (error) => this.fail(error),
     });
-    this.api.masterValues('university', { active: true }).subscribe(({ items }) => this.universities.set(items));
-    this.api.masterValues('college', { active: true }).subscribe(({ items }) => this.colleges.set(items));
-    this.api.masterValues('academic', { active: true }).subscribe(({ items }) => this.academicSessions.set(items));
-    this.api.masterValues('department', { active: true }).subscribe(({ items }) => this.departments.set(items));
-    this.api.masterValues('level', { active: true }).subscribe(({ items }) => this.levels.set(items));
-    this.api.masterValues('domicile', { active: true }).subscribe(({ items }) => this.domiciles.set(items));
-    this.api.masterValues('student-type', { active: true }).subscribe(({ items }) => this.studentTypes.set(items));
+    this.api
+      .masterValues('university', { active: true })
+      .subscribe(({ items }) => this.universities.set(items));
+    this.api
+      .masterValues('college', { active: true })
+      .subscribe(({ items }) => this.colleges.set(items));
+    this.api
+      .masterValues('academic', { active: true })
+      .subscribe(({ items }) => this.academicSessions.set(items));
+    this.api
+      .masterValues('department', { active: true })
+      .subscribe(({ items }) => this.departments.set(items));
+    this.api
+      .masterValues('level', { active: true })
+      .subscribe(({ items }) => this.levels.set(items));
+    this.api
+      .masterValues('domicile', { active: true })
+      .subscribe(({ items }) => this.domiciles.set(items));
+    this.api
+      .masterValues('student-type', { active: true })
+      .subscribe(({ items }) => this.studentTypes.set(items));
     this.loadFeeTypes();
-    this.api.masterValues('country', { active: true }).subscribe(({ items }) => this.countries.set(items));
+    this.api
+      .masterValues('country', { active: true })
+      .subscribe(({ items }) => this.countries.set(items));
     this.api.feeCourseOptions().subscribe(({ items }) => this.courses.set(items));
-    if (this.section() === 'hostel-fees') this.api.hostels().subscribe(({ items }) => this.hostels.set(items));
+    if (this.section() === 'hostel-fees')
+      this.api.hostels().subscribe(({ items }) => this.hostels.set(items));
   }
 
   loadSectionData() {
@@ -802,7 +926,9 @@ export class FeeManagementComponent implements OnDestroy {
         action: () => {
           this.api.deleteCourseFeeDraft(draft._id).subscribe({
             next: () => {
-              this.courseFeeDrafts.update((items) => items.filter((item) => item._id !== draft._id));
+              this.courseFeeDrafts.update((items) =>
+                items.filter((item) => item._id !== draft._id),
+              );
               this.saved('Course-fee draft deleted.');
             },
             error: (error) => this.fail(error),
@@ -822,7 +948,8 @@ export class FeeManagementComponent implements OnDestroy {
       this.section() !== 'course-fees' ||
       !this.isCreatePage() ||
       !this.selectedBookId
-    ) return;
+    )
+      return;
     this.courseFeeDraftDirty = true;
     this.courseFeeDraftStatus.set('saving');
     if (this.courseFeeDraftTimer) clearTimeout(this.courseFeeDraftTimer);
@@ -830,7 +957,8 @@ export class FeeManagementComponent implements OnDestroy {
   }
 
   private saveCourseFeeDraftNow() {
-    if (!this.selectedBookId || this.courseFeeDraftRequestActive || !this.courseFeeDraftDirty) return;
+    if (!this.selectedBookId || this.courseFeeDraftRequestActive || !this.courseFeeDraftDirty)
+      return;
     this.courseFeeDraftDirty = false;
     this.courseFeeDraftRequestActive = true;
     if (!this.componentDestroyed) this.courseFeeDraftStatus.set('saving');
@@ -853,7 +981,10 @@ export class FeeManagementComponent implements OnDestroy {
       next: ({ item }) => {
         this.currentCourseFeeDraftId = item._id;
         this.courseFeeDraftRequestActive = false;
-        this.courseFeeDrafts.update((items) => [item, ...items.filter((draft) => draft._id !== item._id)]);
+        this.courseFeeDrafts.update((items) => [
+          item,
+          ...items.filter((draft) => draft._id !== item._id),
+        ]);
         if (!this.componentDestroyed) {
           this.courseFeeDraftStatus.set('saved');
           this.courseFeeDraftSavedAt.set(item.updatedAt);
@@ -982,7 +1113,13 @@ export class FeeManagementComponent implements OnDestroy {
   }
 
   saveBook() {
-    if (!this.bookCollegeId || !this.bookStartDate || !this.bookEndDate || !this.bookSession.trim() || !this.bookCode.trim())
+    if (
+      !this.bookCollegeId ||
+      !this.bookStartDate ||
+      !this.bookEndDate ||
+      !this.bookSession.trim() ||
+      !this.bookCode.trim()
+    )
       return this.error.set('Complete all required book fields.');
     this.startSaving();
     const body = {
@@ -1017,7 +1154,12 @@ export class FeeManagementComponent implements OnDestroy {
         confirmLabel: 'Delete book',
         destructive: true,
         action: () => {
-          this.api.deleteFeeBook(book._id).subscribe({ next: () => this.saved('Fee book deleted.'), error: (error) => this.fail(error) });
+          this.api
+            .deleteFeeBook(book._id)
+            .subscribe({
+              next: () => this.saved('Fee book deleted.'),
+              error: (error) => this.fail(error),
+            });
         },
       });
     }
@@ -1044,8 +1186,12 @@ export class FeeManagementComponent implements OnDestroy {
   }
 
   saveHead() {
-    if (!this.selectedBookId || !this.headName.trim()) return this.error.set('Select a fee book and enter the fee-head name.');
-    if ((this.headPlacement === 'before' || this.headPlacement === 'after') && !this.headReferenceId)
+    if (!this.selectedBookId || !this.headName.trim())
+      return this.error.set('Select a fee book and enter the fee-head name.');
+    if (
+      (this.headPlacement === 'before' || this.headPlacement === 'after') &&
+      !this.headReferenceId
+    )
       return this.error.set('Select the reference fee head for the chosen priority placement.');
     this.startSaving();
     const request = this.editingHead()
@@ -1054,6 +1200,7 @@ export class FeeManagementComponent implements OnDestroy {
           category: this.headCategory,
           placement: this.headPlacement,
           referenceHeadId: this.headReferenceId || undefined,
+          divideSemesterWise: this.headDivideSemesterWise,
         })
       : this.api.createFeeHead({
           bookId: this.selectedBookId,
@@ -1061,8 +1208,15 @@ export class FeeManagementComponent implements OnDestroy {
           category: this.headCategory,
           placement: this.headPlacement,
           referenceHeadId: this.headReferenceId || undefined,
+          divideSemesterWise: this.headDivideSemesterWise,
         });
-    request.subscribe({ next: () => { this.resetHead(); this.completedCreation('Fee head saved successfully.'); }, error: (error) => this.fail(error) });
+    request.subscribe({
+      next: () => {
+        this.resetHead();
+        this.completedCreation('Fee head saved successfully.');
+      },
+      error: (error) => this.fail(error),
+    });
   }
 
   handleHeadAction(action: string, head: FeeHead) {
@@ -1076,7 +1230,12 @@ export class FeeManagementComponent implements OnDestroy {
         confirmLabel: 'Delete head',
         destructive: true,
         action: () => {
-          this.api.deleteFeeHead(head._id).subscribe({ next: () => this.saved('Fee head deleted.'), error: (error) => this.fail(error) });
+          this.api
+            .deleteFeeHead(head._id)
+            .subscribe({
+              next: () => this.saved('Fee head deleted.'),
+              error: (error) => this.fail(error),
+            });
         },
       });
     }
@@ -1089,6 +1248,7 @@ export class FeeManagementComponent implements OnDestroy {
     this.headCategory = head.category;
     this.headPlacement = 'bottom';
     this.headReferenceId = '';
+    this.headDivideSemesterWise = Boolean(head.divideSemesterWise);
   }
 
   resetHead() {
@@ -1097,21 +1257,30 @@ export class FeeManagementComponent implements OnDestroy {
     this.headCategory = 'fee';
     this.headPlacement = 'bottom';
     this.headReferenceId = '';
+    this.headDivideSemesterWise = false;
   }
 
   saveHostelFee() {
     if (!this.selectedBookId || !this.hostelId || !this.hostelFeeHeadId || !this.hostelAmount)
       return this.error.set('Complete all required hostel-fee fields.');
     this.startSaving();
-    this.api.createHostelFee({
-      bookId: this.selectedBookId,
-      hostelId: this.hostelId,
-      seater: Number(this.hostelSeater),
-      roomType: this.hostelRoomType.trim(),
-      feeHeadId: this.hostelFeeHeadId,
-      frequency: this.hostelFrequency,
-      amount: Number(this.hostelAmount),
-    }).subscribe({ next: () => { this.hostelAmount = null; this.completedCreation('Hostel fee saved successfully.'); }, error: (error) => this.fail(error) });
+    this.api
+      .createHostelFee({
+        bookId: this.selectedBookId,
+        hostelId: this.hostelId,
+        seater: Number(this.hostelSeater),
+        roomType: this.hostelRoomType.trim(),
+        feeHeadId: this.hostelFeeHeadId,
+        frequency: this.hostelFrequency,
+        amount: Number(this.hostelAmount),
+      })
+      .subscribe({
+        next: () => {
+          this.hostelAmount = null;
+          this.completedCreation('Hostel fee saved successfully.');
+        },
+        error: (error) => this.fail(error),
+      });
   }
 
   deleteHostelFee(action: string, fee: HostelFee) {
@@ -1123,7 +1292,12 @@ export class FeeManagementComponent implements OnDestroy {
         confirmLabel: 'Delete fee',
         destructive: true,
         action: () => {
-          this.api.deleteHostelFee(fee._id).subscribe({ next: () => this.saved('Hostel fee deleted.'), error: (error) => this.fail(error) });
+          this.api
+            .deleteHostelFee(fee._id)
+            .subscribe({
+              next: () => this.saved('Hostel fee deleted.'),
+              error: (error) => this.fail(error),
+            });
         },
       });
     }
@@ -1138,7 +1312,9 @@ export class FeeManagementComponent implements OnDestroy {
       !this.courseFeeTypeId ||
       (this.courseRequiresCountry() && !this.courseCountryId)
     )
-      return this.error.set('Select department, level, course, domicile, student type, fee type and required country.');
+      return this.error.set(
+        'Select department, level, course, domicile, student type, fee type and required country.',
+      );
     if (!this.courseFeePeriodType())
       return this.error.set('Selected fee type must represent Yearly or Semester fees.');
     const rows = this.selectedCourseFeeHeadIds()
@@ -1153,24 +1329,28 @@ export class FeeManagementComponent implements OnDestroy {
           .filter((cell) => cell.amount > 0),
       }))
       .filter((row) => row.amounts.length);
-    if (!rows.length) return this.error.set('Select at least one fee head and enter an amount in the matrix.');
-    if (this.courseFeeDraftStatus() === 'saving') return this.error.set('Please wait for the current draft save to finish.');
+    if (!rows.length)
+      return this.error.set('Select at least one fee head and enter an amount in the matrix.');
+    if (this.courseFeeDraftStatus() === 'saving')
+      return this.error.set('Please wait for the current draft save to finish.');
     if (this.courseFeeDraftTimer) clearTimeout(this.courseFeeDraftTimer);
     this.courseFeeDraftDirty = false;
     this.startSaving();
-    this.api.saveCourseFeeMatrix({
-      bookId: this.selectedBookId,
-      courseId: this.courseId,
-      domicileId: this.courseDomicileId,
-      studentTypeId: this.courseStudentTypeId,
-      feeTypeId: this.courseFeeTypeId,
-      countryId: this.courseRequiresCountry() ? this.courseCountryId : null,
-      replaceExisting: true,
-      rows,
-    }).subscribe({
-      next: ({ saved }) => this.completeCourseFeePublish(saved),
-      error: (error) => this.fail(error),
-    });
+    this.api
+      .saveCourseFeeMatrix({
+        bookId: this.selectedBookId,
+        courseId: this.courseId,
+        domicileId: this.courseDomicileId,
+        studentTypeId: this.courseStudentTypeId,
+        feeTypeId: this.courseFeeTypeId,
+        countryId: this.courseRequiresCountry() ? this.courseCountryId : null,
+        replaceExisting: true,
+        rows,
+      })
+      .subscribe({
+        next: ({ saved }) => this.completeCourseFeePublish(saved),
+        error: (error) => this.fail(error),
+      });
   }
 
   private completeCourseFeePublish(saved: number) {
@@ -1178,12 +1358,14 @@ export class FeeManagementComponent implements OnDestroy {
       this.currentCourseFeeDraftId = '';
       this.courseFeeDraftStatus.set('idle');
       this.courseFeeDraftSavedAt.set('');
-      void this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { draft: null },
-        queryParamsHandling: 'merge',
-        replaceUrl: true,
-      }).then(() => this.completedCreation(`${saved} course-fee amount(s) saved successfully.`));
+      void this.router
+        .navigate([], {
+          relativeTo: this.route,
+          queryParams: { draft: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        })
+        .then(() => this.completedCreation(`${saved} course-fee amount(s) saved successfully.`));
     };
     if (!this.currentCourseFeeDraftId) return finish();
     this.api.deleteCourseFeeDraft(this.currentCourseFeeDraftId).subscribe({
@@ -1194,55 +1376,90 @@ export class FeeManagementComponent implements OnDestroy {
 
   previewWorkbook(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file || !this.selectedBookId || !this.importDomicileId || !this.importStudentTypeId || (this.importRequiresCountry() && !this.importCountryId))
-      return this.error.set('Select a fee book, domicile, student type and required country, then choose an .xlsx file.');
+    if (
+      !file ||
+      !this.selectedBookId ||
+      !this.importDomicileId ||
+      !this.importStudentTypeId ||
+      (this.importRequiresCountry() && !this.importCountryId)
+    )
+      return this.error.set(
+        'Select a fee book, domicile, student type and required country, then choose an .xlsx file.',
+      );
     this.startSaving();
-    this.api.previewCourseFeeImport(this.selectedBookId, this.importDomicileId, this.importStudentTypeId, this.importRequiresCountry() ? this.importCountryId : '', file).subscribe({
-      next: ({ preview }) => {
-        this.preview.set(preview);
-        this.sheetMappings = Object.fromEntries(
-          preview.sheets.map((sheet) => [
-            sheet.sheetName,
-            sheet.match.courseId ? [sheet.match.courseId] : [],
-          ]),
-        );
-        this.previewPage = 1;
-        this.previewPageSize = 10;
-        this.previewCourseToAdd = {};
-        this.headMappings = Object.fromEntries(preview.headMappings.map((head) => [head.sourceHead, head.feeHeadId || '']));
-        this.message.set(`Workbook analysed: ${preview.sheets.length} sheets found.`);
-        this.saving.set(false);
-      },
-      error: (error) => this.fail(error),
-    });
+    this.api
+      .previewCourseFeeImport(
+        this.selectedBookId,
+        this.importDomicileId,
+        this.importStudentTypeId,
+        this.importRequiresCountry() ? this.importCountryId : '',
+        file,
+      )
+      .subscribe({
+        next: ({ preview }) => {
+          this.preview.set(preview);
+          this.sheetMappings = Object.fromEntries(
+            preview.sheets.map((sheet) => [
+              sheet.sheetName,
+              sheet.match.courseId ? [sheet.match.courseId] : [],
+            ]),
+          );
+          this.previewPage = 1;
+          this.previewPageSize = 10;
+          this.previewCourseToAdd = {};
+          this.headMappings = Object.fromEntries(
+            preview.headMappings.map((head) => [head.sourceHead, head.feeHeadId || '']),
+          );
+          this.message.set(`Workbook analysed: ${preview.sheets.length} sheets found.`);
+          this.saving.set(false);
+        },
+        error: (error) => this.fail(error),
+      });
   }
 
   commitImport() {
     const preview = this.preview();
     if (!preview) return;
-    const mappedSheets = Object.values(this.sheetMappings).filter((courseIds) => courseIds.length).length;
+    const mappedSheets = Object.values(this.sheetMappings).filter(
+      (courseIds) => courseIds.length,
+    ).length;
     const mappedHeads = Object.values(this.headMappings).filter(Boolean).length;
-    if (!mappedSheets || !mappedHeads) return this.error.set('Map at least one course sheet and one fee head before importing.');
+    if (!mappedSheets || !mappedHeads)
+      return this.error.set('Map at least one course sheet and one fee head before importing.');
     this.startSaving();
-    this.api.commitCourseFeeImport({
-      previewId: preview._id,
-      sheetMappings: preview.sheets.map((sheet) => ({ sheetName: sheet.sheetName, courseIds: this.sheetMappings[sheet.sheetName] || [] })),
-      headMappings: preview.headMappings.map((head) => ({ sourceHead: head.sourceHead, feeHeadId: this.headMappings[head.sourceHead] || null })),
-      replaceExisting: this.replaceExisting,
-    }).subscribe({
-      next: ({ imported, mappedSheets }) => {
-        this.preview.set(null);
-        this.sheetMappings = {};
-        this.headMappings = {};
-        this.message.set(`${imported} fee rows imported from ${mappedSheets} course sheets.`);
-        this.saving.set(false);
-      },
-      error: (error) => this.fail(error),
-    });
+    this.api
+      .commitCourseFeeImport({
+        previewId: preview._id,
+        sheetMappings: preview.sheets.map((sheet) => ({
+          sheetName: sheet.sheetName,
+          courseIds: this.sheetMappings[sheet.sheetName] || [],
+        })),
+        headMappings: preview.headMappings.map((head) => ({
+          sourceHead: head.sourceHead,
+          feeHeadId: this.headMappings[head.sourceHead] || null,
+        })),
+        replaceExisting: this.replaceExisting,
+      })
+      .subscribe({
+        next: ({ imported, mappedSheets }) => {
+          this.preview.set(null);
+          this.sheetMappings = {};
+          this.headMappings = {};
+          this.message.set(`${imported} fee rows imported from ${mappedSheets} course sheets.`);
+          this.saving.set(false);
+        },
+        error: (error) => this.fail(error),
+      });
   }
 
   loadHostelFees() {
-    this.api.hostelFees(this.selectedBookId).subscribe({ next: ({ items }) => { this.hostelFees.set(items); this.loading.set(false); }, error: (error) => this.fail(error) });
+    this.api.hostelFees(this.selectedBookId).subscribe({
+      next: ({ items }) => {
+        this.hostelFees.set(items);
+        this.loading.set(false);
+      },
+      error: (error) => this.fail(error),
+    });
   }
 
   departmentChanged() {
@@ -1319,9 +1536,8 @@ export class FeeManagementComponent implements OnDestroy {
     const value = this.feeMatrixValue(headId, periodKey);
     if (!Number(value)) return;
     const selected = this.selectedCourseFeeHeadIds();
-    const targetHeadIds = selected.length > 1
-      ? selected
-      : this.activeCourseFeeHeads().map((head) => head._id);
+    const targetHeadIds =
+      selected.length > 1 ? selected : this.activeCourseFeeHeads().map((head) => head._id);
     this.feeMatrixAmounts.update((amounts) => {
       const next = { ...amounts };
       for (const targetHeadId of targetHeadIds) {
@@ -1367,8 +1583,14 @@ export class FeeManagementComponent implements OnDestroy {
     const direction = movement[event.key];
     if (!direction) return;
     event.preventDefault();
-    const nextRow = Math.max(0, Math.min(this.activeCourseFeeHeads().length - 1, rowIndex + direction[0]));
-    const nextColumn = Math.max(0, Math.min(this.courseFeePeriods().length - 1, columnIndex + direction[1]));
+    const nextRow = Math.max(
+      0,
+      Math.min(this.activeCourseFeeHeads().length - 1, rowIndex + direction[0]),
+    );
+    const nextColumn = Math.max(
+      0,
+      Math.min(this.courseFeePeriods().length - 1, columnIndex + direction[1]),
+    );
     const table = (event.currentTarget as HTMLElement).closest('table');
     const target = table?.querySelector<HTMLInputElement>(
       `[data-matrix-row="${nextRow}"][data-matrix-column="${nextColumn}"]`,
@@ -1403,7 +1625,9 @@ export class FeeManagementComponent implements OnDestroy {
     if (!Object.keys(updates).length) return;
     event.preventDefault();
     this.feeMatrixAmounts.update((amounts) => ({ ...amounts, ...updates }));
-    this.selectedCourseFeeHeadIds.update((selected) => [...new Set([...selected, ...touchedHeads])]);
+    this.selectedCourseFeeHeadIds.update((selected) => [
+      ...new Set([...selected, ...touchedHeads]),
+    ]);
     this.scheduleCourseFeeDraftSave();
   }
 
@@ -1504,18 +1728,38 @@ export class FeeManagementComponent implements OnDestroy {
   }
 
   loadCourseFeeView() {
-    if (!this.selectedBookId || !this.viewCollegeId || !this.viewDepartmentId || !this.viewLevelId || !this.viewCourseId || !this.viewDomicileId || !this.viewStudentTypeId || (this.viewRequiresCountry() && !this.viewCountryId))
-      return this.error.set('Select the book, college, department, level, course, domicile, student type and required country.');
+    if (
+      !this.selectedBookId ||
+      !this.viewCollegeId ||
+      !this.viewDepartmentId ||
+      !this.viewLevelId ||
+      !this.viewCourseId ||
+      !this.viewDomicileId ||
+      !this.viewStudentTypeId ||
+      (this.viewRequiresCountry() && !this.viewCountryId)
+    )
+      return this.error.set(
+        'Select the book, college, department, level, course, domicile, student type and required country.',
+      );
     this.clearNotices();
     this.loading.set(true);
-    this.api.courseFees(this.selectedBookId, this.viewCourseId, this.viewDomicileId, this.viewStudentTypeId, this.viewRequiresCountry() ? this.viewCountryId : '').subscribe({
-      next: ({ items }) => {
-        this.courseFeeViewRecords.set(items);
-        this.loading.set(false);
-        if (!items.length) this.message.set('No fees are configured for the selected course and book.');
-      },
-      error: (error) => this.fail(error),
-    });
+    this.api
+      .courseFees(
+        this.selectedBookId,
+        this.viewCourseId,
+        this.viewDomicileId,
+        this.viewStudentTypeId,
+        this.viewRequiresCountry() ? this.viewCountryId : '',
+      )
+      .subscribe({
+        next: ({ items }) => {
+          this.courseFeeViewRecords.set(items);
+          this.loading.set(false);
+          if (!items.length)
+            this.message.set('No fees are configured for the selected course and book.');
+        },
+        error: (error) => this.fail(error),
+      });
   }
 
   private saved(message: string) {
@@ -1565,7 +1809,9 @@ export class FeeManagementComponent implements OnDestroy {
   }
 
   private fail(error: { error?: { message?: string }; message?: string }) {
-    this.error.set(error?.error?.message || error?.message || 'The request could not be completed.');
+    this.error.set(
+      error?.error?.message || error?.message || 'The request could not be completed.',
+    );
     this.loading.set(false);
     this.saving.set(false);
   }

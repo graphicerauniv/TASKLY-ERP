@@ -186,6 +186,14 @@
                     max="20"
                     [(ngModel)]="courseTotalSemesters"
                 /></label>
+                <label
+                  ><span>Default current academic year *</span
+                  ><select class="erp-control" [(ngModel)]="courseDefaultAcademicYear">
+                    @for (year of courseYearOptions(); track year) {
+                      <option [ngValue]="year">Year {{ year }}</option>
+                    }
+                  </select></label
+                >
               }
               <button class="erp-button erp-button--primary" type="button" (click)="save()">
                 {{ editingId() ? 'Save changes' : 'Add value' }}

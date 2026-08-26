@@ -38,6 +38,61 @@
   @if (feeError()) {
     <p class="erp-notice erp-notice--error">{{ feeError() }}</p>
   }
+  @if (paymentMessage()) {
+    <p class="erp-notice erp-notice--success">{{ paymentMessage() }}</p>
+  }
+
+  <section class="erp-card erp-card--padded">
+    <div class="erp-card__header">
+      <div>
+        <span class="erp-page-header__eyebrow">Online payment</span>
+        <h2>Pay your fee</h2>
+        @if (totalOutstanding() > 0) {
+          <p>
+            Your payment is applied to penalties first and then to fee heads in the configured
+            accounts order.
+          </p>
+        } @else {
+          <p>You currently have no outstanding fee available for online payment.</p>
+        }
+      </div>
+      @if (totalOutstanding() > 0) {
+        <div>
+          <strong>{{ totalOutstanding() | currency: 'INR' }}</strong>
+          <p>Total outstanding</p>
+        </div>
+      }
+    </div>
+    @if (totalOutstanding() > 0) {
+      @if (razorpayEnabled()) {
+        <div class="erp-table-toolbar__actions">
+          <label
+            ><span>Custom payment amount</span
+            ><input
+              class="erp-control"
+              type="number"
+              min="1"
+              [max]="totalOutstanding()"
+              [(ngModel)]="paymentAmount" /></label
+          ><button
+            class="erp-button erp-button--primary"
+            type="button"
+            [disabled]="paying()"
+            (click)="pay()"
+          >
+            {{ paying() ? 'Opening Razorpay…' : 'Pay securely' }}
+          </button>
+        </div>
+      } @else {
+        <p class="erp-notice">
+          Online payment is unavailable because Razorpay API keys have not been configured by the
+          administrator.
+        </p>
+      }
+    } @else {
+      <p class="erp-notice erp-notice--success">No payment is currently due.</p>
+    }
+  </section>
 
   @if (loadingFees()) {
     <section class="erp-card erp-card--padded erp-empty-state">Loading your fees…</section>
@@ -48,7 +103,7 @@
           <span class="erp-page-header__eyebrow">
             {{ fee.academicSession }}
             @if (fee.kind === 'academic') {
-              · Year {{ fee.currentAcademicYear }}
+              · {{ fee.periodLabel || 'Year ' + fee.currentAcademicYear }}
             }
           </span>
           <h2>{{ fee.name }}</h2>
@@ -82,6 +137,9 @@
                   @if (entry.category === 'discount') {
                     <small>Discount</small>
                   }
+                  @if (entry.feeHeadId === 'penalty') {
+                    <small>Daily late-payment charge</small>
+                  }
                 </td>
                 <td>{{ entry.periodLabel }}</td>
                 <td>{{ entry.dueDate | date: 'mediumDate' }}</td>
@@ -99,6 +157,9 @@
         <span>Discounts {{ fee.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
         <strong>Total {{ fee.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
         <span>Paid {{ fee.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
+        @if (fee.penaltyAmount) {
+          <span>Penalty {{ fee.penaltyAmount | currency: 'INR' }}</span>
+        }
       </div>
     </section>
   } @else {
@@ -108,4 +169,59 @@
       <p>Not enrolled in this section.</p>
     </section>
   }
+
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>
+          Payment receipts <small>{{ payments().length }}</small>
+        </h2>
+        <p>Download receipts for verified successful payments.</p>
+      </div>
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Receipt</th>
+            <th>Payment ID</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (payment of payments(); track payment._id) {
+            <tr>
+              <td>
+                <strong>{{ payment.receiptNumber || 'Pending' }}</strong>
+              </td>
+              <td>{{ payment.razorpayPaymentId || payment.razorpayOrderId }}</td>
+              <td>{{ payment.amount | currency: 'INR' }}</td>
+              <td>{{ payment.paidAt || payment.createdAt | date: 'medium' }}</td>
+              <td>
+                <span class="erp-status">{{ payment.status }}</span>
+              </td>
+              <td>
+                @if (payment.status === 'paid') {
+                  <button
+                    class="erp-button erp-button--secondary"
+                    type="button"
+                    (click)="receipt(payment)"
+                  >
+                    Download
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="erp-empty-state">No payments made yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>

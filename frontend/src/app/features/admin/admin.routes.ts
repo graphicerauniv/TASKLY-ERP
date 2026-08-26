@@ -8,6 +8,8 @@ import { AdminShellComponent } from './layout/admin-shell.component';
 import { MasterDataComponent } from './master-data/master-data.component';
 import { HostelManagementComponent } from './hostel-management/hostel-management.component';
 import { FeeManagementComponent } from './fee-management/fee-management.component';
+import { FeeProgressionComponent } from './fee-progression/fee-progression.component';
+import { AccountsComponent } from './accounts/accounts.component';
 
 /**
  * Admin routes share one shell and one router outlet.
@@ -58,6 +60,8 @@ export const ADMIN_ROUTES: Routes = [
         pathMatch: 'full',
         redirectTo: 'fees/books/create',
       },
+      { path: 'fees/progression', component: FeeProgressionComponent },
+      { path: 'accounts', component: AccountsComponent },
       ...[
         ['books/create', 'books', 'create'],
         ['books/view', 'books', 'view'],

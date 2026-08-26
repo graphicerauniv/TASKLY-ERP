@@ -87,6 +87,7 @@ export class MasterDataComponent {
   courseCode = '';
   courseDurationYears = 4;
   courseTotalSemesters = 8;
+  courseDefaultAcademicYear = 1;
   selectedDependencies: Record<string, string> = {};
   search = '';
   customName = '';
@@ -187,6 +188,7 @@ export class MasterDataComponent {
     this.courseCode = '';
     this.courseDurationYears = 4;
     this.courseTotalSemesters = 8;
+    this.courseDefaultAcademicYear = 1;
     this.selectedDependencies = {};
   }
   dependencySlugs(): string[] {
@@ -209,6 +211,12 @@ export class MasterDataComponent {
     const chain = this.dependencySlugs();
     for (let next = index + 1; next < chain.length; next += 1)
       this.selectedDependencies[chain[next]] = '';
+  }
+  courseYearOptions() {
+    return Array.from(
+      { length: Math.max(1, Number(this.courseDurationYears) || 1) },
+      (_, index) => index + 1,
+    );
   }
   parentPath(item: MasterValue): string {
     const chain = this.dependencySlugs();
@@ -311,6 +319,10 @@ export class MasterDataComponent {
       totalSemesters:
         Number(this.courseTotalSemesters) ||
         Math.max(2, (Number(this.courseDurationYears) || 1) * 2),
+      defaultAcademicYear: Math.min(
+        Number(this.courseDurationYears) || 1,
+        Math.max(1, Number(this.courseDefaultAcademicYear) || 1),
+      ),
     };
   }
   private applyCourseMetadata(item: MasterValue) {
@@ -319,6 +331,7 @@ export class MasterDataComponent {
     this.courseExamPattern = metadata['examPattern'] === 'year' ? 'year' : 'semester';
     this.courseDurationYears = Number(metadata['durationYears'] || 4);
     this.courseTotalSemesters = Number(metadata['totalSemesters'] || this.courseDurationYears * 2);
+    this.courseDefaultAcademicYear = Number(metadata['defaultAcademicYear'] || 1);
   }
   private syncEditRoute(items: MasterValue[]) {
     const id = this.editId();

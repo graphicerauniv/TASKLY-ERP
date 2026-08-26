@@ -22,6 +22,8 @@ import {
   FeeHead,
   FeeImportPreview,
   HostelFee,
+  FeePayment,
+  FeeProgressionCandidate,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -106,6 +108,8 @@ export class ApiService {
     return this.http.patch<{ item: Admission }>(`${API_BASE_URL}/admissions/${admission._id}`, {
       currentSectionId: admission.currentSectionId,
       currentAcademicYear: admission.currentAcademicYear,
+      currentSemester: admission.currentSemester,
+      feeFrequency: admission.feeFrequency,
       responses: admission.responses,
       repeatableResponses: admission.repeatableResponses,
     });
@@ -119,13 +123,22 @@ export class ApiService {
       passwordMode: 'student-id' | 'manual';
       password?: string;
       currentAcademicYear: number;
+      currentSemester?: number;
+      feeFrequency?: 'year' | 'semester';
     },
   ) {
     return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/approve`, body);
   }
-  setAdmissionAcademicYear(id: string, currentAcademicYear: number) {
+  setAdmissionFeePeriod(
+    id: string,
+    body: {
+      currentAcademicYear?: number;
+      currentSemester?: number;
+      feeFrequency?: 'year' | 'semester';
+    },
+  ) {
     return this.http.patch<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}`, {
-      currentAcademicYear,
+      ...body,
     });
   }
   resetStudentPassword(
@@ -152,6 +165,39 @@ export class ApiService {
       headers: { Authorization: `Bearer ${token}` },
     });
   }
+  studentPaymentHistory(token: string) {
+    return this.http.get<{ items: FeePayment[]; razorpayEnabled: boolean }>(
+      `${API_BASE_URL}/payments/student/history`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  createStudentPaymentOrder(token: string, amount: number) {
+    return this.http.post<{
+      keyId: string;
+      orderId: string;
+      amountPaise: number;
+      currency: string;
+      student: { name: string; studentId: string };
+    }>(
+      `${API_BASE_URL}/payments/student/orders`,
+      { amount },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  verifyStudentPayment(
+    token: string,
+    body: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string },
+  ) {
+    return this.http.post<{ item: FeePayment }>(`${API_BASE_URL}/payments/student/verify`, body, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+  downloadStudentReceipt(token: string, paymentId: string) {
+    return this.http.get(`${API_BASE_URL}/payments/student/receipt/${paymentId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'blob',
+    });
+  }
   generateStudentFees(studentAdmissionIds: string[]) {
     return this.http.post<{
       created: number;
@@ -166,6 +212,42 @@ export class ApiService {
         reason?: string;
       }>;
     }>(`${API_BASE_URL}/fees/student-ledgers/generate`, { studentAdmissionIds });
+  }
+  feeProgressionCandidates(mode: 'semester' | 'year') {
+    return this.http.get<{ items: FeeProgressionCandidate[] }>(
+      `${API_BASE_URL}/fees/student-ledgers/progression-candidates`,
+      { params: { mode } },
+    );
+  }
+  progressStudentFees(body: {
+    mode: 'semester' | 'year';
+    studentAdmissionIds: string[];
+    penalty: { enabled: boolean; dueDate?: string; dailyAmount?: number; maxAmount?: number };
+  }) {
+    return this.http.post<{
+      created: number;
+      studentsProcessed: number;
+      results: Array<{
+        studentName?: string;
+        createdKinds: string[];
+        reason?: string;
+        skippedKinds: Array<{ reason: string }>;
+      }>;
+    }>(`${API_BASE_URL}/fees/student-ledgers/progress`, body);
+  }
+  accounts(search = '', status = '') {
+    let params = new HttpParams();
+    if (search) params = params.set('search', search);
+    if (status) params = params.set('status', status);
+    return this.http.get<{
+      items: FeePayment[];
+      summary: { successfulPayments: number; collectedAmount: number; pendingPayments: number };
+    }>(`${API_BASE_URL}/payments/admin/accounts`, { params });
+  }
+  downloadAdminReceipt(paymentId: string) {
+    return this.http.get(`${API_BASE_URL}/payments/admin/accounts/${paymentId}/receipt`, {
+      responseType: 'blob',
+    });
   }
   deleteStudentFees(studentAdmissionId: string) {
     return this.http.delete<{ deleted: number }>(
@@ -411,6 +493,7 @@ export class ApiService {
     category: FeeHead['category'];
     placement?: string;
     referenceHeadId?: string;
+    divideSemesterWise?: boolean;
   }) {
     return this.http.post<{ item: FeeHead }>(`${API_BASE_URL}/fees/heads`, body);
   }

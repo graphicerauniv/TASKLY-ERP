@@ -71,7 +71,14 @@ export class AdmissionsComponent {
   manualPassword = '';
   confirmPassword = '';
   currentAcademicYear = 1;
+  currentSemester = 1;
+  approvalFeeFrequency: 'year' | 'semester' = 'year';
   readonly academicYearOptions = Array.from({ length: 10 }, (_, index) => index + 1);
+  readonly semesterOptions = Array.from({ length: 20 }, (_, index) => index + 1);
+
+  yearForSemester(value: number | string) {
+    return Math.ceil(Number(value) / 2);
+  }
 
   constructor() {
     this.route.data.subscribe((data) => {
@@ -178,17 +185,24 @@ export class AdmissionsComponent {
     this.createFees([...this.selectedStudentIds()]);
   }
 
-  setAcademicYear(item: Admission, value: number | string) {
-    const currentAcademicYear = Number(value);
-    if (!Number.isInteger(currentAcademicYear) || this.feeSaving()) return;
+  setFeePeriod(
+    item: Admission,
+    changes: {
+      currentAcademicYear?: number;
+      currentSemester?: number;
+      feeFrequency?: 'year' | 'semester';
+    },
+  ) {
+    if (this.feeSaving()) return;
     this.feeSaving.set(true);
     this.error.set('');
-    this.api.setAdmissionAcademicYear(item._id, currentAcademicYear).subscribe({
-      next: () => {
-        item.currentAcademicYear = currentAcademicYear;
+    this.api.setAdmissionFeePeriod(item._id, changes).subscribe({
+      next: ({ item: updated }) => {
+        item.currentAcademicYear = updated.currentAcademicYear;
+        item.currentSemester = updated.currentSemester;
+        item.feeFrequency = updated.feeFrequency;
         this.items.update((items) => [...items]);
         this.feeSaving.set(false);
-        this.createFees([item._id]);
       },
       error: (error) => {
         this.error.set(error.error?.message || 'Could not update the current academic year.');
@@ -269,6 +283,8 @@ export class AdmissionsComponent {
     this.manualPassword = '';
     this.confirmPassword = '';
     this.currentAcademicYear = item.currentAcademicYear || 1;
+    this.currentSemester = item.currentSemester || this.currentAcademicYear * 2 - 1;
+    this.approvalFeeFrequency = item.feeFrequency || 'year';
     this.error.set('');
   }
 
@@ -296,7 +312,12 @@ export class AdmissionsComponent {
       this.credentialAction() === 'approve'
         ? this.api.approveAdmission(item._id, {
             ...passwordBody,
-            currentAcademicYear: this.currentAcademicYear,
+            currentAcademicYear:
+              this.approvalFeeFrequency === 'semester'
+                ? this.yearForSemester(this.currentSemester)
+                : this.currentAcademicYear,
+            currentSemester: this.currentSemester,
+            feeFrequency: this.approvalFeeFrequency,
           })
         : this.api.resetStudentPassword(item._id, passwordBody);
     request.subscribe({
