@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
+import { ERP_PAGINATION } from '../../../core/config/data-view.constants';
 import { Admission, FormField, FormSubsection } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 import {
@@ -10,20 +12,88 @@ import {
 
 @Component({
   selector: 'erp-admissions',
-  imports: [AdminPageComponent, CompactActionMenuComponent, RouterLink],
+  imports: [AdminPageComponent, CompactActionMenuComponent, FormsModule, RouterLink],
   templateUrl: './admissions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdmissionsComponent {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly items = signal<Admission[]>([]);
   readonly selected = signal<Admission | null>(null);
   readonly masterLabels = signal<Record<string, string>>({});
+  readonly loading = signal(false);
   readonly loadingDetails = signal(false);
-  readonly rowActions: CompactActionItem[] = [{ id: 'view', label: 'View details', icon: 'view' }];
+  readonly message = signal('');
+  readonly error = signal('');
+  readonly pageSizeOptions = ERP_PAGINATION.pageSizeOptions;
+  readonly status = signal<'draft' | 'pending_approval' | 'approved'>('approved');
+  readonly title = signal('Approved Students');
+  readonly description = signal('Students whose admission records have been approved.');
+  readonly total = signal(0);
+  readonly pages = signal(1);
+  readonly viewActions: CompactActionItem[] = [{ id: 'view', label: 'View details', icon: 'view' }];
+  readonly draftActions: CompactActionItem[] = [
+    { id: 'edit', label: 'Edit admission', icon: 'edit' },
+    { id: 'view', label: 'View details', icon: 'view' },
+  ];
+  readonly pendingActions: CompactActionItem[] = [
+    { id: 'approve', label: 'Approve student', icon: 'check' },
+    { id: 'view', label: 'View details', icon: 'view' },
+  ];
+  search = '';
+  page = 1;
+  pageSize = 25;
 
   constructor() {
-    this.api.admissions().subscribe(({ items }) => this.items.set(items));
+    this.route.data.subscribe((data) => {
+      this.status.set(data['status'] || 'approved');
+      this.title.set(data['title'] || 'Approved Students');
+      this.description.set(data['description'] || 'Student admission records.');
+      this.page = 1;
+      this.load();
+    });
+  }
+
+  load() {
+    this.loading.set(true);
+    this.error.set('');
+    this.api
+      .admissions({
+        status: this.status(),
+        search: this.search.trim(),
+        page: this.page,
+        limit: this.pageSize,
+      })
+      .subscribe({
+        next: ({ items, pagination }) => {
+          this.items.set(items);
+          this.total.set(pagination.total);
+          this.pages.set(Math.max(1, pagination.pages));
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.error.set(error.error?.message || 'Could not load student records.');
+          this.loading.set(false);
+        },
+      });
+  }
+
+  searchRecords() {
+    this.page = 1;
+    this.load();
+  }
+
+  changePage(nextPage: number) {
+    if (nextPage < 1 || nextPage > this.pages()) return;
+    this.page = nextPage;
+    this.load();
+  }
+
+  changePageSize() {
+    this.page = 1;
+    this.load();
   }
 
   view(item: Admission) {
@@ -38,27 +108,51 @@ export class AdmissionsComponent {
     });
   }
 
-  handleRowAction(action: string, item: Admission) {
-    if (action === 'view') this.view(item);
+  actionsFor(item: Admission) {
+    if (item.status === 'draft') return this.draftActions;
+    if (item.status === 'pending_approval' || item.status === 'submitted')
+      return this.pendingActions;
+    return this.viewActions;
   }
 
-  displayStatus(item: Admission) {
-    return item.status?.trim() || 'draft';
+  handleRowAction(action: string, item: Admission) {
+    if (action === 'view') this.view(item);
+    if (action === 'edit') void this.router.navigate(['/admin/admissions', item._id, 'edit']);
+    if (action === 'approve') this.approve(item);
+  }
+
+  approve(item: Admission) {
+    this.error.set('');
+    this.api.approveAdmission(item._id).subscribe({
+      next: () => {
+        this.message.set(
+          `${item.studentName || item.studentId || 'Student'} approved successfully.`,
+        );
+        this.load();
+      },
+      error: (error) => this.error.set(error.error?.message || 'Could not approve this student.'),
+    });
   }
 
   displayStatusLabel(item: Admission) {
-    const status = this.displayStatus(item);
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    return (
+      {
+        draft: 'Unfilled',
+        submitted: 'Not approved',
+        pending_approval: 'Not approved',
+        approved: 'Approved',
+      }[item.status] || item.status
+    );
   }
 
   createdLabel(item: Admission) {
-    if (!item.createdAt) return 'Date unavailable';
     const createdAt = new Date(item.createdAt);
-    if (Number.isNaN(createdAt.getTime())) return 'Date unavailable';
-    return new Intl.DateTimeFormat('en-IN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(createdAt);
+    return Number.isNaN(createdAt.getTime())
+      ? 'Date unavailable'
+      : new Intl.DateTimeFormat('en-IN', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(createdAt);
   }
 
   close() {

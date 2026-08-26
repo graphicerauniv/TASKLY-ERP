@@ -10,7 +10,9 @@ dashboardRouter.get(
       db().collection('masterValues').countDocuments(),
       db().collection('forms').countDocuments(),
       db().collection('admissions').countDocuments({ status: 'draft' }),
-      db().collection('admissions').countDocuments({ status: 'submitted' }),
+      db()
+        .collection('admissions')
+        .countDocuments({ status: { $in: ['pending_approval', 'approved'] } }),
     ]);
     response.json({ masterValues, forms, drafts, submitted });
   }),

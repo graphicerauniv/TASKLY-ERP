@@ -9,6 +9,7 @@ import { activeForm } from '../services/form-definition.js';
 import { validateSubmission } from '../services/admission-validation.js';
 import { storeObject } from '../services/object-storage.js';
 import { allowedMimeTypes, extensionForMimeType } from '../services/upload-rules.js';
+import { syncAdmissionIdentity } from '../services/admission-identity.js';
 
 export const publicRouter = express.Router();
 const upload = multer({
@@ -66,6 +67,7 @@ publicRouter.post(
       formVersion: form.version,
       formSnapshot: activeForm(form),
       status: 'draft',
+      hasSavedData: false,
       currentSectionId: form.sections.find((s) => s.isActive)?.id || null,
       responses: {},
       repeatableResponses: {},
@@ -92,9 +94,9 @@ publicRouter.patch(
   '/admissions/:admissionId',
   admissionAccess,
   asyncHandler(async (request, response) => {
-    if (request.admission.status === 'submitted')
+    if (request.admission.status !== 'draft')
       return response.status(409).json({ message: 'A submitted application cannot be changed.' });
-    const update = { updatedAt: new Date() };
+    const update = { hasSavedData: true, updatedAt: new Date() };
     if (request.body.currentSectionId !== undefined) {
       const requestedSectionId = String(request.body.currentSectionId || '');
       update.currentSectionId = request.admission.formSnapshot.sections.some(
@@ -115,13 +117,15 @@ publicRouter.patch(
       !Array.isArray(request.body.repeatableResponses)
     )
       update.repeatableResponses = request.body.repeatableResponses;
-    const item = await db()
+    let item = await db()
       .collection('admissions')
       .findOneAndUpdate(
         { _id: request.admission._id },
         { $set: update },
         { returnDocument: 'after' },
       );
+    await syncAdmissionIdentity(db(), item, item.responses || {});
+    item = await db().collection('admissions').findOne({ _id: item._id });
     response.json({ item: admissionForStudent(item) });
   }),
 );
@@ -131,6 +135,8 @@ publicRouter.post(
   admissionAccess,
   upload.single('file'),
   asyncHandler(async (request, response) => {
+    if (request.admission.status !== 'draft')
+      return response.status(409).json({ message: 'A submitted application cannot be changed.' });
     if (!request.file) return response.status(400).json({ message: 'Choose a file to upload.' });
     const field = findField(request.admission.formSnapshot, request.body.fieldId);
     if (!field || !['file', 'image', 'signature'].includes(field.type))
@@ -169,7 +175,7 @@ publicRouter.post(
   '/admissions/:admissionId/submit',
   admissionAccess,
   asyncHandler(async (request, response) => {
-    if (request.admission.status === 'submitted')
+    if (request.admission.status === 'pending_approval' || request.admission.status === 'approved')
       return response.json({ item: admissionForStudent(request.admission) });
     const errors = validateSubmission(
       request.admission.formSnapshot,
@@ -180,11 +186,26 @@ publicRouter.post(
       return response
         .status(422)
         .json({ message: 'Complete all required fields before submitting.', errors });
+    const identity = await syncAdmissionIdentity(
+      db(),
+      request.admission,
+      request.admission.responses || {},
+    );
+    if (identity.academicSessionId && identity.courseId && !identity.studentId)
+      return response.status(422).json({
+        message: 'A Student ID could not be generated. Check the session year and course code.',
+      });
     const item = await db()
       .collection('admissions')
       .findOneAndUpdate(
         { _id: request.admission._id },
-        { $set: { status: 'submitted', submittedAt: new Date(), updatedAt: new Date() } },
+        {
+          $set: {
+            status: 'pending_approval',
+            submittedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
         { returnDocument: 'after' },
       );
     response.json({ item: admissionForStudent(item) });

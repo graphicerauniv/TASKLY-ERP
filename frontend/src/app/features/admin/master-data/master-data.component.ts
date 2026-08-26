@@ -39,7 +39,13 @@ interface ConfirmDialogState {
 
 @Component({
   selector: 'erp-master-data',
-  imports: [AdminPageComponent, CompactActionMenuComponent, ConfirmDialogComponent, FormsModule, RouterLink],
+  imports: [
+    AdminPageComponent,
+    CompactActionMenuComponent,
+    ConfirmDialogComponent,
+    FormsModule,
+    RouterLink,
+  ],
   templateUrl: './master-data.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -78,6 +84,7 @@ export class MasterDataComponent {
   ];
   name = '';
   courseExamPattern: 'year' | 'semester' = 'semester';
+  courseCode = '';
   courseDurationYears = 4;
   courseTotalSemesters = 8;
   selectedDependencies: Record<string, string> = {};
@@ -91,7 +98,8 @@ export class MasterDataComponent {
   readonly isCourseMaster = computed(() => this.slug() === 'course');
   readonly pageTitle = computed(() => {
     const type = this.currentType()?.name || this.titleFromSlug(this.slug());
-    if (this.slug() === 'custom') return this.isCreatePage() ? 'Create Custom Master' : 'Custom Masters';
+    if (this.slug() === 'custom')
+      return this.isCreatePage() ? 'Create Custom Master' : 'Custom Masters';
     if (this.editId()) return `Edit ${type}`;
     return this.isCreatePage() ? `Create ${type}` : type;
   });
@@ -136,13 +144,21 @@ export class MasterDataComponent {
   }
   save() {
     if (!this.name.trim()) return;
+    if (this.isCourseMaster() && !/^[A-Za-z0-9]{2,12}$/.test(this.courseCode.trim())) {
+      this.error.set('Enter a course code containing 2 to 12 letters or numbers.');
+      return;
+    }
     const dependencies = this.dependencySlugs();
     if (dependencies.some((slug) => !this.selectedDependencies[slug])) {
       this.error.set('Select every required dependency before saving.');
       return;
     }
     const parentId = dependencies.length ? this.selectedDependencies[dependencies.at(-1)!] : null;
-    const body = { name: this.name, parentId, metadata: this.isCourseMaster() ? this.courseMetadata() : {} };
+    const body = {
+      name: this.name,
+      parentId,
+      metadata: this.isCourseMaster() ? this.courseMetadata() : {},
+    };
     const request = this.editingId()
       ? this.api.updateMasterValue(this.slug(), this.editingId()!, body)
       : this.api.createMasterValue(this.slug(), body);
@@ -168,6 +184,7 @@ export class MasterDataComponent {
     this.editingValue = null;
     this.name = '';
     this.courseExamPattern = 'semester';
+    this.courseCode = '';
     this.courseDurationYears = 4;
     this.courseTotalSemesters = 8;
     this.selectedDependencies = {};
@@ -213,7 +230,8 @@ export class MasterDataComponent {
       .subscribe(() => this.loadValues());
   }
   handleRowAction(action: string, item: MasterValue) {
-    if (action === 'edit' || action === 'configure') void this.router.navigate(['/admin/master-data', this.slug(), item._id, 'edit']);
+    if (action === 'edit' || action === 'configure')
+      void this.router.navigate(['/admin/master-data', this.slug(), item._id, 'edit']);
     if (action === 'delete') this.remove(item);
   }
   requestConfirmation(options: ConfirmDialogState) {
@@ -287,13 +305,17 @@ export class MasterDataComponent {
   }
   private courseMetadata() {
     return {
+      courseCode: this.courseCode.trim().toUpperCase(),
       examPattern: this.courseExamPattern,
       durationYears: Number(this.courseDurationYears) || 1,
-      totalSemesters: Number(this.courseTotalSemesters) || Math.max(2, (Number(this.courseDurationYears) || 1) * 2),
+      totalSemesters:
+        Number(this.courseTotalSemesters) ||
+        Math.max(2, (Number(this.courseDurationYears) || 1) * 2),
     };
   }
   private applyCourseMetadata(item: MasterValue) {
     const metadata = item.metadata || {};
+    this.courseCode = String(metadata['courseCode'] || '');
     this.courseExamPattern = metadata['examPattern'] === 'year' ? 'year' : 'semester';
     this.courseDurationYears = Number(metadata['durationYears'] || 4);
     this.courseTotalSemesters = Number(metadata['totalSemesters'] || this.courseDurationYears * 2);

@@ -56,6 +56,10 @@ async function ensureIndexes(databaseInstance) {
       .collection('admissions')
       .createIndex({ applicationNumber: 1 }, { unique: true }),
     databaseInstance.collection('admissions').createIndex({ formId: 1, createdAt: -1 }),
+    databaseInstance
+      .collection('admissions')
+      .createIndex({ studentId: 1 }, { unique: true, sparse: true }),
+    databaseInstance.collection('admissions').createIndex({ status: 1, updatedAt: -1 }),
     databaseInstance.collection('hostels').createIndex({ code: 1 }, { unique: true }),
     databaseInstance.collection('hostels').createIndex({ name: 1 }),
     databaseInstance
@@ -83,18 +87,23 @@ async function ensureIndexes(databaseInstance) {
         { unique: true, partialFilterExpression: { status: 'active' } },
       ),
     databaseInstance.collection('feeBooks').createIndex({ code: 1 }, { unique: true }),
-    databaseInstance.collection('feeHeads').createIndex(
-      { bookId: 1, normalizedName: 1 },
-      { unique: true },
-    ),
-    databaseInstance.collection('hostelFees').createIndex(
-      { bookId: 1, hostelId: 1, seater: 1, roomType: 1, feeHeadId: 1, frequency: 1 },
-      { unique: true },
-    ),
+    databaseInstance
+      .collection('feeHeads')
+      .createIndex({ bookId: 1, normalizedName: 1 }, { unique: true }),
+    databaseInstance
+      .collection('hostelFees')
+      .createIndex(
+        { bookId: 1, hostelId: 1, seater: 1, roomType: 1, feeHeadId: 1, frequency: 1 },
+        { unique: true },
+      ),
     databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1 }),
-    databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),
+    databaseInstance
+      .collection('courseFees')
+      .createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),
     databaseInstance.collection('courseFees').createIndex({ importPreviewId: 1 }),
-    databaseInstance.collection('feeImportPreviews').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    databaseInstance
+      .collection('feeImportPreviews')
+      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]);
 }
 

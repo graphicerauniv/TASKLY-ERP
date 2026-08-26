@@ -1,4 +1,9 @@
-<erp-admin-page eyebrow="Hostel" [title]="pageTitle()" [description]="pageDescription()" variant="compact">
+<erp-admin-page
+  eyebrow="Hostel"
+  [title]="pageTitle()"
+  [description]="pageDescription()"
+  variant="compact"
+>
   <div page-actions class="hostel-page-actions">
     <button
       class="erp-icon-button"
@@ -599,9 +604,7 @@
       </section>
     }
 
-    @if (
-      section() === 'capacity' && academicSession && locationReady() && locationRooms().length
-    ) {
+    @if (section() === 'capacity' && academicSession && locationReady() && locationRooms().length) {
       <section class="erp-card hostel-capacity-progress hostel-section-gap">
         <div>
           <span>Room capacity setup</span>
@@ -651,7 +654,9 @@
         <span class="erp-empty-panel__icon">
           <svg lucideMapPin size="24" aria-hidden="true"></svg>
         </span>
-        <h2>{{ section() === 'capacity' ? 'Select hostel location' : 'Select a room location' }}</h2>
+        <h2>
+          {{ section() === 'capacity' ? 'Select hostel location' : 'Select a room location' }}
+        </h2>
         <p>Choose a hostel, block and floor to view or create rooms.</p>
       </section>
     } @else if (loading()) {
@@ -709,7 +714,7 @@
             [queryParams]="{
               hostel: selectedHostelId,
               block: selectedBlockId,
-              floor: selectedFloorId
+              floor: selectedFloorId,
             }"
           >
             Go to Rooms
@@ -745,17 +750,20 @@
             <tbody>
               @for (room of visibleRooms(); track room._id) {
                 <tr>
-                  <td><strong>{{ room.roomNumber }}</strong></td>
-                  <td><strong>{{ room.blockName }}</strong><small>{{ room.floorName }}</small></td>
+                  <td>
+                    <strong>{{ room.roomNumber }}</strong>
+                  </td>
+                  <td>
+                    <strong>{{ room.blockName }}</strong
+                    ><small>{{ room.floorName }}</small>
+                  </td>
                   <td>{{ room.configuredForSession ? room.roomType : '—' }}</td>
                   <td>
                     {{ room.configuredForSession ? room.capacity + ' seater' : '—' }}
                   </td>
                   @if (section() === 'capacity') {
                     <td>{{ academicSession }}</td>
-                    <td>
-                      {{ room.occupiedBeds.length }} / {{ room.capacity || 0 }} occupied
-                    </td>
+                    <td>{{ room.occupiedBeds.length }} / {{ room.capacity || 0 }} occupied</td>
                   }
                   <td>
                     <span
@@ -877,100 +885,144 @@
       </section>
     } @else if (allocationLoadFailed()) {
       <section class="erp-card erp-empty-panel hostel-section-gap" role="alert">
-        <span class="erp-empty-panel__icon"><svg lucideRefreshCw size="24" aria-hidden="true"></svg></span>
+        <span class="erp-empty-panel__icon"
+          ><svg lucideRefreshCw size="24" aria-hidden="true"></svg
+        ></span>
         <h2>Allocations could not be loaded</h2>
         <p>{{ error() || 'Check your connection and try again.' }}</p>
-        <button class="erp-button erp-button--secondary" type="button" (click)="loadAllocations()">Retry</button>
+        <button class="erp-button erp-button--secondary" type="button" (click)="loadAllocations()">
+          Retry
+        </button>
       </section>
     } @else if (!allocations().length) {
       <section class="erp-card erp-empty-panel hostel-section-gap">
-        <span class="erp-empty-panel__icon"><svg lucideBedDouble size="24" aria-hidden="true"></svg></span>
+        <span class="erp-empty-panel__icon"
+          ><svg lucideBedDouble size="24" aria-hidden="true"></svg
+        ></span>
         <h2>No {{ allocationStatusFilter === 'active' ? 'active hostel ' : '' }}allocations</h2>
         <p>Allocate a configured room and available bed to an eligible student.</p>
-        <button class="erp-button erp-button--primary" type="button" (click)="openAllocationDrawer()">
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          (click)="openAllocationDrawer()"
+        >
           <svg lucideUserRoundPlus size="17" aria-hidden="true"></svg><span>Allocate student</span>
         </button>
       </section>
     } @else if (!visibleAllocations().length) {
       <section class="erp-card erp-empty-panel hostel-section-gap">
-        <span class="erp-empty-panel__icon"><svg lucideSearch size="24" aria-hidden="true"></svg></span>
+        <span class="erp-empty-panel__icon"
+          ><svg lucideSearch size="24" aria-hidden="true"></svg
+        ></span>
         <h2>No matching allocations</h2>
         <p>Adjust your search or browse filters.</p>
-        <button class="erp-button erp-button--secondary" type="button" (click)="clearAllocationFilters()">Clear filters</button>
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="clearAllocationFilters()"
+        >
+          Clear filters
+        </button>
       </section>
     } @else {
-    <section class="erp-card erp-table-shell hostel-allocation-directory hostel-section-gap">
-      <div class="erp-table-toolbar">
-        <h2>
-          {{ allocationStatusFilter === 'active' ? 'Active allocations' : 'Allocation directory' }}
-          <small>{{ visibleAllocations().length }}</small>
-        </h2>
-      </div>
-      <div class="erp-table-shell__scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Session</th>
-              <th>Hostel</th>
-              <th>Room / Bed</th>
-              <th>Allocated</th>
-              <th>Status</th>
-              <th class="erp-table-shell__actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (allocation of visibleAllocations(); track allocation._id) {
+      <section class="erp-card erp-table-shell hostel-allocation-directory hostel-section-gap">
+        <div class="erp-table-toolbar">
+          <h2>
+            {{
+              allocationStatusFilter === 'active' ? 'Active allocations' : 'Allocation directory'
+            }}
+            <small>{{ visibleAllocations().length }}</small>
+          </h2>
+        </div>
+        <div class="erp-table-shell__scroll">
+          <table>
+            <thead>
               <tr>
-                <td>
-                  <strong>{{ allocation.studentName }}</strong
-                  ><small>{{ allocation.studentApplicationNumber }}</small>
-                </td>
-                <td>{{ allocation.academicSession }}</td>
-                <td>
-                  {{ allocation.hostelName
-                  }}<small>{{ allocation.blockName }} · {{ allocation.floorName }}</small>
-                </td>
-                <td><strong>{{ allocation.roomNumber }}</strong><small>Bed {{ allocation.bedNumber }}</small></td>
-                <td>{{ allocation.allocatedAt | date: 'mediumDate' }}</td>
-                <td>
-                  <span class="erp-status" [class.erp-status--neutral]="allocation.status !== 'active'">
-                    {{ allocation.status === 'active' ? 'Active' : 'Vacated' }}
-                  </span>
-                </td>
-                <td class="erp-table-shell__actions">
-                  <erp-compact-action-menu
-                    [items]="allocationActions(allocation)"
-                    (selected)="handleAllocationAction($event, allocation)"
-                  />
-                </td>
+                <th>Student</th>
+                <th>Session</th>
+                <th>Hostel</th>
+                <th>Room / Bed</th>
+                <th>Allocated</th>
+                <th>Status</th>
+                <th class="erp-table-shell__actions">Actions</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
+            </thead>
+            <tbody>
+              @for (allocation of visibleAllocations(); track allocation._id) {
+                <tr>
+                  <td>
+                    <strong>{{ allocation.studentName }}</strong
+                    ><small>{{ allocation.studentApplicationNumber }}</small>
+                  </td>
+                  <td>{{ allocation.academicSession }}</td>
+                  <td>
+                    {{ allocation.hostelName
+                    }}<small>{{ allocation.blockName }} · {{ allocation.floorName }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ allocation.roomNumber }}</strong
+                    ><small>Bed {{ allocation.bedNumber }}</small>
+                  </td>
+                  <td>{{ allocation.allocatedAt | date: 'mediumDate' }}</td>
+                  <td>
+                    <span
+                      class="erp-status"
+                      [class.erp-status--neutral]="allocation.status !== 'active'"
+                    >
+                      {{ allocation.status === 'active' ? 'Active' : 'Vacated' }}
+                    </span>
+                  </td>
+                  <td class="erp-table-shell__actions">
+                    <erp-compact-action-menu
+                      [items]="allocationActions(allocation)"
+                      (selected)="handleAllocationAction($event, allocation)"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-    <section class="hostel-allocation-cards hostel-section-gap" aria-label="Allocation directory">
-      @for (allocation of visibleAllocations(); track allocation._id) {
-        <article class="erp-card hostel-allocation-card">
-          <div class="hostel-allocation-card__head">
-            <span class="hostel-student-avatar">{{ allocation.studentName.slice(0, 1) }}</span>
-            <div>
-              <strong>{{ allocation.studentName }}</strong>
-              <small>{{ allocation.studentApplicationNumber }} · {{ allocation.academicSession }}</small>
+      <section class="hostel-allocation-cards hostel-section-gap" aria-label="Allocation directory">
+        @for (allocation of visibleAllocations(); track allocation._id) {
+          <article class="erp-card hostel-allocation-card">
+            <div class="hostel-allocation-card__head">
+              <span class="hostel-student-avatar">{{ allocation.studentName.slice(0, 1) }}</span>
+              <div>
+                <strong>{{ allocation.studentName }}</strong>
+                <small
+                  >{{ allocation.studentApplicationNumber }} ·
+                  {{ allocation.academicSession }}</small
+                >
+              </div>
+              <erp-compact-action-menu
+                [items]="allocationActions(allocation)"
+                (selected)="handleAllocationAction($event, allocation)"
+              />
             </div>
-            <erp-compact-action-menu [items]="allocationActions(allocation)" (selected)="handleAllocationAction($event, allocation)" />
-          </div>
-          <dl>
-            <div><dt>Hostel</dt><dd>{{ allocation.hostelName }}</dd></div>
-            <div><dt>Location</dt><dd>{{ allocation.blockName }} · {{ allocation.floorName }}</dd></div>
-            <div><dt>Room / Bed</dt><dd>{{ allocation.roomNumber }} · Bed {{ allocation.bedNumber }}</dd></div>
-            <div><dt>Status</dt><dd>{{ allocation.status === 'active' ? 'Active' : 'Vacated' }}</dd></div>
-          </dl>
-        </article>
-      }
-    </section>
+            <dl>
+              <div>
+                <dt>Hostel</dt>
+                <dd>{{ allocation.hostelName }}</dd>
+              </div>
+              <div>
+                <dt>Location</dt>
+                <dd>{{ allocation.blockName }} · {{ allocation.floorName }}</dd>
+              </div>
+              <div>
+                <dt>Room / Bed</dt>
+                <dd>{{ allocation.roomNumber }} · Bed {{ allocation.bedNumber }}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{{ allocation.status === 'active' ? 'Active' : 'Vacated' }}</dd>
+              </div>
+            </dl>
+          </article>
+        }
+      </section>
     }
   }
 
@@ -1226,7 +1278,12 @@
             }}
           </p>
         </div>
-        <button class="erp-icon-button" type="button" aria-label="Close allocation workflow" (click)="closeAllocationDrawer()">
+        <button
+          class="erp-icon-button"
+          type="button"
+          aria-label="Close allocation workflow"
+          (click)="closeAllocationDrawer()"
+        >
           <svg lucideX size="18" aria-hidden="true"></svg>
         </button>
       </header>
@@ -1270,7 +1327,7 @@
             <div class="hostel-allocation-stage__heading">
               <small>Stage 1 of 3</small>
               <h3 id="allocation-stage-student">Select student</h3>
-              <p>Choose the session and submitted student record.</p>
+              <p>Choose the session and approved student record.</p>
             </div>
             <label class="erp-field-stack">
               <span>Academic session *</span>
@@ -1303,10 +1360,13 @@
                     (click)="selectAllocationStudent(student)"
                   >
                     <span class="hostel-student-avatar">{{ student.name.slice(0, 1) }}</span>
-                    <span><strong>{{ student.name }}</strong><small>{{ student.applicationNumber }}</small></span>
+                    <span
+                      ><strong>{{ student.name }}</strong
+                      ><small>{{ student.applicationNumber }}</small></span
+                    >
                   </button>
                 } @empty {
-                  <p>No submitted students match this search.</p>
+                  <p>No approved students match this search.</p>
                 }
               </div>
             }
@@ -1324,8 +1384,20 @@
                     {{ current.roomNumber }} / Bed {{ current.bedNumber }}
                   </p>
                   <div>
-                    <button class="erp-button erp-button--secondary" type="button" (click)="viewAllocation(current)">View allocation</button>
-                    <button class="erp-button erp-button--secondary" type="button" (click)="startTransfer(current)">Start transfer</button>
+                    <button
+                      class="erp-button erp-button--secondary"
+                      type="button"
+                      (click)="viewAllocation(current)"
+                    >
+                      View allocation
+                    </button>
+                    <button
+                      class="erp-button erp-button--secondary"
+                      type="button"
+                      (click)="startTransfer(current)"
+                    >
+                      Start transfer
+                    </button>
                   </div>
                 } @else {
                   <span class="erp-status">Eligible for allocation</span>
@@ -1345,13 +1417,20 @@
             @if (!transferTarget() && selectedStudent(); as student) {
               <div class="hostel-pinned-student">
                 <span class="hostel-student-avatar">{{ selectedStudentInitials() }}</span>
-                <span><strong>{{ student.name }}</strong><small>{{ student.applicationNumber }}</small></span>
+                <span
+                  ><strong>{{ student.name }}</strong
+                  ><small>{{ student.applicationNumber }}</small></span
+                >
               </div>
             }
             <div class="hostel-allocation-location">
               <label class="erp-field-stack">
                 <span>Hostel *</span>
-                <select class="erp-control" [(ngModel)]="selectedHostelId" (ngModelChange)="allocationHostelSelectionChanged()">
+                <select
+                  class="erp-control"
+                  [(ngModel)]="selectedHostelId"
+                  (ngModelChange)="allocationHostelSelectionChanged()"
+                >
                   <option value="">Select active hostel</option>
                   @for (hostel of hostels(); track hostel._id) {
                     @if (hostel.isActive) {
@@ -1362,7 +1441,12 @@
               </label>
               <label class="erp-field-stack">
                 <span>Block *</span>
-                <select class="erp-control" [(ngModel)]="selectedBlockId" [disabled]="!selectedHostelId" (ngModelChange)="allocationBlockSelectionChanged()">
+                <select
+                  class="erp-control"
+                  [(ngModel)]="selectedBlockId"
+                  [disabled]="!selectedHostelId"
+                  (ngModelChange)="allocationBlockSelectionChanged()"
+                >
                   <option value="">Select block</option>
                   @for (block of blocks(); track block._id) {
                     <option [value]="block._id">{{ block.name }}</option>
@@ -1371,7 +1455,12 @@
               </label>
               <label class="erp-field-stack">
                 <span>Floor *</span>
-                <select class="erp-control" [(ngModel)]="selectedFloorId" [disabled]="!selectedBlockId" (ngModelChange)="allocationFloorSelectionChanged()">
+                <select
+                  class="erp-control"
+                  [(ngModel)]="selectedFloorId"
+                  [disabled]="!selectedBlockId"
+                  (ngModelChange)="allocationFloorSelectionChanged()"
+                >
                   <option value="">Select floor</option>
                   @for (floor of floors(); track floor._id) {
                     <option [value]="floor._id">{{ floor.name }}</option>
@@ -1393,16 +1482,33 @@
               @if (!allocationAvailableRooms().length) {
                 <div class="hostel-allocation-blocked">
                   @if (!allocationConfiguredRooms().length) {
-                    <span class="erp-empty-panel__icon"><svg lucideSettings2 size="22" aria-hidden="true"></svg></span>
+                    <span class="erp-empty-panel__icon"
+                      ><svg lucideSettings2 size="22" aria-hidden="true"></svg
+                    ></span>
                     <strong>No configured rooms available</strong>
                     <p>Rooms must have capacity and type configured before allocation.</p>
-                    <a class="erp-button erp-button--secondary" routerLink="/admin/master-data/hostel/capacity" [queryParams]="{ session: academicSession, hostel: selectedHostelId, block: selectedBlockId, floor: selectedFloorId }" (click)="closeAllocationDrawer()">Go to Room Capacity</a>
+                    <a
+                      class="erp-button erp-button--secondary"
+                      routerLink="/admin/master-data/hostel/capacity"
+                      [queryParams]="{
+                        session: academicSession,
+                        hostel: selectedHostelId,
+                        block: selectedBlockId,
+                        floor: selectedFloorId,
+                      }"
+                      (click)="closeAllocationDrawer()"
+                      >Go to Room Capacity</a
+                    >
                   } @else if (allocationRoomSearch) {
-                    <span class="erp-empty-panel__icon"><svg lucideSearch size="22" aria-hidden="true"></svg></span>
+                    <span class="erp-empty-panel__icon"
+                      ><svg lucideSearch size="22" aria-hidden="true"></svg
+                    ></span>
                     <strong>No rooms match this search</strong>
                     <p>Clear the room search or try another location.</p>
                   } @else {
-                    <span class="erp-empty-panel__icon"><svg lucideBedDouble size="22" aria-hidden="true"></svg></span>
+                    <span class="erp-empty-panel__icon"
+                      ><svg lucideBedDouble size="22" aria-hidden="true"></svg
+                    ></span>
                     <strong>No beds available</strong>
                     <p>Every configured room at this location is currently full.</p>
                   }
@@ -1417,7 +1523,10 @@
                       [class.hostel-room-option--selected]="selectedRoomId === room._id"
                       (click)="selectAllocationRoom(room)"
                     >
-                      <span><strong>{{ room.roomNumber }}</strong><small>{{ room.roomType }} · {{ room.capacity }} seater</small></span>
+                      <span
+                        ><strong>{{ room.roomNumber }}</strong
+                        ><small>{{ room.roomType }} · {{ room.capacity }} seater</small></span
+                      >
                       <span>{{ room.capacity - room.occupiedBeds.length }} beds available</span>
                     </button>
                   }
@@ -1429,11 +1538,21 @@
               <section class="hostel-selected-room">
                 <div>
                   <span>Selected room</span>
-                  <strong>{{ room.roomNumber }} · {{ room.roomType }} · {{ room.capacity }} seater</strong>
+                  <strong
+                    >{{ room.roomNumber }} · {{ room.roomType }} ·
+                    {{ room.capacity }} seater</strong
+                  >
                   <small>{{ room.hostelName }} / {{ room.blockName }} / {{ room.floorName }}</small>
                 </div>
-                <p>{{ room.capacity - room.occupiedBeds.length }} of {{ room.capacity }} beds available</p>
-                <div class="hostel-bed-selector" role="listbox" aria-label="Select an available bed">
+                <p>
+                  {{ room.capacity - room.occupiedBeds.length }} of {{ room.capacity }} beds
+                  available
+                </p>
+                <div
+                  class="hostel-bed-selector"
+                  role="listbox"
+                  aria-label="Select an available bed"
+                >
                   @for (bed of room.beds; track bed) {
                     <button
                       type="button"
@@ -1444,7 +1563,9 @@
                       (click)="selectAllocationBed(bed)"
                     >
                       Bed {{ bed }}
-                      <small>{{ room.occupiedBeds.includes(bed) ? 'Occupied' : 'Available' }}</small>
+                      <small>{{
+                        room.occupiedBeds.includes(bed) ? 'Occupied' : 'Available'
+                      }}</small>
                     </button>
                   }
                 </div>
@@ -1466,28 +1587,53 @@
               <div>
                 <span>Student</span>
                 <strong>{{ transferTarget()?.studentName || selectedStudent()?.name }}</strong>
-                <small>{{ transferTarget()?.studentApplicationNumber || selectedStudent()?.applicationNumber }}</small>
+                <small>{{
+                  transferTarget()?.studentApplicationNumber || selectedStudent()?.applicationNumber
+                }}</small>
               </div>
-              <div><span>Academic session</span><strong>{{ academicSession }}</strong></div>
+              <div>
+                <span>Academic session</span><strong>{{ academicSession }}</strong>
+              </div>
               @if (transferTarget(); as transfer) {
-                <div><span>From</span><strong>{{ transfer.hostelName }} · {{ transfer.roomNumber }} · Bed {{ transfer.bedNumber }}</strong></div>
+                <div>
+                  <span>From</span
+                  ><strong
+                    >{{ transfer.hostelName }} · {{ transfer.roomNumber }} · Bed
+                    {{ transfer.bedNumber }}</strong
+                  >
+                </div>
               }
               @if (selectedRoom(); as room) {
                 <div>
                   <span>{{ transferTarget() ? 'To' : 'Allocation' }}</span>
-                  <strong>{{ room.hostelName }} · {{ room.roomNumber }} · Bed {{ selectedBedNumber }}</strong>
-                  <small>{{ room.blockName }} / {{ room.floorName }} · {{ room.capacity }} seater · {{ room.roomType }}</small>
+                  <strong
+                    >{{ room.hostelName }} · {{ room.roomNumber }} · Bed
+                    {{ selectedBedNumber }}</strong
+                  >
+                  <small
+                    >{{ room.blockName }} / {{ room.floorName }} · {{ room.capacity }} seater ·
+                    {{ room.roomType }}</small
+                  >
                 </div>
               }
             </div>
             @if (transferTarget()) {
               <label class="erp-field-stack">
                 <span>Transfer reason</span>
-                <input class="erp-control" [(ngModel)]="transferReason" placeholder="Optional reason" />
+                <input
+                  class="erp-control"
+                  [(ngModel)]="transferReason"
+                  placeholder="Optional reason"
+                />
               </label>
-              <p class="erp-notice erp-notice--warning">The current bed will be released only after a successful transfer.</p>
+              <p class="erp-notice erp-notice--warning">
+                The current bed will be released only after a successful transfer.
+              </p>
             } @else {
-              <p class="erp-notice erp-notice--warning">Confirm the student and bed carefully. This action creates an active hostel allocation.</p>
+              <p class="erp-notice erp-notice--warning">
+                Confirm the student and bed carefully. This action creates an active hostel
+                allocation.
+              </p>
             }
           </section>
         }
@@ -1498,23 +1644,63 @@
 
         <footer class="erp-drawer__footer hostel-allocation-footer">
           @if (allocationStage() === 1) {
-            <button class="erp-button erp-button--secondary" type="button" (click)="closeAllocationDrawer()">Cancel</button>
-            <button class="erp-button erp-button--primary" type="button" (click)="continueAllocation()" [disabled]="!academicSession || !selectedStudentId || !!activeAllocationForSelectedStudent()">
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="closeAllocationDrawer()"
+            >
+              Cancel
+            </button>
+            <button
+              class="erp-button erp-button--primary"
+              type="button"
+              (click)="continueAllocation()"
+              [disabled]="
+                !academicSession || !selectedStudentId || !!activeAllocationForSelectedStudent()
+              "
+            >
               Continue to room selection <svg lucideArrowRight size="17" aria-hidden="true"></svg>
             </button>
           } @else if (allocationStage() === 2) {
-            <button class="erp-button erp-button--secondary" type="button" (click)="transferTarget() ? cancelTransfer() : previousAllocationStage()">
-              <svg lucideArrowLeft size="17" aria-hidden="true"></svg>{{ transferTarget() ? 'Cancel' : 'Back' }}
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="transferTarget() ? cancelTransfer() : previousAllocationStage()"
+            >
+              <svg lucideArrowLeft size="17" aria-hidden="true"></svg
+              >{{ transferTarget() ? 'Cancel' : 'Back' }}
             </button>
-            <button class="erp-button erp-button--primary" type="button" (click)="continueAllocation()" [disabled]="!selectedRoomId || !selectedBedNumber">
+            <button
+              class="erp-button erp-button--primary"
+              type="button"
+              (click)="continueAllocation()"
+              [disabled]="!selectedRoomId || !selectedBedNumber"
+            >
               Continue to review <svg lucideArrowRight size="17" aria-hidden="true"></svg>
             </button>
           } @else {
-            <button class="erp-button erp-button--secondary" type="button" (click)="previousAllocationStage()">
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="previousAllocationStage()"
+            >
               <svg lucideArrowLeft size="17" aria-hidden="true"></svg>Back
             </button>
-            <button class="erp-button erp-button--primary" type="button" (click)="createOrTransferAllocation()" [disabled]="saving()">
-              {{ saving() ? (transferTarget() ? 'Transferring…' : 'Allocating…') : (transferTarget() ? 'Confirm transfer' : 'Confirm allocation') }}
+            <button
+              class="erp-button erp-button--primary"
+              type="button"
+              (click)="createOrTransferAllocation()"
+              [disabled]="saving()"
+            >
+              {{
+                saving()
+                  ? transferTarget()
+                    ? 'Transferring…'
+                    : 'Allocating…'
+                  : transferTarget()
+                    ? 'Confirm transfer'
+                    : 'Confirm allocation'
+              }}
             </button>
           }
         </footer>
@@ -1525,29 +1711,96 @@
 
 @if (allocationDetail(); as allocation) {
   <div class="erp-drawer-layer">
-    <button class="erp-drawer-backdrop" type="button" aria-label="Close allocation details" (click)="closeAllocationDetail()"></button>
-    <section class="erp-drawer hostel-allocation-detail" role="dialog" aria-modal="true" aria-labelledby="allocation-detail-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      aria-label="Close allocation details"
+      (click)="closeAllocationDetail()"
+    ></button>
+    <section
+      class="erp-drawer hostel-allocation-detail"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="allocation-detail-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
       <header class="erp-drawer__header">
-        <span class="erp-drawer__icon"><svg lucideUserRound size="21" aria-hidden="true"></svg></span>
-        <div><small>Allocation record</small><h2 id="allocation-detail-title">{{ allocation.studentName }}</h2><p>{{ allocation.studentApplicationNumber }}</p></div>
-        <button class="erp-icon-button" type="button" aria-label="Close allocation details" (click)="closeAllocationDetail()"><svg lucideX size="18" aria-hidden="true"></svg></button>
+        <span class="erp-drawer__icon"
+          ><svg lucideUserRound size="21" aria-hidden="true"></svg
+        ></span>
+        <div>
+          <small>Allocation record</small>
+          <h2 id="allocation-detail-title">{{ allocation.studentName }}</h2>
+          <p>{{ allocation.studentApplicationNumber }}</p>
+        </div>
+        <button
+          class="erp-icon-button"
+          type="button"
+          aria-label="Close allocation details"
+          (click)="closeAllocationDetail()"
+        >
+          <svg lucideX size="18" aria-hidden="true"></svg>
+        </button>
       </header>
       <div class="erp-drawer__body hostel-room-details">
         <dl>
-          <div><dt>Academic session</dt><dd>{{ allocation.academicSession }}</dd></div>
-          <div><dt>Status</dt><dd>{{ allocation.status === 'active' ? 'Active' : 'Vacated' }}</dd></div>
-          <div><dt>Hostel</dt><dd>{{ allocation.hostelName }}</dd></div>
-          <div><dt>Block</dt><dd>{{ allocation.blockName }}</dd></div>
-          <div><dt>Floor</dt><dd>{{ allocation.floorName }}</dd></div>
-          <div><dt>Room</dt><dd>{{ allocation.roomNumber }}</dd></div>
-          <div><dt>Bed</dt><dd>Bed {{ allocation.bedNumber }}</dd></div>
-          <div><dt>Allocated</dt><dd>{{ allocation.allocatedAt | date: 'mediumDate' }}</dd></div>
+          <div>
+            <dt>Academic session</dt>
+            <dd>{{ allocation.academicSession }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>{{ allocation.status === 'active' ? 'Active' : 'Vacated' }}</dd>
+          </div>
+          <div>
+            <dt>Hostel</dt>
+            <dd>{{ allocation.hostelName }}</dd>
+          </div>
+          <div>
+            <dt>Block</dt>
+            <dd>{{ allocation.blockName }}</dd>
+          </div>
+          <div>
+            <dt>Floor</dt>
+            <dd>{{ allocation.floorName }}</dd>
+          </div>
+          <div>
+            <dt>Room</dt>
+            <dd>{{ allocation.roomNumber }}</dd>
+          </div>
+          <div>
+            <dt>Bed</dt>
+            <dd>Bed {{ allocation.bedNumber }}</dd>
+          </div>
+          <div>
+            <dt>Allocated</dt>
+            <dd>{{ allocation.allocatedAt | date: 'mediumDate' }}</dd>
+          </div>
         </dl>
         <footer class="erp-drawer__footer">
-          <button class="erp-button erp-button--secondary" type="button" (click)="closeAllocationDetail()">Close</button>
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="closeAllocationDetail()"
+          >
+            Close
+          </button>
           @if (allocation.status === 'active') {
-            <button class="erp-button erp-button--secondary" type="button" (click)="startTransfer(allocation)"><svg lucideArrowRightLeft size="17" aria-hidden="true"></svg>Transfer room</button>
-            <button class="erp-button erp-button--danger" type="button" (click)="closeAllocationDetail(); vacateTarget.set(allocation)"><svg lucideLogOut size="17" aria-hidden="true"></svg>Vacate room</button>
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="startTransfer(allocation)"
+            >
+              <svg lucideArrowRightLeft size="17" aria-hidden="true"></svg>Transfer room
+            </button>
+            <button
+              class="erp-button erp-button--danger"
+              type="button"
+              (click)="closeAllocationDetail(); vacateTarget.set(allocation)"
+            >
+              <svg lucideLogOut size="17" aria-hidden="true"></svg>Vacate room
+            </button>
           }
         </footer>
       </div>
@@ -1610,7 +1863,11 @@
             <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
           }
           <footer class="erp-drawer__footer">
-            <button class="erp-button erp-button--secondary" type="button" (click)="closeRoomEditor()">
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="closeRoomEditor()"
+            >
               Cancel
             </button>
             <button
@@ -1706,7 +1963,11 @@
             <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
           }
           <footer class="erp-drawer__footer">
-            <button class="erp-button erp-button--secondary" type="button" (click)="closeRoomEditor()">
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="closeRoomEditor()"
+            >
               Cancel
             </button>
             <button
@@ -1719,13 +1980,7 @@
                   : roomStartNumber < 1 || roomGenerationCount < 1 || roomGenerationCount > 500)
               "
             >
-              {{
-                saving()
-                  ? 'Saving…'
-                  : roomMode === 'manual'
-                    ? 'Create room'
-                    : 'Generate rooms'
-              }}
+              {{ saving() ? 'Saving…' : roomMode === 'manual' ? 'Create room' : 'Generate rooms' }}
             </button>
           </footer>
         </form>
@@ -1751,30 +2006,71 @@
       [cdkTrapFocusAutoCapture]="true"
     >
       <header class="erp-drawer__header">
-        <span class="erp-drawer__icon"><svg lucideDoorOpen size="21" aria-hidden="true"></svg></span>
+        <span class="erp-drawer__icon"
+          ><svg lucideDoorOpen size="21" aria-hidden="true"></svg
+        ></span>
         <div>
           <small>Room details</small>
           <h2 id="room-details-title">Room {{ room.roomNumber }}</h2>
           <p>{{ room.blockName }} / {{ room.floorName }}</p>
         </div>
-        <button class="erp-icon-button" type="button" aria-label="Close room details" (click)="viewingRoom.set(null)">
+        <button
+          class="erp-icon-button"
+          type="button"
+          aria-label="Close room details"
+          (click)="viewingRoom.set(null)"
+        >
           <svg lucideX size="18" aria-hidden="true"></svg>
         </button>
       </header>
       <div class="erp-drawer__body hostel-room-details">
         <dl>
-          <div><dt>Hostel</dt><dd>{{ selectedHostel()?.name }}</dd></div>
-          <div><dt>Block</dt><dd>{{ room.blockName }}</dd></div>
-          <div><dt>Floor</dt><dd>{{ room.floorName }}</dd></div>
-          <div><dt>Room type</dt><dd>{{ room.configuredForSession ? room.roomType : 'Not configured' }}</dd></div>
-          <div><dt>Capacity</dt><dd>{{ room.configuredForSession ? room.capacity + ' beds' : 'Not configured' }}</dd></div>
-          <div><dt>Occupancy</dt><dd>{{ room.occupiedBeds.length }} occupied</dd></div>
-          <div><dt>Status</dt><dd>{{ room.isActive ? 'Active' : 'Disabled' }}</dd></div>
-          <div><dt>Session</dt><dd>{{ academicSession }}</dd></div>
+          <div>
+            <dt>Hostel</dt>
+            <dd>{{ selectedHostel()?.name }}</dd>
+          </div>
+          <div>
+            <dt>Block</dt>
+            <dd>{{ room.blockName }}</dd>
+          </div>
+          <div>
+            <dt>Floor</dt>
+            <dd>{{ room.floorName }}</dd>
+          </div>
+          <div>
+            <dt>Room type</dt>
+            <dd>{{ room.configuredForSession ? room.roomType : 'Not configured' }}</dd>
+          </div>
+          <div>
+            <dt>Capacity</dt>
+            <dd>{{ room.configuredForSession ? room.capacity + ' beds' : 'Not configured' }}</dd>
+          </div>
+          <div>
+            <dt>Occupancy</dt>
+            <dd>{{ room.occupiedBeds.length }} occupied</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>{{ room.isActive ? 'Active' : 'Disabled' }}</dd>
+          </div>
+          <div>
+            <dt>Session</dt>
+            <dd>{{ academicSession }}</dd>
+          </div>
         </dl>
         <footer class="erp-drawer__footer">
-          <button class="erp-button erp-button--secondary" type="button" (click)="viewingRoom.set(null)">Close</button>
-          <button class="erp-button erp-button--primary" type="button" (click)="viewingRoom.set(null); openCapacity(room)">
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="viewingRoom.set(null)"
+          >
+            Close
+          </button>
+          <button
+            class="erp-button erp-button--primary"
+            type="button"
+            (click)="viewingRoom.set(null); openCapacity(room)"
+          >
             {{ room.configuredForSession ? 'Edit capacity' : 'Configure capacity' }}
           </button>
         </footer>
@@ -1800,13 +2096,22 @@
       [cdkTrapFocusAutoCapture]="true"
     >
       <header class="erp-drawer__header">
-        <span class="erp-drawer__icon"><svg lucideBedDouble size="21" aria-hidden="true"></svg></span>
+        <span class="erp-drawer__icon"
+          ><svg lucideBedDouble size="21" aria-hidden="true"></svg
+        ></span>
         <div>
-          <small>{{ room.configuredForSession ? 'Update configuration' : 'New configuration' }}</small>
+          <small>{{
+            room.configuredForSession ? 'Update configuration' : 'New configuration'
+          }}</small>
           <h2 id="capacity-editor-title">Room {{ room.roomNumber }} capacity</h2>
           <p>{{ room.blockName }} / {{ room.floorName }} · {{ academicSession }}</p>
         </div>
-        <button class="erp-icon-button" type="button" aria-label="Close capacity editor" (click)="closeCapacityEditor()">
+        <button
+          class="erp-icon-button"
+          type="button"
+          aria-label="Close capacity editor"
+          (click)="closeCapacityEditor()"
+        >
           <svg lucideX size="18" aria-hidden="true"></svg>
         </button>
       </header>
@@ -1827,7 +2132,13 @@
         @if (roomTypeChoice === 'custom') {
           <label class="erp-field-stack">
             <span>Custom room type *</span>
-            <input class="erp-control" name="customRoomType" [(ngModel)]="customRoomType" maxlength="60" placeholder="e.g. Premium AC" />
+            <input
+              class="erp-control"
+              name="customRoomType"
+              [(ngModel)]="customRoomType"
+              maxlength="60"
+              placeholder="e.g. Premium AC"
+            />
           </label>
         }
         <label class="erp-field-stack">
@@ -1842,7 +2153,14 @@
         @if (capacityChoice === 'custom') {
           <label class="erp-field-stack">
             <span>Custom capacity *</span>
-            <input class="erp-control" name="customCapacity" type="number" min="1" max="30" [(ngModel)]="customCapacity" />
+            <input
+              class="erp-control"
+              name="customCapacity"
+              type="number"
+              min="1"
+              max="30"
+              [(ngModel)]="customCapacity"
+            />
           </label>
         }
         <section class="hostel-capacity-summary">
@@ -1857,9 +2175,17 @@
           <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
         }
         <footer class="erp-drawer__footer">
-          <button class="erp-button erp-button--secondary" type="button" (click)="closeCapacityEditor()">Cancel</button>
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="closeCapacityEditor()"
+          >
+            Cancel
+          </button>
           <button class="erp-button erp-button--primary" type="submit" [disabled]="saving()">
-            {{ saving() ? 'Saving…' : room.configuredForSession ? 'Save changes' : 'Configure room' }}
+            {{
+              saving() ? 'Saving…' : room.configuredForSession ? 'Save changes' : 'Configure room'
+            }}
           </button>
         </footer>
       </form>
@@ -1869,16 +2195,44 @@
 
 @if (generationConfirmOpen()) {
   <div class="dialog-layer">
-    <button class="dialog-backdrop" type="button" aria-label="Cancel room generation" (click)="generationConfirmOpen.set(false)"></button>
-    <section class="dialog dialog--confirm" role="alertdialog" aria-modal="true" aria-labelledby="room-generation-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+    <button
+      class="dialog-backdrop"
+      type="button"
+      aria-label="Cancel room generation"
+      (click)="generationConfirmOpen.set(false)"
+    ></button>
+    <section
+      class="dialog dialog--confirm"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="room-generation-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
       <div class="dialog__body confirm-body">
         <span class="confirm-icon" aria-hidden="true">!</span>
         <h2 id="room-generation-title">Generate {{ roomGenerationCount }} rooms?</h2>
-        <p>This creates a large room sequence in {{ locationLabel() }}. Review the prefix and numbering before continuing.</p>
+        <p>
+          This creates a large room sequence in {{ locationLabel() }}. Review the prefix and
+          numbering before continuing.
+        </p>
       </div>
       <footer class="dialog__footer">
-        <button class="erp-button erp-button--secondary" type="button" (click)="generationConfirmOpen.set(false)">Review settings</button>
-        <button class="erp-button erp-button--primary" type="button" (click)="confirmRoomGeneration()" [disabled]="saving()">Confirm generation</button>
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="generationConfirmOpen.set(false)"
+        >
+          Review settings
+        </button>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          (click)="confirmRoomGeneration()"
+          [disabled]="saving()"
+        >
+          Confirm generation
+        </button>
       </footer>
     </section>
   </div>
@@ -2023,31 +2377,83 @@
 
 @if (vacateTarget(); as allocation) {
   <div class="dialog-layer">
-    <button class="dialog-backdrop" type="button" aria-label="Cancel vacating room" (click)="vacateTarget.set(null)"></button>
-    <section class="dialog hostel-vacate-dialog" role="alertdialog" aria-modal="true" aria-labelledby="vacate-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+    <button
+      class="dialog-backdrop"
+      type="button"
+      aria-label="Cancel vacating room"
+      (click)="vacateTarget.set(null)"
+    ></button>
+    <section
+      class="dialog hostel-vacate-dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="vacate-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
       <header class="dialog__header">
-        <div><small>Destructive action</small><h2 id="vacate-title">Vacate hostel bed?</h2></div>
-        <button type="button" aria-label="Close vacate confirmation" (click)="vacateTarget.set(null)"><svg lucideX size="18" aria-hidden="true"></svg></button>
+        <div>
+          <small>Destructive action</small>
+          <h2 id="vacate-title">Vacate hostel bed?</h2>
+        </div>
+        <button
+          type="button"
+          aria-label="Close vacate confirmation"
+          (click)="vacateTarget.set(null)"
+        >
+          <svg lucideX size="18" aria-hidden="true"></svg>
+        </button>
       </header>
       <div class="dialog__body hostel-vacate-body">
-        <span class="hostel-vacate-body__icon"><svg lucideLogOut size="22" aria-hidden="true"></svg></span>
+        <span class="hostel-vacate-body__icon"
+          ><svg lucideLogOut size="22" aria-hidden="true"></svg
+        ></span>
         <dl>
-          <div><dt>Student</dt><dd>{{ allocation.studentName }} · {{ allocation.studentApplicationNumber }}</dd></div>
-          <div><dt>Current allocation</dt><dd>{{ allocation.hostelName }} / {{ allocation.blockName }} / {{ allocation.floorName }}<small>Room {{ allocation.roomNumber }} · Bed {{ allocation.bedNumber }}</small></dd></div>
-          <div><dt>Academic session</dt><dd>{{ allocation.academicSession }}</dd></div>
+          <div>
+            <dt>Student</dt>
+            <dd>{{ allocation.studentName }} · {{ allocation.studentApplicationNumber }}</dd>
+          </div>
+          <div>
+            <dt>Current allocation</dt>
+            <dd>
+              {{ allocation.hostelName }} / {{ allocation.blockName }} / {{ allocation.floorName
+              }}<small>Room {{ allocation.roomNumber }} · Bed {{ allocation.bedNumber }}</small>
+            </dd>
+          </div>
+          <div>
+            <dt>Academic session</dt>
+            <dd>{{ allocation.academicSession }}</dd>
+          </div>
         </dl>
         <p>Vacating will end the student’s active hostel allocation and release the bed.</p>
         <label class="erp-field-stack">
           <span>Reason <small>(optional)</small></span>
-          <textarea class="erp-control" rows="3" [(ngModel)]="vacateReason" placeholder="Graduated, withdrawn or another reason"></textarea>
+          <textarea
+            class="erp-control"
+            rows="3"
+            [(ngModel)]="vacateReason"
+            placeholder="Graduated, withdrawn or another reason"
+          ></textarea>
         </label>
         @if (error()) {
           <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
         }
       </div>
       <footer class="dialog__footer">
-        <button class="erp-button erp-button--secondary" type="button" autofocus (click)="vacateTarget.set(null)">Cancel</button>
-        <button class="erp-button erp-button--danger" type="button" (click)="confirmVacate()" [disabled]="saving()">
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          autofocus
+          (click)="vacateTarget.set(null)"
+        >
+          Cancel
+        </button>
+        <button
+          class="erp-button erp-button--danger"
+          type="button"
+          (click)="confirmVacate()"
+          [disabled]="saving()"
+        >
           {{ saving() ? 'Vacating…' : 'Vacate room' }}
         </button>
       </footer>

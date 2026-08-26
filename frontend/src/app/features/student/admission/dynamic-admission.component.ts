@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideAlertTriangle, LucideCheck } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
@@ -38,8 +38,9 @@ import { MobileSectionNavigatorSheetComponent } from '../../../shared/ui/mobile-
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.embedded]': 'embedded()' },
 })
-export class DynamicAdmissionComponent {
+export class DynamicAdmissionComponent implements OnInit {
   readonly embedded = input(false);
+  readonly admissionId = input('');
   private readonly api = inject(ApiService);
   readonly form = signal<AdmissionForm | null>(null);
   readonly admission = signal<Admission | null>(null);
@@ -54,10 +55,17 @@ export class DynamicAdmissionComponent {
   readonly mobileNavigatorOpen = signal(false);
   readonly reviewMode = signal(false);
   private accessKey = '';
-  constructor() {
+  ngOnInit() {
     this.initialize();
   }
   private initialize() {
+    if (this.admissionId()) {
+      this.api.admission(this.admissionId()).subscribe({
+        next: ({ item }) => this.acceptAdmission(item),
+        error: (e) => this.fail(e),
+      });
+      return;
+    }
     const stored = this.readStored();
     if (stored) {
       this.accessKey = stored.key;
@@ -74,7 +82,7 @@ export class DynamicAdmissionComponent {
           next: ({ item: admission, accessKey }) => {
             this.accessKey = accessKey;
             localStorage.setItem(
-              'taskly_admission',
+              this.storageKey(),
               JSON.stringify({ id: admission._id, key: accessKey }),
             );
             this.acceptAdmission(admission);
@@ -388,7 +396,10 @@ export class DynamicAdmissionComponent {
       return;
     }
     this.error.set('');
-    this.api.upload(admission._id, this.accessKey, field.id, file).subscribe({
+    const request = this.admissionId()
+      ? this.api.uploadAdminAdmission(admission._id, field.id, file)
+      : this.api.upload(admission._id, this.accessKey, field.id, file);
+    request.subscribe({
       next: ({ file: stored }) => this.setValue(field, stored, entry, index),
       error: (e) => this.fail(e),
     });
@@ -416,7 +427,10 @@ export class DynamicAdmissionComponent {
     if (!admission || !section) return;
     this.saving.set(true);
     admission.currentSectionId = section.id;
-    this.api.saveAdmission(admission, this.accessKey).subscribe({
+    const request = this.admissionId()
+      ? this.api.updateAdmission(admission)
+      : this.api.saveAdmission(admission, this.accessKey);
+    request.subscribe({
       next: ({ item }) => {
         this.acceptAdmission(item);
         this.message.set('Progress saved.');
@@ -448,13 +462,19 @@ export class DynamicAdmissionComponent {
     const admission = this.admission();
     if (!admission) return;
     this.saving.set(true);
-    this.api.saveAdmission(admission, this.accessKey).subscribe({
+    const saveRequest = this.admissionId()
+      ? this.api.updateAdmission(admission)
+      : this.api.saveAdmission(admission, this.accessKey);
+    saveRequest.subscribe({
       next: () =>
-        this.api.submitAdmission(admission._id, this.accessKey).subscribe({
+        (this.admissionId()
+          ? this.api.submitAdminAdmission(admission._id)
+          : this.api.submitAdmission(admission._id, this.accessKey)
+        ).subscribe({
           next: ({ item }) => {
             this.admission.set(item);
             this.message.set('Application submitted successfully.');
-            localStorage.removeItem('taskly_admission');
+            localStorage.removeItem(this.storageKey());
             this.saving.set(false);
           },
           error: (e) => {
@@ -469,7 +489,7 @@ export class DynamicAdmissionComponent {
     });
   }
   newApplication() {
-    localStorage.removeItem('taskly_admission');
+    localStorage.removeItem(this.storageKey());
     location.reload();
   }
   loadSectionOptions() {
@@ -557,10 +577,13 @@ export class DynamicAdmissionComponent {
   }
   private readStored(): { id: string; key: string } | null {
     try {
-      return JSON.parse(localStorage.getItem('taskly_admission') || 'null');
+      return JSON.parse(localStorage.getItem(this.storageKey()) || 'null');
     } catch {
       return null;
     }
+  }
+  private storageKey() {
+    return this.embedded() ? 'taskly_admin_admission' : 'taskly_admission';
   }
   private fail(error: { error?: { message?: string; errors?: { message: string }[] } }) {
     this.error.set(

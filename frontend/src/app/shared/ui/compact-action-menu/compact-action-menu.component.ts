@@ -11,6 +11,7 @@ import {
   LucideArrowUp,
   LucideArrowRightLeft,
   LucideCopy,
+  LucideCheck,
   LucideDynamicIcon,
   LucideFilePlus2,
   LucideFolderPlus,
@@ -35,6 +36,7 @@ const ACTION_ICONS = {
   'add-child': LucidePlus,
   delete: LucideTrash2,
   view: LucideEye,
+  check: LucideCheck,
   transfer: LucideArrowRightLeft,
   vacate: LucideLogOut,
 } as const;

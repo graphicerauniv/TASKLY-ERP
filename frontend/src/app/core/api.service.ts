@@ -83,8 +83,14 @@ export class ApiService {
   deleteForm(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/forms/${id}`);
   }
-  admissions() {
-    return this.http.get<{ items: Admission[] }>(`${API_BASE_URL}/admissions`);
+  admissions(options: { status?: string; search?: string; page?: number; limit?: number } = {}) {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(options))
+      if (value !== undefined && value !== '') params = params.set(key, String(value));
+    return this.http.get<{
+      items: Admission[];
+      pagination: { page: number; limit: number; total: number; pages: number };
+    }>(`${API_BASE_URL}/admissions`, { params });
   }
   admission(id: string) {
     return this.http.get<{ item: Admission; masterLabels: Record<string, string> }>(
@@ -93,6 +99,28 @@ export class ApiService {
   }
   deleteAdmission(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/admissions/${id}`);
+  }
+  updateAdmission(admission: Admission) {
+    return this.http.patch<{ item: Admission }>(`${API_BASE_URL}/admissions/${admission._id}`, {
+      currentSectionId: admission.currentSectionId,
+      responses: admission.responses,
+      repeatableResponses: admission.repeatableResponses,
+    });
+  }
+  submitAdminAdmission(id: string) {
+    return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/submit`, {});
+  }
+  approveAdmission(id: string) {
+    return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/approve`, {});
+  }
+  uploadAdminAdmission(id: string, fieldId: string, file: File) {
+    const data = new FormData();
+    data.append('fieldId', fieldId);
+    data.append('file', file);
+    return this.http.post<{ file: { name: string; key: string; url: string } }>(
+      `${API_BASE_URL}/admissions/${id}/upload`,
+      data,
+    );
   }
   activeForm() {
     return this.http.get<{ item: AdmissionForm }>(`${API_BASE_URL}/public/forms/active`);
@@ -318,10 +346,19 @@ export class ApiService {
       params: bookId ? { bookId } : {},
     });
   }
-  createFeeHead(body: { bookId: string; name: string; category: FeeHead['category']; placement?: string; referenceHeadId?: string }) {
+  createFeeHead(body: {
+    bookId: string;
+    name: string;
+    category: FeeHead['category'];
+    placement?: string;
+    referenceHeadId?: string;
+  }) {
     return this.http.post<{ item: FeeHead }>(`${API_BASE_URL}/fees/heads`, body);
   }
-  updateFeeHead(id: string, body: Partial<FeeHead> & { placement?: string; referenceHeadId?: string }) {
+  updateFeeHead(
+    id: string,
+    body: Partial<FeeHead> & { placement?: string; referenceHeadId?: string },
+  ) {
     return this.http.patch<{ item: FeeHead }>(`${API_BASE_URL}/fees/heads/${id}`, body);
   }
   deleteFeeHead(id: string) {
@@ -347,7 +384,22 @@ export class ApiService {
     if (countryId) params = params.set('countryId', countryId);
     return this.http.get<{ items: CourseFee[] }>(`${API_BASE_URL}/fees/course-fees`, { params });
   }
-  createCourseFee(body: Omit<CourseFee, '_id' | 'bookCode' | 'courseName' | 'domicileName' | 'studentTypeName' | 'countryName' | 'feeHeadName' | 'academicName' | 'category' | 'source' | 'sourceSheet'>) {
+  createCourseFee(
+    body: Omit<
+      CourseFee,
+      | '_id'
+      | 'bookCode'
+      | 'courseName'
+      | 'domicileName'
+      | 'studentTypeName'
+      | 'countryName'
+      | 'feeHeadName'
+      | 'academicName'
+      | 'category'
+      | 'source'
+      | 'sourceSheet'
+    >,
+  ) {
     return this.http.post<{ item: CourseFee }>(`${API_BASE_URL}/fees/course-fees`, body);
   }
   saveCourseFeeMatrix(body: {
@@ -367,16 +419,46 @@ export class ApiService {
   }
   courseFeeDrafts(bookId = '') {
     const params = bookId ? new HttpParams().set('bookId', bookId) : undefined;
-    return this.http.get<{ items: CourseFeeDraft[] }>(`${API_BASE_URL}/fees/course-fee-drafts`, { params });
+    return this.http.get<{ items: CourseFeeDraft[] }>(`${API_BASE_URL}/fees/course-fee-drafts`, {
+      params,
+    });
   }
   courseFeeDraft(id: string) {
     return this.http.get<{ item: CourseFeeDraft }>(`${API_BASE_URL}/fees/course-fee-drafts/${id}`);
   }
-  createCourseFeeDraft(body: Omit<CourseFeeDraft, '_id' | 'bookCode' | 'collegeName' | 'academicSession' | 'courseName' | 'status' | 'createdAt' | 'updatedAt'>) {
+  createCourseFeeDraft(
+    body: Omit<
+      CourseFeeDraft,
+      | '_id'
+      | 'bookCode'
+      | 'collegeName'
+      | 'academicSession'
+      | 'courseName'
+      | 'status'
+      | 'createdAt'
+      | 'updatedAt'
+    >,
+  ) {
     return this.http.post<{ item: CourseFeeDraft }>(`${API_BASE_URL}/fees/course-fee-drafts`, body);
   }
-  updateCourseFeeDraft(id: string, body: Omit<CourseFeeDraft, '_id' | 'bookCode' | 'collegeName' | 'academicSession' | 'courseName' | 'status' | 'createdAt' | 'updatedAt'>) {
-    return this.http.put<{ item: CourseFeeDraft }>(`${API_BASE_URL}/fees/course-fee-drafts/${id}`, body);
+  updateCourseFeeDraft(
+    id: string,
+    body: Omit<
+      CourseFeeDraft,
+      | '_id'
+      | 'bookCode'
+      | 'collegeName'
+      | 'academicSession'
+      | 'courseName'
+      | 'status'
+      | 'createdAt'
+      | 'updatedAt'
+    >,
+  ) {
+    return this.http.put<{ item: CourseFeeDraft }>(
+      `${API_BASE_URL}/fees/course-fee-drafts/${id}`,
+      body,
+    );
   }
   deleteCourseFeeDraft(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/course-fee-drafts/${id}`);
@@ -384,7 +466,13 @@ export class ApiService {
   deleteCourseFee(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/course-fees/${id}`);
   }
-  previewCourseFeeImport(bookId: string, domicileId: string, studentTypeId: string, countryId: string, file: File) {
+  previewCourseFeeImport(
+    bookId: string,
+    domicileId: string,
+    studentTypeId: string,
+    countryId: string,
+    file: File,
+  ) {
     const data = new FormData();
     data.append('bookId', bookId);
     data.append('domicileId', domicileId);

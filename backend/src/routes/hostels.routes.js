@@ -418,10 +418,10 @@ hostelsRouter.get(
   asyncHandler(async (request, response) => {
     const admissions = await db()
       .collection('admissions')
-      .find({ status: 'submitted' })
+      .find({ status: 'approved' })
       .sort({ submittedAt: -1 })
       .limit(500)
-      .project({ applicationNumber: 1, formSnapshot: 1, responses: 1 })
+      .project({ applicationNumber: 1, studentName: 1, formSnapshot: 1, responses: 1 })
       .toArray();
     response.json({
       items: admissions.map((admission) => ({
@@ -620,11 +620,11 @@ hostelsRouter.post(
     const studentAdmissionId = id(data.studentAdmissionId, 'studentAdmissionId');
     const roomId = id(data.roomId, 'roomId');
     const [student, room] = await Promise.all([
-      db().collection('admissions').findOne({ _id: studentAdmissionId, status: 'submitted' }),
+      db().collection('admissions').findOne({ _id: studentAdmissionId, status: 'approved' }),
       db().collection('hostelRooms').findOne({ _id: roomId, isActive: true }),
     ]);
     if (!student)
-      return response.status(404).json({ message: 'Submitted student record not found.' });
+      return response.status(404).json({ message: 'Approved student record not found.' });
     if (!room) return response.status(404).json({ message: 'Active room not found.' });
     const hostel = await db().collection('hostels').findOne({ _id: room.hostelId, isActive: true });
     if (!hostel) return response.status(409).json({ message: 'The selected hostel is disabled.' });
@@ -974,6 +974,7 @@ async function roomCapacity(room, academicSession) {
 }
 
 function studentName(admission) {
+  if (admission.studentName) return admission.studentName;
   const fields = (admission.formSnapshot?.sections || [])
     .flatMap((section) => section.subsections || [])
     .flatMap((subsection) => subsection.fields || []);

@@ -21,6 +21,7 @@ const valueSchema = z.object({
   isActive: z.boolean().optional().default(true),
   metadata: z.record(z.string(), z.unknown()).optional().default({}),
 });
+const courseCodePattern = /^[A-Z0-9]{2,12}$/;
 const BUILTIN_MASTER_TYPES = [
   ['academic', 'Academic', null],
   ['university', 'University', null],
@@ -137,6 +138,7 @@ masterDataRouter.post(
   asyncHandler(async (request, response) => {
     await requireType(request.params.typeSlug);
     const data = valueSchema.parse(request.body);
+    validateCourseCode(request.params.typeSlug, data.metadata);
     const now = new Date();
     const document = {
       ...data,
@@ -155,6 +157,9 @@ masterDataRouter.patch(
   '/:typeSlug/values/:valueId',
   asyncHandler(async (request, response) => {
     const data = valueSchema.partial().parse(request.body);
+    if (!Object.hasOwn(request.body, 'metadata')) delete data.metadata;
+    if (!Object.hasOwn(request.body, 'isActive')) delete data.isActive;
+    if (data.metadata !== undefined) validateCourseCode(request.params.typeSlug, data.metadata);
     if ('parentId' in data) data.parentId = data.parentId ? id(data.parentId, 'parentId') : null;
     const result = await db()
       .collection('masterValues')
@@ -179,17 +184,19 @@ masterDataRouter.delete(
         .json({ message: 'This value is used as a parent and cannot be deleted.' });
     if (
       ['domicile', 'student-type', 'fee-type'].includes(request.params.typeSlug) &&
-      (await db().collection('courseFees').countDocuments(
-        request.params.typeSlug === 'domicile'
-          ? { domicileId: valueId }
-          : request.params.typeSlug === 'student-type'
-            ? { studentTypeId: valueId }
-            : { feeTypeId: valueId },
-      ))
+      (await db()
+        .collection('courseFees')
+        .countDocuments(
+          request.params.typeSlug === 'domicile'
+            ? { domicileId: valueId }
+            : request.params.typeSlug === 'student-type'
+              ? { studentTypeId: valueId }
+              : { feeTypeId: valueId },
+        ))
     )
-      return response
-        .status(409)
-        .json({ message: 'This master value is used by course fees. Disable it instead of deleting it.' });
+      return response.status(409).json({
+        message: 'This master value is used by course fees. Disable it instead of deleting it.',
+      });
     const result = await db()
       .collection('masterValues')
       .deleteOne({ _id: valueId, typeSlug: request.params.typeSlug });
@@ -266,22 +273,24 @@ async function ensureBuiltinMasterTypes() {
   const now = new Date();
   await Promise.all(
     BUILTIN_MASTER_TYPES.map(([slug, name, parentTypeSlug], order) =>
-      db().collection('masterTypes').updateOne(
-        { slug },
-        {
-          $setOnInsert: {
-            name,
-            slug,
-            parentTypeSlug,
-            isCustom: false,
-            isActive: true,
-            order,
-            createdAt: now,
-            updatedAt: now,
+      db()
+        .collection('masterTypes')
+        .updateOne(
+          { slug },
+          {
+            $setOnInsert: {
+              name,
+              slug,
+              parentTypeSlug,
+              isCustom: false,
+              isActive: true,
+              order,
+              createdAt: now,
+              updatedAt: now,
+            },
           },
-        },
-        { upsert: true },
-      ),
+          { upsert: true },
+        ),
     ),
   );
 }
@@ -294,22 +303,26 @@ async function ensureBuiltinMasterValues(slug) {
     { name: 'Yearly', order: 1, metadata: { periodType: 'year' } },
     { name: 'Semester', order: 2, metadata: { periodType: 'semester' } },
   ];
-  await Promise.all(defaults.map((value) =>
-    db().collection('masterValues').updateOne(
-      { typeSlug: slug, name: value.name, parentId: null },
-      {
-        $setOnInsert: {
-          ...value,
-          typeSlug: slug,
-          parentId: null,
-          isActive: true,
-          createdAt: now,
-          updatedAt: now,
-        },
-      },
-      { upsert: true },
+  await Promise.all(
+    defaults.map((value) =>
+      db()
+        .collection('masterValues')
+        .updateOne(
+          { typeSlug: slug, name: value.name, parentId: null },
+          {
+            $setOnInsert: {
+              ...value,
+              typeSlug: slug,
+              parentId: null,
+              isActive: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+          { upsert: true },
+        ),
     ),
-  ));
+  );
 }
 
 async function ensureBuiltinMasterType(slug) {
@@ -319,22 +332,37 @@ async function ensureBuiltinMasterType(slug) {
   if (index < 0) return null;
   const [builtInSlug, name, parentTypeSlug] = BUILTIN_MASTER_TYPES[index];
   const now = new Date();
-  await db().collection('masterTypes').updateOne(
-    { slug: builtInSlug },
-    {
-      $setOnInsert: {
-        name,
-        slug: builtInSlug,
-        parentTypeSlug,
-        isCustom: false,
-        isActive: true,
-        order: index,
-        createdAt: now,
-        updatedAt: now,
+  await db()
+    .collection('masterTypes')
+    .updateOne(
+      { slug: builtInSlug },
+      {
+        $setOnInsert: {
+          name,
+          slug: builtInSlug,
+          parentTypeSlug,
+          isCustom: false,
+          isActive: true,
+          order: index,
+          createdAt: now,
+          updatedAt: now,
+        },
       },
-    },
-    { upsert: true },
-  );
+      { upsert: true },
+    );
   return db().collection('masterTypes').findOne({ slug: builtInSlug });
 }
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function validateCourseCode(typeSlug, metadata) {
+  if (typeSlug !== 'course') return;
+  const courseCode = String(metadata?.courseCode || '')
+    .trim()
+    .toUpperCase();
+  if (!courseCodePattern.test(courseCode)) {
+    const error = new Error('Course code must contain 2 to 12 letters or numbers.');
+    error.status = 400;
+    throw error;
+  }
+  metadata.courseCode = courseCode;
+}

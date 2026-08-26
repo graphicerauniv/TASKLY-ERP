@@ -90,7 +90,13 @@ export interface AdmissionForm {
 export interface Admission {
   _id: string;
   applicationNumber: string;
-  status: string;
+  studentId?: string;
+  studentName?: string;
+  academicSession?: string;
+  academicSessionId?: string | null;
+  courseName?: string;
+  courseId?: string | null;
+  status: 'draft' | 'pending_approval' | 'approved' | 'submitted';
   currentSectionId: string | null;
   formVersion?: number;
   formSnapshot: AdmissionForm;
@@ -98,6 +104,7 @@ export interface Admission {
   repeatableResponses: Record<string, Record<string, unknown>[]>;
   createdAt: string;
   submittedAt?: string;
+  approvedAt?: string;
 }
 
 export interface Hostel {

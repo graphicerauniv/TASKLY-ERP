@@ -111,8 +111,41 @@ export const ADMIN_ROUTES: Routes = [
         component: DynamicAdmissionComponent,
       },
       {
-        path: 'admissions',
+        path: 'admissions/:admissionId/edit',
+        data: { embedded: true },
+        component: DynamicAdmissionComponent,
+      },
+      {
+        path: 'admissions/unfilled',
         component: AdmissionsComponent,
+        data: {
+          status: 'draft',
+          title: 'Admission Unfilled Data',
+          description: 'Saved admission forms that still need required information.',
+        },
+      },
+      {
+        path: 'admissions/not-approved',
+        component: AdmissionsComponent,
+        data: {
+          status: 'pending_approval',
+          title: 'Not Approved Students',
+          description: 'Completed admissions waiting for approval.',
+        },
+      },
+      {
+        path: 'admissions/approved',
+        component: AdmissionsComponent,
+        data: {
+          status: 'approved',
+          title: 'Approved Students',
+          description: 'Students whose completed admission records have been approved.',
+        },
+      },
+      {
+        path: 'admissions',
+        pathMatch: 'full',
+        redirectTo: 'admissions/approved',
       },
       {
         path: 'delete-admissions',

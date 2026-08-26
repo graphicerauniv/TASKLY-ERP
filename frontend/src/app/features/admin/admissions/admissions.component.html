@@ -1,21 +1,50 @@
 <erp-admin-page
   eyebrow="Admission"
-  title="Student Database"
-  description="All saved and submitted student admission records."
+  [title]="title()"
+  [description]="description()"
   variant="minimal"
 >
   <a page-actions class="erp-button erp-button--primary" routerLink="/admin/admission/student"
     >＋ New student admission</a
   >
 
+  @if (message()) {
+    <p class="erp-notice erp-notice--success">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="erp-notice erp-notice--error">{{ error() }}</p>
+  }
+
   <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>
+          Student records <small>{{ total() }}</small>
+        </h2>
+        <p>Search by student name, Student ID, course, session, or application number.</p>
+      </div>
+      <div class="erp-table-toolbar__actions">
+        <input
+          class="erp-control"
+          type="search"
+          [(ngModel)]="search"
+          placeholder="Search students"
+          (keyup.enter)="searchRecords()"
+        />
+        <button class="erp-button erp-button--secondary" type="button" (click)="searchRecords()">
+          Search
+        </button>
+      </div>
+    </div>
     <div class="erp-table-shell__scroll">
       <table>
         <thead>
           <tr>
-            <th>Application number</th>
-            <th>Form version</th>
-            <th>Created</th>
+            <th>Student</th>
+            <th>Student ID</th>
+            <th>Course</th>
+            <th>Session</th>
+            <th>Saved</th>
             <th>Status</th>
             <th class="erp-table-shell__actions">Actions</th>
           </tr>
@@ -24,34 +53,79 @@
           @for (item of items(); track item._id) {
             <tr>
               <td>
-                <strong>{{ item.applicationNumber || 'Record unavailable' }}</strong>
+                <strong>{{ item.studentName || 'Name not entered' }}</strong
+                ><small>{{ item.applicationNumber }}</small>
               </td>
-              <td>v{{ item.formVersion || '—' }}</td>
+              <td>
+                <strong>{{ item.studentId || 'Not generated' }}</strong>
+              </td>
+              <td>{{ item.courseName || 'Not selected' }}</td>
+              <td>{{ item.academicSession || 'Not selected' }}</td>
               <td>{{ createdLabel(item) }}</td>
               <td>
-                <span
-                  class="erp-status"
-                  [class.erp-status--warning]="displayStatus(item) !== 'submitted'"
-                >
-                  {{ displayStatusLabel(item) }}
-                </span>
+                <span class="erp-status" [class.erp-status--warning]="item.status !== 'approved'">{{
+                  displayStatusLabel(item)
+                }}</span>
               </td>
               <td class="erp-table-shell__actions">
                 <erp-compact-action-menu
-                  [items]="rowActions"
+                  [items]="actionsFor(item)"
                   (selected)="handleRowAction($event, item)"
                 />
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="erp-empty-state">
-                No student records yet. Start a Student Admission to create one.
+              <td colspan="7" class="erp-empty-state">
+                {{ loading() ? 'Loading…' : 'No matching student records found.' }}
               </td>
             </tr>
           }
         </tbody>
       </table>
+    </div>
+    <div class="erp-pagination">
+      <span
+        >Showing {{ items().length }} of {{ total() }} students · Page {{ page }} of
+        {{ pages() }}</span
+      >
+      <div class="erp-pagination__pages">
+        <select
+          class="erp-control erp-pagination__size"
+          aria-label="Rows per page"
+          [(ngModel)]="pageSize"
+          (ngModelChange)="changePageSize()"
+        >
+          @for (size of pageSizeOptions; track size) {
+            <option [ngValue]="size">{{ size }} / page</option>
+          }
+        </select>
+        <button
+          class="erp-pagination__button"
+          type="button"
+          aria-label="Previous page"
+          [disabled]="page <= 1"
+          (click)="changePage(page - 1)"
+        >
+          ‹
+        </button>
+        <button
+          class="erp-pagination__button erp-pagination__button--active"
+          type="button"
+          aria-current="page"
+        >
+          {{ page }}
+        </button>
+        <button
+          class="erp-pagination__button"
+          type="button"
+          aria-label="Next page"
+          [disabled]="page >= pages()"
+          (click)="changePage(page + 1)"
+        >
+          ›
+        </button>
+      </div>
     </div>
   </section>
 </erp-admin-page>
@@ -73,8 +147,12 @@
       <header>
         <div>
           <small>Student record</small>
-          <h2 id="student-detail-title">{{ admission.applicationNumber }}</h2>
-          <p>Form version {{ admission.formVersion }} · {{ admission.status }}</p>
+          <h2 id="student-detail-title">
+            {{ admission.studentId || admission.applicationNumber }}
+          </h2>
+          <p>
+            {{ admission.studentName || 'Name not entered' }} · {{ displayStatusLabel(admission) }}
+          </p>
         </div>
         <button type="button" aria-label="Close student details" (click)="close()">×</button>
       </header>

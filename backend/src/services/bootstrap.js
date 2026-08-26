@@ -20,6 +20,15 @@ export const BUILTIN_MASTERS = [
 
 export async function bootstrap() {
   const now = new Date();
+  await db()
+    .collection('admissions')
+    .updateMany({ status: 'submitted' }, { $set: { status: 'pending_approval', updatedAt: now } });
+  await db()
+    .collection('admissions')
+    .updateMany(
+      { status: 'draft', hasSavedData: { $exists: false } },
+      { $set: { hasSavedData: true } },
+    );
   await Promise.all(
     BUILTIN_MASTERS.map(([slug, name, parentTypeSlug], order) =>
       db()
@@ -67,26 +76,32 @@ async function ensureDefaultFeeTypes(now) {
     { name: 'Yearly', order: 1, metadata: { periodType: 'year' } },
     { name: 'Semester', order: 2, metadata: { periodType: 'semester' } },
   ];
-  await Promise.all(defaults.map((value) =>
-    db().collection('masterValues').updateOne(
-      { typeSlug: 'fee-type', name: value.name, parentId: null },
-      {
-        $setOnInsert: {
-          ...value,
-          typeSlug: 'fee-type',
-          parentId: null,
-          isActive: true,
-          createdAt: now,
-          updatedAt: now,
-        },
-      },
-      { upsert: true },
+  await Promise.all(
+    defaults.map((value) =>
+      db()
+        .collection('masterValues')
+        .updateOne(
+          { typeSlug: 'fee-type', name: value.name, parentId: null },
+          {
+            $setOnInsert: {
+              ...value,
+              typeSlug: 'fee-type',
+              parentId: null,
+              isActive: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+          { upsert: true },
+        ),
     ),
-  ));
+  );
 }
 
 async function migrateSpecializationsToCourses(now) {
-  const legacyType = await db().collection('masterTypes').findOne({ slug: 'course-specialization' });
+  const legacyType = await db()
+    .collection('masterTypes')
+    .findOne({ slug: 'course-specialization' });
   if (!legacyType) return;
   const specializations = await db()
     .collection('masterValues')
@@ -94,42 +109,53 @@ async function migrateSpecializationsToCourses(now) {
     .toArray();
   for (const specialization of specializations) {
     const parentCourse = specialization.parentId
-      ? await db().collection('masterValues').findOne({ _id: specialization.parentId, typeSlug: 'course' })
+      ? await db()
+          .collection('masterValues')
+          .findOne({ _id: specialization.parentId, typeSlug: 'course' })
       : null;
-    const migratedName = parentCourse && !specialization.name.toLocaleLowerCase().includes(parentCourse.name.toLocaleLowerCase())
-      ? `${parentCourse.name} - ${specialization.name}`
-      : specialization.name;
-    await db().collection('masterValues').updateOne(
-      { typeSlug: 'course', name: migratedName, parentId: parentCourse?.parentId || null },
-      {
-        $setOnInsert: {
-          typeSlug: 'course',
-          name: migratedName,
-          parentId: parentCourse?.parentId || null,
-          order: specialization.order || 0,
-          isActive: specialization.isActive ?? true,
-          metadata: {
-            ...(specialization.metadata || {}),
-            migratedFromSpecialization: String(specialization._id),
-            baseCourseId: parentCourse ? String(parentCourse._id) : null,
+    const migratedName =
+      parentCourse &&
+      !specialization.name.toLocaleLowerCase().includes(parentCourse.name.toLocaleLowerCase())
+        ? `${parentCourse.name} - ${specialization.name}`
+        : specialization.name;
+    await db()
+      .collection('masterValues')
+      .updateOne(
+        { typeSlug: 'course', name: migratedName, parentId: parentCourse?.parentId || null },
+        {
+          $setOnInsert: {
+            typeSlug: 'course',
+            name: migratedName,
+            parentId: parentCourse?.parentId || null,
+            order: specialization.order || 0,
+            isActive: specialization.isActive ?? true,
+            metadata: {
+              ...(specialization.metadata || {}),
+              migratedFromSpecialization: String(specialization._id),
+              baseCourseId: parentCourse ? String(parentCourse._id) : null,
+            },
+            createdAt: now,
+            updatedAt: now,
           },
-          createdAt: now,
-          updatedAt: now,
         },
-      },
-      { upsert: true },
-    );
+        { upsert: true },
+      );
   }
-  await db().collection('masterTypes').updateOne(
-    { _id: legacyType._id },
-    { $set: { isActive: false, legacy: true, updatedAt: now } },
-  );
+  await db()
+    .collection('masterTypes')
+    .updateOne(
+      { _id: legacyType._id },
+      { $set: { isActive: false, legacy: true, updatedAt: now } },
+    );
 }
 
 async function migrateFormSpecializationSources(now) {
-  const forms = await db().collection('forms').find({
-    'sections.subsections.fields.dataSource.masterTypeSlug': 'course-specialization',
-  }).toArray();
+  const forms = await db()
+    .collection('forms')
+    .find({
+      'sections.subsections.fields.dataSource.masterTypeSlug': 'course-specialization',
+    })
+    .toArray();
   for (const form of forms) {
     let changed = false;
     for (const section of form.sections || []) {
@@ -142,6 +168,9 @@ async function migrateFormSpecializationSources(now) {
         }
       }
     }
-    if (changed) await db().collection('forms').updateOne({ _id: form._id }, { $set: { sections: form.sections, updatedAt: now } });
+    if (changed)
+      await db()
+        .collection('forms')
+        .updateOne({ _id: form._id }, { $set: { sections: form.sections, updatedAt: now } });
   }
 }

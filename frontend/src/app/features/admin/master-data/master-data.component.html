@@ -7,9 +7,13 @@
   >
     <div page-actions class="master-page-actions">
       @if (isViewPage()) {
-        <a class="erp-button erp-button--primary" routerLink="/admin/master-data/custom/create">Create custom</a>
+        <a class="erp-button erp-button--primary" routerLink="/admin/master-data/custom/create"
+          >Create custom</a
+        >
       } @else {
-        <a class="erp-button erp-button--secondary" routerLink="/admin/master-data/custom/view">View custom masters</a>
+        <a class="erp-button erp-button--secondary" routerLink="/admin/master-data/custom/view"
+          >View custom masters</a
+        >
       }
     </div>
     @if (message()) {
@@ -29,20 +33,36 @@
               </div>
             </div>
             <div class="erp-form-grid master-value-grid">
-              <label><span>Name</span><input class="erp-control" [(ngModel)]="customName" placeholder="e.g. Board, Religion, Category" /></label>
-              <label><span>Parent master (optional)</span><select class="erp-control" [(ngModel)]="customParent">
+              <label
+                ><span>Name</span
+                ><input
+                  class="erp-control"
+                  [(ngModel)]="customName"
+                  placeholder="e.g. Board, Religion, Category"
+              /></label>
+              <label
+                ><span>Parent master (optional)</span
+                ><select class="erp-control" [(ngModel)]="customParent">
                   <option value="">No parent</option>
                   @for (type of types(); track type.slug) {
                     <option [value]="type.slug">{{ type.name }}</option>
                   }
-                </select></label>
-              <button class="erp-button erp-button--primary" type="button" (click)="createCustom()">Create master</button>
+                </select></label
+              >
+              <button class="erp-button erp-button--primary" type="button" (click)="createCustom()">
+                Create master
+              </button>
             </div>
           </section>
         } @else {
           <section class="erp-card erp-table-shell master-table-card">
             <div class="erp-table-toolbar">
-              <div><h2>Custom masters <small>{{ customTypeCount() }}</small></h2><p>Review custom dropdown data sources separately from creation.</p></div>
+              <div>
+                <h2>
+                  Custom masters <small>{{ customTypeCount() }}</small>
+                </h2>
+                <p>Review custom dropdown data sources separately from creation.</p>
+              </div>
             </div>
             <table>
               <thead>
@@ -57,14 +77,18 @@
                 @for (type of types(); track type.slug) {
                   @if (type.isCustom) {
                     <tr>
-                      <td><strong>{{ type.name }}</strong></td>
+                      <td>
+                        <strong>{{ type.name }}</strong>
+                      </td>
                       <td>{{ type.slug }}</td>
                       <td>{{ type.parentTypeSlug || '—' }}</td>
                       <td><span class="erp-status">Active</span></td>
                     </tr>
                   }
                 } @empty {
-                  <tr><td colspan="4" class="erp-empty-state">No custom masters created.</td></tr>
+                  <tr>
+                    <td colspan="4" class="erp-empty-state">No custom masters created.</td>
+                  </tr>
                 }
               </tbody>
             </table>
@@ -83,7 +107,9 @@
     <div page-actions class="master-page-actions">
       @if (isViewPage()) {
         <a class="erp-button erp-button--primary" [routerLink]="createRoute()">Create value</a>
-        <label class="erp-button erp-button--secondary upload">Bulk upload<input type="file" accept=".csv,.xlsx,.xls" (change)="importFile($event)" /></label>
+        <label class="erp-button erp-button--secondary upload"
+          >Bulk upload<input type="file" accept=".csv,.xlsx,.xls" (change)="importFile($event)"
+        /></label>
       } @else {
         <a class="erp-button erp-button--secondary" [routerLink]="viewRoute()">View values</a>
       }
@@ -101,15 +127,24 @@
             <div class="erp-card__header">
               <div>
                 <h2>{{ editingId() ? 'Edit value' : 'Add value' }}</h2>
-                <p>Keep values consistent because these records power form dropdowns and filters.</p>
+                <p>
+                  Keep values consistent because these records power form dropdowns and filters.
+                </p>
               </div>
             </div>
             <div class="erp-form-grid master-value-grid">
-              <label><span>Name *</span><input class="erp-control" [(ngModel)]="name" placeholder="Enter value name" /></label>
+              <label
+                ><span>Name *</span
+                ><input class="erp-control" [(ngModel)]="name" placeholder="Enter value name"
+              /></label>
               @for (dependencySlug of dependencySlugs(); track dependencySlug; let index = $index) {
                 <label>
                   <span>{{ dependencyLabel(dependencySlug) }} *</span>
-                  <select class="erp-control" [(ngModel)]="selectedDependencies[dependencySlug]" (ngModelChange)="dependencyChanged(index)">
+                  <select
+                    class="erp-control"
+                    [(ngModel)]="selectedDependencies[dependencySlug]"
+                    (ngModelChange)="dependencyChanged(index)"
+                  >
                     <option value="">Select {{ dependencyLabel(dependencySlug) }}</option>
                     @for (option of dependencyOptions(index); track option._id) {
                       <option [value]="option._id">{{ option.name }}</option>
@@ -118,26 +153,73 @@
                 </label>
               }
               @if (isCourseMaster()) {
-                <label><span>Exam pattern *</span><select class="erp-control" [(ngModel)]="courseExamPattern">
-                  <option value="semester">Semester-wise exams</option>
-                  <option value="year">Year-wise exams</option>
-                </select></label>
-                <label><span>Duration years *</span><input class="erp-control" type="number" min="1" max="10" [(ngModel)]="courseDurationYears" /></label>
-                <label><span>Total semesters *</span><input class="erp-control" type="number" min="1" max="20" [(ngModel)]="courseTotalSemesters" /></label>
+                <label
+                  ><span>Course code *</span
+                  ><input
+                    class="erp-control"
+                    [(ngModel)]="courseCode"
+                    maxlength="12"
+                    placeholder="e.g. BCA"
+                /></label>
+                <label
+                  ><span>Exam pattern *</span
+                  ><select class="erp-control" [(ngModel)]="courseExamPattern">
+                    <option value="semester">Semester-wise exams</option>
+                    <option value="year">Year-wise exams</option>
+                  </select></label
+                >
+                <label
+                  ><span>Duration years *</span
+                  ><input
+                    class="erp-control"
+                    type="number"
+                    min="1"
+                    max="10"
+                    [(ngModel)]="courseDurationYears"
+                /></label>
+                <label
+                  ><span>Total semesters *</span
+                  ><input
+                    class="erp-control"
+                    type="number"
+                    min="1"
+                    max="20"
+                    [(ngModel)]="courseTotalSemesters"
+                /></label>
               }
-              <button class="erp-button erp-button--primary" type="button" (click)="save()">{{ editingId() ? 'Save changes' : 'Add value' }}</button>
+              <button class="erp-button erp-button--primary" type="button" (click)="save()">
+                {{ editingId() ? 'Save changes' : 'Add value' }}
+              </button>
               @if (editingId()) {
-                <button class="erp-button erp-button--secondary" type="button" (click)="reset()">Cancel</button>
+                <button class="erp-button erp-button--secondary" type="button" (click)="reset()">
+                  Cancel
+                </button>
               }
             </div>
           </section>
         } @else {
           <section class="erp-card erp-table-shell master-table-card">
             <div class="erp-table-toolbar">
-              <div><h2>Saved values <small>{{ values().length }}</small></h2><p>Search, review and manage this master list separately from creation.</p></div>
+              <div>
+                <h2>
+                  Saved values <small>{{ values().length }}</small>
+                </h2>
+                <p>Search, review and manage this master list separately from creation.</p>
+              </div>
               <div class="erp-table-toolbar__actions">
-                <input class="erp-control" [(ngModel)]="search" placeholder="Search values" (keyup.enter)="loadValues()" />
-                <button class="erp-button erp-button--secondary" type="button" (click)="loadValues()">Search</button>
+                <input
+                  class="erp-control"
+                  [(ngModel)]="search"
+                  placeholder="Search values"
+                  (keyup.enter)="loadValues()"
+                />
+                <button
+                  class="erp-button erp-button--secondary"
+                  type="button"
+                  (click)="loadValues()"
+                >
+                  Search
+                </button>
               </div>
             </div>
             <div class="erp-table-shell__scroll">
@@ -158,21 +240,57 @@
                 <tbody>
                   @for (item of values(); track item._id) {
                     <tr>
-                      <td><strong>{{ item.name }}</strong></td>
+                      <td>
+                        <strong>{{ item.name }}</strong>
+                      </td>
                       @if (dependencySlugs().length) {
                         <td>{{ parentPath(item) }}</td>
                       }
                       @if (isCourseMaster()) {
                         <td>
-                          <strong>{{ item.metadata?.['examPattern'] === 'year' ? 'Year-wise exams' : 'Semester-wise exams' }}</strong>
-                          <small>{{ item.metadata?.['durationYears'] || 4 }} years · {{ item.metadata?.['totalSemesters'] || 8 }} semesters · fee type selected during fee setup</small>
+                          <strong
+                            >{{ item.metadata?.['courseCode'] || 'Code not set' }} ·
+                            {{
+                              item.metadata?.['examPattern'] === 'year'
+                                ? 'Year-wise exams'
+                                : 'Semester-wise exams'
+                            }}</strong
+                          >
+                          <small
+                            >{{ item.metadata?.['durationYears'] || 4 }} years ·
+                            {{ item.metadata?.['totalSemesters'] || 8 }} semesters · fee type
+                            selected during fee setup</small
+                          >
                         </td>
                       }
-                      <td><button class="erp-status" [class.erp-status--neutral]="!item.isActive" type="button" (click)="toggle(item)">{{ item.isActive ? 'Enabled' : 'Disabled' }}</button></td>
-                      <td class="erp-table-shell__actions"><erp-compact-action-menu [items]="isCourseMaster() ? courseRowActions : baseRowActions" (selected)="handleRowAction($event, item)" /></td>
+                      <td>
+                        <button
+                          class="erp-status"
+                          [class.erp-status--neutral]="!item.isActive"
+                          type="button"
+                          (click)="toggle(item)"
+                        >
+                          {{ item.isActive ? 'Enabled' : 'Disabled' }}
+                        </button>
+                      </td>
+                      <td class="erp-table-shell__actions">
+                        <erp-compact-action-menu
+                          [items]="isCourseMaster() ? courseRowActions : baseRowActions"
+                          (selected)="handleRowAction($event, item)"
+                        />
+                      </td>
                     </tr>
                   } @empty {
-                    <tr><td [attr.colspan]="(dependencySlugs().length ? 4 : 3) + (isCourseMaster() ? 1 : 0)" class="erp-empty-state">{{ loading() ? 'Loading…' : 'No values found.' }}</td></tr>
+                    <tr>
+                      <td
+                        [attr.colspan]="
+                          (dependencySlugs().length ? 4 : 3) + (isCourseMaster() ? 1 : 0)
+                        "
+                        class="erp-empty-state"
+                      >
+                        {{ loading() ? 'Loading…' : 'No values found.' }}
+                      </td>
+                    </tr>
                   }
                 </tbody>
               </table>

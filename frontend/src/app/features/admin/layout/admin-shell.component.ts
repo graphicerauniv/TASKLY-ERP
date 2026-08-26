@@ -218,9 +218,7 @@ export class AdminShellComponent {
     }
     this.hostelMenuOpen.set(true);
     setTimeout(() =>
-      this.host.nativeElement
-        .querySelector<HTMLElement>('.hostel-flyout a')
-        ?.focus(),
+      this.host.nativeElement.querySelector<HTMLElement>('.hostel-flyout a')?.focus(),
     );
   }
   closeHostelMenu(restoreFocus = true) {
@@ -236,23 +234,25 @@ export class AdminShellComponent {
     if (!nextOpen) this.feeGroupOpen.set(null);
   }
   toggleFeeGroup(group: 'books' | 'heads' | 'hostel' | 'course') {
-    this.feeGroupOpen.update((open) => open === group ? null : group);
+    this.feeGroupOpen.update((open) => (open === group ? null : group));
   }
   toggleMasterGroup(group: string) {
-    this.masterGroupOpen.update((open) => open === group ? null : group);
+    this.masterGroupOpen.update((open) => (open === group ? null : group));
     this.masterTypeOpen.set(null);
   }
   isMasterGroupExpanded(group: string) {
     return this.masterSearch().trim().length > 0 || this.masterGroupOpen() === group;
   }
   toggleMasterType(slug: string) {
-    this.masterTypeOpen.update((open) => open === slug ? null : slug);
+    this.masterTypeOpen.update((open) => (open === slug ? null : slug));
   }
   isMasterTypeExpanded(slug: string) {
     return this.masterSearch().trim().length > 0 || this.masterTypeOpen() === slug;
   }
   isMasterGroupRoute(group: { items: MasterType[] }) {
-    return group.items.some((type) => this.router.url.startsWith(`/admin/master-data/${type.slug}`));
+    return group.items.some((type) =>
+      this.router.url.startsWith(`/admin/master-data/${type.slug}`),
+    );
   }
   matchesNavigation(label: string) {
     const query = this.navigationSearch().trim().toLocaleLowerCase();
@@ -317,7 +317,7 @@ export class AdminShellComponent {
   isAdmissionRoute() {
     return (
       this.router.url.startsWith('/admin/admission/') ||
-      this.router.url === '/admin/admissions' ||
+      this.router.url.startsWith('/admin/admissions') ||
       this.router.url === '/admin/delete-admissions'
     );
   }
@@ -328,19 +328,24 @@ export class AdminShellComponent {
     return this.router.url.startsWith('/admin/fees/');
   }
   isFeeGroupRoute(group: 'books' | 'heads' | 'hostel' | 'course') {
-    const path = ({
+    const path = {
       books: '/admin/fees/books/',
       heads: '/admin/fees/heads/',
       hostel: '/admin/fees/hostel-fees/',
       course: '/admin/fees/course-fees/',
-    })[group];
+    }[group];
     return this.router.url.startsWith(path);
   }
   private updateCurrentModule(url: string) {
     if (url.includes('/fees/')) this.currentModule.set('Fee Management');
     else if (url.includes('/master-data/')) this.currentModule.set('Master Data');
     else if (url.includes('/form-builder')) this.currentModule.set('Master Data');
-    else if (url.includes('/admissions')) this.currentModule.set('Student Database');
+    else if (url.includes('/admissions/unfilled'))
+      this.currentModule.set('Admission Unfilled Data');
+    else if (url.includes('/admissions/not-approved'))
+      this.currentModule.set('Not Approved Students');
+    else if (url.includes('/admissions/approved')) this.currentModule.set('Approved Students');
+    else if (url.includes('/admissions/')) this.currentModule.set('Student Admission');
     else if (url.includes('/delete-admissions')) this.currentModule.set('Delete Admission');
     else if (url.includes('/admission/student')) this.currentModule.set('Student Admission');
     else this.currentModule.set('Dashboard');

@@ -23,14 +23,26 @@
       <h1>Admission form unavailable</h1>
       <p>{{ error() }}</p>
     </section>
-  } @else if (admission()?.status === 'submitted') {
+  } @else if (admission()?.status !== 'draft') {
     <section class="erp-card erp-card--padded erp-admission-submitted">
       <span><svg lucideCheck size="28" aria-hidden="true"></svg></span>
-      <h1>{{ embedded() ? 'Student record saved' : 'Application submitted' }}</h1>
+      <h1>
+        {{
+          admission()?.status === 'approved'
+            ? 'Student approved'
+            : embedded()
+              ? 'Student sent for approval'
+              : 'Application submitted'
+        }}
+      </h1>
       <p>
         @if (embedded()) {
-          Student record <strong>{{ admission()?.applicationNumber }}</strong> is now available in
-          the Student Database.
+          Student <strong>{{ admission()?.studentId || admission()?.applicationNumber }}</strong>
+          {{
+            admission()?.status === 'approved'
+              ? 'is approved.'
+              : 'is now available in Not Approved Students.'
+          }}
         } @else {
           Your application <strong>{{ admission()?.applicationNumber }}</strong> has been received
           successfully.
@@ -38,13 +50,23 @@
       </p>
       <div class="erp-admission-submitted__actions">
         @if (embedded()) {
-          <a class="erp-button erp-button--secondary" routerLink="/admin/admissions">
-            Open Student Database
+          <a
+            class="erp-button erp-button--secondary"
+            [routerLink]="
+              admission()?.status === 'approved'
+                ? '/admin/admissions/approved'
+                : '/admin/admissions/not-approved'
+            "
+          >
+            Open
+            {{ admission()?.status === 'approved' ? 'Approved Students' : 'Not Approved Students' }}
           </a>
         }
-        <button class="erp-button erp-button--primary" type="button" (click)="newApplication()">
-          Start another admission
-        </button>
+        @if (!admissionId()) {
+          <button class="erp-button erp-button--primary" type="button" (click)="newApplication()">
+            Start another admission
+          </button>
+        }
       </div>
     </section>
   } @else if (form(); as current) {
