@@ -110,7 +110,10 @@
           @if (fee.kind === 'hostel') {
             <p>{{ fee.hostelName || 'Hostel' }} · Room {{ fee.roomNumber || 'not assigned' }}</p>
           } @else {
-            <p>Your Academic Fee for the current year.</p>
+            <p>
+              Your Academic Fee for
+              {{ fee.feeFrequency === 'semester' ? fee.periodLabel : 'the current year' }}.
+            </p>
           }
         </div>
         <div>
@@ -126,7 +129,8 @@
               <th>Period</th>
               <th>Due date</th>
               <th>Amount</th>
-              <th>Status</th>
+              <th>Amount received</th>
+              <th>Left amount</th>
             </tr>
           </thead>
           <tbody>
@@ -144,9 +148,8 @@
                 <td>{{ entry.periodLabel }}</td>
                 <td>{{ entry.dueDate | date: 'mediumDate' }}</td>
                 <td>{{ entryAmount(entry) | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
-                <td>
-                  <span class="erp-status">{{ entry.status }}</span>
-                </td>
+                <td>{{ entry.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                <td>{{ entry.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
               </tr>
             }
           </tbody>

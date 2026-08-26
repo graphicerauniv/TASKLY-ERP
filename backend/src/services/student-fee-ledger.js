@@ -68,6 +68,61 @@ export async function removeStudentFeeLedgers(database, studentAdmissionId) {
   return result.deletedCount;
 }
 
+export async function recalculateStudentAcademicLedger(database, admission, createdBy) {
+  if (admission.status !== 'approved' || !admission.isActive)
+    return failure(admission, 'Student must be approved and active.');
+  const existing = await database
+    .collection('studentFeeLedgers')
+    .find({ studentAdmissionId: admission._id, kind: 'academic', status: 'active' })
+    .toArray();
+  if (existing.some((ledger) => Number(ledger.paidAmount || 0) > 0)) {
+    const error = new Error(
+      'The Academic Fee ledger already has a payment and cannot be recalculated. Create an adjustment or contact Accounts.',
+    );
+    error.status = 409;
+    throw error;
+  }
+  const existingIds = existing.map((ledger) => ledger._id);
+  if (existingIds.length)
+    await database.collection('studentFeeLedgers').updateMany(
+      { _id: { $in: existingIds }, status: 'active' },
+      { $set: { status: 'recalculating', updatedAt: new Date() } },
+    );
+  try {
+    const result = await generateStudentFeeLedgers(database, admission, createdBy, {
+      academicOnly: true,
+    });
+    if (!result.createdKinds.includes('academic')) {
+      if (existingIds.length)
+        await database.collection('studentFeeLedgers').updateMany(
+          { _id: { $in: existingIds }, status: 'recalculating' },
+          { $set: { status: 'active', updatedAt: new Date() } },
+        );
+      return result;
+    }
+    if (existingIds.length)
+      await database.collection('studentFeeLedgers').updateMany(
+        { _id: { $in: existingIds }, status: 'recalculating' },
+        {
+          $set: {
+            status: 'superseded',
+            supersededAt: new Date(),
+            supersededBy: createdBy,
+            updatedAt: new Date(),
+          },
+        },
+      );
+    return result;
+  } catch (error) {
+    if (existingIds.length)
+      await database.collection('studentFeeLedgers').updateMany(
+        { _id: { $in: existingIds }, status: 'recalculating' },
+        { $set: { status: 'active', updatedAt: new Date() } },
+      );
+    throw error;
+  }
+}
+
 export function totalsForEntries(entries) {
   const chargeAmount = entries
     .filter((entry) => entry.category === 'fee')

@@ -213,6 +213,21 @@ export class ApiService {
       }>;
     }>(`${API_BASE_URL}/fees/student-ledgers/generate`, { studentAdmissionIds });
   }
+  recalculateStudentFees(studentAdmissionIds: string[]) {
+    return this.http.post<{
+      created: number;
+      studentsProcessed: number;
+      results: Array<{
+        studentAdmissionId: string;
+        studentId?: string;
+        studentName?: string;
+        success: boolean;
+        createdKinds: Array<'academic'>;
+        skippedKinds: Array<{ kind: 'academic'; reason: string }>;
+        reason?: string;
+      }>;
+    }>(`${API_BASE_URL}/fees/student-ledgers/recalculate`, { studentAdmissionIds });
+  }
   feeProgressionCandidates(mode: 'semester' | 'year') {
     return this.http.get<{ items: FeeProgressionCandidate[] }>(
       `${API_BASE_URL}/fees/student-ledgers/progression-candidates`,
@@ -491,6 +506,7 @@ export class ApiService {
     bookId: string;
     name: string;
     category: FeeHead['category'];
+    priority?: number;
     placement?: string;
     referenceHeadId?: string;
     divideSemesterWise?: boolean;

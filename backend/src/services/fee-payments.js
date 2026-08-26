@@ -17,7 +17,7 @@ export async function refreshStudentPenalties(database, studentAdmissionId, asOf
 }
 
 export async function refreshLedgerPenalty(database, ledger, asOf = new Date()) {
-  const entries = (ledger.entries || []).map(normalizeEntry);
+  const entries = await entriesWithCurrentPriorities(database, ledger.entries || []);
   const settings = ledger.penalty || {};
   const existingIndex = entries.findIndex((entry) => entry.isPenalty);
   const penaltyAmount = calculatePenaltyAmount(settings, ledger.balanceAmount, asOf);
@@ -43,6 +43,7 @@ export async function refreshLedgerPenalty(database, ledger, asOf = new Date()) 
     if (existingIndex >= 0) entries[existingIndex] = penaltyEntry;
     else entries.unshift(penaltyEntry);
   }
+  entries.sort(compareEntriesByPriority);
   const totals = ledgerTotals(entries);
   const update = {
     entries,
@@ -58,6 +59,37 @@ export async function refreshLedgerPenalty(database, ledger, asOf = new Date()) 
   };
   await database.collection('studentFeeLedgers').updateOne({ _id: ledger._id }, { $set: update });
   return { ...ledger, ...update };
+}
+
+async function entriesWithCurrentPriorities(database, sourceEntries) {
+  const entries = sourceEntries.map(normalizeEntry);
+  const feeHeadIds = entries
+    .filter((entry) => !entry.isPenalty && entry.feeHeadId)
+    .map((entry) => entry.feeHeadId);
+  const heads = feeHeadIds.length
+    ? await database
+        .collection('feeHeads')
+        .find({ _id: { $in: feeHeadIds } })
+        .toArray()
+    : [];
+  const priorities = new Map(
+    heads.map((head) => [String(head._id), Number(head.priority || 9999)]),
+  );
+  return entries.map((entry) => ({
+    ...entry,
+    priority: entry.isPenalty
+      ? 0
+      : priorities.get(String(entry.feeHeadId)) || Number(entry.priority || 9999),
+  }));
+}
+
+function compareEntriesByPriority(left, right) {
+  return (
+    Number(!left.isPenalty) - Number(!right.isPenalty) ||
+    Number(left.priority || 9999) - Number(right.priority || 9999) ||
+    String(left.dueDate || '').localeCompare(String(right.dueDate || '')) ||
+    String(left.feeHeadName || '').localeCompare(String(right.feeHeadName || ''))
+  );
 }
 
 export async function createRazorpayOrder(database, student, amountRupees) {

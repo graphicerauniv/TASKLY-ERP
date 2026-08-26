@@ -290,13 +290,14 @@
           </select></label
         >
         <label class="erp-field-stack"
-          ><span>Priority placement *</span
-          ><select class="erp-control" [(ngModel)]="headPlacement">
-            <option value="bottom">Place at bottom</option>
-            <option value="top">Place at top</option>
-            <option value="before">Place before another head</option>
-            <option value="after">Place after another head</option>
-          </select></label
+          ><span>Priority number *</span
+          ><input
+            class="erp-control"
+            type="number"
+            min="1"
+            [max]="orderedBookHeads().length + (editingHead() ? 0 : 1)"
+            [(ngModel)]="headPriority"
+          /><small>1 is highest and appears first, followed by 2, 3, 4…</small></label
         >
         <label class="erp-field-stack"
           ><span>Semester calculation</span
@@ -305,19 +306,6 @@
             <option [ngValue]="true">Divide this head by 2</option></select
           ><small>Applied only when the student uses semester-wise fees.</small></label
         >
-        @if (headPlacement === 'before' || headPlacement === 'after') {
-          <label class="erp-field-stack"
-            ><span>Reference head *</span
-            ><select class="erp-control" [(ngModel)]="headReferenceId">
-              <option value="">Select reference head</option>
-              @for (head of orderedBookHeads(); track head._id) {
-                @if (head._id !== editingHead()?._id) {
-                  <option [value]="head._id">{{ head.priority || '—' }} · {{ head.name }}</option>
-                }
-              }
-            </select></label
-          >
-        }
         @if (editingHead()) {
           <button class="erp-button erp-button--secondary" type="button" (click)="resetHead()">
             Cancel

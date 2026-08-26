@@ -10,6 +10,7 @@ import {
   generateStudentFeeLedgers,
   progressionCandidates,
   progressStudentFee,
+  recalculateStudentAcademicLedger,
   removeStudentFeeLedgers,
 } from '../services/student-fee-ledger.js';
 
@@ -275,6 +276,34 @@ feesRouter.post(
   }),
 );
 
+feesRouter.post(
+  '/student-ledgers/recalculate',
+  asyncHandler(async (request, response) => {
+    const data = studentLedgerGenerationSchema.parse(request.body);
+    const admissionIds = [...new Set(data.studentAdmissionIds)].map((value) =>
+      id(value, 'studentAdmissionId'),
+    );
+    const admissions = await db()
+      .collection('admissions')
+      .find({ _id: { $in: admissionIds } })
+      .toArray();
+    const admissionMap = new Map(admissions.map((student) => [String(student._id), student]));
+    const results = [];
+    for (const admissionId of admissionIds) {
+      const admission = admissionMap.get(String(admissionId));
+      if (!admission) continue;
+      results.push(
+        await recalculateStudentAcademicLedger(db(), admission, id(request.admin._id)),
+      );
+    }
+    response.json({
+      created: results.reduce((total, result) => total + result.createdKinds.length, 0),
+      studentsProcessed: results.length,
+      results: results.map(serialize),
+    });
+  }),
+);
+
 feesRouter.delete(
   '/student-ledgers/student/:studentAdmissionId',
   asyncHandler(async (request, response) => {
@@ -389,7 +418,30 @@ function feeTypePeriod(feeType) {
   throw error;
 }
 
-async function normalizeFeeHeadPriority(bookId) {
+async function resequenceFeeHeadPriority(bookId, feeHeadId, requestedPriority) {
+  const heads = await db()
+    .collection('feeHeads')
+    .find({ bookId })
+    .sort({ priority: 1, createdAt: 1, name: 1 })
+    .toArray();
+  const selected = heads.find((head) => String(head._id) === String(feeHeadId));
+  if (!selected) return;
+  const remaining = heads.filter((head) => String(head._id) !== String(feeHeadId));
+  const position = Math.min(
+    remaining.length,
+    Math.max(0, Math.round(Number(requestedPriority || remaining.length + 1)) - 1),
+  );
+  remaining.splice(position, 0, selected);
+  await Promise.all(
+    remaining.map((head, index) =>
+      db()
+        .collection('feeHeads')
+        .updateOne({ _id: head._id }, { $set: { priority: index + 1 } }),
+    ),
+  );
+}
+
+async function compactFeeHeadPriorities(bookId) {
   const heads = await db()
     .collection('feeHeads')
     .find({ bookId })
@@ -438,7 +490,7 @@ feesRouter.post(
       updatedAt: now,
     };
     const result = await db().collection('feeHeads').insertOne(document);
-    await normalizeFeeHeadPriority(book._id);
+    await resequenceFeeHeadPriority(book._id, result.insertedId, priority);
     const item = await db().collection('feeHeads').findOne({ _id: result.insertedId });
     response.status(201).json({ item: serialize(item) });
   }),
@@ -460,13 +512,14 @@ feesRouter.patch(
         data.referenceHeadId,
       );
     }
+    const requestedPriority = data.priority ?? current.priority;
     const headData = { ...data };
     delete headData.placement;
     delete headData.referenceHeadId;
     await db()
       .collection('feeHeads')
       .updateOne({ _id: current._id }, { $set: { ...headData, updatedAt: new Date() } });
-    await normalizeFeeHeadPriority(current.bookId);
+    await resequenceFeeHeadPriority(current.bookId, current._id, requestedPriority);
     const result = await db().collection('feeHeads').findOne({ _id: current._id });
     response.json({ item: serialize(result) });
   }),
@@ -476,6 +529,8 @@ feesRouter.delete(
   '/heads/:headId',
   asyncHandler(async (request, response) => {
     const feeHeadId = id(request.params.headId);
+    const current = await db().collection('feeHeads').findOne({ _id: feeHeadId });
+    if (!current) return response.status(404).json({ message: 'Fee head was not found.' });
     const usage = await Promise.all(
       ['hostelFees', 'courseFees'].map((name) =>
         db().collection(name).countDocuments({ feeHeadId }),
@@ -488,6 +543,7 @@ feesRouter.delete(
     const result = await db().collection('feeHeads').deleteOne({ _id: feeHeadId });
     if (!result.deletedCount)
       return response.status(404).json({ message: 'Fee head was not found.' });
+    await compactFeeHeadPriorities(current.bookId);
     response.status(204).end();
   }),
 );
