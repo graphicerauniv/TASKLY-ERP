@@ -33,6 +33,7 @@ test('finds schema-driven admission identity fields and student name', () => {
                 name: 'Course',
                 dataSource: { masterTypeSlug: 'course' },
               },
+              { id: 'year', name: 'Current Academic Year', type: 'dropdown' },
             ],
           },
         ],
@@ -43,8 +44,10 @@ test('finds schema-driven admission identity fields and student name', () => {
     name: 'Aarav Sharma',
     session: [sessionId.toString()],
     course: [courseId.toString()],
+    year: '2',
   });
   assert.equal(context.studentName, 'Aarav Sharma');
   assert.ok(context.sessionValueId.equals(sessionId));
   assert.ok(context.courseValueId.equals(courseId));
+  assert.equal(context.currentAcademicYear, 2);
 });

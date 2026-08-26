@@ -365,4 +365,29 @@ function validateCourseCode(typeSlug, metadata) {
     throw error;
   }
   metadata.courseCode = courseCode;
+  const durationYears = Number(metadata.durationYears || 1);
+  const totalSemesters = Number(metadata.totalSemesters || durationYears * 2);
+  const defaultAcademicYear = Number(metadata.defaultAcademicYear || 1);
+  if (!Number.isInteger(durationYears) || durationYears < 1 || durationYears > 10) {
+    const error = new Error('Course duration must be between 1 and 10 years.');
+    error.status = 400;
+    throw error;
+  }
+  if (!Number.isInteger(totalSemesters) || totalSemesters < 1 || totalSemesters > 20) {
+    const error = new Error('Course semesters must be between 1 and 20.');
+    error.status = 400;
+    throw error;
+  }
+  if (
+    !Number.isInteger(defaultAcademicYear) ||
+    defaultAcademicYear < 1 ||
+    defaultAcademicYear > durationYears
+  ) {
+    const error = new Error('Default academic year must be within the course duration.');
+    error.status = 400;
+    throw error;
+  }
+  metadata.durationYears = durationYears;
+  metadata.totalSemesters = totalSemesters;
+  metadata.defaultAcademicYear = defaultAcademicYear;
 }

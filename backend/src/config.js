@@ -15,6 +15,11 @@ export const config = Object.freeze({
   apiPrefix: process.env.API_PREFIX || '/api/v1',
   appName: process.env.APP_NAME || 'Taskly ERP',
   databaseUrl: process.env.DATABASE_URL || '',
+  razorpay: {
+    keyId: process.env.RAZORPAY_KEY_ID || '',
+    keySecret: process.env.RAZORPAY_KEY_SECRET || '',
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+  },
   jwtSecret: process.env.JWT_ACCESS_SECRET || '',
   jwtTtl: process.env.JWT_ACCESS_TTL || '8h',
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:4200')
@@ -46,6 +51,8 @@ export function validateConfig() {
     throw new Error('DATABASE_URL must contain a valid PostgreSQL connection string.');
   if (config.jwtSecret.length < 32)
     throw new Error('JWT_ACCESS_SECRET must contain at least 32 characters.');
+  if (Boolean(config.razorpay.keyId) !== Boolean(config.razorpay.keySecret))
+    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be configured together.');
   if (!['local', 's3'].includes(config.storage.driver))
     throw new Error('STORAGE_DRIVER must be either local or s3.');
   if (config.storage.driver === 's3' && !config.storage.bucket)

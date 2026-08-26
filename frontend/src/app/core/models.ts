@@ -94,6 +94,8 @@ export interface Admission {
   studentName?: string;
   academicSession?: string;
   currentAcademicYear?: number;
+  currentSemester?: number;
+  feeFrequency?: 'year' | 'semester';
   academicSessionId?: string | null;
   courseName?: string;
   courseId?: string | null;
@@ -134,6 +136,8 @@ export interface StudentFeeEntry {
   semester: number | null;
   periodLabel: string;
   amount: number;
+  paidAmount: number;
+  balanceAmount: number;
   dueDate: string;
   status: 'due' | 'paid' | 'partial';
 }
@@ -147,6 +151,10 @@ export interface StudentFeeLedger {
   feeBookCode: string;
   academicSession: string;
   currentAcademicYear: number;
+  currentSemester?: number | null;
+  feeFrequency: 'year' | 'semester';
+  periodKey: string;
+  periodLabel: string;
   kind: 'academic' | 'hostel';
   name: 'Academic Fee' | 'Hostel Fee';
   entries: StudentFeeEntry[];
@@ -156,6 +164,8 @@ export interface StudentFeeLedger {
   paidAmount: number;
   balanceAmount: number;
   status: 'active';
+  paymentStatus: 'due' | 'partial' | 'paid';
+  penaltyAmount?: number;
   hostelName?: string;
   roomNumber?: string;
   createdAt: string;
@@ -272,6 +282,7 @@ export interface FeeHead {
   name: string;
   category: 'fee' | 'discount' | 'payment-option';
   priority: number;
+  divideSemesterWise: boolean;
   isActive: boolean;
 }
 
@@ -374,4 +385,37 @@ export interface FeeImportPreview {
     feeHeadId: string | null;
     feeHeadName: string | null;
   }>;
+}
+
+export interface FeeProgressionCandidate extends Admission {
+  nextAcademicYear: number;
+  nextSemester: number | null;
+  nextPeriodLabel: string;
+}
+
+export interface FeePaymentAllocation {
+  ledgerId: string;
+  ledgerKind: 'academic' | 'hostel';
+  feeHeadId: string;
+  feeHeadName: string;
+  isPenalty: boolean;
+  amount: number;
+}
+
+export interface FeePayment {
+  _id: string;
+  receiptNumber?: string;
+  studentAdmissionId: string;
+  studentId: string;
+  studentName: string;
+  razorpayOrderId: string;
+  razorpayPaymentId?: string;
+  amount: number;
+  currency: 'INR';
+  method?: string;
+  status: 'created' | 'processing' | 'paid' | 'failed' | 'refunded';
+  allocations?: FeePaymentAllocation[];
+  createdAt: string;
+  paidAt?: string;
+  outstandingBalance?: number;
 }

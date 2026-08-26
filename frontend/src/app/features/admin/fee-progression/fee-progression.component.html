@@ -1,0 +1,151 @@
+<erp-admin-page
+  eyebrow="Fee Management"
+  title="Next Semester / Year Fee"
+  description="Create the next fee period only for eligible students. Duplicate periods are blocked."
+  variant="minimal"
+>
+  <div page-actions class="erp-table-toolbar__actions">
+    <button
+      class="erp-button"
+      [class.erp-button--primary]="mode === 'semester'"
+      [class.erp-button--secondary]="mode !== 'semester'"
+      type="button"
+      (click)="changeMode('semester')"
+    >
+      Next Semester
+    </button>
+    <button
+      class="erp-button"
+      [class.erp-button--primary]="mode === 'year'"
+      [class.erp-button--secondary]="mode !== 'year'"
+      type="button"
+      (click)="changeMode('year')"
+    >
+      Next Year
+    </button>
+  </div>
+
+  @if (message()) {
+    <p class="erp-notice erp-notice--success">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="erp-notice erp-notice--error">{{ error() }}</p>
+  }
+
+  <section class="erp-card erp-card--padded">
+    <div class="erp-card__header">
+      <div>
+        <h2>Penalty configuration</h2>
+        <p>
+          The daily penalty stops when the configured cap is reached or the outstanding fee is fully
+          paid.
+        </p>
+      </div>
+    </div>
+    <div class="erp-form-grid">
+      <label
+        ><span>Late-payment penalty</span
+        ><select class="erp-control" [(ngModel)]="penaltyEnabled">
+          <option [ngValue]="false">No penalty</option>
+          <option [ngValue]="true">Enable daily penalty</option>
+        </select></label
+      >
+      @if (penaltyEnabled) {
+        <label
+          ><span>Fee due date *</span
+          ><input class="erp-control" type="date" [(ngModel)]="penaltyDueDate"
+        /></label>
+        <label
+          ><span>Daily penalty amount *</span
+          ><input class="erp-control" type="number" min="1" [(ngModel)]="penaltyDailyAmount"
+        /></label>
+        <label
+          ><span>Maximum penalty amount *</span
+          ><input class="erp-control" type="number" min="1" [(ngModel)]="penaltyMaxAmount"
+        /></label>
+      }
+    </div>
+  </section>
+
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>
+          {{ mode === 'semester' ? 'Semester-wise students' : 'Full-year students' }}
+          <small>{{ items().length }}</small>
+        </h2>
+        <p>Only students with another configured course period are listed.</p>
+      </div>
+      <button
+        class="erp-button erp-button--primary"
+        type="button"
+        [disabled]="!selected().size || saving()"
+        (click)="createFees()"
+      >
+        {{ saving() ? 'Creating…' : 'Create selected fees' }}
+      </button>
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <input
+                type="checkbox"
+                aria-label="Select all"
+                [checked]="items().length > 0 && selected().size === items().length"
+                (change)="toggleAll($any($event.target).checked)"
+              />
+            </th>
+            <th>Student</th>
+            <th>Student ID</th>
+            <th>Course</th>
+            <th>Current period</th>
+            <th>Next period</th>
+            <th>Session</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td>
+                <input
+                  type="checkbox"
+                  [checked]="selected().has(item._id)"
+                  [attr.aria-label]="'Select ' + item.studentName"
+                  (change)="toggle(item._id, $any($event.target).checked)"
+                />
+              </td>
+              <td>
+                <strong>{{ item.studentName }}</strong>
+              </td>
+              <td>{{ item.studentId }}</td>
+              <td>{{ item.courseName }}</td>
+              <td>
+                {{
+                  mode === 'semester'
+                    ? 'Semester ' + item.currentSemester
+                    : 'Year ' + item.currentAcademicYear
+                }}
+              </td>
+              <td>
+                <span class="erp-status">{{ item.nextPeriodLabel }}</span>
+              </td>
+              <td>{{ item.academicSession }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="erp-empty-state">
+                {{
+                  loading()
+                    ? 'Loading eligible students…'
+                    : 'No students are currently eligible for this progression.'
+                }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</erp-admin-page>

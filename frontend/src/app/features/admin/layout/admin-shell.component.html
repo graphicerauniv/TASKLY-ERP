@@ -701,6 +701,27 @@
                 </button>
               </header>
               <div class="master-flyout__groups admission-flyout__groups">
+                <div class="master-group">
+                  <a
+                    routerLink="/admin/fees/progression"
+                    routerLinkActive="active"
+                    (click)="closeNavigation()"
+                  >
+                    <span class="master-item__icon"
+                      ><svg lucideCalendarCheck aria-hidden="true"></svg
+                    ></span>
+                    <span
+                      ><strong>Next Semester / Year</strong
+                      ><small>Progress eligible student fees</small></span
+                    >
+                    <svg
+                      class="master-item__arrow"
+                      lucideChevronRight
+                      size="15"
+                      aria-hidden="true"
+                    ></svg>
+                  </a>
+                </div>
                 <div class="master-group fee-navigation-group">
                   <button
                     class="fee-navigation-group__trigger"
@@ -910,11 +931,26 @@
           }
         </div>
       }
+      @if (matchesNavigation('Accounts')) {
+        <a
+          class="nav-link"
+          data-tooltip="Accounts"
+          routerLink="/admin/accounts"
+          routerLinkActive="active"
+          (click)="closeNavigation()"
+        >
+          <span class="nav-link__icon"
+            ><svg lucideWalletCards size="20" [strokeWidth]="1.8" aria-hidden="true"></svg
+          ></span>
+          <span class="nav-link__label">Accounts</span>
+        </a>
+      }
       @if (
         !matchesNavigation('Dashboard') &&
         !matchesNavigation('Master Data') &&
         !matchesNavigation('Admission') &&
-        !matchesNavigation('Fee Management')
+        !matchesNavigation('Fee Management') &&
+        !matchesNavigation('Accounts')
       ) {
         <p class="sidebar-search__empty">No navigation found</p>
       }

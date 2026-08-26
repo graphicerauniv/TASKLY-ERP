@@ -19,52 +19,57 @@ export const BUILTIN_MASTERS = [
   ['city', 'City', 'district'],
 ];
 
+const BOOTSTRAP_MIGRATION_VERSION = 'bootstrap-data-2026-08-27-v2';
+
 export async function bootstrap() {
   const now = new Date();
-  await db()
-    .collection('admissions')
-    .updateMany({ applicationNumber: { $exists: true } }, { $unset: { applicationNumber: '' } });
-  await db()
-    .collection('admissions')
-    .updateMany({ status: 'submitted' }, { $set: { status: 'pending_approval', updatedAt: now } });
-  await db()
-    .collection('admissions')
-    .updateMany(
-      { status: 'draft', hasSavedData: { $exists: false } },
-      { $set: { hasSavedData: true } },
-    );
-  await db()
-    .collection('admissions')
-    .updateMany(
-      { status: 'draft', studentId: { $exists: true } },
-      { $unset: { studentId: '', studentIdGeneratedAt: '' } },
-    );
-  await migrateAdmissionIdentities();
-  await Promise.all(
-    BUILTIN_MASTERS.map(([slug, name, parentTypeSlug], order) =>
-      db()
-        .collection('masterTypes')
-        .updateOne(
-          { slug },
-          {
-            $setOnInsert: {
-              name,
-              slug,
-              parentTypeSlug,
-              isCustom: false,
-              isActive: true,
-              order,
-              createdAt: now,
-              updatedAt: now,
+  if (!(await db().hasRuntimeMigration(BOOTSTRAP_MIGRATION_VERSION))) {
+    await db()
+      .collection('admissions')
+      .updateMany({ applicationNumber: { $exists: true } }, { $unset: { applicationNumber: '' } });
+    await db()
+      .collection('admissions')
+      .updateMany({ status: 'submitted' }, { $set: { status: 'pending_approval', updatedAt: now } });
+    await db()
+      .collection('admissions')
+      .updateMany(
+        { status: 'draft', hasSavedData: { $exists: false } },
+        { $set: { hasSavedData: true } },
+      );
+    await db()
+      .collection('admissions')
+      .updateMany(
+        { status: 'draft', studentId: { $exists: true } },
+        { $unset: { studentId: '', studentIdGeneratedAt: '' } },
+      );
+    await migrateAdmissionIdentities();
+    await Promise.all(
+      BUILTIN_MASTERS.map(([slug, name, parentTypeSlug], order) =>
+        db()
+          .collection('masterTypes')
+          .updateOne(
+            { slug },
+            {
+              $setOnInsert: {
+                name,
+                slug,
+                parentTypeSlug,
+                isCustom: false,
+                isActive: true,
+                order,
+                createdAt: now,
+                updatedAt: now,
+              },
             },
-          },
-          { upsert: true },
-        ),
-    ),
-  );
-  await ensureDefaultFeeTypes(now);
-  await migrateSpecializationsToCourses(now);
-  await migrateFormSpecializationSources(now);
+            { upsert: true },
+          ),
+      ),
+    );
+    await ensureDefaultFeeTypes(now);
+    await migrateSpecializationsToCourses(now);
+    await migrateFormSpecializationSources(now);
+    await db().markRuntimeMigration(BOOTSTRAP_MIGRATION_VERSION);
+  }
   const { email, password, name } = config.bootstrapAdmin;
   if (email && password && !(await db().collection('admins').findOne({ email }))) {
     await db()

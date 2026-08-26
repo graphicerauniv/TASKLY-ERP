@@ -17,6 +17,7 @@ export function admissionContext(form, responses = {}) {
     studentTypeValueId: valueId('student-type'),
     countryValueId: valueId('country'),
     studentName: studentName(fields, responses),
+    currentAcademicYear: academicYear(fields, responses),
   };
 }
 
@@ -76,10 +77,20 @@ export async function syncAdmissionIdentity(
     studentTypeName: studentType?.name || '',
     countryId: country?._id || null,
     countryName: country?.name || '',
+    currentAcademicYear: Number(
+      context.currentAcademicYear ||
+        admission.currentAcademicYear ||
+        course?.metadata?.defaultAcademicYear ||
+        1,
+    ),
     identityVersion: 4,
     identitySyncedAt: new Date(),
     updatedAt: new Date(),
   };
+  identity.currentSemester = Number(
+    admission.currentSemester || Math.max(1, identity.currentAcademicYear * 2 - 1),
+  );
+  identity.feeFrequency = admission.feeFrequency === 'semester' ? 'semester' : 'year';
   await database.collection('admissions').updateOne({ _id: admission._id }, { $set: identity });
 
   if (admission.studentId || !generateStudentId || !session || !course)
@@ -179,4 +190,22 @@ function studentName(fields, responses) {
 
 function primitiveText(value) {
   return ['string', 'number'].includes(typeof value) ? String(value).trim() : '';
+}
+
+function academicYear(fields, responses) {
+  const field = fields.find((candidate) => {
+    const name = String(candidate.name || '')
+      .trim()
+      .toLocaleLowerCase();
+    return [
+      'current academic year',
+      'current year',
+      'admission year of study',
+      'year of study',
+    ].includes(name);
+  });
+  const value = Number(
+    Array.isArray(responses[field?.id]) ? responses[field?.id]?.[0] : responses[field?.id],
+  );
+  return Number.isInteger(value) && value >= 1 && value <= 10 ? value : null;
 }

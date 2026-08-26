@@ -14,6 +14,7 @@ import {
   LucideBookOpen,
   LucideBookOpenCheck,
   LucideBookPlus,
+  LucideCalendarCheck,
   LucideBell,
   LucideBuilding2,
   LucideChevronRight,
@@ -58,6 +59,7 @@ import { filter } from 'rxjs';
     LucideBookOpen,
     LucideBookOpenCheck,
     LucideBookPlus,
+    LucideCalendarCheck,
     LucideBell,
     LucideBuilding2,
     LucideChevronRight,
@@ -337,7 +339,8 @@ export class AdminShellComponent {
     return this.router.url.startsWith(path);
   }
   private updateCurrentModule(url: string) {
-    if (url.includes('/fees/')) this.currentModule.set('Fee Management');
+    if (url.includes('/accounts')) this.currentModule.set('Accounts');
+    else if (url.includes('/fees/')) this.currentModule.set('Fee Management');
     else if (url.includes('/master-data/')) this.currentModule.set('Master Data');
     else if (url.includes('/form-builder')) this.currentModule.set('Master Data');
     else if (url.includes('/admissions/unfilled'))

@@ -28,9 +28,14 @@ const passwordSetupSchema = z
     path: ['password'],
   });
 const approvalSchema = passwordSetupSchema.and(
-  z.object({ currentAcademicYear: z.coerce.number().int().min(1).max(10) }),
+  z.object({
+    currentAcademicYear: z.coerce.number().int().min(1).max(10),
+    feeFrequency: z.enum(['year', 'semester']).optional().default('year'),
+    currentSemester: z.coerce.number().int().min(1).max(20).optional(),
+  }),
 );
 const currentAcademicYearSchema = z.coerce.number().int().min(1).max(10);
+const currentSemesterSchema = z.coerce.number().int().min(1).max(20);
 admissionsRouter.get(
   '/',
   asyncHandler(async (request, response) => {
@@ -106,10 +111,21 @@ admissionsRouter.patch(
       update.currentAcademicYear = currentAcademicYearSchema.parse(
         request.body.currentAcademicYear,
       );
+    if (request.body.feeFrequency !== undefined)
+      update.feeFrequency = z.enum(['year', 'semester']).parse(request.body.feeFrequency);
+    if (request.body.currentSemester !== undefined)
+      update.currentSemester = currentSemesterSchema.parse(request.body.currentSemester);
     let item = await db()
       .collection('admissions')
       .findOneAndUpdate({ _id: admissionId }, { $set: update }, { returnDocument: 'after' });
     await syncAdmissionIdentity(db(), item, item.responses || {});
+    const explicitFeePeriod = {};
+    for (const field of ['currentAcademicYear', 'currentSemester', 'feeFrequency'])
+      if (update[field] !== undefined) explicitFeePeriod[field] = update[field];
+    if (Object.keys(explicitFeePeriod).length)
+      await db()
+        .collection('admissions')
+        .updateOne({ _id: admissionId }, { $set: explicitFeePeriod });
     item = await db().collection('admissions').findOne({ _id: admissionId });
     response.json({ item: serialize(item) });
   }),
@@ -174,6 +190,10 @@ admissionsRouter.post(
     if (!admission.studentId)
       return response.status(422).json({ message: 'Generate the Student ID before approval.' });
     const passwordSetup = approvalSchema.parse(request.body);
+    if (passwordSetup.feeFrequency === 'semester') {
+      passwordSetup.currentSemester ||= passwordSetup.currentAcademicYear * 2 - 1;
+      passwordSetup.currentAcademicYear = Math.ceil(passwordSetup.currentSemester / 2);
+    }
     const initialPassword =
       passwordSetup.passwordMode === 'student-id' ? admission.studentId : passwordSetup.password;
     const item = await db()
@@ -187,6 +207,9 @@ admissionsRouter.post(
             passwordHash: await argon2.hash(initialPassword),
             mustChangePassword: true,
             currentAcademicYear: passwordSetup.currentAcademicYear,
+            currentSemester:
+              passwordSetup.currentSemester || passwordSetup.currentAcademicYear * 2 - 1,
+            feeFrequency: passwordSetup.feeFrequency,
             passwordUpdatedAt: new Date(),
             approvedAt: new Date(),
             updatedAt: new Date(),
