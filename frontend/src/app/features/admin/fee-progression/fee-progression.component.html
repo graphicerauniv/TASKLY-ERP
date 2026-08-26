@@ -12,7 +12,7 @@
       type="button"
       (click)="changeMode('semester')"
     >
-      Next Semester
+      Semester-wise students
     </button>
     <button
       class="erp-button"
@@ -21,7 +21,7 @@
       type="button"
       (click)="changeMode('year')"
     >
-      Next Year
+      Full-year students
     </button>
   </div>
 
@@ -79,10 +79,16 @@
       <button
         class="erp-button erp-button--primary"
         type="button"
-        [disabled]="!selected().size || saving()"
+        [disabled]="saving()"
         (click)="createFees()"
       >
-        {{ saving() ? 'Creating…' : 'Create selected fees' }}
+        {{
+          saving()
+            ? 'Creating…'
+            : mode === 'semester'
+              ? 'Create next semester for selected'
+              : 'Create next year for selected'
+        }}
       </button>
     </div>
     <div class="erp-table-shell__scroll">
@@ -103,6 +109,7 @@
             <th>Current period</th>
             <th>Next period</th>
             <th>Session</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -132,10 +139,20 @@
                 <span class="erp-status">{{ item.nextPeriodLabel }}</span>
               </td>
               <td>{{ item.academicSession }}</td>
+              <td>
+                <button
+                  class="erp-button erp-button--primary"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="createFor(item)"
+                >
+                  Create {{ item.nextPeriodLabel }}
+                </button>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="erp-empty-state">
+              <td colspan="8" class="erp-empty-state">
                 {{
                   loading()
                     ? 'Loading eligible students…'

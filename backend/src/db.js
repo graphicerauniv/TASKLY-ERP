@@ -1,18 +1,64 @@
 import { ObjectId } from 'bson';
+import { setTimeout as delay } from 'node:timers/promises';
 import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
 let database;
-const DATABASE_SCHEMA_VERSION = 'postgres-domain-schema-2026-08-27-v2';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-08-27-v3';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-08-27-v3';
+const PREVIOUS_SCHEMA_VERSION = 'postgres-domain-schema-2026-08-27-v2';
 
 export async function connectDatabase() {
-  database = new PostgresDocumentDatabase(config.databaseUrl);
-  await database.connect();
-  if (await database.prepareSchema(DATABASE_SCHEMA_VERSION)) {
-    await ensureIndexes(database);
-    await database.markRuntimeMigration(DATABASE_SCHEMA_VERSION);
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    database = new PostgresDocumentDatabase(config.databaseUrl);
+    try {
+      await database.connect();
+      const upgradingExistingDatabase = await database.hasRuntimeMigration(
+        PREVIOUS_SCHEMA_VERSION,
+      );
+      const changedTables = upgradingExistingDatabase
+        ? ['feePayments', 'studentProgressions']
+        : undefined;
+      if (await database.prepareSchema(DATABASE_TABLE_VERSION, changedTables)) {
+        console.log(
+          upgradingExistingDatabase
+            ? 'Applied incremental student progression tables.'
+            : 'Applied the complete PostgreSQL domain schema.',
+        );
+        await database.markRuntimeMigration(DATABASE_TABLE_VERSION);
+      }
+      if (!(await database.hasRuntimeMigration(DATABASE_INDEX_VERSION))) {
+        console.log('Checking PostgreSQL indexes and data migrations…');
+        if (upgradingExistingDatabase) await ensureStudentProgressionIndexes(database);
+        else await ensureIndexes(database);
+        await database.markRuntimeMigration(DATABASE_INDEX_VERSION);
+        console.log('PostgreSQL indexes are ready.');
+      }
+      return database;
+    } catch (error) {
+      await database.close().catch(() => undefined);
+      database = undefined;
+      if (!transientDatabaseError(error) || attempt === 4) throw error;
+      console.warn(`PostgreSQL connection interrupted; retrying (${attempt}/4)…`);
+      await delay(attempt * 1_000);
+    }
   }
-  return database;
+}
+
+async function ensureStudentProgressionIndexes(databaseInstance) {
+  await databaseInstance
+    .collection('studentProgressions')
+    .createIndex(
+      { studentAdmissionId: 1, status: 1 },
+      { unique: true, partialFilterExpression: { status: 'pending' } },
+    );
+  await databaseInstance
+    .collection('studentProgressions')
+    .createIndex({ mode: 1, status: 1, academicSession: 1, toAcademicYear: 1, toSemester: 1 });
+}
+
+function transientDatabaseError(error) {
+  return ['ENOTFOUND', 'EAI_AGAIN', 'ECONNRESET', 'ETIMEDOUT', '57P01'].includes(error?.code);
 }
 
 export function db() {
@@ -132,6 +178,15 @@ async function ensureIndexes(databaseInstance) {
     databaseInstance
       .collection('feePayments')
       .createIndex({ studentAdmissionId: 1, createdAt: -1 }),
+    databaseInstance
+      .collection('studentProgressions')
+      .createIndex(
+        { studentAdmissionId: 1, status: 1 },
+        { unique: true, partialFilterExpression: { status: 'pending' } },
+      ),
+    databaseInstance
+      .collection('studentProgressions')
+      .createIndex({ mode: 1, status: 1, academicSession: 1, toAcademicYear: 1, toSemester: 1 }),
   ]);
 }
 

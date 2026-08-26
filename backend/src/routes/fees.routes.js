@@ -10,8 +10,10 @@ import {
   generateStudentFeeLedgers,
   progressionCandidates,
   progressStudentFee,
+  recalculateStudentAcademicLedger,
   removeStudentFeeLedgers,
 } from '../services/student-fee-ledger.js';
+import { promoteStudentProgression } from '../services/student-promotion.js';
 
 export const feesRouter = express.Router();
 const upload = multer({
@@ -24,6 +26,7 @@ const upload = multer({
 });
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const amount = z.coerce.number().nonnegative().max(1_000_000_000);
+const promotionSchema = z.object({ progressionIds: z.array(z.string()).min(1).max(500) });
 const bookSchema = z.object({
   collegeId: z.string(),
   startDate: dateString,
@@ -238,6 +241,10 @@ feesRouter.post(
   }),
 );
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 feesRouter.get(
   '/student-ledgers/progression-candidates',
   asyncHandler(async (request, response) => {
@@ -265,6 +272,103 @@ feesRouter.post(
       if (!admission) continue;
       results.push(
         await progressStudentFee(db(), admission, data.mode, id(request.admin._id), data.penalty),
+      );
+    }
+    response.json({
+      created: results.reduce((total, result) => total + result.createdKinds.length, 0),
+      promotionsCreated: results.filter((result) => result.promotionCreated).length,
+      studentsProcessed: results.length,
+      results: results.map(serialize),
+    });
+  }),
+);
+
+feesRouter.get(
+  '/student-promotions',
+  asyncHandler(async (request, response) => {
+    const filter = {};
+    if (request.query.mode)
+      filter.mode = z.enum(['semester', 'year']).parse(request.query.mode);
+    if (request.query.status && request.query.status !== 'all')
+      filter.status = z
+        .enum(['pending', 'promoting', 'promoted', 'cancelled'])
+        .parse(request.query.status);
+    if (request.query.academicSession)
+      filter.academicSession = String(request.query.academicSession);
+    if (request.query.courseId) filter.courseId = id(request.query.courseId, 'courseId');
+    if (request.query.currentAcademicYear)
+      filter.fromAcademicYear = z.coerce.number().int().min(1).max(10).parse(
+        request.query.currentAcademicYear,
+      );
+    if (request.query.currentSemester)
+      filter.fromSemester = z.coerce.number().int().min(1).max(20).parse(
+        request.query.currentSemester,
+      );
+    if (request.query.search) {
+      const match = { $regex: escapeRegex(request.query.search), $options: 'i' };
+      filter.$or = [
+        { studentName: match },
+        { studentId: match },
+        { courseName: match },
+        { academicSession: match },
+      ];
+    }
+    const items = await db()
+      .collection('studentProgressions')
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(5000)
+      .toArray();
+    response.json({ items: items.map(serialize) });
+  }),
+);
+
+feesRouter.post(
+  '/student-promotions/promote',
+  asyncHandler(async (request, response) => {
+    const data = promotionSchema.parse(request.body);
+    const progressionIds = [...new Set(data.progressionIds)].map((value) =>
+      id(value, 'progressionId'),
+    );
+    const results = [];
+    for (const progressionId of progressionIds) {
+      try {
+        const item = await promoteStudentProgression(
+          db(),
+          progressionId,
+          id(request.admin._id),
+        );
+        results.push({ progressionId, success: true, item });
+      } catch (error) {
+        results.push({ progressionId, success: false, reason: error.message });
+      }
+    }
+    response.json({
+      promoted: results.filter((result) => result.success).length,
+      requested: progressionIds.length,
+      results: results.map(serialize),
+    });
+  }),
+);
+
+feesRouter.post(
+  '/student-ledgers/recalculate',
+  asyncHandler(async (request, response) => {
+    const data = studentLedgerGenerationSchema.parse(request.body);
+    const admissionIds = [...new Set(data.studentAdmissionIds)].map((value) =>
+      id(value, 'studentAdmissionId'),
+    );
+    const admissions = await db()
+      .collection('admissions')
+      .find({ _id: { $in: admissionIds } })
+      .toArray();
+    const admissionMap = new Map(admissions.map((student) => [String(student._id), student]));
+    const results = [];
+    for (const admissionId of admissionIds) {
+      const admission = admissionMap.get(String(admissionId));
+      if (!admission) continue;
+      results.push(
+        await recalculateStudentAcademicLedger(db(), admission, id(request.admin._id)),
       );
     }
     response.json({
@@ -389,7 +493,30 @@ function feeTypePeriod(feeType) {
   throw error;
 }
 
-async function normalizeFeeHeadPriority(bookId) {
+async function resequenceFeeHeadPriority(bookId, feeHeadId, requestedPriority) {
+  const heads = await db()
+    .collection('feeHeads')
+    .find({ bookId })
+    .sort({ priority: 1, createdAt: 1, name: 1 })
+    .toArray();
+  const selected = heads.find((head) => String(head._id) === String(feeHeadId));
+  if (!selected) return;
+  const remaining = heads.filter((head) => String(head._id) !== String(feeHeadId));
+  const position = Math.min(
+    remaining.length,
+    Math.max(0, Math.round(Number(requestedPriority || remaining.length + 1)) - 1),
+  );
+  remaining.splice(position, 0, selected);
+  await Promise.all(
+    remaining.map((head, index) =>
+      db()
+        .collection('feeHeads')
+        .updateOne({ _id: head._id }, { $set: { priority: index + 1 } }),
+    ),
+  );
+}
+
+async function compactFeeHeadPriorities(bookId) {
   const heads = await db()
     .collection('feeHeads')
     .find({ bookId })
@@ -438,7 +565,7 @@ feesRouter.post(
       updatedAt: now,
     };
     const result = await db().collection('feeHeads').insertOne(document);
-    await normalizeFeeHeadPriority(book._id);
+    await resequenceFeeHeadPriority(book._id, result.insertedId, priority);
     const item = await db().collection('feeHeads').findOne({ _id: result.insertedId });
     response.status(201).json({ item: serialize(item) });
   }),
@@ -460,13 +587,14 @@ feesRouter.patch(
         data.referenceHeadId,
       );
     }
+    const requestedPriority = data.priority ?? current.priority;
     const headData = { ...data };
     delete headData.placement;
     delete headData.referenceHeadId;
     await db()
       .collection('feeHeads')
       .updateOne({ _id: current._id }, { $set: { ...headData, updatedAt: new Date() } });
-    await normalizeFeeHeadPriority(current.bookId);
+    await resequenceFeeHeadPriority(current.bookId, current._id, requestedPriority);
     const result = await db().collection('feeHeads').findOne({ _id: current._id });
     response.json({ item: serialize(result) });
   }),
@@ -476,6 +604,8 @@ feesRouter.delete(
   '/heads/:headId',
   asyncHandler(async (request, response) => {
     const feeHeadId = id(request.params.headId);
+    const current = await db().collection('feeHeads').findOne({ _id: feeHeadId });
+    if (!current) return response.status(404).json({ message: 'Fee head was not found.' });
     const usage = await Promise.all(
       ['hostelFees', 'courseFees'].map((name) =>
         db().collection(name).countDocuments({ feeHeadId }),
@@ -488,6 +618,7 @@ feesRouter.delete(
     const result = await db().collection('feeHeads').deleteOne({ _id: feeHeadId });
     if (!result.deletedCount)
       return response.status(404).json({ message: 'Fee head was not found.' });
+    await compactFeeHeadPriorities(current.bookId);
     response.status(204).end();
   }),
 );

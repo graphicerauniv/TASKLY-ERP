@@ -265,8 +265,7 @@ export class FeeManagementComponent implements OnDestroy {
   bookFrequency: 'semester' | 'year' = 'semester';
   headName = '';
   headCategory: FeeHead['category'] = 'fee';
-  headPlacement: 'top' | 'bottom' | 'before' | 'after' = 'bottom';
-  headReferenceId = '';
+  headPriority = 1;
   headDivideSemesterWise = false;
   hostelId = '';
   hostelSeater = 2;
@@ -821,7 +820,8 @@ export class FeeManagementComponent implements OnDestroy {
           requestedDraftId !== this.currentCourseFeeDraftId
         ) {
           const draft = items.find((item) => item._id === requestedDraftId);
-          draft ? this.restoreCourseFeeDraft(draft) : this.loadCourseFeeDraft(requestedDraftId);
+          if (draft) this.restoreCourseFeeDraft(draft);
+          else this.loadCourseFeeDraft(requestedDraftId);
         } else if (requestedDraftId && requestedDraftId === this.currentCourseFeeDraftId) {
           this.courseFeeDraftResumePending.set(false);
         }
@@ -869,6 +869,8 @@ export class FeeManagementComponent implements OnDestroy {
     this.courseCountryId = '';
     this.refreshCourseFeeContext();
     this.clearCourseFeeHead();
+    if (this.section() === 'heads' && !this.editingHead())
+      this.headPriority = this.orderedBookHeads().length + 1;
     if (this.section() === 'course-fee-view') this.viewBookChanged();
     if (this.section() === 'hostel-fees') this.loadHostelFees();
     this.scheduleCourseFeeDraftSave();
@@ -1063,7 +1065,8 @@ export class FeeManagementComponent implements OnDestroy {
 
   selectCourseFeeHead(headId: string) {
     const selected = new Set(this.selectedCourseFeeHeadIds());
-    selected.has(headId) ? selected.delete(headId) : selected.add(headId);
+    if (selected.has(headId)) selected.delete(headId);
+    else selected.add(headId);
     this.selectedCourseFeeHeadIds.set([...selected]);
     this.scheduleCourseFeeDraftSave();
   }
@@ -1188,26 +1191,21 @@ export class FeeManagementComponent implements OnDestroy {
   saveHead() {
     if (!this.selectedBookId || !this.headName.trim())
       return this.error.set('Select a fee book and enter the fee-head name.');
-    if (
-      (this.headPlacement === 'before' || this.headPlacement === 'after') &&
-      !this.headReferenceId
-    )
-      return this.error.set('Select the reference fee head for the chosen priority placement.');
+    if (!Number.isInteger(Number(this.headPriority)) || Number(this.headPriority) < 1)
+      return this.error.set('Priority must be a whole number starting from 1.');
     this.startSaving();
     const request = this.editingHead()
       ? this.api.updateFeeHead(this.editingHead()!._id, {
           name: this.headName.trim(),
           category: this.headCategory,
-          placement: this.headPlacement,
-          referenceHeadId: this.headReferenceId || undefined,
+          priority: Number(this.headPriority),
           divideSemesterWise: this.headDivideSemesterWise,
         })
       : this.api.createFeeHead({
           bookId: this.selectedBookId,
           name: this.headName.trim(),
           category: this.headCategory,
-          placement: this.headPlacement,
-          referenceHeadId: this.headReferenceId || undefined,
+          priority: Number(this.headPriority),
           divideSemesterWise: this.headDivideSemesterWise,
         });
     request.subscribe({
@@ -1246,8 +1244,7 @@ export class FeeManagementComponent implements OnDestroy {
     this.selectedBookId = head.bookId;
     this.headName = head.name;
     this.headCategory = head.category;
-    this.headPlacement = 'bottom';
-    this.headReferenceId = '';
+    this.headPriority = Number(head.priority || 1);
     this.headDivideSemesterWise = Boolean(head.divideSemesterWise);
   }
 
@@ -1255,8 +1252,7 @@ export class FeeManagementComponent implements OnDestroy {
     this.editingHead.set(null);
     this.headName = '';
     this.headCategory = 'fee';
-    this.headPlacement = 'bottom';
-    this.headReferenceId = '';
+    this.headPriority = this.orderedBookHeads().length + 1;
     this.headDivideSemesterWise = false;
   }
 
@@ -1551,9 +1547,8 @@ export class FeeManagementComponent implements OnDestroy {
 
   fillMatrixFromCell(event: MouseEvent, headId: string, periodKey: string) {
     event.preventDefault();
-    event.shiftKey
-      ? this.fillColumnFromCell(headId, periodKey)
-      : this.fillRowFromCell(headId, periodKey);
+    if (event.shiftKey) this.fillColumnFromCell(headId, periodKey);
+    else this.fillRowFromCell(headId, periodKey);
   }
 
   handleMatrixKeydown(

@@ -107,9 +107,9 @@
                   <select
                     class="erp-control"
                     aria-label="Fee calculation mode"
-                    [ngModel]="item.feeFrequency || 'year'"
+                    [ngModel]="feePeriodDraft(item).feeFrequency"
                     [disabled]="feeSaving()"
-                    (ngModelChange)="setFeePeriod(item, { feeFrequency: $event })"
+                    (ngModelChange)="updateFeePeriodDraft(item, { feeFrequency: $event })"
                   >
                     <option value="year">Full year</option>
                     <option value="semester">Semester-wise</option>
@@ -119,9 +119,9 @@
                   <select
                     class="erp-control"
                     aria-label="Current academic year"
-                    [ngModel]="item.currentAcademicYear || ''"
+                    [ngModel]="feePeriodDraft(item).currentAcademicYear"
                     [disabled]="feeSaving()"
-                    (ngModelChange)="setFeePeriod(item, { currentAcademicYear: +$event })"
+                    (ngModelChange)="updateFeePeriodDraft(item, { currentAcademicYear: +$event })"
                   >
                     <option value="" disabled>Select year</option>
                     @for (year of academicYearOptions; track year) {
@@ -130,17 +130,14 @@
                   </select>
                 </td>
                 <td>
-                  @if ((item.feeFrequency || 'year') === 'semester') {
+                  @if (feePeriodDraft(item).feeFrequency === 'semester') {
                     <select
                       class="erp-control"
                       aria-label="Current semester"
-                      [ngModel]="item.currentSemester || 1"
+                      [ngModel]="feePeriodDraft(item).currentSemester"
                       [disabled]="feeSaving()"
                       (ngModelChange)="
-                        setFeePeriod(item, {
-                          currentSemester: +$event,
-                          currentAcademicYear: yearForSemester($event),
-                        })
+                        updateFeePeriodDraft(item, { currentSemester: +$event })
                       "
                     >
                       @for (semester of semesterOptions; track semester) {
@@ -152,7 +149,25 @@
                   }
                 </td>
                 <td>
-                  <span class="erp-status">{{ feeStatus(item) }}</span>
+                  <div class="erp-table-toolbar__actions">
+                    <span class="erp-status">{{ feeStatus(item) }}</span>
+                    <button
+                      class="erp-button erp-button--secondary"
+                      type="button"
+                      [disabled]="feeSaving() || !feePeriodDirty(item)"
+                      (click)="saveFeePeriod(item)"
+                    >
+                      Save
+                    </button>
+                    <button
+                      class="erp-button erp-button--primary"
+                      type="button"
+                      [disabled]="feeSaving() || feePeriodDirty(item)"
+                      (click)="applyFeePeriod(item)"
+                    >
+                      Apply
+                    </button>
+                  </div>
                 </td>
               }
               <td>{{ createdLabel(item) }}</td>

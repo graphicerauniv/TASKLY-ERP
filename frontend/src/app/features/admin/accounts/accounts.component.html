@@ -57,6 +57,7 @@
             <th>Student</th>
             <th>Payment ID</th>
             <th>Amount</th>
+            <th>Fee period</th>
             <th>Allocation</th>
             <th>Outstanding</th>
             <th>Date</th>
@@ -76,6 +77,7 @@
               </td>
               <td>{{ payment.razorpayPaymentId || payment.razorpayOrderId }}</td>
               <td>{{ payment.amount | currency: 'INR' }}</td>
+              <td>{{ payment.targetPeriodLabel || 'Legacy payment' }}</td>
               <td>
                 @for (
                   allocation of payment.allocations || [];
@@ -105,7 +107,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="9" class="erp-empty-state">
+              <td colspan="10" class="erp-empty-state">
                 {{ loading() ? 'Loading payments…' : 'No payment records found.' }}
               </td>
             </tr>

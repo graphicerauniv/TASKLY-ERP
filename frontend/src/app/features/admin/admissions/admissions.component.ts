@@ -40,6 +40,7 @@ export class AdmissionsComponent {
   readonly credentialSaving = signal(false);
   readonly selectedStudentIds = signal<Set<string>>(new Set());
   readonly feeSaving = signal(false);
+  readonly feePeriodDrafts = signal<Record<string, FeePeriodDraft>>({});
   readonly feeDeleteStudent = signal<Admission | null>(null);
   readonly pageSizeOptions = ERP_PAGINATION.pageSizeOptions;
   readonly status = signal<'draft' | 'pending_approval' | 'approved'>('approved');
@@ -103,6 +104,9 @@ export class AdmissionsComponent {
       .subscribe({
         next: ({ items, pagination }) => {
           this.items.set(items);
+          this.feePeriodDrafts.set(
+            Object.fromEntries(items.map((item) => [item._id, feePeriodFromAdmission(item)])),
+          );
           this.total.set(pagination.total);
           this.pages.set(Math.max(1, pagination.pages));
           this.loading.set(false);
@@ -185,7 +189,11 @@ export class AdmissionsComponent {
     this.createFees([...this.selectedStudentIds()]);
   }
 
-  setFeePeriod(
+  feePeriodDraft(item: Admission) {
+    return this.feePeriodDrafts()[item._id] || feePeriodFromAdmission(item);
+  }
+
+  updateFeePeriodDraft(
     item: Admission,
     changes: {
       currentAcademicYear?: number;
@@ -193,19 +201,81 @@ export class AdmissionsComponent {
       feeFrequency?: 'year' | 'semester';
     },
   ) {
+    const current = this.feePeriodDraft(item);
+    const next = { ...current, ...changes };
+    if (changes.feeFrequency === 'semester' && current.feeFrequency !== 'semester')
+      next.currentSemester = Math.max(1, next.currentAcademicYear * 2 - 1);
+    if (changes.currentAcademicYear !== undefined && next.feeFrequency === 'semester')
+      next.currentSemester = Math.max(1, Number(changes.currentAcademicYear) * 2 - 1);
+    if (changes.currentSemester !== undefined)
+      next.currentAcademicYear = this.yearForSemester(changes.currentSemester);
+    this.feePeriodDrafts.update((drafts) => ({ ...drafts, [item._id]: next }));
+  }
+
+  feePeriodDirty(item: Admission) {
+    const draft = this.feePeriodDraft(item);
+    return (
+      draft.feeFrequency !== (item.feeFrequency || 'year') ||
+      draft.currentAcademicYear !== Number(item.currentAcademicYear || 1) ||
+      (draft.feeFrequency === 'semester' &&
+        draft.currentSemester !==
+          Number(item.currentSemester || Number(item.currentAcademicYear || 1) * 2 - 1))
+    );
+  }
+
+  saveFeePeriod(item: Admission) {
     if (this.feeSaving()) return;
     this.feeSaving.set(true);
     this.error.set('');
-    this.api.setAdmissionFeePeriod(item._id, changes).subscribe({
+    const draft = this.feePeriodDraft(item);
+    this.api.setAdmissionFeePeriod(item._id, draft).subscribe({
       next: ({ item: updated }) => {
         item.currentAcademicYear = updated.currentAcademicYear;
         item.currentSemester = updated.currentSemester;
         item.feeFrequency = updated.feeFrequency;
+        this.feePeriodDrafts.update((drafts) => ({
+          ...drafts,
+          [item._id]: feePeriodFromAdmission(updated),
+        }));
         this.items.update((items) => [...items]);
+        this.message.set(
+          `Fee settings saved for ${item.studentName || item.studentId}. Click Apply to recalculate the unpaid Academic Fee ledger.`,
+        );
         this.feeSaving.set(false);
       },
       error: (error) => {
         this.error.set(error.error?.message || 'Could not update the current academic year.');
+        this.feeSaving.set(false);
+      },
+    });
+  }
+
+  applyFeePeriod(item: Admission) {
+    if (this.feeSaving()) return;
+    if (this.feePeriodDirty(item)) {
+      this.error.set('Save the Fee mode, current year, and semester before applying them.');
+      return;
+    }
+    this.feeSaving.set(true);
+    this.error.set('');
+    this.api.recalculateStudentFees([item._id]).subscribe({
+      next: ({ created, results }) => {
+        const result = results[0];
+        const reason =
+          result?.reason || result?.skippedKinds?.map((entry) => entry.reason).join(' ');
+        if (created) {
+          this.message.set(
+            `Saved fee settings applied to ${item.studentName || item.studentId}. The Academic Fee ledger was recalculated.`,
+          );
+          this.feeSaving.set(false);
+          this.load();
+          return;
+        }
+        this.error.set(reason || 'The Academic Fee ledger could not be recalculated.');
+        this.feeSaving.set(false);
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Could not apply the saved fee settings.');
         this.feeSaving.set(false);
       },
     });
@@ -382,4 +452,19 @@ export class AdmissionsComponent {
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
     return this.masterLabels()[String(value)] || String(value);
   }
+}
+
+interface FeePeriodDraft {
+  currentAcademicYear: number;
+  currentSemester: number;
+  feeFrequency: 'year' | 'semester';
+}
+
+function feePeriodFromAdmission(item: Admission): FeePeriodDraft {
+  const currentAcademicYear = Number(item.currentAcademicYear || 1);
+  return {
+    currentAcademicYear,
+    currentSemester: Number(item.currentSemester || currentAcademicYear * 2 - 1),
+    feeFrequency: item.feeFrequency === 'semester' ? 'semester' : 'year',
+  };
 }

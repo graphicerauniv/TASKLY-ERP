@@ -65,7 +65,83 @@ export async function removeStudentFeeLedgers(database, studentAdmissionId) {
   const result = await database
     .collection('studentFeeLedgers')
     .deleteMany({ studentAdmissionId, status: 'active' });
+  if (result.deletedCount)
+    await database.collection('studentProgressions').updateMany(
+      { studentAdmissionId, status: 'pending' },
+      {
+        $set: {
+          status: 'cancelled',
+          cancelledReason: 'Associated fee ledger was deleted.',
+          cancelledAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+    );
   return result.deletedCount;
+}
+
+export async function recalculateStudentAcademicLedger(database, admission, createdBy) {
+  if (admission.status !== 'approved' || !admission.isActive)
+    return failure(admission, 'Student must be approved and active.');
+  const currentPeriodKey =
+    admission.feeFrequency === 'semester'
+      ? `semester:${Number(admission.currentSemester || 1)}`
+      : `year:${Number(admission.currentAcademicYear || 1)}`;
+  const existing = await database
+    .collection('studentFeeLedgers')
+    .find({
+      studentAdmissionId: admission._id,
+      kind: 'academic',
+      periodKey: currentPeriodKey,
+      status: 'active',
+    })
+    .toArray();
+  if (existing.some((ledger) => Number(ledger.paidAmount || 0) > 0)) {
+    const error = new Error(
+      'The Academic Fee ledger already has a payment and cannot be recalculated. Create an adjustment or contact Accounts.',
+    );
+    error.status = 409;
+    throw error;
+  }
+  const existingIds = existing.map((ledger) => ledger._id);
+  if (existingIds.length)
+    await database.collection('studentFeeLedgers').updateMany(
+      { _id: { $in: existingIds }, status: 'active' },
+      { $set: { status: 'recalculating', updatedAt: new Date() } },
+    );
+  try {
+    const result = await generateStudentFeeLedgers(database, admission, createdBy, {
+      academicOnly: true,
+    });
+    if (!result.createdKinds.includes('academic')) {
+      if (existingIds.length)
+        await database.collection('studentFeeLedgers').updateMany(
+          { _id: { $in: existingIds }, status: 'recalculating' },
+          { $set: { status: 'active', updatedAt: new Date() } },
+        );
+      return result;
+    }
+    if (existingIds.length)
+      await database.collection('studentFeeLedgers').updateMany(
+        { _id: { $in: existingIds }, status: 'recalculating' },
+        {
+          $set: {
+            status: 'superseded',
+            supersededAt: new Date(),
+            supersededBy: createdBy,
+            updatedAt: new Date(),
+          },
+        },
+      );
+    return result;
+  } catch (error) {
+    if (existingIds.length)
+      await database.collection('studentFeeLedgers').updateMany(
+        { _id: { $in: existingIds }, status: 'recalculating' },
+        { $set: { status: 'active', updatedAt: new Date() } },
+      );
+    throw error;
+  }
 }
 
 export function totalsForEntries(entries) {
@@ -293,6 +369,7 @@ async function ledgerEntries(database, fees, book, kind, context) {
         dividedSemesterWise: decision.divided,
       };
     })
+    .filter((entry) => Number(entry.amount || 0) > 0)
     .sort(
       (left, right) =>
         left.priority - right.priority ||
@@ -344,11 +421,17 @@ async function existingLedger(database, studentAdmissionId, feeBookId, kind, per
 
 export async function progressionCandidates(database, mode) {
   const frequency = mode === 'semester' ? 'semester' : 'year';
-  const admissions = await database
-    .collection('admissions')
-    .find({ status: 'approved', isActive: true, feeFrequency: frequency })
-    .sort({ studentName: 1 })
-    .toArray();
+  const [admissions, pendingProgressions] = await Promise.all([
+    database
+      .collection('admissions')
+      .find({ status: 'approved', isActive: true, feeFrequency: frequency })
+      .sort({ studentName: 1 })
+      .toArray(),
+    database.collection('studentProgressions').find({ status: 'pending' }).toArray(),
+  ]);
+  const pendingStudentIds = new Set(
+    pendingProgressions.map((progression) => String(progression.studentAdmissionId)),
+  );
   const courseIds = [
     ...new Set(admissions.map((item) => String(item.courseId || '')).filter(Boolean)),
   ]
@@ -362,6 +445,7 @@ export async function progressionCandidates(database, mode) {
     : [];
   const courseMap = new Map(courses.map((course) => [String(course._id), course]));
   return admissions
+    .filter((admission) => !pendingStudentIds.has(String(admission._id)))
     .map((admission) => {
       const course = courseMap.get(String(admission.courseId));
       const durationYears = Number(course?.metadata?.durationYears || 1);
@@ -392,6 +476,14 @@ export async function progressionCandidates(database, mode) {
 }
 
 export async function progressStudentFee(database, admission, mode, createdBy, penalty) {
+  const pending = await database
+    .collection('studentProgressions')
+    .findOne({ studentAdmissionId: admission._id, status: 'pending' });
+  if (pending)
+    return failure(
+      admission,
+      `${pending.targetPeriodLabel} is already waiting for student promotion.`,
+    );
   const course = admission.courseId
     ? await database
         .collection('masterValues')
@@ -422,17 +514,39 @@ export async function progressStudentFee(database, admission, mode, createdBy, p
     academicOnly: true,
     penalty,
   });
-  if (result.createdKinds.includes('academic')) {
-    await database.collection('admissions').updateOne(
-      { _id: admission._id },
-      {
-        $set: {
-          currentAcademicYear: target.currentAcademicYear,
-          currentSemester: target.currentSemester,
-          updatedAt: new Date(),
-        },
-      },
-    );
+  const targetPeriodKey = academicPeriodKey(target);
+  const ledger = await database.collection('studentFeeLedgers').findOne({
+    studentAdmissionId: admission._id,
+    kind: 'academic',
+    periodKey: targetPeriodKey,
+    status: 'active',
+  });
+  if (ledger) {
+    const now = new Date();
+    await database.collection('studentProgressions').insertOne({
+      studentAdmissionId: admission._id,
+      studentId: admission.studentId,
+      studentName: admission.studentName,
+      courseId: admission.courseId,
+      courseName: admission.courseName,
+      academicSession: admission.academicSession,
+      mode,
+      fromAcademicYear: Number(admission.currentAcademicYear || 1),
+      fromSemester: Number(
+        admission.currentSemester || Number(admission.currentAcademicYear || 1) * 2 - 1,
+      ),
+      toAcademicYear: Number(target.currentAcademicYear),
+      toSemester: mode === 'semester' ? Number(target.currentSemester) : null,
+      targetPeriodKey,
+      targetPeriodLabel: academicPeriodLabel(target),
+      feeLedgerId: ledger._id,
+      status: 'pending',
+      createdBy,
+      createdAt: now,
+      updatedAt: now,
+    });
+    result.promotionCreated = true;
+    result.targetPeriodLabel = academicPeriodLabel(target);
   }
   return result;
 }

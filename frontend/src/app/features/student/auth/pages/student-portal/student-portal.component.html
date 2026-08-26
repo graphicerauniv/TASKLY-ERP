@@ -8,6 +8,15 @@
           {{ student()?.name || 'Student' }} · Student ID
           <strong>{{ student()?.studentId }}</strong>
         </p>
+        <p>
+          {{ student()?.courseName || 'Course' }} · {{ student()?.academicSession || 'Session' }} ·
+          Current
+          {{
+            student()?.feeFrequency === 'semester'
+              ? 'Semester ' + student()?.currentSemester
+              : 'Year ' + student()?.currentAcademicYear
+          }}
+        </p>
       </div>
     </div>
 
@@ -67,12 +76,24 @@
       @if (razorpayEnabled()) {
         <div class="erp-table-toolbar__actions">
           <label
+            ><span>Pay against fee period</span
+            ><select class="erp-control" [(ngModel)]="paymentLedgerId">
+              <option value="">Select fee period</option>
+              @for (fee of payableLedgers(); track fee._id) {
+                <option [value]="fee._id">
+                  {{ fee.name }} · {{ fee.periodLabel }} ·
+                  {{ fee.balanceAmount | currency: 'INR' }}
+                </option>
+              }
+            </select></label
+          >
+          <label
             ><span>Custom payment amount</span
             ><input
               class="erp-control"
               type="number"
               min="1"
-              [max]="totalOutstanding()"
+              [max]="paymentLimit()"
               [(ngModel)]="paymentAmount" /></label
           ><button
             class="erp-button erp-button--primary"
@@ -96,78 +117,77 @@
 
   @if (loadingFees()) {
     <section class="erp-card erp-card--padded erp-empty-state">Loading your fees…</section>
-  } @else if (ledger(activeKind()); as fee) {
-    <section class="erp-card erp-table-shell">
-      <div class="erp-table-toolbar">
-        <div>
-          <span class="erp-page-header__eyebrow">
-            {{ fee.academicSession }}
-            @if (fee.kind === 'academic') {
-              · {{ fee.periodLabel || 'Year ' + fee.currentAcademicYear }}
+  } @else {
+    @for (fee of ledgers(activeKind()); track fee._id) {
+      <section class="erp-card erp-table-shell">
+        <div class="erp-table-toolbar">
+          <div>
+            <span class="erp-page-header__eyebrow">
+              {{ fee.academicSession }} · {{ fee.periodLabel }}
+            </span>
+            <h2>{{ fee.name }} · {{ fee.periodLabel }}</h2>
+            @if (fee.kind === 'hostel') {
+              <p>{{ fee.hostelName || 'Hostel' }} · Room {{ fee.roomNumber || 'not assigned' }}</p>
+            } @else {
+              <p>{{ fee.periodLabel }} fee is available for payment.</p>
             }
-          </span>
-          <h2>{{ fee.name }}</h2>
-          @if (fee.kind === 'hostel') {
-            <p>{{ fee.hostelName || 'Hostel' }} · Room {{ fee.roomNumber || 'not assigned' }}</p>
-          } @else {
-            <p>Your Academic Fee for the current year.</p>
+          </div>
+          <div>
+            <strong>{{ fee.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+            <p>Balance due</p>
+          </div>
+        </div>
+        <div class="erp-table-shell__scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Fee head</th>
+                <th>Period</th>
+                <th>Due date</th>
+                <th>Amount</th>
+                <th>Amount received</th>
+                <th>Left amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of fee.entries; track entry.feeHeadId + entry.periodLabel) {
+                <tr>
+                  <td>
+                    <strong>{{ entry.feeHeadName }}</strong>
+                    @if (entry.category === 'discount') {
+                      <small>Discount</small>
+                    }
+                    @if (entry.feeHeadId === 'penalty') {
+                      <small>Daily late-payment charge</small>
+                    }
+                  </td>
+                  <td>{{ entry.periodLabel }}</td>
+                  <td>{{ entry.dueDate | date: 'mediumDate' }}</td>
+                  <td>{{ entryAmount(entry) | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                  <td>{{ entry.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                  <td>{{ entry.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="erp-pagination">
+          <span>Charges {{ fee.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
+          <span>Discounts {{ fee.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
+          <strong>Total {{ fee.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          <span>Paid {{ fee.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
+          @if (fee.penaltyAmount) {
+            <span>Penalty {{ fee.penaltyAmount | currency: 'INR' }}</span>
           }
         </div>
-        <div>
-          <strong>{{ fee.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
-          <p>Balance due</p>
-        </div>
-      </div>
-      <div class="erp-table-shell__scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Fee head</th>
-              <th>Period</th>
-              <th>Due date</th>
-              <th>Amount</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (entry of fee.entries; track entry.feeHeadId + entry.periodLabel) {
-              <tr>
-                <td>
-                  <strong>{{ entry.feeHeadName }}</strong>
-                  @if (entry.category === 'discount') {
-                    <small>Discount</small>
-                  }
-                  @if (entry.feeHeadId === 'penalty') {
-                    <small>Daily late-payment charge</small>
-                  }
-                </td>
-                <td>{{ entry.periodLabel }}</td>
-                <td>{{ entry.dueDate | date: 'mediumDate' }}</td>
-                <td>{{ entryAmount(entry) | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
-                <td>
-                  <span class="erp-status">{{ entry.status }}</span>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      <div class="erp-pagination">
-        <span>Charges {{ fee.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
-        <span>Discounts {{ fee.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
-        <strong>Total {{ fee.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
-        <span>Paid {{ fee.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
-        @if (fee.penaltyAmount) {
-          <span>Penalty {{ fee.penaltyAmount | currency: 'INR' }}</span>
-        }
-      </div>
-    </section>
-  } @else {
-    <section class="erp-card erp-card--padded erp-empty-state">
-      <svg lucideUserRound size="32" aria-hidden="true"></svg>
-      <strong>{{ activeKind() === 'academic' ? 'Academic Fee' : 'Hostel Fee' }}</strong>
-      <p>Not enrolled in this section.</p>
-    </section>
+      </section>
+    } @empty {
+      <section class="erp-card erp-card--padded erp-empty-state">
+        <svg lucideUserRound size="32" aria-hidden="true"></svg>
+        <strong>{{ activeKind() === 'academic' ? 'Academic Fee' : 'Hostel Fee' }}</strong>
+        <p>Not enrolled in this section.</p>
+      </section>
+    }
   }
 
   <section class="erp-card erp-table-shell">
@@ -186,6 +206,7 @@
             <th>Receipt</th>
             <th>Payment ID</th>
             <th>Amount</th>
+            <th>Fee period</th>
             <th>Date</th>
             <th>Status</th>
             <th>Action</th>
@@ -199,6 +220,7 @@
               </td>
               <td>{{ payment.razorpayPaymentId || payment.razorpayOrderId }}</td>
               <td>{{ payment.amount | currency: 'INR' }}</td>
+              <td>{{ payment.targetPeriodLabel || 'Fee payment' }}</td>
               <td>{{ payment.paidAt || payment.createdAt | date: 'medium' }}</td>
               <td>
                 <span class="erp-status">{{ payment.status }}</span>
@@ -217,7 +239,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="erp-empty-state">No payments made yet.</td>
+              <td colspan="7" class="erp-empty-state">No payments made yet.</td>
             </tr>
           }
         </tbody>

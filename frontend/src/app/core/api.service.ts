@@ -24,6 +24,7 @@ import {
   HostelFee,
   FeePayment,
   FeeProgressionCandidate,
+  StudentPromotion,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -161,9 +162,10 @@ export class ApiService {
     );
   }
   studentFees(token: string) {
-    return this.http.get<{ items: StudentFeeLedger[] }>(`${API_BASE_URL}/auth/student/fees`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    return this.http.get<{ items: StudentFeeLedger[]; student: StudentSession }>(
+      `${API_BASE_URL}/auth/student/fees`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
   }
   studentPaymentHistory(token: string) {
     return this.http.get<{ items: FeePayment[]; razorpayEnabled: boolean }>(
@@ -171,7 +173,7 @@ export class ApiService {
       { headers: { Authorization: `Bearer ${token}` } },
     );
   }
-  createStudentPaymentOrder(token: string, amount: number) {
+  createStudentPaymentOrder(token: string, amount: number, ledgerId: string) {
     return this.http.post<{
       keyId: string;
       orderId: string;
@@ -180,7 +182,7 @@ export class ApiService {
       student: { name: string; studentId: string };
     }>(
       `${API_BASE_URL}/payments/student/orders`,
-      { amount },
+      { amount, ledgerId },
       { headers: { Authorization: `Bearer ${token}` } },
     );
   }
@@ -213,6 +215,21 @@ export class ApiService {
       }>;
     }>(`${API_BASE_URL}/fees/student-ledgers/generate`, { studentAdmissionIds });
   }
+  recalculateStudentFees(studentAdmissionIds: string[]) {
+    return this.http.post<{
+      created: number;
+      studentsProcessed: number;
+      results: Array<{
+        studentAdmissionId: string;
+        studentId?: string;
+        studentName?: string;
+        success: boolean;
+        createdKinds: Array<'academic'>;
+        skippedKinds: Array<{ kind: 'academic'; reason: string }>;
+        reason?: string;
+      }>;
+    }>(`${API_BASE_URL}/fees/student-ledgers/recalculate`, { studentAdmissionIds });
+  }
   feeProgressionCandidates(mode: 'semester' | 'year') {
     return this.http.get<{ items: FeeProgressionCandidate[] }>(
       `${API_BASE_URL}/fees/student-ledgers/progression-candidates`,
@@ -226,14 +243,41 @@ export class ApiService {
   }) {
     return this.http.post<{
       created: number;
+      promotionsCreated: number;
       studentsProcessed: number;
       results: Array<{
         studentName?: string;
         createdKinds: string[];
         reason?: string;
+        promotionCreated?: boolean;
+        targetPeriodLabel?: string;
         skippedKinds: Array<{ reason: string }>;
       }>;
     }>(`${API_BASE_URL}/fees/student-ledgers/progress`, body);
+  }
+  studentPromotions(filters: {
+    mode?: 'semester' | 'year';
+    status?: string;
+    search?: string;
+    academicSession?: string;
+    courseId?: string;
+    currentAcademicYear?: number | null;
+    currentSemester?: number | null;
+  }) {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(filters))
+      if (value !== undefined && value !== null && value !== '') params = params.set(key, value);
+    return this.http.get<{ items: StudentPromotion[] }>(
+      `${API_BASE_URL}/fees/student-promotions`,
+      { params },
+    );
+  }
+  promoteStudents(progressionIds: string[]) {
+    return this.http.post<{
+      promoted: number;
+      requested: number;
+      results: Array<{ progressionId: string; success: boolean; reason?: string }>;
+    }>(`${API_BASE_URL}/fees/student-promotions/promote`, { progressionIds });
   }
   accounts(search = '', status = '') {
     let params = new HttpParams();
@@ -491,6 +535,7 @@ export class ApiService {
     bookId: string;
     name: string;
     category: FeeHead['category'];
+    priority?: number;
     placement?: string;
     referenceHeadId?: string;
     divideSemesterWise?: boolean;

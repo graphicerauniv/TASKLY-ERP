@@ -10,6 +10,7 @@ import { HostelManagementComponent } from './hostel-management/hostel-management
 import { FeeManagementComponent } from './fee-management/fee-management.component';
 import { FeeProgressionComponent } from './fee-progression/fee-progression.component';
 import { AccountsComponent } from './accounts/accounts.component';
+import { StudentPromotionsComponent } from './student-promotions/student-promotions.component';
 
 /**
  * Admin routes share one shell and one router outlet.
@@ -145,6 +146,10 @@ export const ADMIN_ROUTES: Routes = [
           title: 'Approved Students',
           description: 'Students whose completed admission records have been approved.',
         },
+      },
+      {
+        path: 'admissions/promotions',
+        component: StudentPromotionsComponent,
       },
       {
         path: 'admissions',
