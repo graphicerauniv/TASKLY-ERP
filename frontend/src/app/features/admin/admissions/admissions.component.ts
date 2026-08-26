@@ -10,10 +10,17 @@ import {
   CompactActionItem,
   CompactActionMenuComponent,
 } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
+import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'erp-admissions',
-  imports: [AdminPageComponent, CompactActionMenuComponent, FormsModule, RouterLink],
+  imports: [
+    AdminPageComponent,
+    CompactActionMenuComponent,
+    ConfirmDialogComponent,
+    FormsModule,
+    RouterLink,
+  ],
   templateUrl: './admissions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -31,6 +38,9 @@ export class AdmissionsComponent {
   readonly credentialStudent = signal<Admission | null>(null);
   readonly credentialAction = signal<'approve' | 'reset'>('approve');
   readonly credentialSaving = signal(false);
+  readonly selectedStudentIds = signal<Set<string>>(new Set());
+  readonly feeSaving = signal(false);
+  readonly feeDeleteStudent = signal<Admission | null>(null);
   readonly pageSizeOptions = ERP_PAGINATION.pageSizeOptions;
   readonly status = signal<'draft' | 'pending_approval' | 'approved'>('approved');
   readonly title = signal('Approved Students');
@@ -39,6 +49,9 @@ export class AdmissionsComponent {
   readonly pages = signal(1);
   readonly viewActions: CompactActionItem[] = [{ id: 'view', label: 'View details', icon: 'view' }];
   readonly approvedActions: CompactActionItem[] = [
+    { id: 'create-fees', label: 'Create Ledger & Due Card', icon: 'edit' },
+    { id: 'delete-fees', label: 'Delete Ledger & Due Card', icon: 'delete', destructive: true },
+    { id: 'edit', label: 'Edit admission data', icon: 'edit' },
     { id: 'password', label: 'Set or reset password', icon: 'edit' },
     { id: 'view', label: 'View details', icon: 'view' },
   ];
@@ -57,6 +70,8 @@ export class AdmissionsComponent {
   passwordMode: 'student-id' | 'manual' = 'student-id';
   manualPassword = '';
   confirmPassword = '';
+  currentAcademicYear = 1;
+  readonly academicYearOptions = Array.from({ length: 10 }, (_, index) => index + 1);
 
   constructor() {
     this.route.data.subscribe((data) => {
@@ -138,6 +153,109 @@ export class AdmissionsComponent {
     if (action === 'edit') void this.router.navigate(['/admin/admissions', item._id, 'edit']);
     if (action === 'approve') this.approve(item);
     if (action === 'password') this.openCredentials(item, 'reset');
+    if (action === 'create-fees') this.createFees([item._id]);
+    if (action === 'delete-fees') this.feeDeleteStudent.set(item);
+  }
+
+  isSelected(item: Admission) {
+    return this.selectedStudentIds().has(item._id);
+  }
+
+  toggleStudent(item: Admission, selected: boolean) {
+    this.selectedStudentIds.update((current) => {
+      const next = new Set(current);
+      if (selected) next.add(item._id);
+      else next.delete(item._id);
+      return next;
+    });
+  }
+
+  togglePage(selected: boolean) {
+    this.selectedStudentIds.set(new Set(selected ? this.items().map((item) => item._id) : []));
+  }
+
+  createSelectedFees() {
+    this.createFees([...this.selectedStudentIds()]);
+  }
+
+  setAcademicYear(item: Admission, value: number | string) {
+    const currentAcademicYear = Number(value);
+    if (!Number.isInteger(currentAcademicYear) || this.feeSaving()) return;
+    this.feeSaving.set(true);
+    this.error.set('');
+    this.api.setAdmissionAcademicYear(item._id, currentAcademicYear).subscribe({
+      next: () => {
+        item.currentAcademicYear = currentAcademicYear;
+        this.items.update((items) => [...items]);
+        this.feeSaving.set(false);
+        this.createFees([item._id]);
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Could not update the current academic year.');
+        this.feeSaving.set(false);
+      },
+    });
+  }
+
+  createFees(studentAdmissionIds: string[]) {
+    if (!studentAdmissionIds.length || this.feeSaving()) return;
+    this.feeSaving.set(true);
+    this.error.set('');
+    this.api.generateStudentFees(studentAdmissionIds).subscribe({
+      next: ({ created, studentsProcessed, results }) => {
+        const failures = results
+          .flatMap((result) =>
+            result.reason
+              ? [`${result.studentName || result.studentId || 'Student'}: ${result.reason}`]
+              : result.skippedKinds.map(
+                  (item) =>
+                    `${result.studentName || result.studentId || 'Student'} ${item.kind}: ${item.reason}`,
+                ),
+          )
+          .filter((reason) => !reason.includes('already created'));
+        this.message.set(
+          `${created} fee ledger(s) created for ${studentsProcessed} student(s).${failures.length ? ` ${failures.join(' ')}` : ''}`,
+        );
+        this.selectedStudentIds.set(new Set());
+        this.feeSaving.set(false);
+        this.load();
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Could not create student fees.');
+        this.feeSaving.set(false);
+      },
+    });
+  }
+
+  deleteFees(item: Admission) {
+    if (this.feeSaving()) return;
+    this.feeSaving.set(true);
+    this.error.set('');
+    this.api.deleteStudentFees(item._id).subscribe({
+      next: ({ deleted }) => {
+        this.message.set(
+          `${deleted} fee ledger(s) deleted for ${item.studentName || item.studentId}.`,
+        );
+        this.feeSaving.set(false);
+        this.feeDeleteStudent.set(null);
+        this.load();
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Could not delete student fees.');
+        this.feeSaving.set(false);
+      },
+    });
+  }
+
+  confirmFeeDeletion() {
+    const student = this.feeDeleteStudent();
+    if (student) this.deleteFees(student);
+  }
+
+  feeStatus(item: Admission) {
+    const kinds = item.feeLedgerKinds || [];
+    if (!kinds.length) return 'Not created';
+    return kinds.map((kind) => (kind === 'academic' ? 'Academic' : 'Hostel')).join(' + ');
   }
 
   approve(item: Admission) {
@@ -150,6 +268,7 @@ export class AdmissionsComponent {
     this.passwordMode = 'student-id';
     this.manualPassword = '';
     this.confirmPassword = '';
+    this.currentAcademicYear = item.currentAcademicYear || 1;
     this.error.set('');
   }
 
@@ -169,14 +288,17 @@ export class AdmissionsComponent {
       return;
     }
     this.credentialSaving.set(true);
-    const body = {
+    const passwordBody = {
       passwordMode: this.passwordMode,
       password: this.passwordMode === 'manual' ? this.manualPassword : undefined,
     } as const;
     const request: Observable<unknown> =
       this.credentialAction() === 'approve'
-        ? this.api.approveAdmission(item._id, body)
-        : this.api.resetStudentPassword(item._id, body);
+        ? this.api.approveAdmission(item._id, {
+            ...passwordBody,
+            currentAcademicYear: this.currentAcademicYear,
+          })
+        : this.api.resetStudentPassword(item._id, passwordBody);
     request.subscribe({
       next: () => {
         const action =

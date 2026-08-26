@@ -114,6 +114,20 @@ authRouter.post(
   }),
 );
 
+authRouter.get(
+  '/student/fees',
+  requireStudent,
+  asyncHandler(async (request, response) => {
+    const items = await db()
+      .collection('studentFeeLedgers')
+      .find({ studentAdmissionId: request.student._id, status: 'active' })
+      .project({ createdBy: 0 })
+      .sort({ kind: 1, createdAt: -1 })
+      .toArray();
+    response.json({ items: items.map(serialize) });
+  }),
+);
+
 function publicAdmin(admin) {
   const value = serialize(admin);
   return { id: value._id, email: value.email, name: value.name, role: value.role };

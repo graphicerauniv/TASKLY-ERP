@@ -4,9 +4,21 @@
   [description]="description()"
   variant="minimal"
 >
-  <a page-actions class="erp-button erp-button--primary" routerLink="/admin/admission/student"
-    >＋ New student admission</a
-  >
+  <div page-actions class="erp-table-toolbar__actions">
+    @if (status() === 'approved') {
+      <button
+        class="erp-button erp-button--secondary"
+        type="button"
+        [disabled]="!selectedStudentIds().size || feeSaving()"
+        (click)="createSelectedFees()"
+      >
+        {{ feeSaving() ? 'Creating…' : 'Create Ledger & Due for selected' }}
+      </button>
+    }
+    <a class="erp-button erp-button--primary" routerLink="/admin/admission/student"
+      >＋ New student admission</a
+    >
+  </div>
 
   @if (message()) {
     <p class="erp-notice erp-notice--success">{{ message() }}</p>
@@ -40,10 +52,26 @@
       <table>
         <thead>
           <tr>
+            @if (status() === 'approved') {
+              <th>
+                <input
+                  type="checkbox"
+                  aria-label="Select all students on this page"
+                  [checked]="items().length > 0 && selectedStudentIds().size === items().length"
+                  (change)="togglePage($any($event.target).checked)"
+                />
+              </th>
+            }
             <th>Student</th>
             <th>Student ID</th>
             <th>Course</th>
             <th>Session</th>
+            @if (status() === 'approved') {
+              <th>Domicile</th>
+              <th>Student type</th>
+              <th>Current year</th>
+              <th>Fee ledger</th>
+            }
             <th>Saved</th>
             <th>Status</th>
             <th class="erp-table-shell__actions">Actions</th>
@@ -52,6 +80,16 @@
         <tbody>
           @for (item of items(); track item._id) {
             <tr>
+              @if (status() === 'approved') {
+                <td>
+                  <input
+                    type="checkbox"
+                    [attr.aria-label]="'Select ' + (item.studentName || item.studentId)"
+                    [checked]="isSelected(item)"
+                    (change)="toggleStudent(item, $any($event.target).checked)"
+                  />
+                </td>
+              }
               <td>
                 <strong>{{ item.studentName || 'Name not entered' }}</strong>
               </td>
@@ -60,6 +98,27 @@
               </td>
               <td>{{ item.courseName || 'Not selected' }}</td>
               <td>{{ item.academicSession || 'Not selected' }}</td>
+              @if (status() === 'approved') {
+                <td>{{ item.domicileName || 'Not selected' }}</td>
+                <td>{{ item.studentTypeName || 'Not selected' }}</td>
+                <td>
+                  <select
+                    class="erp-control"
+                    aria-label="Current academic year"
+                    [ngModel]="item.currentAcademicYear || ''"
+                    [disabled]="feeSaving()"
+                    (ngModelChange)="setAcademicYear(item, $event)"
+                  >
+                    <option value="" disabled>Select year</option>
+                    @for (year of academicYearOptions; track year) {
+                      <option [ngValue]="year">Year {{ year }}</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <span class="erp-status">{{ feeStatus(item) }}</span>
+                </td>
+              }
               <td>{{ createdLabel(item) }}</td>
               <td>
                 <span class="erp-status" [class.erp-status--warning]="item.status !== 'approved'">{{
@@ -75,7 +134,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="erp-empty-state">
+              <td [attr.colspan]="status() === 'approved' ? 12 : 7" class="erp-empty-state">
                 {{ loading() ? 'Loading…' : 'No matching student records found.' }}
               </td>
             </tr>
@@ -129,6 +188,23 @@
   </section>
 </erp-admin-page>
 
+@if (feeDeleteStudent(); as student) {
+  <erp-confirm-dialog
+    [open]="true"
+    eyebrow="Student fees"
+    title="Delete Ledger & Due Card?"
+    [message]="
+      'Academic Fee and Hostel Fee will disappear from ' +
+      (student.studentName || student.studentId || 'this student') +
+      '\u0027s portal. They can be created again later.'
+    "
+    confirmLabel="Delete fees"
+    [destructive]="true"
+    (cancelled)="feeDeleteStudent.set(null)"
+    (confirmed)="confirmFeeDeletion()"
+  />
+}
+
 @if (credentialStudent(); as student) {
   <div class="modal-backdrop">
     <button
@@ -156,6 +232,16 @@
             The student must replace this temporary password after their first successful login.
           </p>
           <div class="erp-form-grid">
+            @if (credentialAction() === 'approve') {
+              <label>
+                <span>Current academic year *</span>
+                <select class="erp-control" [(ngModel)]="currentAcademicYear" required>
+                  @for (year of academicYearOptions; track year) {
+                    <option [ngValue]="year">Year {{ year }}</option>
+                  }
+                </select>
+              </label>
+            }
             <label>
               <span>Temporary password option</span>
               <select class="erp-control" [(ngModel)]="passwordMode">

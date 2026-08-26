@@ -15,6 +15,7 @@ import {
   MasterType,
   MasterValue,
   StudentSession,
+  StudentFeeLedger,
   CourseFee,
   CourseFeeDraft,
   FeeBook,
@@ -104,6 +105,7 @@ export class ApiService {
   updateAdmission(admission: Admission) {
     return this.http.patch<{ item: Admission }>(`${API_BASE_URL}/admissions/${admission._id}`, {
       currentSectionId: admission.currentSectionId,
+      currentAcademicYear: admission.currentAcademicYear,
       responses: admission.responses,
       repeatableResponses: admission.repeatableResponses,
     });
@@ -111,8 +113,20 @@ export class ApiService {
   submitAdminAdmission(id: string) {
     return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/submit`, {});
   }
-  approveAdmission(id: string, body: { passwordMode: 'student-id' | 'manual'; password?: string }) {
+  approveAdmission(
+    id: string,
+    body: {
+      passwordMode: 'student-id' | 'manual';
+      password?: string;
+      currentAcademicYear: number;
+    },
+  ) {
     return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/approve`, body);
+  }
+  setAdmissionAcademicYear(id: string, currentAcademicYear: number) {
+    return this.http.patch<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}`, {
+      currentAcademicYear,
+    });
   }
   resetStudentPassword(
     id: string,
@@ -131,6 +145,31 @@ export class ApiService {
       `${API_BASE_URL}/auth/student/change-password`,
       { password },
       { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  studentFees(token: string) {
+    return this.http.get<{ items: StudentFeeLedger[] }>(`${API_BASE_URL}/auth/student/fees`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+  generateStudentFees(studentAdmissionIds: string[]) {
+    return this.http.post<{
+      created: number;
+      studentsProcessed: number;
+      results: Array<{
+        studentAdmissionId: string;
+        studentId?: string;
+        studentName?: string;
+        success: boolean;
+        createdKinds: Array<'academic' | 'hostel'>;
+        skippedKinds: Array<{ kind: 'academic' | 'hostel'; reason: string }>;
+        reason?: string;
+      }>;
+    }>(`${API_BASE_URL}/fees/student-ledgers/generate`, { studentAdmissionIds });
+  }
+  deleteStudentFees(studentAdmissionId: string) {
+    return this.http.delete<{ deleted: number }>(
+      `${API_BASE_URL}/fees/student-ledgers/student/${studentAdmissionId}`,
     );
   }
   uploadAdminAdmission(id: string, fieldId: string, file: File) {

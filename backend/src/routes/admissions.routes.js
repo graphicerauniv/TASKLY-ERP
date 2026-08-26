@@ -27,6 +27,10 @@ const passwordSetupSchema = z
     message: 'A manually entered password must contain at least 8 characters.',
     path: ['password'],
   });
+const approvalSchema = passwordSetupSchema.and(
+  z.object({ currentAcademicYear: z.coerce.number().int().min(1).max(10) }),
+);
+const currentAcademicYearSchema = z.coerce.number().int().min(1).max(10);
 admissionsRouter.get(
   '/',
   asyncHandler(async (request, response) => {
@@ -54,7 +58,28 @@ admissionsRouter.get(
         .toArray(),
       db().collection('admissions').countDocuments(filter),
     ]);
-    response.json(pageResult(items.map(serialize), total, page, limit));
+    const ledgers = items.length
+      ? await db()
+          .collection('studentFeeLedgers')
+          .find({ studentAdmissionId: { $in: items.map((item) => item._id) }, status: 'active' })
+          .project({ studentAdmissionId: 1, kind: 1 })
+          .toArray()
+      : [];
+    const kindsByStudent = new Map();
+    for (const ledger of ledgers) {
+      const key = String(ledger.studentAdmissionId);
+      kindsByStudent.set(key, [...(kindsByStudent.get(key) || []), ledger.kind]);
+    }
+    response.json(
+      pageResult(
+        items.map((item) =>
+          serialize({ ...item, feeLedgerKinds: kindsByStudent.get(String(item._id)) || [] }),
+        ),
+        total,
+        page,
+        limit,
+      ),
+    );
   }),
 );
 admissionsRouter.patch(
@@ -63,8 +88,8 @@ admissionsRouter.patch(
     const admissionId = id(request.params.admissionId);
     const admission = await db().collection('admissions').findOne({ _id: admissionId });
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
-    if (!['draft', 'pending_approval'].includes(admission.status))
-      return response.status(409).json({ message: 'Approved student records cannot be edited.' });
+    if (!['draft', 'pending_approval', 'approved'].includes(admission.status))
+      return response.status(409).json({ message: 'This student record cannot be edited.' });
     const update = { hasSavedData: true, updatedAt: new Date() };
     if (request.body.currentSectionId !== undefined) {
       const sectionId = String(request.body.currentSectionId || '');
@@ -77,6 +102,10 @@ admissionsRouter.patch(
     if (plainObject(request.body.responses)) update.responses = request.body.responses;
     if (plainObject(request.body.repeatableResponses))
       update.repeatableResponses = request.body.repeatableResponses;
+    if (request.body.currentAcademicYear !== undefined)
+      update.currentAcademicYear = currentAcademicYearSchema.parse(
+        request.body.currentAcademicYear,
+      );
     let item = await db()
       .collection('admissions')
       .findOneAndUpdate({ _id: admissionId }, { $set: update }, { returnDocument: 'after' });
@@ -144,7 +173,7 @@ admissionsRouter.post(
         .json({ message: 'Required admission data is incomplete.', errors });
     if (!admission.studentId)
       return response.status(422).json({ message: 'Generate the Student ID before approval.' });
-    const passwordSetup = passwordSetupSchema.parse(request.body);
+    const passwordSetup = approvalSchema.parse(request.body);
     const initialPassword =
       passwordSetup.passwordMode === 'student-id' ? admission.studentId : passwordSetup.password;
     const item = await db()
@@ -157,6 +186,7 @@ admissionsRouter.post(
             isActive: true,
             passwordHash: await argon2.hash(initialPassword),
             mustChangePassword: true,
+            currentAcademicYear: passwordSetup.currentAcademicYear,
             passwordUpdatedAt: new Date(),
             approvedAt: new Date(),
             updatedAt: new Date(),
@@ -205,8 +235,8 @@ admissionsRouter.post(
       .collection('admissions')
       .findOne({ _id: id(request.params.admissionId) });
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
-    if (!['draft', 'pending_approval'].includes(admission.status))
-      return response.status(409).json({ message: 'Approved student records cannot be edited.' });
+    if (!['draft', 'pending_approval', 'approved'].includes(admission.status))
+      return response.status(409).json({ message: 'This student record cannot be edited.' });
     if (!request.file) return response.status(400).json({ message: 'Choose a file to upload.' });
     const field = findField(admission.formSnapshot, request.body.fieldId);
     if (!field || !['file', 'image', 'signature'].includes(field.type))

@@ -63,7 +63,7 @@ export const STUDENT_NAVIGATION: readonly StudentNavigationItem[] = [
     icon: 'wallet-cards',
     route: '/student/fees',
     ariaLabel: 'Open fees',
-    enabled: false,
+    enabled: true,
     order: 4,
   },
   {

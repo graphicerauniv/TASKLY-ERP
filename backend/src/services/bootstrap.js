@@ -85,7 +85,7 @@ export async function bootstrap() {
 async function migrateAdmissionIdentities() {
   const admissions = await db()
     .collection('admissions')
-    .find({ identityVersion: { $ne: 3 } })
+    .find({ identityVersion: { $ne: 4 } })
     .toArray();
   for (const admission of admissions)
     await syncAdmissionIdentity(db(), admission, admission.responses || {}, {

@@ -6,6 +6,10 @@ import { config } from '../config.js';
 import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { normalizeFeeName, parseFeeWorkbook } from '../services/fee-workbook.js';
+import {
+  generateStudentFeeLedgers,
+  removeStudentFeeLedgers,
+} from '../services/student-fee-ledger.js';
 
 export const feesRouter = express.Router();
 const upload = multer({
@@ -89,6 +93,9 @@ const courseFeeDraftSchema = z.object({
   selectedFeeHeadIds: z.array(z.string()).max(500).optional().default([]),
   matrixAmounts: z.record(z.union([z.number().nonnegative().max(1_000_000_000), z.null()])).optional().default({}),
 });
+const studentLedgerGenerationSchema = z.object({
+  studentAdmissionIds: z.array(z.string()).min(1).max(500),
+});
 
 async function masterValue(value, typeSlug, field) {
   const item = await db().collection('masterValues').findOne({ _id: id(value, field), typeSlug });
@@ -137,6 +144,68 @@ feesRouter.get('/course-options', asyncHandler(async (request, response) => {
     .toArray();
   response.json({ items: items.map(serialize) });
 }));
+
+feesRouter.get(
+  '/student-ledgers',
+  asyncHandler(async (request, response) => {
+    const filter = { status: 'active' };
+    if (request.query.studentAdmissionId)
+      filter.studentAdmissionId = id(request.query.studentAdmissionId, 'studentAdmissionId');
+    const items = await db()
+      .collection('studentFeeLedgers')
+      .find(filter)
+      .sort({ studentName: 1, kind: 1, createdAt: -1 })
+      .limit(2000)
+      .toArray();
+    response.json({ items: items.map(serialize) });
+  }),
+);
+
+feesRouter.post(
+  '/student-ledgers/generate',
+  asyncHandler(async (request, response) => {
+    const data = studentLedgerGenerationSchema.parse(request.body);
+    const admissionIds = [...new Set(data.studentAdmissionIds)].map((value) =>
+      id(value, 'studentAdmissionId'),
+    );
+    const admissions = await db()
+      .collection('admissions')
+      .find({ _id: { $in: admissionIds } })
+      .toArray();
+    const admissionMap = new Map(admissions.map((student) => [String(student._id), student]));
+    const results = [];
+    for (const admissionId of admissionIds) {
+      const admission = admissionMap.get(String(admissionId));
+      if (!admission) {
+        results.push({
+          studentAdmissionId: admissionId,
+          success: false,
+          createdKinds: [],
+          skippedKinds: [],
+          reason: 'Student not found.',
+        });
+        continue;
+      }
+      results.push(await generateStudentFeeLedgers(db(), admission, id(request.admin._id)));
+    }
+    response.json({
+      created: results.reduce((total, result) => total + result.createdKinds.length, 0),
+      studentsProcessed: results.length,
+      results: results.map(serialize),
+    });
+  }),
+);
+
+feesRouter.delete(
+  '/student-ledgers/student/:studentAdmissionId',
+  asyncHandler(async (request, response) => {
+    const studentAdmissionId = id(request.params.studentAdmissionId, 'studentAdmissionId');
+    const deleted = await removeStudentFeeLedgers(db(), studentAdmissionId);
+    if (!deleted)
+      return response.status(404).json({ message: 'No active Academic or Hostel Fee ledger found.' });
+    response.json({ deleted });
+  }),
+);
 
 feesRouter.post('/books', asyncHandler(async (request, response) => {
   const data = bookSchema.parse(request.body);
@@ -216,7 +285,9 @@ feesRouter.post('/heads', asyncHandler(async (request, response) => {
   const book = await feeBook(data.bookId);
   const now = new Date();
   const priority = data.priority || await resolveFeeHeadPriority(book._id, data.placement, data.referenceHeadId);
-  const { placement, referenceHeadId, ...headData } = data;
+  const headData = { ...data };
+  delete headData.placement;
+  delete headData.referenceHeadId;
   const document = { ...headData, bookId: book._id, bookCode: book.code, priority, normalizedName: normalizeFeeName(data.name), createdBy: id(request.admin._id), createdAt: now, updatedAt: now };
   const result = await db().collection('feeHeads').insertOne(document);
   await normalizeFeeHeadPriority(book._id);
@@ -232,7 +303,9 @@ feesRouter.patch('/heads/:headId', asyncHandler(async (request, response) => {
   if (data.placement) {
     data.priority = await resolveFeeHeadPriority(current.bookId, data.placement, data.referenceHeadId);
   }
-  const { placement, referenceHeadId, ...headData } = data;
+  const headData = { ...data };
+  delete headData.placement;
+  delete headData.referenceHeadId;
   await db().collection('feeHeads').updateOne({ _id: current._id }, { $set: { ...headData, updatedAt: new Date() } });
   await normalizeFeeHeadPriority(current.bookId);
   const result = await db().collection('feeHeads').findOne({ _id: current._id });
@@ -473,7 +546,11 @@ feesRouter.post('/course-fees/import/preview', upload.single('file'), asyncHandl
   const now = new Date();
   const preview = { bookId: book._id, bookCode: book.code, domicileId: domicile._id, domicileName: domicile.name, studentTypeId: studentType._id, studentTypeName: studentType.name, countryId: country?._id || null, countryName: country?.name || null, fileName: request.file.originalname, sheets, headMappings, createdBy: id(request.admin._id), createdAt: now, expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), status: 'pending' };
   const result = await db().collection('feeImportPreviews').insertOne(preview);
-  response.status(201).json({ preview: serialize({ ...preview, _id: result.insertedId, sheets: sheets.map(({ lines, ...sheet }) => sheet) }) });
+  response.status(201).json({ preview: serialize({ ...preview, _id: result.insertedId, sheets: sheets.map((sheet) => {
+    const summary = { ...sheet };
+    delete summary.lines;
+    return summary;
+  }) }) });
 }));
 
 const importSchema = z.object({

@@ -75,7 +75,7 @@ export class StudentLoginComponent {
         this.saveSession(token, student);
         this.loading.set(false);
         if (student.mustChangePassword) this.changeRequired.set(true);
-        else void this.router.navigate(['/student/portal']);
+        else void this.router.navigate(['/student/dashboard']);
       },
       error: (error) => {
         this.error.set(error.error?.message || 'Unable to sign in.');
@@ -97,7 +97,7 @@ export class StudentLoginComponent {
       next: ({ token, student }) => {
         this.saveSession(token, student);
         this.loading.set(false);
-        void this.router.navigate(['/student/portal']);
+        void this.router.navigate(['/student/dashboard']);
       },
       error: (error) => {
         this.error.set(error.error?.message || 'Unable to change the password.');

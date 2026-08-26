@@ -100,6 +100,15 @@ async function ensureIndexes(databaseInstance) {
       .createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),
     databaseInstance.collection('courseFees').createIndex({ importPreviewId: 1 }),
     databaseInstance
+      .collection('studentFeeLedgers')
+      .createIndex(
+        { studentAdmissionId: 1, feeBookId: 1, kind: 1 },
+        { unique: true, partialFilterExpression: { status: 'active' } },
+      ),
+    databaseInstance
+      .collection('studentFeeLedgers')
+      .createIndex({ studentAdmissionId: 1, status: 1, kind: 1 }),
+    databaseInstance
       .collection('feeImportPreviews')
       .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]);

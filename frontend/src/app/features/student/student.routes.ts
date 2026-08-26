@@ -14,6 +14,14 @@ export const STUDENT_ROUTES: Routes = [
             (component) => component.StudentDashboardComponent,
           ),
       },
+      {
+        path: 'fees',
+        title: 'Fees | GEU ERP',
+        loadComponent: () =>
+          import('./auth/pages/student-portal/student-portal.component').then(
+            (component) => component.StudentPortalComponent,
+          ),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: '**', redirectTo: 'dashboard' },
     ],

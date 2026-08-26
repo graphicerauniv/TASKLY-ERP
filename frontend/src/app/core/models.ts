@@ -93,9 +93,17 @@ export interface Admission {
   studentId?: string;
   studentName?: string;
   academicSession?: string;
+  currentAcademicYear?: number;
   academicSessionId?: string | null;
   courseName?: string;
   courseId?: string | null;
+  collegeName?: string;
+  departmentName?: string;
+  levelName?: string;
+  domicileName?: string;
+  studentTypeName?: string;
+  countryName?: string;
+  feeLedgerKinds?: Array<'academic' | 'hostel'>;
   status: 'draft' | 'pending_approval' | 'approved' | 'submitted';
   currentSectionId: string | null;
   formVersion?: number;
@@ -114,6 +122,43 @@ export interface StudentSession {
   studentId: string;
   name: string;
   mustChangePassword: boolean;
+}
+
+export interface StudentFeeEntry {
+  feeHeadId: string;
+  feeHeadName: string;
+  category: 'fee' | 'discount' | 'payment-option';
+  priority: number;
+  frequency: FeeFrequency;
+  academicYear: number | null;
+  semester: number | null;
+  periodLabel: string;
+  amount: number;
+  dueDate: string;
+  status: 'due' | 'paid' | 'partial';
+}
+
+export interface StudentFeeLedger {
+  _id: string;
+  studentAdmissionId: string;
+  studentId: string;
+  studentName: string;
+  feeBookId: string;
+  feeBookCode: string;
+  academicSession: string;
+  currentAcademicYear: number;
+  kind: 'academic' | 'hostel';
+  name: 'Academic Fee' | 'Hostel Fee';
+  entries: StudentFeeEntry[];
+  chargeAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  paidAmount: number;
+  balanceAmount: number;
+  status: 'active';
+  hostelName?: string;
+  roomNumber?: string;
+  createdAt: string;
 }
 
 export interface Hostel {

@@ -3,11 +3,19 @@ import { ObjectId } from 'mongodb';
 
 export function admissionContext(form, responses = {}) {
   const fields = allFields(form);
-  const sessionField = fields.find((field) => field.dataSource?.masterTypeSlug === 'academic');
-  const courseField = fields.find((field) => field.dataSource?.masterTypeSlug === 'course');
+  const valueId = (slug) => {
+    const field = fields.find((candidate) => candidate.dataSource?.masterTypeSlug === slug);
+    return objectIdValue(responses[field?.id]);
+  };
   return {
-    sessionValueId: objectIdValue(responses[sessionField?.id]),
-    courseValueId: objectIdValue(responses[courseField?.id]),
+    sessionValueId: valueId('academic'),
+    collegeValueId: valueId('college'),
+    departmentValueId: valueId('department'),
+    levelValueId: valueId('level'),
+    courseValueId: valueId('course'),
+    domicileValueId: valueId('domicile'),
+    studentTypeValueId: valueId('student-type'),
+    countryValueId: valueId('country'),
     studentName: studentName(fields, responses),
   };
 }
@@ -19,7 +27,16 @@ export async function syncAdmissionIdentity(
   { generateStudentId = false } = {},
 ) {
   const context = admissionContext(admission.formSnapshot, responses);
-  const values = [context.sessionValueId, context.courseValueId].filter(Boolean);
+  const values = [
+    context.sessionValueId,
+    context.collegeValueId,
+    context.departmentValueId,
+    context.levelValueId,
+    context.courseValueId,
+    context.domicileValueId,
+    context.studentTypeValueId,
+    context.countryValueId,
+  ].filter(Boolean);
   const masterValues = values.length
     ? await database
         .collection('masterValues')
@@ -33,13 +50,33 @@ export async function syncAdmissionIdentity(
   const course = masterValues.find(
     (value) => value.typeSlug === 'course' && value._id.equals(context.courseValueId),
   );
+  const master = (slug, valueId) =>
+    masterValues.find((value) => value.typeSlug === slug && value._id.equals(valueId));
+  const college = master('college', context.collegeValueId);
+  const department = master('department', context.departmentValueId);
+  const level = master('level', context.levelValueId);
+  const domicile = master('domicile', context.domicileValueId);
+  const studentType = master('student-type', context.studentTypeValueId);
+  const country = master('country', context.countryValueId);
   const identity = {
     studentName: context.studentName || '',
     academicSessionId: session?._id || null,
     academicSession: session?.name || '',
+    collegeId: college?._id || null,
+    collegeName: college?.name || '',
+    departmentId: department?._id || null,
+    departmentName: department?.name || '',
+    levelId: level?._id || null,
+    levelName: level?.name || '',
     courseId: course?._id || null,
     courseName: course?.name || '',
-    identityVersion: 3,
+    domicileId: domicile?._id || null,
+    domicileName: domicile?.name || '',
+    studentTypeId: studentType?._id || null,
+    studentTypeName: studentType?.name || '',
+    countryId: country?._id || null,
+    countryName: country?.name || '',
+    identityVersion: 4,
     identitySyncedAt: new Date(),
     updatedAt: new Date(),
   };

@@ -34,7 +34,7 @@ export const STUDENT_DASHBOARD_MODULES: readonly StudentDashboardModule[] = [
     route: '/student/fees',
     ariaLabel: 'Open fees',
     background: 'var(--student-module-fees)',
-    enabled: false,
+    enabled: true,
     order: 3,
     imageWidth: 384,
     imageHeight: 384,

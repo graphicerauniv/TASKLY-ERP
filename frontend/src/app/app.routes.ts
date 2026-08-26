@@ -20,6 +20,11 @@ export const appRoutes: Routes = [
         loadChildren: () =>
           import('./features/student/auth').then((routes) => routes.STUDENT_AUTH_ROUTES),
       },
+      {
+        path: 'portal',
+        pathMatch: 'full',
+        redirectTo: 'dashboard',
+      },
       ...STUDENT_ROUTES,
     ],
   },

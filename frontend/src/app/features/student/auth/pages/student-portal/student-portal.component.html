@@ -1,28 +1,111 @@
-<main class="erp-admission-page">
+<div class="student-dashboard" aria-label="Student fee portal">
   <section class="erp-card erp-card--padded">
     <div class="erp-card__header">
       <div>
         <span class="erp-page-header__eyebrow">Student Portal</span>
-        <h1>Welcome, {{ student()?.name || 'Student' }}</h1>
+        <h1>Fee Portal</h1>
         <p>
-          Student ID: <strong>{{ student()?.studentId }}</strong>
+          {{ student()?.name || 'Student' }} · Student ID
+          <strong>{{ student()?.studentId }}</strong>
         </p>
       </div>
-      <button class="erp-button erp-button--secondary" type="button" (click)="logout()">
-        <svg lucideLogOut size="17" aria-hidden="true"></svg> Log out
+    </div>
+
+    <div class="erp-table-toolbar__actions" role="group" aria-label="Choose fee section">
+      <button
+        class="erp-button"
+        [class.erp-button--primary]="activeKind() === 'academic'"
+        [class.erp-button--secondary]="activeKind() !== 'academic'"
+        type="button"
+        [attr.aria-pressed]="activeKind() === 'academic'"
+        (click)="activeKind.set('academic')"
+      >
+        Academic Fee
+      </button>
+      <button
+        class="erp-button"
+        [class.erp-button--primary]="activeKind() === 'hostel'"
+        [class.erp-button--secondary]="activeKind() !== 'hostel'"
+        type="button"
+        [attr.aria-pressed]="activeKind() === 'hostel'"
+        (click)="activeKind.set('hostel')"
+      >
+        Hostel Fee
       </button>
     </div>
-    <div class="erp-success-panel">
-      <span><svg lucideShieldCheck size="24" aria-hidden="true"></svg></span>
-      <div>
-        <h2>Student account active</h2>
-        <p>Your password is set and your student portal access is active.</p>
-      </div>
-    </div>
-    <div class="erp-empty-state">
-      <svg lucideUserRound size="32" aria-hidden="true"></svg>
-      <strong>Portal modules will appear here</strong>
-      <p>Your approved admission account is ready for future student services.</p>
-    </div>
   </section>
-</main>
+
+  @if (feeError()) {
+    <p class="erp-notice erp-notice--error">{{ feeError() }}</p>
+  }
+
+  @if (loadingFees()) {
+    <section class="erp-card erp-card--padded erp-empty-state">Loading your fees…</section>
+  } @else if (ledger(activeKind()); as fee) {
+    <section class="erp-card erp-table-shell">
+      <div class="erp-table-toolbar">
+        <div>
+          <span class="erp-page-header__eyebrow">
+            {{ fee.academicSession }}
+            @if (fee.kind === 'academic') {
+              · Year {{ fee.currentAcademicYear }}
+            }
+          </span>
+          <h2>{{ fee.name }}</h2>
+          @if (fee.kind === 'hostel') {
+            <p>{{ fee.hostelName || 'Hostel' }} · Room {{ fee.roomNumber || 'not assigned' }}</p>
+          } @else {
+            <p>Your Academic Fee for the current year.</p>
+          }
+        </div>
+        <div>
+          <strong>{{ fee.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          <p>Balance due</p>
+        </div>
+      </div>
+      <div class="erp-table-shell__scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Fee head</th>
+              <th>Period</th>
+              <th>Due date</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of fee.entries; track entry.feeHeadId + entry.periodLabel) {
+              <tr>
+                <td>
+                  <strong>{{ entry.feeHeadName }}</strong>
+                  @if (entry.category === 'discount') {
+                    <small>Discount</small>
+                  }
+                </td>
+                <td>{{ entry.periodLabel }}</td>
+                <td>{{ entry.dueDate | date: 'mediumDate' }}</td>
+                <td>{{ entryAmount(entry) | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                <td>
+                  <span class="erp-status">{{ entry.status }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="erp-pagination">
+        <span>Charges {{ fee.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
+        <span>Discounts {{ fee.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
+        <strong>Total {{ fee.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+        <span>Paid {{ fee.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</span>
+      </div>
+    </section>
+  } @else {
+    <section class="erp-card erp-card--padded erp-empty-state">
+      <svg lucideUserRound size="32" aria-hidden="true"></svg>
+      <strong>{{ activeKind() === 'academic' ? 'Academic Fee' : 'Hostel Fee' }}</strong>
+      <p>Not enrolled in this section.</p>
+    </section>
+  }
+</div>
