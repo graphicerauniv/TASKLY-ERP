@@ -1,0 +1,9 @@
+<nav class="student-dashboard-modules" aria-label="Student ERP modules">
+  <ul>
+    @for (module of modules(); track module.id) {
+      <li>
+        <erp-dashboard-module-card [module]="module" />
+      </li>
+    }
+  </ul>
+</nav>

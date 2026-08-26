@@ -36,7 +36,7 @@ test.describe('Student portal shell', () => {
     expect(expandedContent?.x).toBe(initialContent?.x);
     expect(expandedContent?.width).toBe(initialContent?.width);
 
-    await page.locator('.student-dashboard-placeholder').hover();
+    await page.locator('.student-dashboard-hero').hover();
     await expect(sidebar).toHaveCSS('width', '72px');
 
     await dashboardLink.focus();
@@ -50,7 +50,7 @@ test.describe('Student portal shell', () => {
     const trigger = page.getByRole('button', { name: 'Open Vivek Sharma account menu' });
     await trigger.click();
     await expect(page.getByRole('menu', { name: 'Student account menu' })).toBeVisible();
-    await page.locator('.student-dashboard-placeholder').click();
+    await page.locator('.student-dashboard-hero').click();
     await expect(page.getByRole('menu', { name: 'Student account menu' })).toBeHidden();
 
     await trigger.click();
@@ -109,5 +109,92 @@ test.describe('Student portal shell', () => {
       getComputedStyle(document.body).getPropertyValue('--student-color-primary').trim(),
     );
     expect(leakedToken).toBe('');
+  });
+
+  test('dashboard hero and module configuration match the approved Phase 2 contract', async ({
+    page,
+  }) => {
+    const failedAssets: string[] = [];
+    page.on('response', (response) => {
+      if (response.url().includes('/assets/student/dashboard/') && !response.ok()) {
+        failedAssets.push(`${response.status()} ${response.url()}`);
+      }
+    });
+
+    await page.setViewportSize({ width: 1536, height: 1024 });
+    await page.goto('/student/dashboard');
+
+    await expect(page.getByRole('heading', { name: 'Ready for your day, Vivek?' })).toBeVisible();
+    await expect(page.locator('.student-dashboard-hero__art')).toHaveAttribute(
+      'src',
+      '/assets/student/dashboard/hero/day-illustration.webp',
+    );
+
+    const cards = page.locator('.student-module-card');
+    await expect(cards).toHaveCount(9);
+    await expect(page.locator('.student-module-card__label')).toHaveText([
+      'Academics',
+      'Attendance',
+      'Fees',
+      'Exams',
+      'Hostel',
+      'Complaints',
+      'Placement',
+      'Documents',
+      'Campus',
+    ]);
+
+    const assetNames = await page.locator('.student-module-card img').evaluateAll((images) =>
+      images.map((image) => new URL((image as HTMLImageElement).src).pathname),
+    );
+    expect(assetNames).toEqual([
+      '/assets/student/dashboard/modules/academics.webp',
+      '/assets/student/dashboard/modules/attendance.webp',
+      '/assets/student/dashboard/modules/fees.webp',
+      '/assets/student/dashboard/modules/exams.webp',
+      '/assets/student/dashboard/modules/hostel.webp',
+      '/assets/student/dashboard/modules/complaints.webp',
+      '/assets/student/dashboard/modules/placement.webp',
+      '/assets/student/dashboard/modules/documents.webp',
+      '/assets/student/dashboard/modules/campus.webp',
+    ]);
+
+    await expect(cards.first()).toHaveCSS('background-color', 'rgb(227, 242, 253)');
+    await expect(cards.first()).toHaveAttribute('aria-disabled', 'true');
+    const routeBeforeDisabledClick = page.url();
+    await cards.first().dispatchEvent('click');
+    expect(page.url()).toBe(routeBeforeDisabledClick);
+    expect(failedAssets).toEqual([]);
+  });
+
+  test('dashboard keeps a three-column module grid on desktop and mobile', async ({ page }) => {
+    for (const viewport of [
+      { width: 1536, height: 1024 },
+      { width: 390, height: 844 },
+      { width: 360, height: 800 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/student/dashboard');
+
+      const columnCount = await page.locator('.student-dashboard-modules ul').evaluate((grid) =>
+        getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length,
+      );
+      expect(columnCount, `${viewport.width}px dashboard grid`).toBe(3);
+    }
+  });
+
+  test('dashboard remains fixed while the desktop navigation overlays it', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 1024 });
+    await page.goto('/student/dashboard');
+
+    const dashboard = page.locator('.student-dashboard');
+    const sidebar = page.locator('.student-sidebar');
+    const before = await dashboard.boundingBox();
+    await sidebar.hover();
+    await expect(sidebar).toHaveCSS('width', '264px');
+    const after = await dashboard.boundingBox();
+
+    expect(after?.x).toBe(before?.x);
+    expect(after?.width).toBe(before?.width);
   });
 });

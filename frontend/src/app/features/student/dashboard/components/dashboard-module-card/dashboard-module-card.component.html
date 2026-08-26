@@ -1,0 +1,36 @@
+@if (module().enabled) {
+  <a
+    class="student-module-card"
+    [routerLink]="module().route"
+    [attr.aria-label]="module().ariaLabel"
+    [style.--student-module-background]="module().background"
+    [style.--student-module-accent]="module().accent || module().background"
+  >
+    <ng-container *ngTemplateOutlet="moduleContent" />
+  </a>
+} @else {
+  <div
+    class="student-module-card student-module-card--disabled"
+    role="link"
+    aria-disabled="true"
+    [attr.aria-label]="module().label + ' — coming soon'"
+    [style.--student-module-background]="module().background"
+    [style.--student-module-accent]="module().accent || module().background"
+  >
+    <ng-container *ngTemplateOutlet="moduleContent" />
+  </div>
+}
+
+<ng-template #moduleContent>
+  <span class="student-module-card__image-box" aria-hidden="true">
+    <img
+      [src]="module().imagePath"
+      alt=""
+      [width]="module().imageWidth || 384"
+      [height]="module().imageHeight || 384"
+      loading="eager"
+      decoding="async"
+    />
+  </span>
+  <span class="student-module-card__label">{{ module().label }}</span>
+</ng-template>

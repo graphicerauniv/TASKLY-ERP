@@ -1,5 +1,8 @@
-<section class="student-dashboard-placeholder" aria-labelledby="student-dashboard-title">
-  <p class="student-dashboard-placeholder__eyebrow">Student portal</p>
-  <h1 id="student-dashboard-title">Student Dashboard</h1>
-  <p>The dashboard workspace will be added in Phase 2.</p>
-</section>
+<div class="student-dashboard" aria-label="Student dashboard">
+  <erp-dashboard-hero [viewModel]="viewModel" />
+
+  <section class="student-dashboard-modules-section" aria-labelledby="campus-modules-title">
+    <h2 id="campus-modules-title">Explore your campus</h2>
+    <erp-dashboard-module-grid [modules]="modules" />
+  </section>
+</div>
