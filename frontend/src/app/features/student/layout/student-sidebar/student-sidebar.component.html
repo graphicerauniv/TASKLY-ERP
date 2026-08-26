@@ -1,0 +1,101 @@
+<aside
+  class="student-sidebar"
+  [class.student-sidebar--expanded]="layoutState.desktopSidebarExpanded()"
+  aria-label="Student portal navigation"
+>
+  <div class="student-sidebar__decoration" aria-hidden="true"></div>
+
+  <a
+    class="student-sidebar__brand"
+    routerLink="/student/dashboard"
+    aria-label="GEU ERP student portal"
+  >
+    <img
+      src="/assets/images/brand/graphic-era-mark.png"
+      width="44"
+      height="44"
+      alt="Graphic Era University"
+    />
+    <span class="student-sidebar__brand-copy">
+      <strong>GEU ERP</strong>
+      <small>Student Portal</small>
+    </span>
+  </a>
+
+  <nav class="student-navigation" aria-label="Primary student navigation">
+    <ul>
+      @for (item of navigation; track item.id) {
+        <li
+          class="student-navigation__item-wrap"
+          (pointerenter)="showTooltip(item.label, $event)"
+          (pointerleave)="hideTooltip()"
+        >
+          @if (item.enabled) {
+            <a
+              class="student-navigation__item"
+              [routerLink]="item.route"
+              routerLinkActive="student-navigation__item--active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              ariaCurrentWhenActive="page"
+              [attr.aria-label]="item.ariaLabel"
+              (click)="selectNavigation()"
+            >
+              <span class="student-navigation__icon">
+                <svg [lucideIcon]="navigationIcon(item.icon)" size="21" aria-hidden="true"></svg>
+              </span>
+              <span class="student-navigation__label">{{ item.label }}</span>
+              @if (item.badge) {
+                <span class="student-navigation__badge">{{ item.badge }}</span>
+              }
+            </a>
+          } @else {
+            <button
+              class="student-navigation__item student-navigation__item--disabled"
+              type="button"
+              disabled
+              [attr.aria-label]="item.label + ' — coming soon'"
+            >
+              <span class="student-navigation__icon">
+                <svg [lucideIcon]="navigationIcon(item.icon)" size="21" aria-hidden="true"></svg>
+              </span>
+              <span class="student-navigation__label">{{ item.label }}</span>
+              <span class="student-navigation__soon">Soon</span>
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  </nav>
+
+  @if (!layoutState.desktopSidebarExpanded() && tooltipLabel()) {
+    <span class="student-sidebar__floating-tooltip" role="tooltip" [style.top.px]="tooltipTop()">{{
+      tooltipLabel()
+    }}</span>
+  }
+
+  <div class="student-sidebar__profile">
+    <button
+      class="student-sidebar__profile-summary"
+      type="button"
+      aria-label="Student profile for Vivek Sharma"
+    >
+      <span class="student-avatar">VS</span>
+      <span class="student-sidebar__profile-copy">
+        <strong>Vivek Sharma</strong>
+        <small>B.Tech CSE · Semester 5</small>
+        <small>Roll No. 23BCS1045</small>
+      </span>
+    </button>
+    <div class="student-sidebar__profile-actions">
+      <button type="button" disabled aria-label="My profile — coming soon">
+        <svg lucideUserRound size="17" aria-hidden="true"></svg>
+        <span>Profile</span>
+      </button>
+      <a routerLink="/student/login" aria-label="Sign out of the student portal">
+        <svg lucideLogOut size="17" aria-hidden="true"></svg>
+        <span>Sign out</span>
+      </a>
+    </div>
+    <span class="student-sidebar__profile-tooltip" role="tooltip">Vivek Sharma</span>
+  </div>
+</aside>

@@ -1,0 +1,34 @@
+@if (layoutState.profileMenuOpen()) {
+  <section
+    id="student-profile-menu"
+    class="student-profile-menu"
+    role="menu"
+    aria-label="Student account menu"
+  >
+    <header class="student-profile-menu__header">
+      <span class="student-avatar student-avatar--large">VS</span>
+      <span>
+        <strong>Vivek Sharma</strong>
+        <small>B.Tech CSE · Semester 5</small>
+        <small>Roll No. 23BCS1045</small>
+      </span>
+    </header>
+    <div class="student-profile-menu__actions">
+      <button type="button" role="menuitem" disabled>
+        <svg lucideUserRound size="18" aria-hidden="true"></svg><span>My profile</span>
+      </button>
+      <button type="button" role="menuitem" disabled>
+        <svg lucideGraduationCap size="18" aria-hidden="true"></svg><span>Academic record</span>
+      </button>
+      <button type="button" role="menuitem" disabled>
+        <svg lucideFolderOpen size="18" aria-hidden="true"></svg><span>Documents</span>
+      </button>
+      <button type="button" role="menuitem" disabled>
+        <svg lucideSettings size="18" aria-hidden="true"></svg><span>Settings</span>
+      </button>
+      <a routerLink="/student/login" role="menuitem" (click)="close()">
+        <svg lucideLogOut size="18" aria-hidden="true"></svg><span>Sign out</span>
+      </a>
+    </div>
+  </section>
+}

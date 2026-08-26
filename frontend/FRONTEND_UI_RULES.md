@@ -102,9 +102,32 @@ src/app/
     student/
       auth/
       admission/
+      student.routes.ts
+      layout/
+        student-shell/
+        student-header/
+        student-sidebar/
+        student-mobile-drawer/
+        student-profile-menu/
+      dashboard/
+      shared/
+        config/
+        models/
+        services/
+      styles/
+        _student-tokens.scss
+        _student-typography.scss
+        _student-layout.scss
+        _student-responsive.scss
+        student-theme.scss
 ```
 
 Do not create a parallel `pages`, `screens`, `views`, or second theme architecture without updating this file first.
+
+The Student Portal is the approved isolated portal exception. Its reusable visual
+system lives in `features/student/styles`, every variable uses the `--student-*`
+prefix, and every selector is scoped beneath `[data-portal='student']`. Student
+feature pages must consume this system instead of Admin `erp-*` layout styling.
 
 ## 4. Component File Rule
 
@@ -138,7 +161,7 @@ buttons, cards, inputs, typography, shadows, or repeated responsive patterns.
 
 ## 5. One Design System
 
-The project has one canonical global style system:
+The Admin Portal has one canonical global style system:
 
 ```text
 src/style/_tokens.scss  theme values
@@ -148,6 +171,10 @@ src/style/_index.scss   one style entry imported by src/styles.scss
 
 Do not add a duplicate `shared/theme`, `styles`, `theme`, or page-theme folder.
 The `src/style` folder is the GEU ERP equivalent of the shared theme layer.
+
+The Student Portal intentionally has a separate, route-scoped theme at
+`src/app/features/student/styles`. Never import Admin-specific layout styling into
+Student components, and never expose Student tokens on `:root`, `html`, or `body`.
 
 Correct ownership:
 
@@ -300,9 +327,7 @@ templates.
 Use:
 
 ```html
-<erp-admin-page title="Fee Books" variant="minimal">
-  ...
-</erp-admin-page>
+<erp-admin-page title="Fee Books" variant="minimal"> ... </erp-admin-page>
 ```
 
 Header variants:

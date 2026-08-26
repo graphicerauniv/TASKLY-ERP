@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { ADMIN_ROUTES } from './features/admin/admin.routes';
+import { STUDENT_ROUTES } from './features/student/student.routes';
 
 export const appRoutes: Routes = [
   {
@@ -13,8 +14,14 @@ export const appRoutes: Routes = [
   },
   {
     path: 'student',
-    loadChildren: () =>
-      import('./features/student/auth').then((routes) => routes.STUDENT_AUTH_ROUTES),
+    children: [
+      {
+        path: 'login',
+        loadChildren: () =>
+          import('./features/student/auth').then((routes) => routes.STUDENT_AUTH_ROUTES),
+      },
+      ...STUDENT_ROUTES,
+    ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },

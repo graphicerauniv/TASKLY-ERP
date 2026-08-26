@@ -1,0 +1,83 @@
+@if (layoutState.mobileNavigationOpen()) {
+  <div class="student-mobile-drawer-layer">
+    <button
+      class="student-mobile-drawer__backdrop"
+      type="button"
+      aria-label="Close student navigation"
+      (click)="close()"
+    ></button>
+    <aside
+      id="student-mobile-drawer"
+      class="student-mobile-drawer"
+      aria-label="Mobile student navigation"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="student-mobile-drawer__header">
+        <a routerLink="/student/dashboard" aria-label="GEU ERP student portal" (click)="close()">
+          <img
+            src="/assets/images/brand/graphic-era-mark.png"
+            width="44"
+            height="44"
+            alt="Graphic Era University"
+          />
+          <span><strong>GEU ERP</strong><small>Student Portal</small></span>
+        </a>
+        <button
+          class="student-icon-button"
+          type="button"
+          aria-label="Close student navigation"
+          (click)="close()"
+        >
+          <svg lucideX size="21" aria-hidden="true"></svg>
+        </button>
+      </header>
+
+      <nav class="student-mobile-navigation" aria-label="Primary student navigation">
+        <ul>
+          @for (item of navigation; track item.id) {
+            <li>
+              @if (item.enabled) {
+                <a
+                  [routerLink]="item.route"
+                  routerLinkActive="student-mobile-navigation__item--active"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  ariaCurrentWhenActive="page"
+                  [attr.aria-label]="item.ariaLabel"
+                  (click)="close()"
+                >
+                  <svg [lucideIcon]="navigationIcon(item.icon)" size="20" aria-hidden="true"></svg>
+                  <span>{{ item.label }}</span>
+                </a>
+              } @else {
+                <button type="button" disabled [attr.aria-label]="item.label + ' — coming soon'">
+                  <svg [lucideIcon]="navigationIcon(item.icon)" size="20" aria-hidden="true"></svg>
+                  <span>{{ item.label }}</span>
+                  <small>Soon</small>
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      </nav>
+
+      <footer class="student-mobile-drawer__profile">
+        <div class="student-mobile-drawer__student">
+          <span class="student-avatar">VS</span>
+          <span
+            ><strong>Vivek Sharma</strong><small>B.Tech CSE · Semester 5</small
+            ><small>Roll No. 23BCS1045</small></span
+          >
+        </div>
+        <div class="student-mobile-drawer__profile-actions">
+          <button type="button" disabled>
+            <svg lucideUserRound size="17" aria-hidden="true"></svg><span>Profile</span>
+          </button>
+          <a routerLink="/student/login" (click)="close(false)">
+            <svg lucideLogOut size="17" aria-hidden="true"></svg><span>Sign out</span>
+          </a>
+        </div>
+      </footer>
+    </aside>
+  </div>
+}

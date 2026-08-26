@@ -1,0 +1,70 @@
+<header class="student-header">
+  <div class="student-header__mobile-brand">
+    <button
+      class="student-icon-button student-header__menu-button"
+      type="button"
+      aria-label="Open student navigation"
+      [attr.aria-expanded]="layoutState.mobileNavigationOpen()"
+      aria-controls="student-mobile-drawer"
+      (click)="openMobileNavigation($event.currentTarget)"
+    >
+      <svg lucideMenu size="21" aria-hidden="true"></svg>
+    </button>
+    <img
+      src="/assets/images/brand/graphic-era-mark.png"
+      width="38"
+      height="38"
+      alt="Graphic Era University"
+    />
+    <span>GEU ERP</span>
+  </div>
+
+  <h1 class="student-header__title">Dashboard</h1>
+
+  <label class="student-header__search">
+    <span class="student-visually-hidden">Search student portal</span>
+    <svg lucideSearch size="18" aria-hidden="true"></svg>
+    <input type="search" placeholder="Search anything..." autocomplete="off" />
+  </label>
+
+  <div class="student-header__actions">
+    <button
+      class="student-icon-button student-header__calendar"
+      type="button"
+      aria-label="Open calendar — coming soon"
+      disabled
+    >
+      <svg lucideCalendarDays size="20" aria-hidden="true"></svg>
+    </button>
+    <button
+      class="student-icon-button student-notification-button"
+      type="button"
+      aria-label="Notifications — coming in a later phase"
+      disabled
+    >
+      <svg lucideBell size="20" aria-hidden="true"></svg>
+      <span class="student-notification-button__badge" aria-hidden="true">3</span>
+    </button>
+
+    <div class="student-header__profile-area">
+      <button
+        class="student-header__profile-trigger"
+        type="button"
+        aria-label="Open Vivek Sharma account menu"
+        [attr.aria-expanded]="layoutState.profileMenuOpen()"
+        aria-controls="student-profile-menu"
+        (click)="toggleProfileMenu($event.currentTarget)"
+      >
+        <span class="student-avatar">VS</span>
+        <span class="student-header__profile-name">Vivek Sharma</span>
+        <svg
+          class="student-header__profile-chevron"
+          lucideChevronDown
+          size="16"
+          aria-hidden="true"
+        ></svg>
+      </button>
+      <erp-student-profile-menu />
+    </div>
+  </div>
+</header>

@@ -3,7 +3,7 @@ import { StudentPortalComponent } from './pages/student-portal/student-portal.co
 
 export const STUDENT_AUTH_ROUTES: Routes = [
   {
-    path: 'login',
+    path: '',
     title: 'Student sign in | Taskly ERP',
     loadComponent: () =>
       import('./pages/student-login/student-login.component').then(
@@ -15,5 +15,4 @@ export const STUDENT_AUTH_ROUTES: Routes = [
     title: 'Student Portal | Taskly ERP',
     component: StudentPortalComponent,
   },
-  { path: '', pathMatch: 'full', redirectTo: 'login' },
 ];

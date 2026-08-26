@@ -15,6 +15,12 @@ const legacyRawColorFiles = new Set([
   'src/style/_system.scss',
 ]);
 
+const scopedThemeTokenFiles = new Set([
+  // The Student Portal is an intentionally isolated product surface. Its locked
+  // tokens are scoped under [data-portal='student'] and cannot affect Admin UI.
+  'src/app/features/student/styles/_student-tokens.scss',
+]);
+
 const rawColorPattern = /#[0-9a-fA-F]{3,8}\b|rgba?\(/;
 const tailwindArbitraryColorPattern =
   /\b(?:bg|text|border|ring|shadow|from|via|to)-\[[^\]]*(?:#[0-9a-fA-F]{3,8}|rgba?\()[^\]]*\]/;
@@ -44,7 +50,9 @@ const files = walk(srcRoot).filter((file) => /\.(scss|css|html|ts)$/.test(file))
 const errors = [];
 
 const htmlFiles = files.filter((file) => file.endsWith('.html')).map(normalise);
-const browserEntryFiles = htmlFiles.filter((file) => file.endsWith('/index.html') || file === 'src/index.html');
+const browserEntryFiles = htmlFiles.filter(
+  (file) => file.endsWith('/index.html') || file === 'src/index.html',
+);
 
 if (browserEntryFiles.length !== 1 || browserEntryFiles[0] !== 'src/index.html') {
   errors.push(
@@ -67,6 +75,7 @@ for (const file of files) {
   if (
     rel.startsWith('src/app/features/') &&
     rel.endsWith('.scss') &&
+    !rel.startsWith('src/app/features/student/styles/') &&
     !localStyleExceptionPattern.test(content)
   ) {
     errors.push(
@@ -75,7 +84,9 @@ for (const file of files) {
   }
 
   const canDeclareRawColors =
-    rel === 'src/style/_tokens.scss' || legacyRawColorFiles.has(rel);
+    rel === 'src/style/_tokens.scss' ||
+    legacyRawColorFiles.has(rel) ||
+    scopedThemeTokenFiles.has(rel);
 
   if (
     !canDeclareRawColors &&
@@ -87,7 +98,9 @@ for (const file of files) {
   }
 
   if (rel.endsWith('.html') && internalHrefPattern.test(content)) {
-    errors.push(`${rel}: internal Angular navigation must use routerLink instead of <a href="/...">.`);
+    errors.push(
+      `${rel}: internal Angular navigation must use routerLink instead of <a href="/...">.`,
+    );
   }
 
   if (rel.endsWith('.html') && directTableActionButtonPattern.test(content)) {
@@ -115,7 +128,9 @@ if (errors.length > 0) {
   for (const error of errors) {
     console.error(`- ${error}`);
   }
-  console.error('\nFix the violations or update FRONTEND_UI_RULES.md with a deliberate exception.\n');
+  console.error(
+    '\nFix the violations or update FRONTEND_UI_RULES.md with a deliberate exception.\n',
+  );
   process.exit(1);
 }
 
