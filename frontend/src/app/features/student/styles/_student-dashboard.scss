@@ -107,7 +107,8 @@
     gap: var(--student-space-4);
     overflow: hidden;
     padding: 12px 20px;
-    border: 1px solid color-mix(in srgb, var(--student-module-accent) 18%, var(--student-color-border));
+    border: 1px solid
+      color-mix(in srgb, var(--student-module-accent) 18%, var(--student-color-border));
     border-radius: 16px;
     color: var(--student-color-text);
     background: var(--student-module-background);

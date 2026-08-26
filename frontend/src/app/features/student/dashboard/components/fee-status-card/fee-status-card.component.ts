@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { LucideIndianRupee } from '@lucide/angular';
 import { DashboardWidgetStateComponent } from '../dashboard-widget-state/dashboard-widget-state.component';
-import { DashboardWidgetState, FeeStatusViewModel } from '../../models/student-dashboard-operational.model';
+import {
+  DashboardWidgetState,
+  FeeStatusViewModel,
+} from '../../models/student-dashboard-operational.model';
 
 @Component({
   selector: 'erp-fee-status-card',
@@ -9,7 +12,10 @@ import { DashboardWidgetState, FeeStatusViewModel } from '../../models/student-d
   template: `
     <article class="student-operational-card student-operational-card--compact">
       <header class="student-operational-card__header">
-        <span><svg lucideIndianRupee size="18" aria-hidden="true"></svg><strong>Fee status</strong></span>
+        <span
+          ><svg lucideIndianRupee size="18" aria-hidden="true"></svg
+          ><strong>Fee status</strong></span
+        >
       </header>
       <erp-dashboard-widget-state
         [status]="state().status"

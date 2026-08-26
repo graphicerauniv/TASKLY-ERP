@@ -90,11 +90,17 @@
         <svg lucideUserRound size="17" aria-hidden="true"></svg>
         <span>Profile</span>
       </button>
-      <a routerLink="/student/login" aria-label="Sign out of the student portal" (click)="signOut()">
+      <a
+        routerLink="/student/login"
+        aria-label="Sign out of the student portal"
+        (click)="signOut()"
+      >
         <svg lucideLogOut size="17" aria-hidden="true"></svg>
         <span>Sign out</span>
       </a>
     </div>
-    <span class="student-sidebar__profile-tooltip" role="tooltip">{{ session.profile()?.name || 'Student' }}</span>
+    <span class="student-sidebar__profile-tooltip" role="tooltip">{{
+      session.profile()?.name || 'Student'
+    }}</span>
   </div>
 </aside>

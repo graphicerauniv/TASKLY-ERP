@@ -8,7 +8,11 @@ import { StudentDashboardViewModel } from '../../models/student-dashboard-module
 
 @Component({
   selector: 'erp-student-dashboard',
-  imports: [DashboardHeroComponent, DashboardModuleGridComponent, DashboardOperationalGridComponent],
+  imports: [
+    DashboardHeroComponent,
+    DashboardModuleGridComponent,
+    DashboardOperationalGridComponent,
+  ],
   templateUrl: './student-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

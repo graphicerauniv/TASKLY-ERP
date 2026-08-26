@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { LucideBadgeIndianRupee, LucideCalendarPlus, LucideFileCheck2, LucideIdCard } from '@lucide/angular';
+import {
+  LucideBadgeIndianRupee,
+  LucideCalendarPlus,
+  LucideFileCheck2,
+  LucideIdCard,
+} from '@lucide/angular';
 import { DashboardQuickAction } from '../../models/student-dashboard-operational.model';
 
 @Component({
@@ -13,10 +18,18 @@ import { DashboardQuickAction } from '../../models/student-dashboard-operational
           <button type="button" disabled [attr.aria-label]="action.label + ' — unavailable'">
             <span aria-hidden="true">
               @switch (action.id) {
-                @case ('fees') { <svg lucideBadgeIndianRupee size="21"></svg> }
-                @case ('id-card') { <svg lucideIdCard size="21"></svg> }
-                @case ('certificate') { <svg lucideFileCheck2 size="21"></svg> }
-                @case ('leave') { <svg lucideCalendarPlus size="21"></svg> }
+                @case ('fees') {
+                  <svg lucideBadgeIndianRupee size="21"></svg>
+                }
+                @case ('id-card') {
+                  <svg lucideIdCard size="21"></svg>
+                }
+                @case ('certificate') {
+                  <svg lucideFileCheck2 size="21"></svg>
+                }
+                @case ('leave') {
+                  <svg lucideCalendarPlus size="21"></svg>
+                }
               }
             </span>
             <small>{{ action.label }}</small>

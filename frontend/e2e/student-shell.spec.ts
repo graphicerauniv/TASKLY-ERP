@@ -16,6 +16,21 @@ const requiredViewports = [
 ] as const;
 
 test.describe('Student portal shell', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('taskly_student_token', 'e2e-student-token');
+      localStorage.setItem(
+        'taskly_student_profile',
+        JSON.stringify({
+          id: 'student-e2e-1',
+          studentId: 'GEU-E2E-001',
+          name: 'Vivek Sharma',
+          mustChangePassword: false,
+        }),
+      );
+    });
+  });
+
   test('desktop rail expands without moving the content and restores after pointer leave', async ({
     page,
   }) => {
@@ -144,9 +159,11 @@ test.describe('Student portal shell', () => {
       'Campus',
     ]);
 
-    const assetNames = await page.locator('.student-module-card img').evaluateAll((images) =>
-      images.map((image) => new URL((image as HTMLImageElement).src).pathname),
-    );
+    const assetNames = await page
+      .locator('.student-module-card img')
+      .evaluateAll((images) =>
+        images.map((image) => new URL((image as HTMLImageElement).src).pathname),
+      );
     expect(assetNames).toEqual([
       '/assets/student/dashboard/modules/academics.webp',
       '/assets/student/dashboard/modules/attendance.webp',
@@ -176,9 +193,11 @@ test.describe('Student portal shell', () => {
       await page.setViewportSize(viewport);
       await page.goto('/student/dashboard');
 
-      const columnCount = await page.locator('.student-dashboard-modules ul').evaluate((grid) =>
-        getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length,
-      );
+      const columnCount = await page
+        .locator('.student-dashboard-modules ul')
+        .evaluate(
+          (grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length,
+        );
       expect(columnCount, `${viewport.width}px dashboard grid`).toBe(3);
     }
   });
@@ -196,5 +215,36 @@ test.describe('Student portal shell', () => {
 
     expect(after?.x).toBe(before?.x);
     expect(after?.width).toBe(before?.width);
+  });
+
+  test('dashboard identity comes from the authenticated student session', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'taskly_student_profile',
+        JSON.stringify({
+          id: 'student-e2e-2',
+          studentId: 'GEU-E2E-002',
+          name: 'Aanya Gupta',
+          mustChangePassword: false,
+        }),
+      );
+    });
+    await page.goto('/student/dashboard');
+
+    await expect(page.getByRole('heading', { name: 'Ready for your day, Aanya?' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open Aanya Gupta account menu' })).toBeVisible();
+    await expect(page.locator('.student-header__profile-trigger .student-avatar')).toHaveText('AG');
+  });
+
+  test('operational widgets expose honest independent unavailable states', async ({ page }) => {
+    await page.goto('/student/dashboard');
+
+    await expect(page.locator('.student-dashboard-operational')).toBeVisible();
+    await expect(page.locator('.student-widget-state[data-status="unavailable"]')).toHaveCount(7);
+    await expect(page.getByText('Schedule unavailable')).toBeVisible();
+    await expect(page.getByText('Attendance unavailable')).toBeVisible();
+    await expect(page.getByText('Fee status unavailable')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Pay fees — unavailable' })).toBeDisabled();
+    await expect(page.locator('.student-notification-button__badge')).toHaveCount(0);
   });
 });

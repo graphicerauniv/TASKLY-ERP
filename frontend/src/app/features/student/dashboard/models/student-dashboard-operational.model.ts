@@ -1,11 +1,5 @@
 export type DashboardWidgetStatus =
-  | 'idle'
-  | 'loading'
-  | 'refreshing'
-  | 'loaded'
-  | 'empty'
-  | 'error'
-  | 'unavailable';
+  'idle' | 'loading' | 'refreshing' | 'loaded' | 'empty' | 'error' | 'unavailable';
 
 export interface DashboardWidgetState<T> {
   readonly status: DashboardWidgetStatus;
