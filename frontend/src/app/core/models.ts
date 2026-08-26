@@ -89,7 +89,7 @@ export interface AdmissionForm {
 }
 export interface Admission {
   _id: string;
-  applicationNumber: string;
+  applicationNumber?: string;
   studentId?: string;
   studentName?: string;
   academicSession?: string;
@@ -105,6 +105,15 @@ export interface Admission {
   createdAt: string;
   submittedAt?: string;
   approvedAt?: string;
+  isActive?: boolean;
+  mustChangePassword?: boolean;
+}
+
+export interface StudentSession {
+  id: string;
+  studentId: string;
+  name: string;
+  mustChangePassword: boolean;
 }
 
 export interface Hostel {

@@ -40,7 +40,8 @@ export class DeleteAdmissionsComponent {
     if (!query) return this.items();
     return this.items().filter(
       (item) =>
-        item.applicationNumber.toLowerCase().includes(query) ||
+        (item.studentName || '').toLowerCase().includes(query) ||
+        (item.studentId || '').toLowerCase().includes(query) ||
         item.status.toLowerCase().includes(query),
     );
   });
@@ -83,7 +84,9 @@ export class DeleteAdmissionsComponent {
     this.api.deleteAdmission(item._id).subscribe({
       next: () => {
         this.items.update((items) => items.filter((current) => current._id !== item._id));
-        this.message.set(`Admission ${item.applicationNumber} was permanently deleted.`);
+        this.message.set(
+          `Admission for ${item.studentName || item.studentId || 'student'} was permanently deleted.`,
+        );
         this.deleteTarget.set(null);
         this.deleting.set(false);
       },

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
 import { ERP_PAGINATION } from '../../../core/config/data-view.constants';
 import { Admission, FormField, FormSubsection } from '../../../core/models';
@@ -27,6 +28,9 @@ export class AdmissionsComponent {
   readonly loadingDetails = signal(false);
   readonly message = signal('');
   readonly error = signal('');
+  readonly credentialStudent = signal<Admission | null>(null);
+  readonly credentialAction = signal<'approve' | 'reset'>('approve');
+  readonly credentialSaving = signal(false);
   readonly pageSizeOptions = ERP_PAGINATION.pageSizeOptions;
   readonly status = signal<'draft' | 'pending_approval' | 'approved'>('approved');
   readonly title = signal('Approved Students');
@@ -34,6 +38,10 @@ export class AdmissionsComponent {
   readonly total = signal(0);
   readonly pages = signal(1);
   readonly viewActions: CompactActionItem[] = [{ id: 'view', label: 'View details', icon: 'view' }];
+  readonly approvedActions: CompactActionItem[] = [
+    { id: 'password', label: 'Set or reset password', icon: 'edit' },
+    { id: 'view', label: 'View details', icon: 'view' },
+  ];
   readonly draftActions: CompactActionItem[] = [
     { id: 'edit', label: 'Edit admission', icon: 'edit' },
     { id: 'view', label: 'View details', icon: 'view' },
@@ -46,6 +54,9 @@ export class AdmissionsComponent {
   search = '';
   page = 1;
   pageSize = 25;
+  passwordMode: 'student-id' | 'manual' = 'student-id';
+  manualPassword = '';
+  confirmPassword = '';
 
   constructor() {
     this.route.data.subscribe((data) => {
@@ -86,6 +97,12 @@ export class AdmissionsComponent {
     this.load();
   }
 
+  searchHelp() {
+    return this.status() === 'draft'
+      ? 'Search drafts by student name.'
+      : 'Search by student name, Student ID, course, or session.';
+  }
+
   changePage(nextPage: number) {
     if (nextPage < 1 || nextPage > this.pages()) return;
     this.page = nextPage;
@@ -113,25 +130,68 @@ export class AdmissionsComponent {
     if (item.status === 'draft') return this.draftActions;
     if (item.status === 'pending_approval' || item.status === 'submitted')
       return this.pendingActions;
-    return this.viewActions;
+    return this.approvedActions;
   }
 
   handleRowAction(action: string, item: Admission) {
     if (action === 'view') this.view(item);
     if (action === 'edit') void this.router.navigate(['/admin/admissions', item._id, 'edit']);
     if (action === 'approve') this.approve(item);
+    if (action === 'password') this.openCredentials(item, 'reset');
   }
 
   approve(item: Admission) {
+    this.openCredentials(item, 'approve');
+  }
+
+  openCredentials(item: Admission, action: 'approve' | 'reset') {
+    this.credentialStudent.set(item);
+    this.credentialAction.set(action);
+    this.passwordMode = 'student-id';
+    this.manualPassword = '';
+    this.confirmPassword = '';
     this.error.set('');
-    this.api.approveAdmission(item._id).subscribe({
+  }
+
+  closeCredentials() {
+    if (!this.credentialSaving()) this.credentialStudent.set(null);
+  }
+
+  saveCredentials() {
+    const item = this.credentialStudent();
+    if (!item) return;
+    this.error.set('');
+    if (
+      this.passwordMode === 'manual' &&
+      (this.manualPassword.length < 8 || this.manualPassword !== this.confirmPassword)
+    ) {
+      this.error.set('Manual passwords must match and contain at least 8 characters.');
+      return;
+    }
+    this.credentialSaving.set(true);
+    const body = {
+      passwordMode: this.passwordMode,
+      password: this.passwordMode === 'manual' ? this.manualPassword : undefined,
+    } as const;
+    const request: Observable<unknown> =
+      this.credentialAction() === 'approve'
+        ? this.api.approveAdmission(item._id, body)
+        : this.api.resetStudentPassword(item._id, body);
+    request.subscribe({
       next: () => {
+        const action =
+          this.credentialAction() === 'approve' ? 'approved and activated' : 'password reset';
         this.message.set(
-          `${item.studentName || item.studentId || 'Student'} approved successfully.`,
+          `${item.studentName || item.studentId || 'Student'} ${action} successfully.`,
         );
+        this.credentialSaving.set(false);
+        this.credentialStudent.set(null);
         this.load();
       },
-      error: (error) => this.error.set(error.error?.message || 'Could not approve this student.'),
+      error: (error: { error?: { message?: string } }) => {
+        this.error.set(error.error?.message || 'Could not update this student account.');
+        this.credentialSaving.set(false);
+      },
     });
   }
 
@@ -141,7 +201,7 @@ export class AdmissionsComponent {
         draft: 'Unfilled',
         submitted: 'Not approved',
         pending_approval: 'Not approved',
-        approved: 'Approved',
+        approved: item.isActive ? 'Active' : 'Approved',
       }[item.status] || item.status
     );
   }

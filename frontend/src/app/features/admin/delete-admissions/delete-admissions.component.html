@@ -8,7 +8,7 @@
     <span class="erp-warning-panel__icon"><svg lucideTriangleAlert aria-hidden="true"></svg></span>
     <div>
       <strong>Permanent action</strong>
-      <p>Deleted student records cannot be restored. Check the application number carefully.</p>
+      <p>Deleted student records cannot be restored. Check the student details carefully.</p>
     </div>
   </section>
 
@@ -29,7 +29,7 @@
         <svg lucideSearch size="18" aria-hidden="true"></svg>
         <input
           type="search"
-          placeholder="Search application number or status"
+          placeholder="Search student name, Student ID, or status"
           [value]="query()"
           (input)="updateQuery($event)"
         />
@@ -46,7 +46,7 @@
         <table>
           <thead>
             <tr>
-              <th>Application number</th>
+              <th>Student</th>
               <th>Created</th>
               <th>Status</th>
               <th class="erp-table-shell__actions">Delete record</th>
@@ -56,12 +56,16 @@
             @for (item of filteredItems(); track item._id) {
               <tr>
                 <td>
-                  <strong>{{ item.applicationNumber }}</strong
+                  <strong>{{ item.studentName || 'Name not entered' }}</strong
+                  ><small>{{ item.studentId || 'Student ID not generated' }}</small
                   ><small>Form v{{ item.formVersion || '—' }}</small>
                 </td>
                 <td>{{ item.createdAt | date: 'medium' }}</td>
                 <td>
-                  <span class="erp-status" [class.erp-status--warning]="item.status !== 'submitted'">
+                  <span
+                    class="erp-status"
+                    [class.erp-status--warning]="item.status !== 'submitted'"
+                  >
                     {{ item.status }}
                   </span>
                 </td>
@@ -111,7 +115,7 @@
       <span class="delete-dialog__icon"><svg lucideTrash2 aria-hidden="true"></svg></span>
       <h2 id="delete-title">Delete this admission?</h2>
       <p id="delete-description">You are permanently deleting student record</p>
-      <strong>{{ item.applicationNumber }}</strong>
+      <strong>{{ item.studentName || item.studentId || 'Student record' }}</strong>
       <div class="delete-dialog__actions">
         <button class="cancel" type="button" (click)="cancelDelete()" [disabled]="deleting()">
           Cancel

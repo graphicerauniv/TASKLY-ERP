@@ -3,7 +3,7 @@ import multer from 'multer';
 import crypto from 'node:crypto';
 import { config } from '../config.js';
 import { db, id, serialize } from '../db.js';
-import { accessKey, applicationNumber, hashKey } from '../lib/ids.js';
+import { accessKey, hashKey } from '../lib/ids.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { activeForm } from '../services/form-definition.js';
 import { validateSubmission } from '../services/admission-validation.js';
@@ -62,7 +62,6 @@ publicRouter.post(
     const key = accessKey();
     const now = new Date();
     const document = {
-      applicationNumber: applicationNumber(),
       formId: form._id,
       formVersion: form.version,
       formSnapshot: activeForm(form),
@@ -190,6 +189,7 @@ publicRouter.post(
       db(),
       request.admission,
       request.admission.responses || {},
+      { generateStudentId: true },
     );
     if (identity.academicSessionId && identity.courseId && !identity.studentId)
       return response.status(422).json({
@@ -266,6 +266,7 @@ async function admissionAccess(request, response, next) {
 function admissionForStudent(document) {
   const value = serialize(document);
   delete value.accessKeyHash;
+  delete value.passwordHash;
   return value;
 }
 function findField(form, fieldId) {

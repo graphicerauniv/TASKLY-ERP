@@ -421,12 +421,12 @@ hostelsRouter.get(
       .find({ status: 'approved' })
       .sort({ submittedAt: -1 })
       .limit(500)
-      .project({ applicationNumber: 1, studentName: 1, formSnapshot: 1, responses: 1 })
+      .project({ studentId: 1, studentName: 1, formSnapshot: 1, responses: 1 })
       .toArray();
     response.json({
       items: admissions.map((admission) => ({
         _id: String(admission._id),
-        applicationNumber: admission.applicationNumber,
+        applicationNumber: admission.studentId,
         name: studentName(admission),
       })),
     });
@@ -659,7 +659,7 @@ hostelsRouter.post(
     const now = new Date();
     const document = {
       studentAdmissionId,
-      studentApplicationNumber: student.applicationNumber,
+      studentApplicationNumber: student.studentId,
       studentName: studentName(student),
       academicSession: data.academicSession,
       hostelId: room.hostelId,

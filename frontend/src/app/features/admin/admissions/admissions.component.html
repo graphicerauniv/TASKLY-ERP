@@ -21,7 +21,7 @@
         <h2>
           Student records <small>{{ total() }}</small>
         </h2>
-        <p>Search by student name, Student ID, course, session, or application number.</p>
+        <p>{{ searchHelp() }}</p>
       </div>
       <div class="erp-table-toolbar__actions">
         <input
@@ -53,8 +53,7 @@
           @for (item of items(); track item._id) {
             <tr>
               <td>
-                <strong>{{ item.studentName || 'Name not entered' }}</strong
-                ><small>{{ item.applicationNumber }}</small>
+                <strong>{{ item.studentName || 'Name not entered' }}</strong>
               </td>
               <td>
                 <strong>{{ item.studentId || 'Not generated' }}</strong>
@@ -130,6 +129,94 @@
   </section>
 </erp-admin-page>
 
+@if (credentialStudent(); as student) {
+  <div class="modal-backdrop">
+    <button
+      class="backdrop-close"
+      type="button"
+      aria-label="Cancel student account setup"
+      (click)="closeCredentials()"
+    ></button>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="credential-title">
+      <header>
+        <div>
+          <small>Student account</small>
+          <h2 id="credential-title">
+            {{
+              credentialAction() === 'approve' ? 'Approve and activate student' : 'Reset password'
+            }}
+          </h2>
+          <p>{{ student.studentName }} · {{ student.studentId }}</p>
+        </div>
+        <button type="button" aria-label="Close" (click)="closeCredentials()">×</button>
+      </header>
+      <div class="detail-body">
+        <section class="erp-card erp-card--padded">
+          <p>
+            The student must replace this temporary password after their first successful login.
+          </p>
+          <div class="erp-form-grid">
+            <label>
+              <span>Temporary password option</span>
+              <select class="erp-control" [(ngModel)]="passwordMode">
+                <option value="student-id">Same as Student ID</option>
+                <option value="manual">Enter password manually</option>
+              </select>
+            </label>
+            @if (passwordMode === 'manual') {
+              <label>
+                <span>Temporary password *</span>
+                <input
+                  class="erp-control"
+                  type="password"
+                  [(ngModel)]="manualPassword"
+                  minlength="8"
+                />
+              </label>
+              <label>
+                <span>Confirm temporary password *</span>
+                <input
+                  class="erp-control"
+                  type="password"
+                  [(ngModel)]="confirmPassword"
+                  minlength="8"
+                />
+              </label>
+            }
+          </div>
+          @if (error()) {
+            <p class="erp-notice erp-notice--error">{{ error() }}</p>
+          }
+          <div class="erp-dialog-actions">
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="closeCredentials()"
+              [disabled]="credentialSaving()"
+            >
+              Cancel
+            </button>
+            <button
+              class="erp-button erp-button--primary"
+              type="button"
+              (click)="saveCredentials()"
+              [disabled]="credentialSaving()"
+            >
+              {{
+                credentialSaving()
+                  ? 'Saving…'
+                  : credentialAction() === 'approve'
+                    ? 'Approve and activate'
+                    : 'Reset password'
+              }}
+            </button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+}
+
 @if (selected(); as admission) {
   <div class="modal-backdrop">
     <button
@@ -148,7 +235,7 @@
         <div>
           <small>Student record</small>
           <h2 id="student-detail-title">
-            {{ admission.studentId || admission.applicationNumber }}
+            {{ admission.studentId || admission.studentName || 'Draft admission' }}
           </h2>
           <p>
             {{ admission.studentName || 'Name not entered' }} · {{ displayStatusLabel(admission) }}

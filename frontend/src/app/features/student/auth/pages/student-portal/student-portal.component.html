@@ -1,0 +1,28 @@
+<main class="erp-admission-page">
+  <section class="erp-card erp-card--padded">
+    <div class="erp-card__header">
+      <div>
+        <span class="erp-page-header__eyebrow">Student Portal</span>
+        <h1>Welcome, {{ student()?.name || 'Student' }}</h1>
+        <p>
+          Student ID: <strong>{{ student()?.studentId }}</strong>
+        </p>
+      </div>
+      <button class="erp-button erp-button--secondary" type="button" (click)="logout()">
+        <svg lucideLogOut size="17" aria-hidden="true"></svg> Log out
+      </button>
+    </div>
+    <div class="erp-success-panel">
+      <span><svg lucideShieldCheck size="24" aria-hidden="true"></svg></span>
+      <div>
+        <h2>Student account active</h2>
+        <p>Your password is set and your student portal access is active.</p>
+      </div>
+    </div>
+    <div class="erp-empty-state">
+      <svg lucideUserRound size="32" aria-hidden="true"></svg>
+      <strong>Portal modules will appear here</strong>
+      <p>Your approved admission account is ready for future student services.</p>
+    </div>
+  </section>
+</main>

@@ -4,11 +4,6 @@
       <span>GEU</span>
       <div><strong>GEU ERP</strong><small>Online Admission</small></div>
     </a>
-    @if (admission()) {
-      <div class="erp-admission-application-number">
-        <small>Application number</small><strong>{{ admission()?.applicationNumber }}</strong>
-      </div>
-    }
   </header>
 }
 
@@ -37,15 +32,16 @@
       </h1>
       <p>
         @if (embedded()) {
-          Student <strong>{{ admission()?.studentId || admission()?.applicationNumber }}</strong>
+          Student <strong>{{ admission()?.studentId }}</strong>
           {{
             admission()?.status === 'approved'
               ? 'is approved.'
               : 'is now available in Not Approved Students.'
           }}
         } @else {
-          Your application <strong>{{ admission()?.applicationNumber }}</strong> has been received
-          successfully.
+          Your admission has been submitted successfully. Your Student ID is
+          <strong>{{ admission()?.studentId }}</strong
+          >.
         }
       </p>
       <div class="erp-admission-submitted__actions">

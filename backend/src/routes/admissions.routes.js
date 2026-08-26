@@ -1,7 +1,9 @@
 import express from 'express';
+import argon2 from 'argon2';
 import crypto from 'node:crypto';
 import multer from 'multer';
 import { ObjectId } from 'mongodb';
+import { z } from 'zod';
 import { config } from '../config.js';
 import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
@@ -16,6 +18,15 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: config.maxUploadBytes },
 });
+const passwordSetupSchema = z
+  .object({
+    passwordMode: z.enum(['student-id', 'manual']),
+    password: z.string().optional().default(''),
+  })
+  .refine((value) => value.passwordMode === 'student-id' || value.password.length >= 8, {
+    message: 'A manually entered password must contain at least 8 characters.',
+    path: ['password'],
+  });
 admissionsRouter.get(
   '/',
   asyncHandler(async (request, response) => {
@@ -26,7 +37,6 @@ admissionsRouter.get(
     if (request.query.search) {
       const match = { $regex: escapeRegex(request.query.search), $options: 'i' };
       filter.$or = [
-        { applicationNumber: match },
         { studentId: match },
         { studentName: match },
         { courseName: match },
@@ -37,7 +47,7 @@ admissionsRouter.get(
       db()
         .collection('admissions')
         .find(filter)
-        .project({ accessKeyHash: 0, formSnapshot: 0 })
+        .project({ accessKeyHash: 0, passwordHash: 0, formSnapshot: 0 })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -91,7 +101,9 @@ admissionsRouter.post(
       return response
         .status(422)
         .json({ message: 'Complete all required fields before submitting.', errors });
-    const identity = await syncAdmissionIdentity(db(), admission, admission.responses || {});
+    const identity = await syncAdmissionIdentity(db(), admission, admission.responses || {}, {
+      generateStudentId: true,
+    });
     if (identity.academicSessionId && identity.courseId && !identity.studentId)
       return response.status(422).json({
         message: 'A Student ID could not be generated. Check the session year and course code.',
@@ -118,7 +130,7 @@ admissionsRouter.post(
     const admissionId = id(request.params.admissionId);
     const admission = await db().collection('admissions').findOne({ _id: admissionId });
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
-    if (admission.status === 'approved') return response.json({ item: serialize(admission) });
+    if (admission.status === 'approved') return response.json({ item: safeAdmission(admission) });
     if (admission.status !== 'pending_approval')
       return response.status(409).json({ message: 'Submit the admission before approving it.' });
     const errors = validateSubmission(
@@ -130,14 +142,59 @@ admissionsRouter.post(
       return response
         .status(422)
         .json({ message: 'Required admission data is incomplete.', errors });
+    if (!admission.studentId)
+      return response.status(422).json({ message: 'Generate the Student ID before approval.' });
+    const passwordSetup = passwordSetupSchema.parse(request.body);
+    const initialPassword =
+      passwordSetup.passwordMode === 'student-id' ? admission.studentId : passwordSetup.password;
     const item = await db()
       .collection('admissions')
       .findOneAndUpdate(
         { _id: admissionId, status: 'pending_approval' },
-        { $set: { status: 'approved', approvedAt: new Date(), updatedAt: new Date() } },
+        {
+          $set: {
+            status: 'approved',
+            isActive: true,
+            passwordHash: await argon2.hash(initialPassword),
+            mustChangePassword: true,
+            passwordUpdatedAt: new Date(),
+            approvedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
         { returnDocument: 'after' },
       );
-    response.json({ item: serialize(item) });
+    response.json({ item: safeAdmission(item) });
+  }),
+);
+admissionsRouter.post(
+  '/:admissionId/password',
+  asyncHandler(async (request, response) => {
+    const admissionId = id(request.params.admissionId);
+    const admission = await db()
+      .collection('admissions')
+      .findOne({ _id: admissionId, status: 'approved' });
+    if (!admission) return response.status(404).json({ message: 'Approved student not found.' });
+    if (!admission.studentId)
+      return response.status(422).json({ message: 'This student does not have a Student ID.' });
+    const passwordSetup = passwordSetupSchema.parse(request.body);
+    const password =
+      passwordSetup.passwordMode === 'student-id' ? admission.studentId : passwordSetup.password;
+    await db()
+      .collection('admissions')
+      .updateOne(
+        { _id: admissionId },
+        {
+          $set: {
+            isActive: true,
+            passwordHash: await argon2.hash(password),
+            mustChangePassword: true,
+            passwordUpdatedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      );
+    response.json({ message: 'Student password reset successfully.' });
   }),
 );
 admissionsRouter.post(
@@ -187,7 +244,10 @@ admissionsRouter.get(
   asyncHandler(async (request, response) => {
     const item = await db()
       .collection('admissions')
-      .findOne({ _id: id(request.params.admissionId) }, { projection: { accessKeyHash: 0 } });
+      .findOne(
+        { _id: id(request.params.admissionId) },
+        { projection: { accessKeyHash: 0, passwordHash: 0 } },
+      );
     if (!item) return response.status(404).json({ message: 'Admission not found.' });
     const valueIds = new Set();
     collectObjectIds(item.responses, valueIds);
@@ -236,3 +296,9 @@ function findField(form, fieldId) {
 
 const plainObject = (value) => value && typeof value === 'object' && !Array.isArray(value);
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function safeAdmission(document) {
+  const value = serialize(document);
+  delete value.accessKeyHash;
+  delete value.passwordHash;
+  return value;
+}

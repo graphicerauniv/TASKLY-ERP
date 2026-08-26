@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
   LucideEye,
   LucideEyeOff,
@@ -7,6 +8,7 @@ import {
   LucideShieldCheck,
   LucideUserRound,
 } from '@lucide/angular';
+import { ApiService } from '../../../../../core/api.service';
 
 @Component({
   selector: 'erp-student-login',
@@ -22,8 +24,14 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentLoginComponent {
+  private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   readonly showPassword = signal(false);
-  readonly frontendValidated = signal(false);
+  readonly showNewPassword = signal(false);
+  readonly changeRequired = signal(false);
+  readonly loading = signal(false);
+  readonly error = signal('');
+  private studentToken = '';
 
   readonly form = new FormGroup({
     studentId: new FormControl('', {
@@ -36,14 +44,70 @@ export class StudentLoginComponent {
     }),
     rememberMe: new FormControl(false, { nonNullable: true }),
   });
+  readonly changeForm = new FormGroup({
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/),
+      ],
+    }),
+    confirmPassword: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+  });
 
   togglePassword(): void {
     this.showPassword.update((visible) => !visible);
   }
 
+  toggleNewPassword(): void {
+    this.showNewPassword.update((visible) => !visible);
+  }
+
   submit(): void {
-    this.frontendValidated.set(false);
     this.form.markAllAsTouched();
-    this.frontendValidated.set(this.form.valid);
+    if (this.form.invalid || this.loading()) return;
+    this.loading.set(true);
+    this.error.set('');
+    const { studentId, password } = this.form.getRawValue();
+    this.api.studentLogin(studentId, password).subscribe({
+      next: ({ token, student }) => {
+        this.studentToken = token;
+        this.saveSession(token, student);
+        this.loading.set(false);
+        if (student.mustChangePassword) this.changeRequired.set(true);
+        else void this.router.navigate(['/student/portal']);
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Unable to sign in.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  changePassword(): void {
+    this.changeForm.markAllAsTouched();
+    const { password, confirmPassword } = this.changeForm.getRawValue();
+    if (this.changeForm.invalid || password !== confirmPassword || this.loading()) {
+      if (password !== confirmPassword) this.error.set('The passwords do not match.');
+      return;
+    }
+    this.loading.set(true);
+    this.error.set('');
+    this.api.changeStudentPassword(this.studentToken, password).subscribe({
+      next: ({ token, student }) => {
+        this.saveSession(token, student);
+        this.loading.set(false);
+        void this.router.navigate(['/student/portal']);
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Unable to change the password.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private saveSession(token: string, student: object) {
+    localStorage.setItem('taskly_student_token', token);
+    localStorage.setItem('taskly_student_profile', JSON.stringify(student));
   }
 }

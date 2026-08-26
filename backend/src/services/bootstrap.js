@@ -23,12 +23,21 @@ export async function bootstrap() {
   const now = new Date();
   await db()
     .collection('admissions')
+    .updateMany({ applicationNumber: { $exists: true } }, { $unset: { applicationNumber: '' } });
+  await db()
+    .collection('admissions')
     .updateMany({ status: 'submitted' }, { $set: { status: 'pending_approval', updatedAt: now } });
   await db()
     .collection('admissions')
     .updateMany(
       { status: 'draft', hasSavedData: { $exists: false } },
       { $set: { hasSavedData: true } },
+    );
+  await db()
+    .collection('admissions')
+    .updateMany(
+      { status: 'draft', studentId: { $exists: true } },
+      { $unset: { studentId: '', studentIdGeneratedAt: '' } },
     );
   await migrateAdmissionIdentities();
   await Promise.all(
@@ -76,10 +85,12 @@ export async function bootstrap() {
 async function migrateAdmissionIdentities() {
   const admissions = await db()
     .collection('admissions')
-    .find({ identityVersion: { $ne: 2 } })
+    .find({ identityVersion: { $ne: 3 } })
     .toArray();
   for (const admission of admissions)
-    await syncAdmissionIdentity(db(), admission, admission.responses || {});
+    await syncAdmissionIdentity(db(), admission, admission.responses || {}, {
+      generateStudentId: admission.status !== 'draft',
+    });
 }
 
 async function ensureDefaultFeeTypes(now) {

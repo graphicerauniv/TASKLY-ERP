@@ -1,4 +1,6 @@
-<main class="student-login-page erp-auth-backdrop min-h-dvh lg:grid lg:place-items-center lg:p-6 xl:p-8">
+<main
+  class="student-login-page erp-auth-backdrop min-h-dvh lg:grid lg:place-items-center lg:p-6 xl:p-8"
+>
   <div
     class="student-login-shell mx-auto min-h-dvh w-full overflow-hidden bg-[var(--erp-surface-overlay)] lg:grid lg:h-[min(828px,calc(100dvh-48px))] lg:min-h-[680px] lg:max-w-[1128px] lg:grid-cols-[56%_44%] lg:rounded-2xl lg:border lg:border-[var(--erp-border-strong)] lg:shadow-[var(--erp-shadow-overlay)]"
   >
@@ -55,7 +57,9 @@
         <p class="mt-1 text-sm text-[var(--erp-text-muted)]">Sign in to your student portal</p>
       </header>
 
-      <picture class="student-login-mobile-art block h-[170px] overflow-hidden bg-[var(--erp-blue-50)] sm:h-[220px] lg:hidden">
+      <picture
+        class="student-login-mobile-art block h-[170px] overflow-hidden bg-[var(--erp-blue-50)] sm:h-[220px] lg:hidden"
+      >
         <source srcset="assets/images/auth/student/student-login-mobile.webp" type="image/webp" />
         <img
           class="size-full object-cover object-center"
@@ -85,95 +89,163 @@
           <p class="mt-1 text-sm text-[var(--erp-text-muted)]">Sign in to your student portal</p>
         </header>
 
-        <form class="space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-          <div>
-            <label class="student-auth__label" for="student-id">Student ID</label>
-            <div
-              class="student-auth__field"
-              [class.student-auth__field--invalid]="
-                form.controls.studentId.touched && form.controls.studentId.invalid
-              "
-            >
-              <svg lucideUserRound size="18" aria-hidden="true"></svg>
-              <input
-                id="student-id"
-                type="text"
-                formControlName="studentId"
-                autocomplete="username"
-                placeholder="Enter your Student ID"
-              />
-            </div>
-            @if (form.controls.studentId.touched && form.controls.studentId.invalid) {
-              <p class="student-auth__error">Enter a valid Student ID.</p>
-            }
-          </div>
+        @if (error()) {
+          <p class="student-auth__error mb-4" role="alert">{{ error() }}</p>
+        }
 
-          <div>
-            <label class="student-auth__label" for="student-password">Password</label>
-            <div
-              class="student-auth__field"
-              [class.student-auth__field--invalid]="
-                form.controls.password.touched && form.controls.password.invalid
-              "
-            >
-              <svg lucideLockKeyhole size="18" aria-hidden="true"></svg>
-              <input
-                id="student-password"
-                [type]="showPassword() ? 'text' : 'password'"
-                formControlName="password"
-                autocomplete="current-password"
-                placeholder="Enter your password"
-              />
-              <button
-                class="grid size-9 shrink-0 place-items-center rounded-lg border-0 bg-transparent text-[var(--erp-text-muted)] transition-colors hover:bg-[var(--erp-surface-hover)] hover:text-[var(--erp-blue-700)]"
-                type="button"
-                (click)="togglePassword()"
-                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        @if (changeRequired()) {
+          <form class="space-y-5" [formGroup]="changeForm" (ngSubmit)="changePassword()" novalidate>
+            <div>
+              <h2 class="text-xl font-semibold text-[var(--erp-text-heading)]">
+                Create a new password
+              </h2>
+              <p class="mt-1 text-sm text-[var(--erp-text-muted)]">
+                This is required before you can open the student portal.
+              </p>
+            </div>
+            <div>
+              <label class="student-auth__label" for="new-student-password">New password</label>
+              <div
+                class="student-auth__field"
+                [class.student-auth__field--invalid]="
+                  changeForm.controls.password.touched && changeForm.controls.password.invalid
+                "
               >
-                @if (showPassword()) {
-                  <svg lucideEyeOff size="18" aria-hidden="true"></svg>
-                } @else {
-                  <svg lucideEye size="18" aria-hidden="true"></svg>
-                }
+                <svg lucideLockKeyhole size="18" aria-hidden="true"></svg>
+                <input
+                  id="new-student-password"
+                  [type]="showNewPassword() ? 'text' : 'password'"
+                  formControlName="password"
+                  autocomplete="new-password"
+                  placeholder="Enter a strong password"
+                />
+                <button
+                  class="grid size-9 shrink-0 place-items-center rounded-lg border-0 bg-transparent text-[var(--erp-text-muted)]"
+                  type="button"
+                  (click)="toggleNewPassword()"
+                  [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'"
+                >
+                  @if (showNewPassword()) {
+                    <svg lucideEyeOff size="18" aria-hidden="true"></svg>
+                  } @else {
+                    <svg lucideEye size="18" aria-hidden="true"></svg>
+                  }
+                </button>
+              </div>
+              <p class="mt-2 text-xs text-[var(--erp-text-muted)]">
+                At least 8 characters with one uppercase letter, one lowercase letter, and one
+                symbol.
+              </p>
+            </div>
+            <div>
+              <label class="student-auth__label" for="confirm-student-password"
+                >Confirm password</label
+              >
+              <div class="student-auth__field">
+                <svg lucideLockKeyhole size="18" aria-hidden="true"></svg>
+                <input
+                  id="confirm-student-password"
+                  [type]="showNewPassword() ? 'text' : 'password'"
+                  formControlName="confirmPassword"
+                  autocomplete="new-password"
+                  placeholder="Enter the password again"
+                />
+              </div>
+            </div>
+            <button
+              class="flex min-h-12 w-full items-center justify-center rounded-lg border-0 bg-gradient-to-r from-[var(--erp-blue-500)] to-[var(--erp-blue-600)] font-semibold text-[var(--erp-text-on-primary)]"
+              type="submit"
+              [disabled]="loading()"
+            >
+              {{ loading() ? 'Changing password…' : 'Change password and continue' }}
+            </button>
+          </form>
+        } @else {
+          <form class="space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div>
+              <label class="student-auth__label" for="student-id">Student ID</label>
+              <div
+                class="student-auth__field"
+                [class.student-auth__field--invalid]="
+                  form.controls.studentId.touched && form.controls.studentId.invalid
+                "
+              >
+                <svg lucideUserRound size="18" aria-hidden="true"></svg>
+                <input
+                  id="student-id"
+                  type="text"
+                  formControlName="studentId"
+                  autocomplete="username"
+                  placeholder="Enter your Student ID"
+                />
+              </div>
+              @if (form.controls.studentId.touched && form.controls.studentId.invalid) {
+                <p class="student-auth__error">Enter a valid Student ID.</p>
+              }
+            </div>
+
+            <div>
+              <label class="student-auth__label" for="student-password">Password</label>
+              <div
+                class="student-auth__field"
+                [class.student-auth__field--invalid]="
+                  form.controls.password.touched && form.controls.password.invalid
+                "
+              >
+                <svg lucideLockKeyhole size="18" aria-hidden="true"></svg>
+                <input
+                  id="student-password"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  formControlName="password"
+                  autocomplete="current-password"
+                  placeholder="Enter your password"
+                />
+                <button
+                  class="grid size-9 shrink-0 place-items-center rounded-lg border-0 bg-transparent text-[var(--erp-text-muted)] transition-colors hover:bg-[var(--erp-surface-hover)] hover:text-[var(--erp-blue-700)]"
+                  type="button"
+                  (click)="togglePassword()"
+                  [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                >
+                  @if (showPassword()) {
+                    <svg lucideEyeOff size="18" aria-hidden="true"></svg>
+                  } @else {
+                    <svg lucideEye size="18" aria-hidden="true"></svg>
+                  }
+                </button>
+              </div>
+              @if (form.controls.password.touched && form.controls.password.invalid) {
+                <p class="student-auth__error">Password must contain at least 8 characters.</p>
+              }
+            </div>
+
+            <div class="flex items-center justify-between gap-4">
+              <label
+                class="flex cursor-pointer items-center gap-2.5 text-[13px] text-[var(--erp-text-body)]"
+              >
+                <input
+                  class="size-4 rounded accent-[var(--erp-blue-600)]"
+                  type="checkbox"
+                  formControlName="rememberMe"
+                />
+                Remember me
+              </label>
+              <button
+                class="border-0 bg-transparent p-0 text-[13px] font-medium text-[var(--erp-blue-600)] hover:text-[var(--erp-blue-700)]"
+                type="button"
+              >
+                Forgot password?
               </button>
             </div>
-            @if (form.controls.password.touched && form.controls.password.invalid) {
-              <p class="student-auth__error">Password must contain at least 8 characters.</p>
-            }
-          </div>
 
-          <div class="flex items-center justify-between gap-4">
-            <label
-              class="flex cursor-pointer items-center gap-2.5 text-[13px] text-[var(--erp-text-body)]"
-            >
-              <input
-                class="size-4 rounded accent-[var(--erp-blue-600)]"
-                type="checkbox"
-                formControlName="rememberMe"
-              />
-              Remember me
-            </label>
             <button
-              class="border-0 bg-transparent p-0 text-[13px] font-medium text-[var(--erp-blue-600)] hover:text-[var(--erp-blue-700)]"
-              type="button"
+              class="flex min-h-12 w-full items-center justify-center rounded-lg border-0 bg-gradient-to-r from-[var(--erp-blue-500)] to-[var(--erp-blue-600)] font-semibold text-[var(--erp-text-on-primary)] shadow-[var(--erp-shadow-card-hover)] transition hover:-translate-y-px hover:from-[var(--erp-blue-600)] hover:to-[var(--erp-blue-700)] hover:shadow-[var(--erp-shadow-overlay)]"
+              type="submit"
+              [disabled]="loading()"
             >
-              Forgot password?
+              {{ loading() ? 'Signing in…' : 'Sign in' }}
             </button>
-          </div>
-
-          <button
-            class="flex min-h-12 w-full items-center justify-center rounded-lg border-0 bg-gradient-to-r from-[var(--erp-blue-500)] to-[var(--erp-blue-600)] font-semibold text-[var(--erp-text-on-primary)] shadow-[var(--erp-shadow-card-hover)] transition hover:-translate-y-px hover:from-[var(--erp-blue-600)] hover:to-[var(--erp-blue-700)] hover:shadow-[var(--erp-shadow-overlay)]"
-            type="submit"
-          >
-            Sign in
-          </button>
-
-          @if (frontendValidated()) {
-            <p class="student-auth__notice" role="status">
-              Frontend validation passed. Authentication will connect with the backend later.
-            </p>
-          }
-        </form>
+          </form>
+        }
 
         <div
           class="mt-7 flex items-center justify-center gap-2 text-center text-xs text-[var(--erp-text-muted)]"
@@ -183,7 +255,9 @@
         </div>
       </div>
 
-      <p class="student-login-support mb-8 mt-7 text-center text-[13px] text-[var(--erp-text-muted)] lg:mb-0 lg:mt-10">
+      <p
+        class="student-login-support mb-8 mt-7 text-center text-[13px] text-[var(--erp-text-muted)] lg:mb-0 lg:mt-10"
+      >
         Need help?
         <a
           class="font-medium text-[var(--erp-blue-600)] no-underline"

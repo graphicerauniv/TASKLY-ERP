@@ -16,6 +16,7 @@ export async function syncAdmissionIdentity(
   database,
   admission,
   responses = admission.responses || {},
+  { generateStudentId = false } = {},
 ) {
   const context = admissionContext(admission.formSnapshot, responses);
   const values = [context.sessionValueId, context.courseValueId].filter(Boolean);
@@ -38,13 +39,13 @@ export async function syncAdmissionIdentity(
     academicSession: session?.name || '',
     courseId: course?._id || null,
     courseName: course?.name || '',
-    identityVersion: 2,
+    identityVersion: 3,
     identitySyncedAt: new Date(),
     updatedAt: new Date(),
   };
   await database.collection('admissions').updateOne({ _id: admission._id }, { $set: identity });
 
-  if (admission.studentId || !session || !course)
+  if (admission.studentId || !generateStudentId || !session || !course)
     return { ...identity, studentId: admission.studentId };
   const sessionCode = sessionYearCode(session.name);
   const courseCode = normalizeCourseCode(course.metadata?.courseCode);

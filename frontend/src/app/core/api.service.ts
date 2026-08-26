@@ -14,6 +14,7 @@ import {
   HostelStudentOption,
   MasterType,
   MasterValue,
+  StudentSession,
   CourseFee,
   CourseFeeDraft,
   FeeBook,
@@ -110,8 +111,27 @@ export class ApiService {
   submitAdminAdmission(id: string) {
     return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/submit`, {});
   }
-  approveAdmission(id: string) {
-    return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/approve`, {});
+  approveAdmission(id: string, body: { passwordMode: 'student-id' | 'manual'; password?: string }) {
+    return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/approve`, body);
+  }
+  resetStudentPassword(
+    id: string,
+    body: { passwordMode: 'student-id' | 'manual'; password?: string },
+  ) {
+    return this.http.post<{ message: string }>(`${API_BASE_URL}/admissions/${id}/password`, body);
+  }
+  studentLogin(studentId: string, password: string) {
+    return this.http.post<{ token: string; student: StudentSession }>(
+      `${API_BASE_URL}/auth/student/login`,
+      { studentId, password },
+    );
+  }
+  changeStudentPassword(token: string, password: string) {
+    return this.http.post<{ token: string; student: StudentSession }>(
+      `${API_BASE_URL}/auth/student/change-password`,
+      { password },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
   }
   uploadAdminAdmission(id: string, fieldId: string, file: File) {
     const data = new FormData();

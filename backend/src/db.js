@@ -47,14 +47,12 @@ export function serialize(document) {
 
 async function ensureIndexes(databaseInstance) {
   await migrateHostelFloors(databaseInstance);
+  await removeLegacyApplicationNumberIndex(databaseInstance);
   await Promise.all([
     databaseInstance.collection('admins').createIndex({ email: 1 }, { unique: true }),
     databaseInstance.collection('masterTypes').createIndex({ slug: 1 }, { unique: true }),
     databaseInstance.collection('masterValues').createIndex({ typeSlug: 1, name: 1, parentId: 1 }),
     databaseInstance.collection('forms').createIndex({ slug: 1 }, { unique: true }),
-    databaseInstance
-      .collection('admissions')
-      .createIndex({ applicationNumber: 1 }, { unique: true }),
     databaseInstance.collection('admissions').createIndex({ formId: 1, createdAt: -1 }),
     databaseInstance
       .collection('admissions')
@@ -105,6 +103,17 @@ async function ensureIndexes(databaseInstance) {
       .collection('feeImportPreviews')
       .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]);
+}
+
+async function removeLegacyApplicationNumberIndex(databaseInstance) {
+  let indexes = [];
+  try {
+    indexes = await databaseInstance.collection('admissions').indexes();
+  } catch (error) {
+    if (error.codeName !== 'NamespaceNotFound') throw error;
+  }
+  const index = indexes.find((candidate) => candidate.key?.applicationNumber === 1);
+  if (index) await databaseInstance.collection('admissions').dropIndex(index.name);
 }
 
 async function migrateHostelFloors(databaseInstance) {
