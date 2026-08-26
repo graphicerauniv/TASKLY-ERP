@@ -12,7 +12,6 @@ import {
   LucideArrowRightLeft,
   LucideCopy,
   LucideDynamicIcon,
-  LucideEllipsisVertical,
   LucideFilePlus2,
   LucideFolderPlus,
   LucidePencil,
@@ -53,7 +52,7 @@ export interface CompactActionItem {
 
 @Component({
   selector: 'erp-compact-action-menu',
-  imports: [LucideDynamicIcon, LucideEllipsisVertical, LucidePlus],
+  imports: [LucideDynamicIcon, LucidePlus],
   template: `
     <div class="action-menu">
       <button
@@ -66,7 +65,7 @@ export interface CompactActionItem {
         @if (variant() === 'add') {
           <svg lucidePlus size="16" aria-hidden="true"></svg><span>{{ label() }}</span>
         } @else {
-          <svg lucideEllipsisVertical size="17" aria-hidden="true"></svg>
+          <span class="action-menu__dots" aria-hidden="true">⋮</span>
         }
       </button>
       @if (open()) {
@@ -109,22 +108,31 @@ export interface CompactActionItem {
       height: 34px;
       padding: 0;
       place-items: center;
-      border: 1px solid transparent;
+      border: 1px solid var(--erp-border-default);
       border-radius: var(--erp-radius-control);
-      color: var(--erp-text-muted);
-      background: transparent;
+      color: var(--erp-blue-700);
+      background: var(--erp-blue-50);
       cursor: pointer;
       transition: var(--erp-standard-transition);
     }
     .action-menu__trigger:hover,
     .action-menu__trigger[aria-expanded='true'] {
       color: var(--erp-blue-700);
-      border-color: var(--erp-border-default);
-      background: var(--erp-blue-50);
+      border-color: var(--erp-border-strong);
+      background: var(--erp-surface-hover);
     }
     .action-menu__trigger span {
       font-size: var(--erp-font-caption);
       font-weight: var(--erp-weight-semibold);
+    }
+    .action-menu__trigger .action-menu__dots {
+      display: block;
+      color: var(--erp-blue-700);
+      font-family: Arial, sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1;
+      -webkit-text-fill-color: var(--erp-blue-700);
     }
     .action-menu__trigger:has(span) {
       width: auto;

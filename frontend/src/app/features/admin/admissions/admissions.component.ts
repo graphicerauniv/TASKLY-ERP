@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
@@ -11,7 +10,7 @@ import {
 
 @Component({
   selector: 'erp-admissions',
-  imports: [AdminPageComponent, CompactActionMenuComponent, DatePipe, RouterLink],
+  imports: [AdminPageComponent, CompactActionMenuComponent, RouterLink],
   templateUrl: './admissions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -41,6 +40,25 @@ export class AdmissionsComponent {
 
   handleRowAction(action: string, item: Admission) {
     if (action === 'view') this.view(item);
+  }
+
+  displayStatus(item: Admission) {
+    return item.status?.trim() || 'draft';
+  }
+
+  displayStatusLabel(item: Admission) {
+    const status = this.displayStatus(item);
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  createdLabel(item: Admission) {
+    if (!item.createdAt) return 'Date unavailable';
+    const createdAt = new Date(item.createdAt);
+    if (Number.isNaN(createdAt.getTime())) return 'Date unavailable';
+    return new Intl.DateTimeFormat('en-IN', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(createdAt);
   }
 
   close() {

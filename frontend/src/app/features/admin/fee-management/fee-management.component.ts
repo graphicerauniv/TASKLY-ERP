@@ -22,6 +22,7 @@ import {
   CompactActionItem,
   CompactActionMenuComponent,
 } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
+import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
 
 type FeeSection =
   | 'books'
@@ -56,6 +57,39 @@ interface FeeViewGroup {
   rows: FeeViewRow[];
 }
 
+interface FeeViewMatrixCell {
+  amounts: number[];
+  conflict: boolean;
+  sources: string[];
+}
+
+interface FeeViewMatrixColumn {
+  key: string;
+  label: string;
+  helper: string;
+  order: number;
+  total: number;
+}
+
+interface FeeViewMatrixRow {
+  key: string;
+  feeHeadName: string;
+  category: FeeHead['category'];
+  eligibilityBand: string;
+  priority: number;
+  total: number;
+  cells: Record<string, FeeViewMatrixCell>;
+}
+
+interface FeeViewMatrix {
+  key: string;
+  title: string;
+  description: string;
+  columns: FeeViewMatrixColumn[];
+  rows: FeeViewMatrixRow[];
+  grandTotal: number;
+}
+
 interface CourseFeePeriod {
   key: string;
   type: 'year' | 'semester';
@@ -63,9 +97,18 @@ interface CourseFeePeriod {
   label: string;
 }
 
+interface ConfirmDialogState {
+  eyebrow: string;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  destructive: boolean;
+  action: () => void;
+}
+
 @Component({
   selector: 'erp-fee-management',
-  imports: [AdminPageComponent, CompactActionMenuComponent, FormsModule, CurrencyPipe, DatePipe, RouterLink],
+  imports: [AdminPageComponent, CompactActionMenuComponent, ConfirmDialogComponent, FormsModule, CurrencyPipe, DatePipe, RouterLink],
   templateUrl: './fee-management.component.html',
   styleUrl: './fee-management.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,6 +124,10 @@ export class FeeManagementComponent implements OnDestroy {
   readonly mode = toSignal(
     this.route.data.pipe(map((data) => (data['mode'] || 'create') as FeePageMode)),
     { initialValue: 'create' as FeePageMode },
+  );
+  readonly requestedCourseFeeDraftId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('draft') || '')),
+    { initialValue: '' },
   );
   readonly isCreatePage = computed(() => this.mode() === 'create');
   readonly isViewPage = computed(() => this.mode() === 'view');
@@ -147,6 +194,8 @@ export class FeeManagementComponent implements OnDestroy {
   readonly activeMatrixCell = signal('');
   readonly courseFeeDraftStatus = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
   readonly courseFeeDraftSavedAt = signal('');
+  readonly courseFeeDraftResumePending = signal(false);
+  readonly confirmDialog = signal<ConfirmDialogState | null>(null);
   private readonly courseFeeContextVersion = signal(0);
   readonly creationSuccess = signal('');
   readonly listSearch = signal('');
@@ -468,11 +517,107 @@ export class FeeManagementComponent implements OnDestroy {
       })
       .sort((left, right) => left.order - right.order);
   });
+  readonly feeViewMatrices = computed<FeeViewMatrix[]>(() => {
+    const records = this.courseFeeViewRecords();
+    const headPriority = new Map(this.heads().map((head) => [head._id, head.priority || 9999]));
+    const matrixBuckets = new Map<CourseFee['periodType'], CourseFee[]>();
+    for (const fee of records) {
+      matrixBuckets.set(fee.periodType, [...(matrixBuckets.get(fee.periodType) || []), fee]);
+    }
+
+    return [...matrixBuckets.entries()]
+      .map(([periodType, fees]) => {
+        const columns = new Map<string, FeeViewMatrixColumn>();
+        const rows = new Map<string, FeeViewMatrixRow>();
+
+        for (const fee of fees) {
+          const columnKey = periodType === 'semester'
+            ? `semester-${fee.semester || fee.academicYear || 0}`
+            : `year-${fee.academicYear || fee.semester || fee.academicName || 'one-time'}`;
+          const periodNumber = periodType === 'semester' ? fee.semester || fee.academicYear || 0 : fee.academicYear || fee.semester || 0;
+          const columnLabel = periodType === 'semester'
+            ? `Sem ${periodNumber || '—'}`
+            : fee.academicYear
+              ? `Year ${fee.academicYear}`
+              : fee.academicName || 'One-time';
+          const columnHelper = periodType === 'semester' ? 'Semester fee' : 'Academic year fee';
+          columns.set(columnKey, columns.get(columnKey) || {
+            key: columnKey,
+            label: columnLabel,
+            helper: columnHelper,
+            order: periodNumber || 999,
+            total: 0,
+          });
+
+          const eligibilityBand = fee.eligibilityBand || 'All candidates';
+          const rowKey = `${fee.feeHeadId}|${eligibilityBand}`;
+          const row = rows.get(rowKey) || {
+            key: rowKey,
+            feeHeadName: fee.feeHeadName,
+            category: fee.category,
+            eligibilityBand,
+            priority: headPriority.get(fee.feeHeadId) || 9999,
+            total: 0,
+            cells: {},
+          };
+          const cell = row.cells[columnKey] || { amounts: [], conflict: false, sources: [] };
+          if (!cell.amounts.includes(fee.amount)) cell.amounts.push(fee.amount);
+          const source = fee.source === 'excel' ? `Excel${fee.sourceSheet ? `: ${fee.sourceSheet}` : ''}` : 'Manual';
+          if (!cell.sources.includes(source)) cell.sources.push(source);
+          cell.amounts.sort((left, right) => left - right);
+          cell.conflict = cell.amounts.length > 1;
+          row.cells[columnKey] = cell;
+          rows.set(rowKey, row);
+        }
+
+        const sortedColumns = [...columns.values()].sort((left, right) => left.order - right.order || left.label.localeCompare(right.label));
+        const sortedRows = [...rows.values()]
+          .map((row) => ({
+            ...row,
+            total: sortedColumns.reduce((total, column) =>
+              total + (row.cells[column.key]?.amounts || []).reduce((sum, amount) => sum + amount, 0),
+            0),
+          }))
+          .sort((left, right) =>
+            Number(left.category === 'discount') - Number(right.category === 'discount') ||
+            left.priority - right.priority ||
+            left.feeHeadName.localeCompare(right.feeHeadName) ||
+            left.eligibilityBand.localeCompare(right.eligibilityBand),
+          );
+
+        const columnsWithTotals = sortedColumns.map((column) => ({
+          ...column,
+          total: sortedRows.reduce((total, row) =>
+            total + (row.cells[column.key]?.amounts || []).reduce((sum, amount) => sum + amount, 0),
+          0),
+        }));
+
+        return {
+          key: periodType,
+          title: periodType === 'semester' ? 'Semester-wise fee structure' : 'Year-wise fee structure',
+          description: periodType === 'semester'
+            ? 'Compare every fee head across semesters in one horizontal matrix.'
+            : 'Compare every fee head across academic years in one horizontal matrix.',
+          columns: columnsWithTotals,
+          rows: sortedRows,
+          grandTotal: sortedRows.reduce((total, row) => total + row.total, 0),
+        } satisfies FeeViewMatrix;
+      })
+      .sort((left, right) => Number(left.key === 'semester') - Number(right.key === 'semester'));
+  });
 
   constructor() {
     effect(() => {
       this.section();
       this.mode();
+      const requestedDraftId = this.requestedCourseFeeDraftId();
+      const shouldResumeDraft = this.section() === 'course-fees' && this.isCreatePage() && !!requestedDraftId;
+      if (!shouldResumeDraft) this.courseFeeDraftResumePending.set(false);
+      if (shouldResumeDraft && requestedDraftId !== this.currentCourseFeeDraftId) {
+        this.courseFeeDraftResumePending.set(true);
+        const cachedDraft = this.takeCachedCourseFeeDraft(requestedDraftId);
+        if (cachedDraft) this.restoreCourseFeeDraft(cachedDraft);
+      }
       this.listSearch.set('');
       this.listStatus.set('all');
       this.hostelFrequencyFilter.set('all');
@@ -544,7 +689,7 @@ export class FeeManagementComponent implements OnDestroy {
     this.api.courseFeeDrafts().subscribe({
       next: ({ items }) => {
         this.courseFeeDrafts.set(items);
-        const requestedDraftId = this.route.snapshot.queryParamMap.get('draft');
+        const requestedDraftId = this.requestedCourseFeeDraftId();
         if (
           requestedDraftId &&
           this.section() === 'course-fees' &&
@@ -553,6 +698,8 @@ export class FeeManagementComponent implements OnDestroy {
         ) {
           const draft = items.find((item) => item._id === requestedDraftId);
           draft ? this.restoreCourseFeeDraft(draft) : this.loadCourseFeeDraft(requestedDraftId);
+        } else if (requestedDraftId && requestedDraftId === this.currentCourseFeeDraftId) {
+          this.courseFeeDraftResumePending.set(false);
         }
       },
       error: (error) => this.fail(error),
@@ -562,8 +709,26 @@ export class FeeManagementComponent implements OnDestroy {
   loadCourseFeeDraft(draftId: string) {
     this.api.courseFeeDraft(draftId).subscribe({
       next: ({ item }) => this.restoreCourseFeeDraft(item),
-      error: (error) => this.fail(error),
+      error: (error) => {
+        this.courseFeeDraftResumePending.set(false);
+        this.fail(error);
+      },
     });
+  }
+
+  requestConfirmation(options: ConfirmDialogState) {
+    this.confirmDialog.set(options);
+  }
+
+  cancelConfirmation() {
+    this.confirmDialog.set(null);
+  }
+
+  confirmRequestedAction() {
+    const dialog = this.confirmDialog();
+    if (!dialog) return;
+    this.confirmDialog.set(null);
+    dialog.action();
   }
 
   bookChanged() {
@@ -609,22 +774,40 @@ export class FeeManagementComponent implements OnDestroy {
     this.bookPickerSession = '';
   }
 
-  resumeCourseFeeDraft(draftId: string) {
-    this.router.navigate(['/admin/fees/course-fees/create'], { queryParams: { draft: draftId } });
+  resumeCourseFeeDraft(draft: CourseFeeDraft) {
+    this.courseFeeDraftResumePending.set(true);
+    this.cacheCourseFeeDraft(draft);
+    this.restoreCourseFeeDraft(draft);
+    this.bookSelectorOpen.set(false);
+    this.feeHeadPickerOpen.set(false);
+    this.clearNotices();
+    this.router.navigate(['/admin/fees/course-fees/create'], {
+      queryParams: { draft: draft._id },
+      state: { courseFeeDraft: draft },
+    });
   }
 
   handleCourseFeeDraftAction(action: string, draft: CourseFeeDraft) {
     if (action === 'edit') {
-      this.resumeCourseFeeDraft(draft._id);
+      this.resumeCourseFeeDraft(draft);
       return;
     }
-    if (action === 'delete' && confirm(`Delete draft for ${draft.courseName || draft.bookCode}?`)) {
-      this.api.deleteCourseFeeDraft(draft._id).subscribe({
-        next: () => {
-          this.courseFeeDrafts.update((items) => items.filter((item) => item._id !== draft._id));
-          this.saved('Course-fee draft deleted.');
+    if (action === 'delete') {
+      this.requestConfirmation({
+        eyebrow: 'Fee Management',
+        title: 'Delete draft?',
+        message: `Delete draft for ${draft.courseName || draft.bookCode}? This cannot be undone.`,
+        confirmLabel: 'Delete draft',
+        destructive: true,
+        action: () => {
+          this.api.deleteCourseFeeDraft(draft._id).subscribe({
+            next: () => {
+              this.courseFeeDrafts.update((items) => items.filter((item) => item._id !== draft._id));
+              this.saved('Course-fee draft deleted.');
+            },
+            error: (error) => this.fail(error),
+          });
         },
-        error: (error) => this.fail(error),
       });
     }
   }
@@ -701,6 +884,8 @@ export class FeeManagementComponent implements OnDestroy {
     this.restoringCourseFeeDraft = true;
     this.currentCourseFeeDraftId = draft._id;
     this.selectedBookId = draft.bookId;
+    this.bookSelectorOpen.set(false);
+    this.feeHeadPickerOpen.set(false);
     this.departmentId = draft.departmentId || '';
     this.levelId = draft.levelId || '';
     this.courseId = draft.courseId || '';
@@ -713,7 +898,27 @@ export class FeeManagementComponent implements OnDestroy {
     this.courseFeeDraftStatus.set('saved');
     this.courseFeeDraftSavedAt.set(draft.updatedAt);
     this.refreshCourseFeeContext();
+    this.courseFeeDraftResumePending.set(false);
     this.restoringCourseFeeDraft = false;
+  }
+
+  private cacheCourseFeeDraft(draft: CourseFeeDraft) {
+    try {
+      sessionStorage.setItem(`erp-course-fee-draft:${draft._id}`, JSON.stringify(draft));
+    } catch {
+      // Draft resume still works through the API if browser storage is unavailable.
+    }
+  }
+
+  private takeCachedCourseFeeDraft(draftId: string) {
+    try {
+      const rawDraft = sessionStorage.getItem(`erp-course-fee-draft:${draftId}`);
+      if (!rawDraft) return null;
+      sessionStorage.removeItem(`erp-course-fee-draft:${draftId}`);
+      return JSON.parse(rawDraft) as CourseFeeDraft;
+    } catch {
+      return null;
+    }
   }
 
   openFeeHeadPicker() {
@@ -804,8 +1009,17 @@ export class FeeManagementComponent implements OnDestroy {
   handleBookAction(action: string, book: FeeBook) {
     if (action === 'edit') {
       void this.router.navigate(['/admin/fees/books', book._id, 'edit']);
-    } else if (action === 'delete' && confirm(`Delete fee book ${book.code}?`)) {
-      this.api.deleteFeeBook(book._id).subscribe({ next: () => this.saved('Fee book deleted.'), error: (error) => this.fail(error) });
+    } else if (action === 'delete') {
+      this.requestConfirmation({
+        eyebrow: 'Fee Management',
+        title: 'Delete fee book?',
+        message: `Delete fee book ${book.code}? Related records may depend on this book.`,
+        confirmLabel: 'Delete book',
+        destructive: true,
+        action: () => {
+          this.api.deleteFeeBook(book._id).subscribe({ next: () => this.saved('Fee book deleted.'), error: (error) => this.fail(error) });
+        },
+      });
     }
   }
 
@@ -854,8 +1068,17 @@ export class FeeManagementComponent implements OnDestroy {
   handleHeadAction(action: string, head: FeeHead) {
     if (action === 'edit') {
       void this.router.navigate(['/admin/fees/heads', head._id, 'edit']);
-    } else if (action === 'delete' && confirm(`Delete ${head.name}?`)) {
-      this.api.deleteFeeHead(head._id).subscribe({ next: () => this.saved('Fee head deleted.'), error: (error) => this.fail(error) });
+    } else if (action === 'delete') {
+      this.requestConfirmation({
+        eyebrow: 'Fee Management',
+        title: 'Delete fee head?',
+        message: `Delete ${head.name}? This fee head will no longer be available for future fee setup.`,
+        confirmLabel: 'Delete head',
+        destructive: true,
+        action: () => {
+          this.api.deleteFeeHead(head._id).subscribe({ next: () => this.saved('Fee head deleted.'), error: (error) => this.fail(error) });
+        },
+      });
     }
   }
 
@@ -892,8 +1115,18 @@ export class FeeManagementComponent implements OnDestroy {
   }
 
   deleteHostelFee(action: string, fee: HostelFee) {
-    if (action === 'delete' && confirm(`Delete the ${fee.feeHeadName} charge for ${fee.hostelName}?`))
-      this.api.deleteHostelFee(fee._id).subscribe({ next: () => this.saved('Hostel fee deleted.'), error: (error) => this.fail(error) });
+    if (action === 'delete') {
+      this.requestConfirmation({
+        eyebrow: 'Fee Management',
+        title: 'Delete hostel fee?',
+        message: `Delete the ${fee.feeHeadName} charge for ${fee.hostelName}?`,
+        confirmLabel: 'Delete fee',
+        destructive: true,
+        action: () => {
+          this.api.deleteHostelFee(fee._id).subscribe({ next: () => this.saved('Hostel fee deleted.'), error: (error) => this.fail(error) });
+        },
+      });
+    }
   }
 
   saveCourseFee() {

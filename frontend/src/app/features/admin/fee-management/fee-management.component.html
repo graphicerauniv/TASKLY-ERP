@@ -30,7 +30,17 @@
     <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
   }
 
-  @if (section() !== 'books' && !isDraftPage()) {
+  @if (courseFeeDraftResumePending()) {
+    <section class="erp-card erp-card--padded erp-context-card">
+      <div>
+        <span class="erp-page-header__eyebrow">Course Fee Draft</span>
+        <h2>Opening saved draft…</h2>
+        <p>Restoring the selected book, course context and entered fee matrix.</p>
+      </div>
+    </section>
+  }
+
+  @if (section() !== 'books' && !isDraftPage() && !courseFeeDraftResumePending()) {
     <section class="erp-card erp-card--padded erp-context-card">
       <div>
         <span class="erp-page-header__eyebrow">Working context</span>
@@ -368,30 +378,59 @@
         </div>
       </section>
 
-      @for (group of feeViewGroups(); track group.key) {
-        <section class="erp-card erp-table-shell fee-section-gap fee-year-card">
-          <div class="erp-table-toolbar fee-year-card__header">
-            <div><h2>{{ group.label }}</h2><p>{{ group.description }}</p></div>
-            <span class="erp-status">{{ group.rows.length }} fee heads</span>
+      @for (matrix of feeViewMatrices(); track matrix.key) {
+        <section class="erp-card erp-table-shell fee-section-gap fee-structure-matrix">
+          <div class="erp-table-toolbar fee-structure-matrix__header">
+            <div><h2>{{ matrix.title }}</h2><p>{{ matrix.description }}</p></div>
+            <div class="fee-structure-matrix__meta">
+              <span class="erp-status">{{ matrix.rows.length }} rows</span>
+              <strong>{{ matrix.grandTotal | currency:'INR':'symbol':'1.0-2' }}</strong>
+            </div>
           </div>
           <div class="erp-table-shell__scroll fee-matrix-scroll">
-            <table class="fee-matrix-table">
-              <thead><tr><th>Fee head</th><th>Schedule</th>@for (band of group.eligibilityBands; track band) {<th>{{ band }}</th>}</tr></thead>
+            <table class="fee-matrix-table fee-view-matrix-table">
+              <thead>
+                <tr>
+                  <th>Fee head</th>
+                  <th>Category</th>
+                  <th>Eligibility</th>
+                  @for (column of matrix.columns; track column.key) {
+                    <th><span>{{ column.label }}</span><small>{{ column.helper }}</small></th>
+                  }
+                  <th>Total</th>
+                </tr>
+              </thead>
               <tbody>
-                @for (row of group.rows; track row.key) {
+                @for (row of matrix.rows; track row.key) {
                   <tr>
-                    <td><strong>{{ row.feeHeadName }}</strong><small>{{ row.category === 'discount' ? 'Discount / scholarship' : row.category === 'payment-option' ? 'Payment option' : 'Payable fee' }}</small></td>
-                    <td><span class="erp-status" [class.erp-status--neutral]="row.category !== 'fee'">{{ row.frequency }}</span>@if (row.semester) {<small>Semester {{ row.semester }}</small>}<small>{{ row.sources.join(' · ') }}</small></td>
-                    @for (cell of row.cells; track cell.eligibilityBand) {
-                      <td class="fee-amount-cell" [class.fee-amount-cell--conflict]="cell.conflict">
-                        @for (amount of cell.amounts; track amount) {<strong>{{ amount | currency:'INR':'symbol':'1.2-2' }}</strong>}
-                        @if (!cell.amounts.length) {<span>—</span>}
-                        @if (cell.conflict) {<small>Multiple imported amounts — review mapping</small>}
+                    <td><strong>{{ row.feeHeadName }}</strong><small>#{{ row.priority === 9999 ? '—' : row.priority }}</small></td>
+                    <td><span class="erp-status" [class.erp-status--neutral]="row.category !== 'fee'">{{ row.category === 'discount' ? 'Discount' : row.category === 'payment-option' ? 'Payment option' : 'Payable' }}</span></td>
+                    <td><span>{{ row.eligibilityBand }}</span></td>
+                    @for (column of matrix.columns; track column.key) {
+                      @let cell = row.cells[column.key];
+                      <td class="fee-amount-cell" [class.fee-amount-cell--conflict]="cell?.conflict">
+                        @if (cell?.amounts?.length) {
+                          @for (amount of cell.amounts; track amount) {<strong>{{ amount | currency:'INR':'symbol':'1.2-2' }}</strong>}
+                          <small>{{ cell.sources.join(' · ') }}</small>
+                        } @else {
+                          <span>—</span>
+                        }
+                        @if (cell?.conflict) {<small>Review duplicate amounts</small>}
                       </td>
                     }
+                    <td class="fee-amount-cell fee-amount-cell--total"><strong>{{ row.total | currency:'INR':'symbol':'1.2-2' }}</strong></td>
                   </tr>
                 }
               </tbody>
+              <tfoot>
+                <tr>
+                  <th colspan="3">Period total</th>
+                  @for (column of matrix.columns; track column.key) {
+                    <th>{{ column.total | currency:'INR':'symbol':'1.0-2' }}</th>
+                  }
+                  <th>{{ matrix.grandTotal | currency:'INR':'symbol':'1.0-2' }}</th>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </section>
@@ -472,5 +511,18 @@
         </footer>
       </section>
     </div>
+  }
+
+  @if (confirmDialog(); as dialog) {
+    <erp-confirm-dialog
+      [open]="true"
+      [eyebrow]="dialog.eyebrow"
+      [title]="dialog.title"
+      [message]="dialog.message"
+      [confirmLabel]="dialog.confirmLabel"
+      [destructive]="dialog.destructive"
+      (cancelled)="cancelConfirmation()"
+      (confirmed)="confirmRequestedAction()"
+    />
   }
 </erp-admin-page>

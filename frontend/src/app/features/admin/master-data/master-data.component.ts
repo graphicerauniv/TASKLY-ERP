@@ -18,6 +18,7 @@ import {
   CompactActionItem,
   CompactActionMenuComponent,
 } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
+import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
 
 const DEPENDENCY_CHAINS: Record<string, string[]> = {
   level: ['college', 'department'],
@@ -27,9 +28,18 @@ const DEPENDENCY_CHAINS: Record<string, string[]> = {
   city: ['country', 'state', 'district'],
 };
 
+interface ConfirmDialogState {
+  eyebrow: string;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  destructive: boolean;
+  action: () => void;
+}
+
 @Component({
   selector: 'erp-master-data',
-  imports: [AdminPageComponent, CompactActionMenuComponent, FormsModule, RouterLink],
+  imports: [AdminPageComponent, CompactActionMenuComponent, ConfirmDialogComponent, FormsModule, RouterLink],
   templateUrl: './master-data.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -56,6 +66,7 @@ export class MasterDataComponent {
   readonly message = signal('');
   readonly error = signal('');
   readonly editingId = signal<string | null>(null);
+  readonly confirmDialog = signal<ConfirmDialogState | null>(null);
   readonly baseRowActions: CompactActionItem[] = [
     { id: 'edit', label: 'Edit', icon: 'edit' },
     { id: 'delete', label: 'Delete', icon: 'delete', destructive: true, separator: true },
@@ -205,11 +216,31 @@ export class MasterDataComponent {
     if (action === 'edit' || action === 'configure') void this.router.navigate(['/admin/master-data', this.slug(), item._id, 'edit']);
     if (action === 'delete') this.remove(item);
   }
+  requestConfirmation(options: ConfirmDialogState) {
+    this.confirmDialog.set(options);
+  }
+  cancelConfirmation() {
+    this.confirmDialog.set(null);
+  }
+  confirmRequestedAction() {
+    const dialog = this.confirmDialog();
+    if (!dialog) return;
+    this.confirmDialog.set(null);
+    dialog.action();
+  }
   remove(item: MasterValue) {
-    if (!confirm(`Delete ${item.name}?`)) return;
-    this.api
-      .deleteMasterValue(this.slug(), item._id)
-      .subscribe({ next: () => this.loadValues(), error: (e) => this.fail(e) });
+    this.requestConfirmation({
+      eyebrow: 'Master Data',
+      title: 'Delete master value?',
+      message: `Delete ${item.name}? Forms and filters may depend on this value.`,
+      confirmLabel: 'Delete value',
+      destructive: true,
+      action: () => {
+        this.api
+          .deleteMasterValue(this.slug(), item._id)
+          .subscribe({ next: () => this.loadValues(), error: (e) => this.fail(e) });
+      },
+    });
   }
   importFile(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];

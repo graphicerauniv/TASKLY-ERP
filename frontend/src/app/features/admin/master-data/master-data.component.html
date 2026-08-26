@@ -183,3 +183,16 @@
     </div>
   </erp-admin-page>
 }
+
+@if (confirmDialog(); as dialog) {
+  <erp-confirm-dialog
+    [open]="true"
+    [eyebrow]="dialog.eyebrow"
+    [title]="dialog.title"
+    [message]="dialog.message"
+    [confirmLabel]="dialog.confirmLabel"
+    [destructive]="dialog.destructive"
+    (cancelled)="cancelConfirmation()"
+    (confirmed)="confirmRequestedAction()"
+  />
+}

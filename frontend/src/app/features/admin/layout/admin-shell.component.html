@@ -119,6 +119,63 @@
                     }
                   </div>
                 }
+                @if (
+                  !masterSearch() ||
+                  'admission configuration form builder dynamic form'.includes(
+                    masterSearch().trim().toLocaleLowerCase()
+                  )
+                ) {
+                  <div class="master-group master-navigation-group">
+                    <button
+                      class="master-navigation-group__trigger"
+                      [class.active]="isFormBuilderRoute()"
+                      type="button"
+                      aria-controls="master-admission-configuration-links"
+                      [attr.aria-expanded]="isMasterGroupExpanded('admission-configuration')"
+                      (click)="toggleMasterGroup('admission-configuration')"
+                    >
+                      <span class="master-item__icon"
+                        ><svg lucideFilePenLine aria-hidden="true"></svg
+                      ></span>
+                      <span
+                        ><strong>Admission Configuration</strong
+                        ><small>Form structure and publishing</small></span
+                      >
+                      <svg
+                        class="master-navigation-group__chevron"
+                        lucideChevronRight
+                        aria-hidden="true"
+                      ></svg>
+                    </button>
+                    @if (isMasterGroupExpanded('admission-configuration')) {
+                      <div
+                        class="master-navigation-group__links"
+                        id="master-admission-configuration-links"
+                      >
+                        <a
+                          routerLink="/admin/form-builder"
+                          routerLinkActive="active"
+                          ariaCurrentWhenActive="page"
+                          (click)="closeNavigation()"
+                        >
+                          <span class="master-item__icon"
+                            ><svg lucideFilePenLine aria-hidden="true"></svg
+                          ></span>
+                          <span
+                            ><strong>Form Builder</strong
+                            ><small>Design and publish admission forms</small></span
+                          >
+                          <svg
+                            class="master-item__arrow"
+                            lucideChevronRight
+                            size="15"
+                            aria-hidden="true"
+                          ></svg>
+                        </a>
+                      </div>
+                    }
+                  </div>
+                }
                 @for (group of filteredMasterGroups(); track group.title) {
                   <div class="master-group master-navigation-group">
                     <button class="master-navigation-group__trigger" [class.active]="isMasterGroupRoute(group)" type="button" [attr.aria-controls]="'master-' + group.title" [attr.aria-expanded]="isMasterGroupExpanded(group.title)" (click)="toggleMasterGroup(group.title)">
@@ -441,25 +498,6 @@
               <div class="master-flyout__groups admission-flyout__groups">
                 <div class="master-group">
                   <h3>Admission Management</h3>
-                  <a
-                    routerLink="/admin/form-builder"
-                    routerLinkActive="active"
-                    (click)="closeNavigation()"
-                  >
-                    <span class="master-item__icon"
-                      ><svg lucideFilePenLine aria-hidden="true"></svg
-                    ></span>
-                    <span
-                      ><strong>Form Builder</strong
-                      ><small>Design the dynamic admission form</small></span
-                    >
-                    <svg
-                      class="master-item__arrow"
-                      lucideChevronRight
-                      size="15"
-                      aria-hidden="true"
-                    ></svg>
-                  </a>
                   <a
                     routerLink="/admin/admission/student"
                     routerLinkActive="active"

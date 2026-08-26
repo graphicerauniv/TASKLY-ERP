@@ -960,17 +960,28 @@
   font-size: var(--erp-font-size-xs);
   font-weight: var(--erp-weight-semibold);
   text-transform: capitalize;
+  -webkit-text-fill-color: var(--erp-success-text);
 }
 
 .erp-status--draft,
 .erp-status--warning {
   color: var(--erp-warning-text);
   background: var(--erp-warning-bg);
+  -webkit-text-fill-color: var(--erp-warning-text);
 }
 
 .erp-status--neutral {
   color: var(--erp-text-muted);
   background: var(--erp-surface-neutral);
+  -webkit-text-fill-color: var(--erp-text-muted);
+}
+
+.erp-table-shell tbody {
+  opacity: 1;
+}
+
+.erp-table-shell tbody tr {
+  content-visibility: visible;
 }
 
 .erp-notice {
@@ -1694,7 +1705,9 @@
 .erp-data-region {
   position: relative;
   min-width: 0;
-  contain: layout style;
+  /* Data must paint on the first render. Layout containment caused some Chromium
+     builds to defer table text until the next pointer/focus repaint. */
+  contain: none;
 }
 
 .erp-data-region--busy {
@@ -1832,8 +1845,16 @@
 }
 
 .erp-render-row {
-  content-visibility: auto;
-  contain-intrinsic-block-size: auto var(--erp-content-visibility-size);
+  content-visibility: visible;
+  contain-intrinsic-block-size: none;
+}
+
+/* Global data-view contract: database rows and controls are visible immediately;
+   interaction may enhance them, but must never be required to reveal content. */
+.erp-table-shell tbody tr,
+.erp-table-shell tbody td,
+.erp-table-shell tbody td > * {
+  visibility: visible;
 }
 
 @keyframes erp-spin {
@@ -5072,6 +5093,34 @@ textarea:focus {
 .confirm-body p {
   margin: 8px 0 0;
   color: var(--erp-text-muted);
+}
+
+.erp-confirm-dialog {
+  width: min(440px, 100%);
+}
+
+.erp-confirm-dialog__body {
+  display: grid;
+  gap: var(--erp-space-2);
+}
+
+.erp-confirm-dialog__body p {
+  margin: 0;
+  color: var(--erp-text-body);
+  font-size: var(--erp-font-body);
+  line-height: var(--erp-line-height-body);
+}
+
+.erp-button--danger {
+  border-color: var(--erp-danger);
+  color: var(--erp-text-on-primary);
+  background: var(--erp-danger);
+  box-shadow: var(--erp-shadow-card);
+}
+
+.erp-button--danger:hover {
+  border-color: var(--erp-danger);
+  background: var(--erp-danger-text);
 }
 .confirm-icon {
   display: grid;

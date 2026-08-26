@@ -435,6 +435,65 @@
   min-width: var(--erp-table-wide-min-width);
 }
 
+.fee-structure-matrix__header {
+  align-items: center;
+}
+
+.fee-structure-matrix__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-space-3);
+  color: var(--erp-text-heading);
+}
+
+.fee-structure-matrix__meta strong {
+  font-size: var(--erp-font-section-title);
+}
+
+.fee-view-matrix-table {
+  min-width: max(var(--erp-table-wide-min-width), 980px);
+}
+
+.fee-view-matrix-table th,
+.fee-view-matrix-table td {
+  vertical-align: middle;
+  border-right: 1px solid var(--erp-border-subtle);
+}
+
+.fee-view-matrix-table th:last-child,
+.fee-view-matrix-table td:last-child {
+  border-right: 0;
+}
+
+.fee-view-matrix-table th:first-child,
+.fee-view-matrix-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 260px;
+  background: var(--erp-surface-overlay);
+  box-shadow: 1px 0 0 var(--erp-border-subtle);
+}
+
+.fee-view-matrix-table thead th:first-child {
+  z-index: 3;
+  background: var(--erp-table-header-bg);
+}
+
+.fee-view-matrix-table th span,
+.fee-view-matrix-table th small {
+  display: block;
+}
+
+.fee-view-matrix-table tfoot th {
+  color: var(--erp-text-heading);
+  background: var(--erp-surface-detail);
+}
+
+.fee-view-matrix-table tbody tr:hover td {
+  background: var(--erp-surface-detail);
+}
+
 .fee-matrix-table td:first-child,
 .fee-matrix-table td:nth-child(2) {
   min-width: calc(var(--erp-control-height) * 4);

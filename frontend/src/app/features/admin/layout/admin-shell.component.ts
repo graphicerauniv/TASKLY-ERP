@@ -306,7 +306,10 @@ export class AdminShellComponent {
     }
   }
   isMasterRoute() {
-    return this.router.url.startsWith('/admin/master-data/');
+    return (
+      this.router.url.startsWith('/admin/master-data/') ||
+      this.router.url.startsWith('/admin/form-builder')
+    );
   }
   isHostelRoute() {
     return this.router.url.startsWith('/admin/master-data/hostel/');
@@ -315,9 +318,11 @@ export class AdminShellComponent {
     return (
       this.router.url.startsWith('/admin/admission/') ||
       this.router.url === '/admin/admissions' ||
-      this.router.url === '/admin/delete-admissions' ||
-      this.router.url === '/admin/form-builder'
+      this.router.url === '/admin/delete-admissions'
     );
+  }
+  isFormBuilderRoute() {
+    return this.router.url.startsWith('/admin/form-builder');
   }
   isFeeRoute() {
     return this.router.url.startsWith('/admin/fees/');
@@ -334,7 +339,7 @@ export class AdminShellComponent {
   private updateCurrentModule(url: string) {
     if (url.includes('/fees/')) this.currentModule.set('Fee Management');
     else if (url.includes('/master-data/')) this.currentModule.set('Master Data');
-    else if (url.includes('/form-builder')) this.currentModule.set('Dynamic Form Builder');
+    else if (url.includes('/form-builder')) this.currentModule.set('Master Data');
     else if (url.includes('/admissions')) this.currentModule.set('Student Database');
     else if (url.includes('/delete-admissions')) this.currentModule.set('Delete Admission');
     else if (url.includes('/admission/student')) this.currentModule.set('Student Admission');

@@ -24,13 +24,16 @@
           @for (item of items(); track item._id) {
             <tr>
               <td>
-                <strong>{{ item.applicationNumber }}</strong>
+                <strong>{{ item.applicationNumber || 'Record unavailable' }}</strong>
               </td>
               <td>v{{ item.formVersion || '—' }}</td>
-              <td>{{ item.createdAt | date: 'medium' }}</td>
+              <td>{{ createdLabel(item) }}</td>
               <td>
-                <span class="erp-status" [class.erp-status--warning]="item.status !== 'submitted'">
-                  {{ item.status }}
+                <span
+                  class="erp-status"
+                  [class.erp-status--warning]="displayStatus(item) !== 'submitted'"
+                >
+                  {{ displayStatusLabel(item) }}
                 </span>
               </td>
               <td class="erp-table-shell__actions">
