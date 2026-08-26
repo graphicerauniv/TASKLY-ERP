@@ -77,13 +77,12 @@
     <button
       class="student-sidebar__profile-summary"
       type="button"
-      aria-label="Student profile for Vivek Sharma"
+      [attr.aria-label]="'Student profile for ' + (session.profile()?.name || 'student')"
     >
-      <span class="student-avatar">VS</span>
+      <span class="student-avatar">{{ session.initials() }}</span>
       <span class="student-sidebar__profile-copy">
-        <strong>Vivek Sharma</strong>
-        <small>B.Tech CSE · Semester 5</small>
-        <small>Roll No. 23BCS1045</small>
+        <strong>{{ session.profile()?.name || 'Student' }}</strong>
+        <small>Student ID {{ session.profile()?.studentId || 'Unavailable' }}</small>
       </span>
     </button>
     <div class="student-sidebar__profile-actions">
@@ -91,11 +90,11 @@
         <svg lucideUserRound size="17" aria-hidden="true"></svg>
         <span>Profile</span>
       </button>
-      <a routerLink="/student/login" aria-label="Sign out of the student portal">
+      <a routerLink="/student/login" aria-label="Sign out of the student portal" (click)="signOut()">
         <svg lucideLogOut size="17" aria-hidden="true"></svg>
         <span>Sign out</span>
       </a>
     </div>
-    <span class="student-sidebar__profile-tooltip" role="tooltip">Vivek Sharma</span>
+    <span class="student-sidebar__profile-tooltip" role="tooltip">{{ session.profile()?.name || 'Student' }}</span>
   </div>
 </aside>

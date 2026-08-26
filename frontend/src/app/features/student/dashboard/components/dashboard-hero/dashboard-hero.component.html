@@ -1,7 +1,11 @@
 <section class="student-dashboard-hero" aria-labelledby="student-dashboard-greeting">
   <div class="student-dashboard-hero__copy">
     <h2 id="student-dashboard-greeting">
-      Ready for your day, <span>{{ viewModel().firstName }}?</span>
+      @if (viewModel().firstName; as firstName) {
+        Ready for your day, <span>{{ firstName }}?</span>
+      } @else {
+        Ready for your day?
+      }
     </h2>
     <p>Let’s <strong>make today</strong> count. <span aria-hidden="true">✦</span></p>
   </div>

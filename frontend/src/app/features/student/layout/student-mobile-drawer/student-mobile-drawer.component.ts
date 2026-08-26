@@ -7,6 +7,7 @@ import {
   studentNavigationIcon,
 } from '../../shared/config/student-navigation.config';
 import { StudentLayoutStateService } from '../../shared/services/student-layout-state.service';
+import { StudentSessionService } from '../../shared/services/student-session.service';
 
 @Component({
   selector: 'erp-student-mobile-drawer',
@@ -24,10 +25,16 @@ import { StudentLayoutStateService } from '../../shared/services/student-layout-
 })
 export class StudentMobileDrawerComponent {
   readonly layoutState = inject(StudentLayoutStateService);
+  readonly session = inject(StudentSessionService);
   readonly navigation = STUDENT_NAVIGATION;
   readonly navigationIcon = studentNavigationIcon;
 
   close(restoreFocus = true): void {
     this.layoutState.closeMobileNavigation(restoreFocus);
+  }
+
+  signOut(): void {
+    this.session.clear();
+    this.close(false);
   }
 }

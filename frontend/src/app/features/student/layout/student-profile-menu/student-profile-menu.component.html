@@ -6,11 +6,10 @@
     aria-label="Student account menu"
   >
     <header class="student-profile-menu__header">
-      <span class="student-avatar student-avatar--large">VS</span>
+      <span class="student-avatar student-avatar--large">{{ session.initials() }}</span>
       <span>
-        <strong>Vivek Sharma</strong>
-        <small>B.Tech CSE · Semester 5</small>
-        <small>Roll No. 23BCS1045</small>
+        <strong>{{ session.profile()?.name || 'Student' }}</strong>
+        <small>Student ID {{ session.profile()?.studentId || 'Unavailable' }}</small>
       </span>
     </header>
     <div class="student-profile-menu__actions">
@@ -26,7 +25,7 @@
       <button type="button" role="menuitem" disabled>
         <svg lucideSettings size="18" aria-hidden="true"></svg><span>Settings</span>
       </button>
-      <a routerLink="/student/login" role="menuitem" (click)="close()">
+      <a routerLink="/student/login" role="menuitem" (click)="signOut()">
         <svg lucideLogOut size="18" aria-hidden="true"></svg><span>Sign out</span>
       </a>
     </div>

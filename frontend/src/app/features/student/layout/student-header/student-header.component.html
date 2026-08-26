@@ -43,20 +43,19 @@
       disabled
     >
       <svg lucideBell size="20" aria-hidden="true"></svg>
-      <span class="student-notification-button__badge" aria-hidden="true">3</span>
     </button>
 
     <div class="student-header__profile-area">
       <button
         class="student-header__profile-trigger"
         type="button"
-        aria-label="Open Vivek Sharma account menu"
+        [attr.aria-label]="'Open ' + (session.profile()?.name || 'student') + ' account menu'"
         [attr.aria-expanded]="layoutState.profileMenuOpen()"
         aria-controls="student-profile-menu"
         (click)="toggleProfileMenu($event.currentTarget)"
       >
-        <span class="student-avatar">VS</span>
-        <span class="student-header__profile-name">Vivek Sharma</span>
+        <span class="student-avatar">{{ session.initials() }}</span>
+        <span class="student-header__profile-name">{{ session.profile()?.name || 'Student' }}</span>
         <svg
           class="student-header__profile-chevron"
           lucideChevronDown

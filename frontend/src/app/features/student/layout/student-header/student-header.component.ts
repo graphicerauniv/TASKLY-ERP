@@ -9,6 +9,7 @@ import {
   LucideSearch,
 } from '@lucide/angular';
 import { StudentLayoutStateService } from '../../shared/services/student-layout-state.service';
+import { StudentSessionService } from '../../shared/services/student-session.service';
 import { StudentProfileMenuComponent } from '../student-profile-menu/student-profile-menu.component';
 import { filter } from 'rxjs';
 
@@ -27,6 +28,7 @@ import { filter } from 'rxjs';
 })
 export class StudentHeaderComponent {
   readonly layoutState = inject(StudentLayoutStateService);
+<<<<<<< Updated upstream
   readonly pageTitle = signal('Dashboard');
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -40,6 +42,9 @@ export class StudentHeaderComponent {
       )
       .subscribe((event) => this.updatePageTitle(event.urlAfterRedirects));
   }
+=======
+  readonly session = inject(StudentSessionService);
+>>>>>>> Stashed changes
 
   openMobileNavigation(trigger: EventTarget | null): void {
     if (trigger instanceof HTMLElement) this.layoutState.openMobileNavigation(trigger);

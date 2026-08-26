@@ -6,6 +6,7 @@ import {
   studentNavigationIcon,
 } from '../../shared/config/student-navigation.config';
 import { StudentLayoutStateService } from '../../shared/services/student-layout-state.service';
+import { StudentSessionService } from '../../shared/services/student-session.service';
 
 @Component({
   selector: 'erp-student-sidebar',
@@ -16,6 +17,7 @@ import { StudentLayoutStateService } from '../../shared/services/student-layout-
 export class StudentSidebarComponent {
   readonly navigation = STUDENT_NAVIGATION;
   readonly layoutState = inject(StudentLayoutStateService);
+  readonly session = inject(StudentSessionService);
   readonly navigationIcon = studentNavigationIcon;
   readonly tooltipLabel = signal('');
   readonly tooltipTop = signal(0);
@@ -54,6 +56,10 @@ export class StudentSidebarComponent {
   selectNavigation(): void {
     this.cancelCollapse();
     this.layoutState.setDesktopSidebarExpanded(false);
+  }
+
+  signOut(): void {
+    this.session.clear();
   }
 
   showTooltip(label: string, event: PointerEvent): void {

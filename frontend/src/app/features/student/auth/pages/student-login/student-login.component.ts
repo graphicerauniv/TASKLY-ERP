@@ -9,6 +9,7 @@ import {
   LucideUserRound,
 } from '@lucide/angular';
 import { ApiService } from '../../../../../core/api.service';
+import { StudentSessionService } from '../../../shared/services/student-session.service';
 
 @Component({
   selector: 'erp-student-login',
@@ -26,6 +27,7 @@ import { ApiService } from '../../../../../core/api.service';
 export class StudentLoginComponent {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly session = inject(StudentSessionService);
   readonly showPassword = signal(false);
   readonly showNewPassword = signal(false);
   readonly changeRequired = signal(false);
@@ -106,8 +108,7 @@ export class StudentLoginComponent {
     });
   }
 
-  private saveSession(token: string, student: object) {
-    localStorage.setItem('taskly_student_token', token);
-    localStorage.setItem('taskly_student_profile', JSON.stringify(student));
+  private saveSession(token: string, student: import('../../../../../core/models').StudentSession) {
+    this.session.save(token, student);
   }
 }

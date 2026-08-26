@@ -63,17 +63,17 @@
 
       <footer class="student-mobile-drawer__profile">
         <div class="student-mobile-drawer__student">
-          <span class="student-avatar">VS</span>
+          <span class="student-avatar">{{ session.initials() }}</span>
           <span
-            ><strong>Vivek Sharma</strong><small>B.Tech CSE · Semester 5</small
-            ><small>Roll No. 23BCS1045</small></span
+            ><strong>{{ session.profile()?.name || 'Student' }}</strong
+            ><small>Student ID {{ session.profile()?.studentId || 'Unavailable' }}</small></span
           >
         </div>
         <div class="student-mobile-drawer__profile-actions">
           <button type="button" disabled>
             <svg lucideUserRound size="17" aria-hidden="true"></svg><span>Profile</span>
           </button>
-          <a routerLink="/student/login" (click)="close(false)">
+          <a routerLink="/student/login" (click)="signOut()">
             <svg lucideLogOut size="17" aria-hidden="true"></svg><span>Sign out</span>
           </a>
         </div>

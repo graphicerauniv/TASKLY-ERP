@@ -13,5 +13,5 @@ export interface StudentDashboardModule {
 }
 
 export interface StudentDashboardViewModel {
-  readonly firstName: string;
+  readonly firstName: string | null;
 }

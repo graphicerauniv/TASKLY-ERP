@@ -14,6 +14,7 @@ import {
   LucideUserRound,
 } from '@lucide/angular';
 import { StudentLayoutStateService } from '../../shared/services/student-layout-state.service';
+import { StudentSessionService } from '../../shared/services/student-session.service';
 
 @Component({
   selector: 'erp-student-profile-menu',
@@ -30,6 +31,7 @@ import { StudentLayoutStateService } from '../../shared/services/student-layout-
 })
 export class StudentProfileMenuComponent {
   readonly layoutState = inject(StudentLayoutStateService);
+  readonly session = inject(StudentSessionService);
   private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
   @HostListener('document:pointerdown', ['$event'])
@@ -44,5 +46,10 @@ export class StudentProfileMenuComponent {
 
   close(): void {
     this.layoutState.closeProfileMenu();
+  }
+
+  signOut(): void {
+    this.session.clear();
+    this.close();
   }
 }
