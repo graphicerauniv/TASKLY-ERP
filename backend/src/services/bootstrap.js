@@ -1,6 +1,7 @@
 import argon2 from 'argon2';
 import { config } from '../config.js';
 import { db } from '../db.js';
+import { syncAdmissionIdentity } from './admission-identity.js';
 
 export const BUILTIN_MASTERS = [
   ['academic', 'Academic', null],
@@ -29,6 +30,7 @@ export async function bootstrap() {
       { status: 'draft', hasSavedData: { $exists: false } },
       { $set: { hasSavedData: true } },
     );
+  await migrateAdmissionIdentities();
   await Promise.all(
     BUILTIN_MASTERS.map(([slug, name, parentTypeSlug], order) =>
       db()
@@ -69,6 +71,15 @@ export async function bootstrap() {
       });
     console.log(`Created bootstrap Super Admin: ${email}`);
   }
+}
+
+async function migrateAdmissionIdentities() {
+  const admissions = await db()
+    .collection('admissions')
+    .find({ identityVersion: { $ne: 2 } })
+    .toArray();
+  for (const admission of admissions)
+    await syncAdmissionIdentity(db(), admission, admission.responses || {});
 }
 
 async function ensureDefaultFeeTypes(now) {

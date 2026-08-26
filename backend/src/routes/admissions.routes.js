@@ -53,8 +53,8 @@ admissionsRouter.patch(
     const admissionId = id(request.params.admissionId);
     const admission = await db().collection('admissions').findOne({ _id: admissionId });
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
-    if (admission.status !== 'draft')
-      return response.status(409).json({ message: 'Only unfilled admission data can be edited.' });
+    if (!['draft', 'pending_approval'].includes(admission.status))
+      return response.status(409).json({ message: 'Approved student records cannot be edited.' });
     const update = { hasSavedData: true, updatedAt: new Date() };
     if (request.body.currentSectionId !== undefined) {
       const sectionId = String(request.body.currentSectionId || '');
@@ -148,8 +148,8 @@ admissionsRouter.post(
       .collection('admissions')
       .findOne({ _id: id(request.params.admissionId) });
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
-    if (admission.status !== 'draft')
-      return response.status(409).json({ message: 'Only unfilled admission data can be edited.' });
+    if (!['draft', 'pending_approval'].includes(admission.status))
+      return response.status(409).json({ message: 'Approved student records cannot be edited.' });
     if (!request.file) return response.status(400).json({ message: 'Choose a file to upload.' });
     const field = findField(admission.formSnapshot, request.body.fieldId);
     if (!field || !['file', 'image', 'signature'].includes(field.type))

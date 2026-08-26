@@ -38,6 +38,8 @@ export async function syncAdmissionIdentity(
     academicSession: session?.name || '',
     courseId: course?._id || null,
     courseName: course?.name || '',
+    identityVersion: 2,
+    identitySyncedAt: new Date(),
     updatedAt: new Date(),
   };
   await database.collection('admissions').updateOne({ _id: admission._id }, { $set: identity });
@@ -90,7 +92,10 @@ function allFields(form) {
 }
 
 function objectIdValue(value) {
-  return typeof value === 'string' && ObjectId.isValid(value) ? new ObjectId(value) : null;
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return typeof candidate === 'string' && ObjectId.isValid(candidate)
+    ? new ObjectId(candidate)
+    : null;
 }
 
 function studentName(fields, responses) {

@@ -23,7 +23,7 @@
       <h1>Admission form unavailable</h1>
       <p>{{ error() }}</p>
     </section>
-  } @else if (admission()?.status !== 'draft') {
+  } @else if (admission()?.status !== 'draft' && !admissionId()) {
     <section class="erp-card erp-card--padded erp-admission-submitted">
       <span><svg lucideCheck size="28" aria-hidden="true"></svg></span>
       <h1>

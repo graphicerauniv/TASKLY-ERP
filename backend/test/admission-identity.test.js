@@ -41,8 +41,8 @@ test('finds schema-driven admission identity fields and student name', () => {
   };
   const context = admissionContext(form, {
     name: 'Aarav Sharma',
-    session: sessionId.toString(),
-    course: courseId.toString(),
+    session: [sessionId.toString()],
+    course: [courseId.toString()],
   });
   assert.equal(context.studentName, 'Aarav Sharma');
   assert.ok(context.sessionValueId.equals(sessionId));

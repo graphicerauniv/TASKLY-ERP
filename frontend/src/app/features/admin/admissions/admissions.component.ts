@@ -39,6 +39,7 @@ export class AdmissionsComponent {
     { id: 'view', label: 'View details', icon: 'view' },
   ];
   readonly pendingActions: CompactActionItem[] = [
+    { id: 'edit', label: 'Edit admission', icon: 'edit' },
     { id: 'approve', label: 'Approve student', icon: 'check' },
     { id: 'view', label: 'View details', icon: 'view' },
   ];

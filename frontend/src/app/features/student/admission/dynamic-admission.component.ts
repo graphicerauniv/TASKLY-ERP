@@ -306,10 +306,12 @@ export class DynamicAdmissionComponent implements OnInit {
     return (entry || this.admission()?.responses || {})[field.id];
   }
   setValue(field: FormField, value: unknown, entry?: Record<string, unknown>, entryIndex?: number) {
-    if (entry) entry[field.id] = value;
+    const normalizedValue =
+      field.type === 'dropdown' && Array.isArray(value) ? (value[0] ?? '') : value;
+    if (entry) entry[field.id] = normalizedValue;
     else {
       const admission = this.admission();
-      if (admission) admission.responses[field.id] = value;
+      if (admission) admission.responses[field.id] = normalizedValue;
     }
     this.admission.update((v) => (v ? structuredClone(v) : v));
     this.dirty.set(true);
@@ -473,7 +475,11 @@ export class DynamicAdmissionComponent implements OnInit {
         ).subscribe({
           next: ({ item }) => {
             this.admission.set(item);
-            this.message.set('Application submitted successfully.');
+            this.message.set(
+              this.admissionId()
+                ? 'Student record updated successfully.'
+                : 'Application submitted successfully.',
+            );
             localStorage.removeItem(this.storageKey());
             this.saving.set(false);
           },
