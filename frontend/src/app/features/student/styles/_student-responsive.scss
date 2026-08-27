@@ -84,6 +84,7 @@
     .student-page__container {
       min-height: calc(100dvh - var(--student-mobile-header-height));
       padding: var(--student-space-4) var(--student-space-3);
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
     }
 
     .student-dashboard-placeholder {

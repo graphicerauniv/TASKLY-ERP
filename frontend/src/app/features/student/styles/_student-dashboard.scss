@@ -61,9 +61,9 @@
     position: absolute;
     z-index: 1;
     top: 50%;
-    right: 0;
+    right: 2%;
     display: block;
-    width: min(44%, 590px);
+    width: min(36%, 470px);
     height: auto;
     clip-path: inset(0 0 0 16%);
     object-fit: contain;
@@ -118,7 +118,22 @@
       color-mix(in srgb, var(--student-module-accent) 22%, var(--student-color-border));
     border-radius: 16px;
     color: var(--student-color-text);
-    background: var(--student-module-background);
+    background:
+      radial-gradient(
+        98px 82px at 0% 0%,
+        color-mix(in srgb, var(--student-module-accent) 34%, white) 0 44%,
+        transparent 45%
+      ),
+      radial-gradient(
+        120px 90px at 100% 100%,
+        color-mix(in srgb, var(--student-module-accent) 26%, white) 0 42%,
+        transparent 43%
+      ),
+      linear-gradient(
+        115deg,
+        color-mix(in srgb, var(--student-module-background) 92%, white),
+        color-mix(in srgb, var(--student-module-background) 72%, white)
+      );
     box-shadow: 0 2px 6px color-mix(in srgb, var(--student-color-text) 5%, transparent);
     isolation: isolate;
     transition:
@@ -130,25 +145,30 @@
   .student-module-card::before,
   .student-module-card::after {
     position: absolute;
-    z-index: -1;
-    width: 92px;
-    height: 92px;
-    border-radius: 48% 52% 62% 38%;
-    background: color-mix(in srgb, var(--student-module-accent) 68%, white);
+    z-index: 0;
+    width: 118px;
+    height: 96px;
+    border-radius: 54% 46% 58% 42%;
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--student-module-accent) 42%, white),
+        color-mix(in srgb, var(--student-module-accent) 18%, transparent)
+      );
     content: '';
-    opacity: 0.42;
+    opacity: 0.5;
     pointer-events: none;
   }
 
   .student-module-card::before {
-    top: -56px;
-    left: -30px;
+    top: -54px;
+    left: -42px;
     transform: rotate(24deg);
   }
 
   .student-module-card::after {
-    right: -44px;
-    bottom: -62px;
+    right: -52px;
+    bottom: -58px;
     transform: rotate(-22deg);
   }
 
@@ -745,10 +765,6 @@
 
 @media (max-width: 767px) {
   [data-portal='student'] {
-    .student-page__container {
-      padding-bottom: calc(196px + env(safe-area-inset-bottom));
-    }
-
     .student-dashboard {
       gap: var(--student-space-4);
     }
