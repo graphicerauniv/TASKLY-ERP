@@ -1,0 +1,186 @@
+import { Injectable, inject } from '@angular/core';
+import { catchError, forkJoin, map, of } from 'rxjs';
+import { ApiService } from '../../../../core/api.service';
+import { FeePayment, StudentFeeLedger, StudentSession } from '../../../../core/models';
+import { FEE_SERVICE_CARDS } from '../config/fee-service.config';
+import { FeeActivityViewModel, FeeDueState, FeeHeadDetailViewModel, FeeLedgerDetailViewModel, FeeStatusViewModel, MoneyValue, StudentFeeContextViewModel, StudentFeeDashboardViewModel, StudentFeeWorkspaceViewModel } from '../models/student-fee-dashboard.models';
+
+const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+
+@Injectable({ providedIn: 'root' })
+export class StudentFeesFacade {
+  private readonly api = inject(ApiService);
+
+  load(token: string, storedStudent: StudentSession | null) {
+    const fees$ = this.api.studentFees(token).pipe(
+      map((value) => ({ ok: true as const, value })),
+      catchError(() => of({ ok: false as const, value: null })),
+    );
+    const payments$ = this.api.studentPaymentHistory(token).pipe(
+      map((value) => ({ ok: true as const, value })),
+      catchError(() => of({ ok: false as const, value: null })),
+    );
+    return forkJoin({ fees: fees$, payments: payments$ }).pipe(
+      map(({ fees, payments }) => this.toViewModel(fees.value?.items ?? [], payments.value?.items ?? [], fees.value?.student ?? storedStudent, fees.ok, payments.ok)),
+    );
+  }
+
+  loadWorkspace(token: string, storedStudent: StudentSession | null) {
+    const fees$ = this.api.studentFees(token).pipe(
+      map((value) => ({ ok: true as const, value })),
+      catchError(() => of({ ok: false as const, value: null })),
+    );
+    const payments$ = this.api.studentPaymentHistory(token).pipe(
+      map((value) => ({ ok: true as const, value })),
+      catchError(() => of({ ok: false as const, value: null })),
+    );
+    return forkJoin({ fees: fees$, payments: payments$ }).pipe(
+      map(({ fees, payments }) => {
+        const student = fees.value?.student ?? storedStudent;
+        if (!fees.ok) return this.workspaceLoading(student, 'error', 'We could not load your fee records. Please try again.');
+        const ledgers = uniqueLedgers(fees.value?.items ?? []).map(toLedgerDetail);
+        return {
+          state: 'ready' as const,
+          errorMessage: payments.ok ? null : 'Fee records are available, but payment history is temporarily unavailable.',
+          student: feeContext(student),
+          ledgers,
+          razorpayEnabled: payments.value?.razorpayEnabled ?? false,
+          source: 'backend' as const,
+          loadedAt: new Date().toISOString(),
+        } satisfies StudentFeeWorkspaceViewModel;
+      }),
+    );
+  }
+
+  workspaceLoading(storedStudent: StudentSession | null, state: 'loading' | 'error' = 'loading', errorMessage: string | null = null): StudentFeeWorkspaceViewModel {
+    return { state, errorMessage, student: feeContext(storedStudent), ledgers: [], razorpayEnabled: false, source: 'unavailable', loadedAt: null };
+  }
+
+  loading(storedStudent: StudentSession | null): StudentFeeDashboardViewModel {
+    return this.base(storedStudent, 'loading', 'loading');
+  }
+
+  private toViewModel(ledgers: StudentFeeLedger[], payments: FeePayment[], student: StudentSession | null, feesOk: boolean, paymentsOk: boolean): StudentFeeDashboardViewModel {
+    const unique = [...new Map(ledgers.map((ledger) => [ledger._id, ledger])).values()];
+    const total = sumMoney(unique.map((ledger) => ledger.totalAmount));
+    const paid = sumMoney(unique.map((ledger) => ledger.paidAmount));
+    const balance = sumMoney(unique.map((ledger) => Math.max(0, ledger.balanceAmount)));
+    const nextDueDate = earliestDueDate(unique);
+    const academic = unique.find((ledger) => ledger.kind === 'academic') ?? null;
+    const hostel = unique.find((ledger) => ledger.kind === 'hostel') ?? null;
+    return {
+      ...this.base(student, feesOk ? 'ready' : 'error', paymentsOk ? 'ready' : 'error'),
+      summary: {
+        totalFee: feesOk ? money(total) : null,
+        paidAmount: feesOk ? money(paid) : null,
+        outstandingAmount: feesOk ? money(balance) : null,
+        nextDueDate,
+        dueState: dueState(balance, nextDueDate),
+      },
+      academicFee: feesOk ? feeStatus(academic, 'academic') : null,
+      hostelFee: feesOk ? feeStatus(hostel, 'hostel') : null,
+      recentActivity: paymentsOk ? activities(payments, unique) : [],
+      lastUpdatedAt: new Date().toISOString(),
+    };
+  }
+
+  private base(student: StudentSession | null, feeState: StudentFeeDashboardViewModel['feeState'], activityState: StudentFeeDashboardViewModel['activityState']): StudentFeeDashboardViewModel {
+    const period = student?.feeFrequency === 'semester' ? `Semester ${student.currentSemester ?? '—'}` : `Year ${student?.currentAcademicYear ?? '—'}`;
+    return {
+      student: { name: student?.name ?? null, studentId: student?.studentId ?? null, courseName: student?.courseName ?? null, academicSession: student?.academicSession ?? null, currentPeriod: student ? period : null },
+      summary: { totalFee: null, paidAmount: null, outstandingAmount: null, nextDueDate: null, dueState: 'unknown' },
+      services: [...FEE_SERVICE_CARDS], academicFee: null, hostelFee: null, recentActivity: [], feeState, activityState, lastUpdatedAt: null,
+    };
+  }
+}
+
+function feeContext(student: StudentSession | null): StudentFeeContextViewModel {
+  const period = student?.feeFrequency === 'semester' ? `Semester ${student.currentSemester ?? '—'}` : `Year ${student?.currentAcademicYear ?? '—'}`;
+  return { name: student?.name ?? null, studentId: student?.studentId ?? null, courseName: student?.courseName ?? null, academicSession: student?.academicSession ?? null, currentPeriod: student ? period : null };
+}
+
+function uniqueLedgers(ledgers: StudentFeeLedger[]): StudentFeeLedger[] {
+  return [...new Map(ledgers.map((ledger) => [ledger._id, ledger])).values()];
+}
+
+function toLedgerDetail(ledger: StudentFeeLedger): FeeLedgerDetailViewModel {
+  const rows = ledger.entries.map((entry) => toFeeHeadDetail(entry));
+  const dueDate = earliestEntryDueDate(ledger);
+  const balance = moneyOrNull(ledger.balanceAmount);
+  return {
+    id: ledger._id,
+    kind: ledger.kind,
+    title: ledger.name,
+    periodLabel: ledger.periodLabel,
+    academicSession: ledger.academicSession ?? null,
+    feeFrequency: ledger.feeFrequency,
+    currentAcademicYear: ledger.currentAcademicYear ?? null,
+    currentSemester: ledger.currentSemester ?? null,
+    dueDate,
+    charge: moneyOrNull(ledger.chargeAmount),
+    discount: moneyOrNull(ledger.discountAmount),
+    paid: moneyOrNull(ledger.paidAmount),
+    balance,
+    penalty: moneyOrNull(ledger.penaltyAmount),
+    paymentStatus: ledger.paymentStatus,
+    rows,
+    isPayable: (balance?.amount ?? 0) > 0 && ledger.status === 'active',
+    source: 'backend',
+  };
+}
+
+function toFeeHeadDetail(entry: StudentFeeLedger['entries'][number]): FeeHeadDetailViewModel {
+  const amount = moneyOrNull(entry.amount);
+  return {
+    id: entry.feeHeadId,
+    name: entry.feeHeadName,
+    category: entry.category,
+    priority: entry.priority,
+    periodLabel: entry.periodLabel,
+    dueDate: entry.dueDate || null,
+    charge: entry.category === 'discount' ? null : amount,
+    discount: entry.category === 'discount' ? amount : null,
+    paid: moneyOrNull(entry.paidAmount),
+    balance: moneyOrNull(entry.balanceAmount),
+    status: entry.status,
+    source: 'backend',
+  };
+}
+
+function moneyOrNull(amount: number | null | undefined): MoneyValue | null {
+  const normalized = Number(amount);
+  return Number.isFinite(normalized) ? money(normalized) : null;
+}
+
+function earliestEntryDueDate(ledger: StudentFeeLedger): string | null {
+  return ledger.entries
+    .filter((entry) => Number(entry.balanceAmount) > 0 && entry.dueDate)
+    .map((entry) => new Date(entry.dueDate))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .sort((first, second) => first.getTime() - second.getTime())[0]
+    ?.toISOString() ?? null;
+}
+
+function money(amount: number): MoneyValue { return { amount, formatted: INR.format(amount) }; }
+function sumMoney(values: number[]): number { return Number((values.reduce((sum, value) => sum + Math.round(Number(value || 0) * 100), 0) / 100).toFixed(2)); }
+function earliestDueDate(ledgers: StudentFeeLedger[]): string | null {
+  const dates = ledgers.flatMap((ledger) => ledger.entries).filter((entry) => Number(entry.balanceAmount) > 0 && entry.dueDate).map((entry) => new Date(entry.dueDate)).filter((date) => !Number.isNaN(date.getTime())).sort((a, b) => a.getTime() - b.getTime());
+  return dates[0]?.toISOString() ?? null;
+}
+function dueState(balance: number, dueDate: string | null): FeeDueState {
+  if (balance <= 0) return 'paid';
+  if (!dueDate) return 'unknown';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate); due.setHours(0, 0, 0, 0);
+  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+  return days < 0 ? 'overdue' : days <= 7 ? 'due-soon' : 'upcoming';
+}
+function feeStatus(ledger: StudentFeeLedger | null, kind: 'academic' | 'hostel'): FeeStatusViewModel {
+  if (!ledger) return { kind, title: kind === 'academic' ? 'Academic Fee' : 'Hostel Fee', context: kind === 'hostel' ? 'No hostel fee is currently assigned.' : 'No academic fee is currently assigned.', status: 'not-assigned', amount: null, image: `/assets/student/dashboard/modules/${kind === 'academic' ? 'academics' : 'hostel'}.webp` };
+  return { kind, title: ledger.name, context: kind === 'hostel' ? [ledger.hostelName, ledger.roomNumber ? `Room ${ledger.roomNumber}` : null].filter(Boolean).join(' · ') || ledger.periodLabel : `${ledger.periodLabel} · ${ledger.academicSession}`, status: ledger.paymentStatus, amount: money(Math.max(0, Number(ledger.balanceAmount))), image: `/assets/student/dashboard/modules/${kind === 'academic' ? 'academics' : 'hostel'}.webp` };
+}
+function activities(payments: FeePayment[], ledgers: StudentFeeLedger[]): FeeActivityViewModel[] {
+  const items: FeeActivityViewModel[] = payments.map((payment) => ({ id: payment._id, label: payment.status === 'paid' ? `Payment verified${payment.receiptNumber ? ` · ${payment.receiptNumber}` : ''}` : payment.status === 'failed' ? 'Payment failed' : 'Payment pending', date: payment.paidAt || payment.createdAt || null, state: payment.status === 'paid' ? 'success' : payment.status === 'failed' ? 'danger' : 'warning' }));
+  if (!items.length && ledgers[0]?.createdAt) items.push({ id: `ledger-${ledgers[0]._id}`, label: 'Current fee structure available', date: ledgers[0].createdAt, state: 'info' });
+  return items.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()).slice(0, 3);
+}
