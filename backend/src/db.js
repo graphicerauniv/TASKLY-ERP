@@ -4,33 +4,26 @@ import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-08-27-v3';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-08-27-v3';
-const PREVIOUS_SCHEMA_VERSION = 'postgres-domain-schema-2026-08-27-v2';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-08-28-v4';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-08-28-v4';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
     database = new PostgresDocumentDatabase(config.databaseUrl);
     try {
       await database.connect();
-      const upgradingExistingDatabase = await database.hasRuntimeMigration(
-        PREVIOUS_SCHEMA_VERSION,
-      );
-      const changedTables = upgradingExistingDatabase
-        ? ['feePayments', 'studentProgressions']
-        : undefined;
-      if (await database.prepareSchema(DATABASE_TABLE_VERSION, changedTables)) {
-        console.log(
-          upgradingExistingDatabase
-            ? 'Applied incremental student progression tables.'
-            : 'Applied the complete PostgreSQL domain schema.',
-        );
+      const repairedCollections = await database.repairSchema();
+      if (repairedCollections.length)
+        console.log(`Repaired PostgreSQL schema: ${repairedCollections.join(', ')}.`);
+      if (!(await database.hasRuntimeMigration(DATABASE_TABLE_VERSION))) {
         await database.markRuntimeMigration(DATABASE_TABLE_VERSION);
       }
-      if (!(await database.hasRuntimeMigration(DATABASE_INDEX_VERSION))) {
+      if (
+        repairedCollections.length ||
+        !(await database.hasRuntimeMigration(DATABASE_INDEX_VERSION))
+      ) {
         console.log('Checking PostgreSQL indexes and data migrations…');
-        if (upgradingExistingDatabase) await ensureStudentProgressionIndexes(database);
-        else await ensureIndexes(database);
+        await ensureIndexes(database);
         await database.markRuntimeMigration(DATABASE_INDEX_VERSION);
         console.log('PostgreSQL indexes are ready.');
       }
@@ -43,18 +36,6 @@ export async function connectDatabase() {
       await delay(attempt * 1_000);
     }
   }
-}
-
-async function ensureStudentProgressionIndexes(databaseInstance) {
-  await databaseInstance
-    .collection('studentProgressions')
-    .createIndex(
-      { studentAdmissionId: 1, status: 1 },
-      { unique: true, partialFilterExpression: { status: 'pending' } },
-    );
-  await databaseInstance
-    .collection('studentProgressions')
-    .createIndex({ mode: 1, status: 1, academicSession: 1, toAcademicYear: 1, toSemester: 1 });
 }
 
 function transientDatabaseError(error) {
@@ -103,91 +84,39 @@ async function ensureIndexes(databaseInstance) {
   await databaseInstance
     .collection('studentFeeLedgers')
     .dropIndex('erp_studentfeeledgers_a13db7a69b67');
-  await Promise.all([
-    databaseInstance.collection('admins').createIndex({ email: 1 }, { unique: true }),
-    databaseInstance.collection('masterTypes').createIndex({ slug: 1 }, { unique: true }),
-    databaseInstance.collection('masterValues').createIndex({ typeSlug: 1, name: 1, parentId: 1 }),
-    databaseInstance.collection('forms').createIndex({ slug: 1 }, { unique: true }),
-    databaseInstance.collection('admissions').createIndex({ formId: 1, createdAt: -1 }),
-    databaseInstance
-      .collection('admissions')
-      .createIndex({ studentId: 1 }, { unique: true, sparse: true }),
-    databaseInstance.collection('admissions').createIndex({ status: 1, updatedAt: -1 }),
-    databaseInstance.collection('hostels').createIndex({ code: 1 }, { unique: true }),
-    databaseInstance.collection('hostels').createIndex({ name: 1 }),
-    databaseInstance
-      .collection('hostelBlocks')
-      .createIndex({ hostelId: 1, name: 1 }, { unique: true }),
-    databaseInstance
-      .collection('hostelFloors')
-      .createIndex({ hostelId: 1, name: 1 }, { unique: true }),
-    databaseInstance
-      .collection('hostelRooms')
-      .createIndex({ hostelId: 1, roomNumber: 1 }, { unique: true }),
-    databaseInstance
-      .collection('hostelRoomConfigurations')
-      .createIndex({ roomId: 1, academicSession: 1 }, { unique: true }),
-    databaseInstance
-      .collection('hostelAllocations')
-      .createIndex(
-        { studentAdmissionId: 1, academicSession: 1 },
-        { unique: true, partialFilterExpression: { status: 'active' } },
-      ),
-    databaseInstance
-      .collection('hostelAllocations')
-      .createIndex(
-        { roomId: 1, bedNumber: 1, academicSession: 1 },
-        { unique: true, partialFilterExpression: { status: 'active' } },
-      ),
-    databaseInstance.collection('feeBooks').createIndex({ code: 1 }, { unique: true }),
-    databaseInstance
-      .collection('feeHeads')
-      .createIndex({ bookId: 1, normalizedName: 1 }, { unique: true }),
-    databaseInstance
-      .collection('hostelFees')
-      .createIndex(
-        { bookId: 1, hostelId: 1, seater: 1, roomType: 1, feeHeadId: 1, frequency: 1 },
-        { unique: true },
-      ),
-    databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1 }),
-    databaseInstance
-      .collection('courseFees')
-      .createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),
-    databaseInstance.collection('courseFees').createIndex({ importPreviewId: 1 }),
-    databaseInstance
-      .collection('studentFeeLedgers')
-      .createIndex(
-        { studentAdmissionId: 1, feeBookId: 1, kind: 1, periodKey: 1 },
-        { unique: true, partialFilterExpression: { status: 'active' } },
-      ),
-    databaseInstance
-      .collection('studentFeeLedgers')
-      .createIndex({ studentAdmissionId: 1, status: 1, kind: 1 }),
-    databaseInstance
-      .collection('feeImportPreviews')
-      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-    databaseInstance
-      .collection('feePayments')
-      .createIndex({ razorpayOrderId: 1 }, { unique: true }),
-    databaseInstance
-      .collection('feePayments')
-      .createIndex({ razorpayPaymentId: 1 }, { unique: true, sparse: true }),
-    databaseInstance
-      .collection('feePayments')
-      .createIndex({ receiptNumber: 1 }, { unique: true, sparse: true }),
-    databaseInstance
-      .collection('feePayments')
-      .createIndex({ studentAdmissionId: 1, createdAt: -1 }),
-    databaseInstance
-      .collection('studentProgressions')
-      .createIndex(
-        { studentAdmissionId: 1, status: 1 },
-        { unique: true, partialFilterExpression: { status: 'pending' } },
-      ),
-    databaseInstance
-      .collection('studentProgressions')
-      .createIndex({ mode: 1, status: 1, academicSession: 1, toAcademicYear: 1, toSemester: 1 }),
-  ]);
+  const indexOperations = [
+    () => databaseInstance.collection('admins').createIndex({ email: 1 }, { unique: true }),
+    () => databaseInstance.collection('masterTypes').createIndex({ slug: 1 }, { unique: true }),
+    () => databaseInstance.collection('masterValues').createIndex({ typeSlug: 1, name: 1, parentId: 1 }),
+    () => databaseInstance.collection('forms').createIndex({ slug: 1 }, { unique: true }),
+    () => databaseInstance.collection('admissions').createIndex({ formId: 1, createdAt: -1 }),
+    () => databaseInstance.collection('admissions').createIndex({ studentId: 1 }, { unique: true, sparse: true }),
+    () => databaseInstance.collection('admissions').createIndex({ status: 1, updatedAt: -1 }),
+    () => databaseInstance.collection('hostels').createIndex({ code: 1 }, { unique: true }),
+    () => databaseInstance.collection('hostels').createIndex({ name: 1 }),
+    () => databaseInstance.collection('hostelBlocks').createIndex({ hostelId: 1, name: 1 }, { unique: true }),
+    () => databaseInstance.collection('hostelFloors').createIndex({ hostelId: 1, name: 1 }, { unique: true }),
+    () => databaseInstance.collection('hostelRooms').createIndex({ hostelId: 1, roomNumber: 1 }, { unique: true }),
+    () => databaseInstance.collection('hostelRoomConfigurations').createIndex({ roomId: 1, academicSession: 1 }, { unique: true }),
+    () => databaseInstance.collection('hostelAllocations').createIndex({ studentAdmissionId: 1, academicSession: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
+    () => databaseInstance.collection('hostelAllocations').createIndex({ roomId: 1, bedNumber: 1, academicSession: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
+    () => databaseInstance.collection('feeBooks').createIndex({ code: 1 }, { unique: true }),
+    () => databaseInstance.collection('feeHeads').createIndex({ bookId: 1, normalizedName: 1 }, { unique: true }),
+    () => databaseInstance.collection('hostelFees').createIndex({ bookId: 1, hostelId: 1, seater: 1, roomType: 1, feeHeadId: 1, frequency: 1 }, { unique: true }),
+    () => databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1 }),
+    () => databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),
+    () => databaseInstance.collection('courseFees').createIndex({ importPreviewId: 1 }),
+    () => databaseInstance.collection('studentFeeLedgers').createIndex({ studentAdmissionId: 1, feeBookId: 1, kind: 1, periodKey: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
+    () => databaseInstance.collection('studentFeeLedgers').createIndex({ studentAdmissionId: 1, status: 1, kind: 1 }),
+    () => databaseInstance.collection('feeImportPreviews').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    () => databaseInstance.collection('feePayments').createIndex({ razorpayOrderId: 1 }, { unique: true }),
+    () => databaseInstance.collection('feePayments').createIndex({ razorpayPaymentId: 1 }, { unique: true, sparse: true }),
+    () => databaseInstance.collection('feePayments').createIndex({ receiptNumber: 1 }, { unique: true, sparse: true }),
+    () => databaseInstance.collection('feePayments').createIndex({ studentAdmissionId: 1, createdAt: -1 }),
+    () => databaseInstance.collection('studentProgressions').createIndex({ studentAdmissionId: 1, status: 1 }, { unique: true, partialFilterExpression: { status: 'pending' } }),
+    () => databaseInstance.collection('studentProgressions').createIndex({ mode: 1, status: 1, academicSession: 1, toAcademicYear: 1, toSemester: 1 }),
+  ];
+  for (const operation of indexOperations) await operation();
 }
 
 async function migrateFeePeriods(databaseInstance) {

@@ -234,6 +234,37 @@ async function createDomainTables(pool, collectionNames) {
   }
 }
 
+async function collectionsWithSchemaDrift(pool, collectionNames) {
+  const names = collectionNames?.length ? collectionNames : Object.keys(DOMAIN_TABLES);
+  const definitions = names.map((name) => {
+    const definition = DOMAIN_TABLES[name];
+    if (!definition) throw new Error(`Unknown PostgreSQL collection: ${name}`);
+    return { name, definition };
+  });
+  const result = await pool.query(
+    `select table_name, column_name
+     from information_schema.columns
+     where table_schema = current_schema()
+       and table_name = any($1::text[])`,
+    [definitions.map(({ definition }) => definition.table)],
+  );
+  const columnsByTable = new Map();
+  for (const row of result.rows) {
+    const columns = columnsByTable.get(row.table_name) || new Set();
+    columns.add(row.column_name);
+    columnsByTable.set(row.table_name, columns);
+  }
+  return definitions
+    .filter(({ definition }) => {
+      const columns = columnsByTable.get(definition.table);
+      if (!columns) return true;
+      return ['id', 'document', 'migrated_at', 'updated_at', ...definition.columns.map(snakeCase)].some(
+        (column) => !columns.has(column),
+      );
+    })
+    .map(({ name }) => name);
+}
+
 function tableForCollection(name) {
   const definition = DOMAIN_TABLES[name];
   if (!definition) throw new Error(`Unknown PostgreSQL collection: ${name}`);
@@ -274,6 +305,12 @@ export class PostgresDocumentDatabase {
     if (await this.hasRuntimeMigration(name)) return false;
     await createDomainTables(this.pool, collectionNames);
     return true;
+  }
+
+  async repairSchema(collectionNames) {
+    const driftedCollections = await collectionsWithSchemaDrift(this.pool, collectionNames);
+    if (driftedCollections.length) await createDomainTables(this.pool, driftedCollections);
+    return driftedCollections;
   }
 
   async markRuntimeMigration(name) {
