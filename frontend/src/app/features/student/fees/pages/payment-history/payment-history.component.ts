@@ -6,15 +6,16 @@ import { StudentMobileBottomNavComponent } from '../../../dashboard/components/s
 import { StudentSessionService } from '../../../shared/services/student-session.service';
 import { StudentFeesFacade } from '../../data-access/student-fees.facade';
 import { StudentFeeWorkspaceViewModel, StudentPaymentRecordViewModel } from '../../models/student-fee-dashboard.models';
+import { LucideCheckCircle2, LucideClock3, LucideDownload, LucideDynamicIcon, LucideInfo, LucideSearch, LucideXCircle } from '@lucide/angular';
 
 type HistoryFilter = 'all' | StudentPaymentRecordViewModel['status'];
 
 @Component({
   selector: 'erp-payment-history',
   standalone: true,
-  imports: [DatePipe, RouterLink, StudentMobileBottomNavComponent],
+  imports: [DatePipe, RouterLink, StudentMobileBottomNavComponent, LucideCheckCircle2, LucideClock3, LucideDownload, LucideDynamicIcon, LucideInfo, LucideSearch, LucideXCircle],
   templateUrl: './payment-history.component.html',
-  styleUrl: '../../../styles/_student-fees.scss',
+  styleUrl: '../../../styles/_student-fee-final-pages.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentHistoryComponent implements OnInit {

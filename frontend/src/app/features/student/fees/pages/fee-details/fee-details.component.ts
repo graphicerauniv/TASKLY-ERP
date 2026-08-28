@@ -7,19 +7,14 @@ import { StudentSessionService } from '../../../shared/services/student-session.
 import { StudentFeesFacade } from '../../data-access/student-fees.facade';
 import { FeeLedgerDetailViewModel, StudentFeeWorkspaceViewModel } from '../../models/student-fee-dashboard.models';
 import {
-  LucideBuilding2,
-  LucideGraduationCap,
   LucideDynamicIcon,
   LucideReceiptText,
-  LucideScale,
-  LucideShieldCheck,
-  LucideTags,
   LucideWalletCards,
 } from '@lucide/angular';
 
 @Component({
   selector: 'erp-fee-details',
-  imports: [DatePipe, RouterLink, StudentMobileBottomNavComponent, LucideDynamicIcon, LucideBuilding2, LucideGraduationCap, LucideReceiptText, LucideScale, LucideShieldCheck, LucideTags, LucideWalletCards],
+  imports: [DatePipe, RouterLink, StudentMobileBottomNavComponent, LucideDynamicIcon, LucideReceiptText, LucideWalletCards],
   templateUrl: './fee-details.component.html',
   styleUrl: '../../../styles/_student-fees.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

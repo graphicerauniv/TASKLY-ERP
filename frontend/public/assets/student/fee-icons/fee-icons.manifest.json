@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "format": "webp",
+  "transparent": true,
+  "icons": {
+    "payFees": {
+      "path": "compact/pay-fees.webp",
+      "role": "service",
+      "alt": "Pay fees",
+      "displayPx": 52
+    },
+    "feeDetails": {
+      "path": "compact/fee-details.webp",
+      "role": "service",
+      "alt": "Fee details",
+      "displayPx": 52
+    },
+    "paymentReceipts": {
+      "path": "compact/payment-receipts.webp",
+      "role": "service",
+      "alt": "Payment receipts",
+      "displayPx": 52
+    },
+    "paymentHistory": {
+      "path": "compact/payment-history.webp",
+      "role": "service",
+      "alt": "Payment history",
+      "displayPx": 52
+    },
+    "feeChallan": {
+      "path": "compact/fee-challan.webp",
+      "role": "service",
+      "alt": "Fee challan",
+      "displayPx": 52
+    },
+    "feeInstallments": {
+      "path": "compact/fee-installments.webp",
+      "role": "service",
+      "alt": "Fee installments",
+      "displayPx": 52
+    },
+    "scholarshipDetails": {
+      "path": "compact/scholarship-details.webp",
+      "role": "service",
+      "alt": "Scholarship details",
+      "displayPx": 52
+    },
+    "feeSupport": {
+      "path": "compact/fee-support.webp",
+      "role": "service",
+      "alt": "Fee support",
+      "displayPx": 52
+    },
+    "grossTotalFee": {
+      "path": "compact/gross-total-fee.webp",
+      "role": "kpi",
+      "alt": "",
+      "displayPx": 44
+    },
+    "outstandingDue": {
+      "path": "compact/outstanding-due.webp",
+      "role": "kpi",
+      "alt": "",
+      "displayPx": 44
+    },
+    "latestPayment": {
+      "path": "compact/latest-payment.webp",
+      "role": "kpi",
+      "alt": "",
+      "displayPx": 44
+    },
+    "discounts": {
+      "path": "compact/discounts.webp",
+      "role": "kpi",
+      "alt": "",
+      "displayPx": 44
+    },
+    "noReceipts": {
+      "path": "empty-states/no-receipts.webp",
+      "role": "empty-state",
+      "alt": "",
+      "displayPx": 156
+    },
+    "noPaymentHistory": {
+      "path": "empty-states/no-payment-history.webp",
+      "role": "empty-state",
+      "alt": "",
+      "displayPx": 156
+    },
+    "noChallan": {
+      "path": "empty-states/no-challan.webp",
+      "role": "empty-state",
+      "alt": "",
+      "displayPx": 156
+    },
+    "noInstallments": {
+      "path": "empty-states/no-installments.webp",
+      "role": "empty-state",
+      "alt": "",
+      "displayPx": 156
+    },
+    "noScholarship": {
+      "path": "empty-states/no-scholarship.webp",
+      "role": "empty-state",
+      "alt": "",
+      "displayPx": 156
+    },
+    "noSupportRequests": {
+      "path": "empty-states/no-support-requests.webp",
+      "role": "empty-state",
+      "alt": "",
+      "displayPx": 156
+    }
+  }
+}

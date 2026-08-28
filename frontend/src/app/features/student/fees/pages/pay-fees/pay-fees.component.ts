@@ -8,11 +8,11 @@ import { StudentSessionService } from '../../../shared/services/student-session.
 import { RazorpayCheckoutService, RazorpayPaymentResult } from '../../data-access/razorpay-checkout.service';
 import { StudentFeesFacade } from '../../data-access/student-fees.facade';
 import { FeeLedgerDetailViewModel, StudentFeeWorkspaceViewModel } from '../../models/student-fee-dashboard.models';
-import { LucideCheckCircle2, LucideInfo, LucideLockKeyhole, LucideRefreshCw, LucideReceiptText, LucideShieldCheck, LucideIndianRupee } from '@lucide/angular';
+import { LucideCheckCircle2, LucideInfo, LucideRefreshCw, LucideReceiptText, LucideShieldCheck, LucideIndianRupee } from '@lucide/angular';
 
 @Component({
   selector: 'erp-pay-fees',
-  imports: [FormsModule, RouterLink, StudentMobileBottomNavComponent, LucideCheckCircle2, LucideInfo, LucideLockKeyhole, LucideRefreshCw, LucideReceiptText, LucideShieldCheck, LucideIndianRupee],
+  imports: [FormsModule, RouterLink, StudentMobileBottomNavComponent, LucideCheckCircle2, LucideInfo, LucideRefreshCw, LucideReceiptText, LucideShieldCheck, LucideIndianRupee],
   templateUrl: './pay-fees.component.html',
   styleUrl: '../../../styles/_student-fees.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

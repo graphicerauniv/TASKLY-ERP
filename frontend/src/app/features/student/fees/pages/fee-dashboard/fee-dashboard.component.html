@@ -27,19 +27,19 @@
   } @else {
     <section class="student-fees-summary" aria-label="Fee summary">
       <article class="student-fees-stat student-fees-stat--blue">
-        <img src="/assets/student/dashboard/modules/documents.webp" alt="" width="64" height="64" />
+        <img src="/assets/student/fee-icons/compact/gross-total-fee.webp" alt="" width="64" height="64" />
         <div><span>Total Fee</span><strong>{{ vm.summary.totalFee?.formatted || 'Unavailable' }}</strong></div>
       </article>
       <article class="student-fees-stat student-fees-stat--green">
-        <img src="/assets/student/dashboard/modules/fees.webp" alt="" width="64" height="64" />
+        <img src="/assets/student/fee-icons/compact/payment-receipts.webp" alt="" width="64" height="64" />
         <div><span>Paid Amount</span><strong>{{ vm.summary.paidAmount?.formatted || 'Unavailable' }}</strong></div>
       </article>
       <article class="student-fees-stat student-fees-stat--orange">
-        <span class="student-fees-stat__symbol">!</span>
+        <img src="/assets/student/fee-icons/compact/outstanding-due.webp" alt="" width="64" height="64" />
         <div><span>Outstanding</span><strong>{{ vm.summary.outstandingAmount?.formatted || 'Unavailable' }}</strong></div>
       </article>
       <article class="student-fees-stat student-fees-stat--violet">
-        <img src="/assets/student/dashboard/modules/attendance.webp" alt="" width="64" height="64" />
+        <img src="/assets/student/fee-icons/compact/latest-payment.webp" alt="" width="64" height="64" />
         <div><span>Next Due Date</span><strong>{{ vm.summary.nextDueDate ? (vm.summary.nextDueDate | date: 'dd MMM yyyy') : 'Not scheduled' }}</strong>
           @if (vm.summary.dueState === 'overdue') { <small>Overdue</small> }
         </div>
@@ -51,7 +51,7 @@
         @if (vm.summary.dueState === 'overdue') { <em>Overdue</em> }
         <small>{{ vm.summary.nextDueDate ? 'Due ' + (vm.summary.nextDueDate | date: 'dd MMM yyyy') : 'No due date assigned' }}</small>
       </div>
-      <img src="/assets/student/dashboard/modules/fees.webp" alt="" width="130" height="130" />
+      <img src="/assets/student/fee-icons/compact/pay-fees.webp" alt="" width="130" height="130" />
       <dl><div><dt>Total Fee</dt><dd>{{ vm.summary.totalFee?.formatted || '—' }}</dd></div><div><dt>Paid</dt><dd>{{ vm.summary.paidAmount?.formatted || '—' }}</dd></div></dl>
     </section>
   }

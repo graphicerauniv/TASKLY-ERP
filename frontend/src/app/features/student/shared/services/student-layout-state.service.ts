@@ -10,7 +10,7 @@ export class StudentLayoutStateService {
   private mobileMenuTrigger: HTMLElement | null = null;
   private profileTrigger: HTMLElement | null = null;
 
-  readonly desktopSidebarExpanded = signal(false);
+  readonly desktopSidebarExpanded = signal(true);
   readonly activeOverlay = this.overlay.asReadonly();
   readonly mobileNavigationOpen = computed(() => this.overlay() === 'mobile-navigation');
   readonly profileMenuOpen = computed(() => this.overlay() === 'profile');

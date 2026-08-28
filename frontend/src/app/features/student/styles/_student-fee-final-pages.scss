@@ -1,3 +1,135 @@
 :host{display:block}.student-final-page{display:grid;gap:18px;min-width:0;padding:4px 0 24px;color:var(--student-color-text)}.final-heading{display:flex;align-items:end;justify-content:space-between;gap:20px}.final-heading h1{margin:8px 0 4px;font-size:34px;letter-spacing:-.04em}.final-heading p{margin:0;color:var(--student-color-text-secondary)}.final-back{color:var(--student-color-primary);text-decoration:none;font-weight:700}.final-context{max-width:45%;padding:11px 16px;border:1px solid var(--student-color-primary-middle);border-radius:99px;color:var(--student-color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.final-panel,.final-stat-grid article,.final-toolbar{border:1px solid var(--student-color-border);border-radius:16px;background:var(--student-color-surface);box-shadow:0 5px 18px color-mix(in srgb,var(--student-color-text) 4%,transparent)}.final-panel{padding:18px}.final-panel h2{margin:0 0 14px;font-size:19px}.final-stat-grid{display:grid;gap:16px}.final-stat-grid.three{grid-template-columns:repeat(3,1fr)}.final-stat-grid.four{grid-template-columns:repeat(4,1fr)}.final-stat-grid article{display:flex;align-items:center;gap:14px;padding:18px}.final-stat-grid small,.context-row small{display:block;color:var(--student-color-text-secondary)}.final-stat-grid strong{display:block;margin-top:5px;font-size:24px}.final-icon{display:grid;flex:0 0 58px;width:58px;height:58px;place-items:center;border-radius:50%}.final-icon svg{width:29px;height:29px}.blue{color:var(--student-color-primary);background:var(--student-color-primary-soft)}.orange{color:var(--student-color-warning);background:var(--student-color-warning-soft)}.violet{color:var(--student-color-primary-pressed);background:var(--student-color-primary-soft)}.green{color:var(--student-color-success);background:var(--student-color-success-soft)}.final-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}.final-controls label,.support-form label{display:grid;gap:7px;color:var(--student-color-text-secondary);font-size:13px}.final-controls select,.support-form select,.support-form input,.support-form textarea,.final-toolbar select{width:100%;min-height:42px;padding:9px 12px;border:1px solid var(--student-color-border);border-radius:9px;color:var(--student-color-text);background:var(--student-color-surface-raised);font:inherit}.final-table-wrap{overflow-x:auto}.final-table-wrap table{width:100%;border-collapse:collapse;font-size:13px}.final-table-wrap th{padding:11px;text-align:left;color:var(--student-color-text-secondary);background:var(--student-color-primary-subtle);font-weight:700}.final-table-wrap td{padding:0;border-bottom:1px solid var(--student-color-divider)}.final-empty{display:grid;place-items:center;gap:7px;min-height:275px;padding:20px;text-align:center}.final-empty.compact{min-height:210px}.final-empty strong{font-size:20px}.final-empty p{max-width:480px;margin:0;color:var(--student-color-text-secondary)}.final-empty a{color:var(--student-color-primary);font-weight:700;text-decoration:none}.empty-art{display:grid;width:80px;height:80px;place-items:center;border-radius:24px}.empty-art svg{width:52px;height:52px}.blue-art{color:var(--student-color-primary);background:var(--student-color-primary-soft)}.gold-art{color:var(--student-color-warning);background:var(--student-color-warning-soft)}.final-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}.context-row{display:flex;align-items:center;gap:14px}.context-row strong{font-size:17px}.context-row small+small{margin-top:3px}.metric-row{display:grid;grid-template-columns:repeat(3,1fr);margin-top:22px}.metric-row div{padding-left:14px;border-left:1px solid var(--student-color-divider);color:var(--student-color-text-secondary)}.metric-row div:first-child{padding-left:0;border:0}.metric-row strong{display:block;margin-top:6px;color:var(--student-color-text);font-size:18px}.danger-text{color:var(--student-color-danger)!important}.check-list{display:grid;gap:14px;padding:0;margin:0;list-style:none;color:var(--student-color-text-secondary)}.check-list li{display:flex;align-items:center;gap:10px}.check-list svg{width:18px;color:var(--student-color-primary-pressed)}.final-note,.final-security,.final-callout{display:flex;align-items:center;gap:13px;padding:16px;border:1px solid var(--student-color-primary-middle);border-radius:14px;background:var(--student-color-primary-subtle);color:var(--student-color-text-secondary)}.final-note svg,.final-security svg{flex:0 0 25px;color:var(--student-color-primary)}.final-toolbar{display:flex;align-items:center;gap:18px;padding:12px}.final-segment{display:flex}.final-segment button{min-height:42px;padding:0 18px;border:1px solid var(--student-color-primary-middle);color:var(--student-color-primary);background:transparent;font:inherit}.final-segment button:first-child{border-radius:9px 0 0 9px}.final-segment button:last-child{border-radius:0 9px 9px 0}.final-segment button.active{color:var(--student-color-text-inverse);background:var(--student-color-primary)}.final-toolbar label{flex:1}.status-pill{padding:10px 14px;border-radius:9px;color:var(--student-color-primary);background:var(--student-color-primary-subtle);white-space:nowrap}.fee-impact p{display:flex;justify-content:space-between;margin:18px 0;color:var(--student-color-text-secondary)}.fee-impact strong{color:var(--student-color-text)}.fee-impact hr{border:0;border-top:1px solid var(--student-color-divider)}.primary-text,.primary-text strong{color:var(--student-color-primary)!important}.violet-note{border-color:var(--student-color-primary-middle);background:var(--student-color-primary-subtle)}.violet-note svg,.violet-note b{color:var(--student-color-primary-pressed)}.violet-note a{display:inline-block;margin-top:9px;color:var(--student-color-primary-pressed);font-weight:700}.support-grid{display:grid;grid-template-columns:7fr 5fr;gap:18px}.support-form{display:grid;gap:14px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.support-form textarea{resize:vertical}.support-form small{color:var(--student-color-text-secondary)}.upload-box{display:flex;align-items:center;gap:13px;min-height:66px;padding:12px;border:1px dashed var(--student-color-primary-middle);border-radius:10px;color:var(--student-color-primary)}.upload-box input{position:absolute;width:1px;height:1px;opacity:0}.upload-box>span{display:grid;color:var(--student-color-text)}.upload-box small{color:var(--student-color-text-secondary)}.check-control{display:flex!important;grid-template-columns:none!important;align-items:center;gap:9px}.check-control input{width:18px;min-height:18px}.primary-button,.outline-button{min-height:44px;padding:0 18px;border-radius:9px;font:inherit;font-weight:700}.primary-button{border:0;color:var(--student-color-text-inverse);background:var(--student-color-primary)}.primary-button:disabled{opacity:.55}.outline-button{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--student-color-primary);color:var(--student-color-primary);background:transparent}.outline-button:disabled{opacity:.65}.form-error{margin:0;color:var(--student-color-danger);font-size:13px}.unavailable{margin:0;color:var(--student-color-text-secondary);font-size:12px}.support-aside{display:grid;align-content:start;gap:16px}.orange-list svg{color:var(--student-color-warning)}.requests h2{display:flex;align-items:center;gap:10px}.count{padding:3px 9px;border-radius:99px;color:var(--student-color-primary);background:var(--student-color-primary-subtle);font-size:12px}.request-empty{display:grid;place-items:center;gap:6px;min-height:160px;color:var(--student-color-text-secondary);text-align:center}.request-empty svg{color:var(--student-color-primary);width:32px}.request-empty strong{color:var(--student-color-text)}.request-empty p{margin:0}.final-security{font-size:13px}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:1023px){.final-stat-grid.four{grid-template-columns:repeat(2,1fr)}.final-two-col,.support-grid{grid-template-columns:1fr}.final-heading{align-items:start;flex-direction:column}.final-context{max-width:100%}}
 @media(max-width:767px){.student-final-page{gap:16px;padding:4px 0 88px}.final-heading h1{font-size:32px}.final-heading p{font-size:14px}.final-context{font-size:12px}.final-stat-grid.three{grid-template-columns:repeat(3,1fr);gap:7px}.final-stat-grid article{display:grid;justify-items:center;gap:7px;padding:12px 5px;text-align:center}.final-stat-grid strong{font-size:17px}.final-stat-grid small{font-size:11px}.final-icon{width:48px;height:48px;flex-basis:48px}.final-icon svg{width:23px}.final-panel{padding:14px}.final-controls,.form-grid{grid-template-columns:1fr;gap:12px}.final-table-wrap{overflow:visible}.schedule .final-table-wrap table{display:none}.final-empty{min-height:300px}.final-toolbar{display:grid;grid-template-columns:1fr;padding:10px}.final-toolbar label{width:100%}.final-segment button{flex:1}.metric-row{gap:8px}.metric-row div{font-size:12px}.metric-row strong{font-size:15px}.fee-impact p{margin:14px 0}.support-grid{gap:16px}.support-form{gap:12px}.final-security{font-size:12px}.request-empty{min-height:170px}}
+
+/* Shared fee subpage foundation for history and receipts */
+.student-fee-subpage{display:grid;gap:20px;min-width:0;padding:4px 0 24px;color:var(--student-color-text)}
+.student-fee-subpage__header{display:flex;align-items:end;justify-content:space-between;gap:24px}
+.student-fee-subpage__header h1{margin:8px 0 4px;color:var(--student-color-text);font-size:34px;line-height:1.05;letter-spacing:-.04em}
+.student-fee-subpage__header p{margin:0;color:var(--student-color-text-secondary)}
+.student-fee-subpage__back{color:var(--student-color-primary);font-weight:700;text-decoration:none}
+.student-fee-subpage__context{max-width:45%;padding:11px 16px;border:1px solid var(--student-color-primary-middle);border-radius:99px;color:var(--student-color-text-secondary);background:var(--student-color-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.student-fee-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.student-fee-stat-grid--four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.student-fee-stat-card{display:flex;min-width:0;min-height:106px;align-items:center;gap:15px;padding:16px;border:1px solid var(--student-color-border);border-radius:16px;background:var(--student-color-surface);box-shadow:0 4px 16px color-mix(in srgb,var(--student-color-text) 5%,transparent)}
+.student-fee-stat-card__icon{width:58px;height:58px;flex:0 0 58px;object-fit:contain}
+.student-fee-stat-card div{display:grid;min-width:0;gap:5px}.student-fee-stat-card span{color:var(--student-color-text-secondary);font-size:13px}.student-fee-stat-card strong{overflow:hidden;color:var(--student-color-text);font-size:25px;letter-spacing:-.025em;text-overflow:ellipsis;white-space:nowrap}
+.student-fee-panel{min-width:0;padding:18px;border:1px solid var(--student-color-border);border-radius:16px;background:var(--student-color-surface);box-shadow:0 5px 18px color-mix(in srgb,var(--student-color-text) 4%,transparent)}
+.student-fee-toolbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.student-fee-search,.student-fee-filter{min-height:48px;padding:0 16px;border:1px solid var(--student-color-border);border-radius:14px;color:var(--student-color-text);background:var(--student-color-surface-raised);font:inherit}.student-fee-search{min-width:min(100%,280px);flex:1}.student-fee-status-pills{display:flex;gap:10px;flex-wrap:wrap}.student-fee-status-pill{border:1px solid var(--student-color-border);border-radius:999px;padding:10px 18px;color:var(--student-color-text-secondary);background:var(--student-color-surface-raised);font-weight:800;cursor:pointer}.student-fee-status-pill.is-active{border-color:var(--student-color-primary);color:var(--student-color-text-inverse);background:var(--student-color-primary)}
+.student-fee-table-wrap{overflow:auto}.student-fee-table{width:100%;min-width:840px;border-collapse:collapse}.student-fee-table th{padding:16px 20px;color:var(--student-color-text-secondary);background:var(--student-color-surface-soft);text-align:left}.student-fee-table td{padding:18px 20px;border-top:1px solid var(--student-color-divider);color:var(--student-color-text-secondary);vertical-align:middle}.student-fee-table strong{color:var(--student-color-text)}.student-fee-table small{display:block;margin-top:5px;color:var(--student-color-text-secondary)}
+.student-fee-status-chip{display:inline-flex;align-items:center;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:800;text-transform:capitalize}.student-fee-status-chip.is-successful{color:var(--student-color-success);background:var(--student-color-success-soft)}.student-fee-status-chip.is-pending{color:var(--student-color-warning);background:var(--student-color-warning-soft)}.student-fee-status-chip.is-failed{color:var(--student-color-danger);background:var(--student-color-danger-soft)}
+.student-fee-empty-state{text-align:center;padding:54px 24px}.student-fee-empty-state__image{max-width:46vw;object-fit:contain;filter:drop-shadow(0 14px 18px color-mix(in srgb,var(--student-color-primary) 14%,transparent))}.student-fee-empty-state h2{margin:18px 0 8px;color:var(--student-color-text)}.student-fee-empty-state p{margin:0;color:var(--student-color-text-secondary)}.student-fee-empty-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:22px}.student-fee-primary-action,.student-fee-outline-action{display:inline-flex;align-items:center;justify-content:center;padding:0 18px;text-decoration:none}.student-fee-primary-action{min-height:44px;border:0;border-radius:9px;color:var(--student-color-text-inverse);background:var(--student-color-primary);font-weight:800}.student-fee-outline-action{min-height:42px;border:1px solid var(--student-color-primary);border-radius:9px;color:var(--student-color-primary);background:var(--student-color-surface-raised);font-weight:700}.student-fee-process-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.student-fee-process-card{display:flex;align-items:center;gap:16px;padding:18px;border:1px solid var(--student-color-border);border-radius:16px;background:var(--student-color-surface)}.student-fee-process-card>span{display:grid;width:32px;height:32px;place-items:center;flex:0 0 32px;border-radius:99px;color:var(--student-color-text-inverse);background:var(--student-color-primary);font-weight:900}.student-fee-process-card img{width:58px;height:58px;object-fit:contain}.student-fee-process-card p{margin:5px 0 0;color:var(--student-color-text-secondary)}.student-fee-secure-note{padding:16px;border:1px solid var(--student-color-primary-middle);border-radius:14px;color:var(--student-color-text-secondary);background:var(--student-color-primary-subtle)}
+
+/* Dedicated history and receipt surfaces */
+.student-fee-history-page,
+.student-fee-receipts-page { gap: 22px; }
+.student-fee-history-page .student-fee-subpage__header,
+.student-fee-receipts-page .student-fee-subpage__header { margin-bottom: 0; }
+.student-fee-history-page .student-fee-subpage__header h1,
+.student-fee-receipts-page .student-fee-subpage__header h1 { font-size: 42px; line-height: 1.05; }
+.student-fee-history-page .student-fee-subpage__header p,
+.student-fee-receipts-page .student-fee-subpage__header p { margin-top: 10px; font-size: 16px; }
+.student-fee-history-page .student-fee-stat-card,
+.student-fee-receipts-page .student-fee-stat-card { min-height: 104px; border-color: var(--student-color-primary-middle); box-shadow: 0 12px 28px color-mix(in srgb, var(--student-color-primary) 7%, transparent); }
+.student-fee-history-page .student-fee-stat-card__icon,
+.student-fee-receipts-page .student-fee-stat-card__icon { width: 62px; height: 62px; padding: 0; border-radius: 18px; object-fit: contain; }
+.student-fee-history-page .student-fee-stat-card span,
+.student-fee-receipts-page .student-fee-stat-card span { font-size: 14px; font-weight: 600; }
+.student-fee-history-page .student-fee-stat-card strong,
+.student-fee-receipts-page .student-fee-stat-card strong { margin-top: 7px; font-size: 31px; line-height: 1; }
+.student-fee-history-page .student-fee-panel,
+.student-fee-receipts-page .student-fee-panel { padding: 0; border-color: var(--student-color-primary-middle); border-radius: 18px; box-shadow: 0 16px 34px color-mix(in srgb, var(--student-color-primary) 6%, transparent); }
+.student-fee-history-page .student-fee-toolbar,
+.student-fee-receipts-page .student-fee-toolbar { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; padding: 28px 42px 14px; }
+.student-fee-search-field { display: flex; grid-column: 1 / -1; min-height: 48px; align-items: center; gap: 12px; padding: 0 16px; border: 1px solid var(--student-color-primary-middle); border-radius: 13px; color: var(--student-color-text-secondary); background: var(--student-color-surface-raised); }
+.student-fee-search-field:focus-within { border-color: var(--student-color-primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--student-color-primary) 10%, transparent); }
+.student-fee-search-field .student-fee-search { min-width: 0; min-height: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.student-fee-search-field .student-fee-search:focus { outline: 0; }
+.student-fee-history-page .student-fee-filter,
+.student-fee-receipts-page .student-fee-filter { width: 100%; min-height: 48px; border-color: var(--student-color-primary-middle); border-radius: 13px; }
+.student-fee-soft-action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 0 18px; border: 1px solid var(--student-color-primary-middle); border-radius: 13px; color: var(--student-color-text-secondary); background: var(--student-color-surface-raised); font: inherit; font-weight: 700; }
+.student-fee-status-pills { align-items: center; gap: 10px; padding: 10px 42px 30px; border-bottom: 1px solid var(--student-color-divider); }
+.student-fee-status-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 18px; border-color: var(--student-color-primary-middle); font-size: 13px; }
+.student-fee-status-pill.is-active { box-shadow: 0 10px 22px color-mix(in srgb, var(--student-color-primary) 22%, transparent); }
+.student-fee-status-pill svg { flex: 0 0 auto; }
+.student-fee-table-wrap { padding: 0 28px 24px; border-top: 0; }
+.student-fee-table th { padding: 16px 14px; background: var(--student-color-primary-subtle); color: var(--student-color-text); font-size: 12px; text-transform: none; letter-spacing: 0; }
+.student-fee-table td { padding: 17px 14px; font-size: 13px; }
+.student-fee-status-chip { gap: 6px; min-width: max-content; }
+.student-fee-status-chip svg { flex: 0 0 auto; }
+.student-fee-empty-state { min-height: 430px; padding: 50px 28px 58px; }
+.student-fee-empty-state__image { width: 144px; height: 144px; }
+.student-fee-empty-state h2 { margin-top: 18px; font-size: 24px; }
+.student-fee-empty-state p { margin-top: 2px; }
+.student-fee-empty-actions { width: 100%; max-width: 100%; margin-top: 28px; }
+.student-fee-empty-actions .student-fee-primary-action { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; margin: 0; border-radius: 10px; text-decoration: none; }
+.student-fee-empty-actions .student-fee-outline-action { min-height: 42px; }
+.student-fee-process-card { border-color: var(--student-color-primary-middle); }
+.student-fee-secure-note { display: flex; align-items: center; gap: 10px; border-color: var(--student-color-primary-middle); }
+.student-fee-secure-note svg { flex: 0 0 auto; color: var(--student-color-primary); }
+
+/* Keep artwork and panels at the same restrained scale as the references. */
+.student-final-page { gap: 16px; }
+.final-heading h1 { font-size: 32px; }
+.final-stat-grid { gap: 12px; }
+.final-stat-grid article { min-height: 86px; gap: 12px; padding: 14px 16px; }
+.final-stat-grid strong { font-size: 23px; }
+.final-icon { width: 50px; height: 50px; flex-basis: 50px; }
+.final-icon svg { width: 25px; height: 25px; }
+.final-panel { padding: 16px; }
+.final-empty { min-height: 230px; padding: 18px; }
+.student-fee-process-card { min-height: 76px; padding: 13px; gap: 11px; }
+.student-fee-process-card img { width: 46px; height: 46px; }
+.fee-empty-illustration { display: block; width: 124px; height: 124px; margin-inline: auto; object-fit: contain; }
+.student-fee-history-page .student-fee-stat-card__icon,
+.student-fee-receipts-page .student-fee-stat-card__icon { width: 52px; height: 52px; }
+.student-fee-history-page .student-fee-stat-card,
+.student-fee-receipts-page .student-fee-stat-card { min-height: 90px; padding: 12px 14px; }
+.student-fee-history-page .student-fee-stat-card strong,
+.student-fee-receipts-page .student-fee-stat-card strong { font-size: 26px; }
+.student-fee-empty-state__image { width: 124px; height: 124px; }
+@media(max-width:767px){
+  .student-final-page { gap: 14px; padding-bottom: 82px; }
+  .final-heading h1 { font-size: 30px; }
+  .final-heading p { font-size: 14px; }
+  .final-stat-grid article { min-height: 78px; padding: 11px 9px; }
+  .final-stat-grid strong { font-size: 19px; }
+  .final-icon { width: 44px; height: 44px; flex-basis: 44px; }
+  .final-icon svg { width: 22px; height: 22px; }
+  .final-panel { padding: 13px; }
+  .final-empty { min-height: 240px; }
+  .student-fee-history-page .student-fee-stat-card,
+  .student-fee-receipts-page .student-fee-stat-card { min-height: 94px; padding: 10px; }
+  .student-fee-history-page .student-fee-stat-card__icon,
+  .student-fee-receipts-page .student-fee-stat-card__icon { width: 44px; height: 44px; }
+  .student-fee-history-page .student-fee-stat-card strong,
+  .student-fee-receipts-page .student-fee-stat-card strong { font-size: 22px; }
+  .student-fee-empty-state__image,.fee-empty-illustration { width: 112px; height: 112px; }
+}
+.student-fee-installments-page .empty-art,
+[aria-labelledby='scholarship-title'] .empty-art { width: 156px; height: 156px; background: transparent; }
+.student-fee-installments-page .empty-art svg,
+[aria-labelledby='scholarship-title'] .empty-art svg { display: none; }
+.student-fee-installments-page .empty-art::before,
+[aria-labelledby='scholarship-title'] .empty-art::before { display: block; width: 156px; height: 156px; background: center / contain no-repeat; content: ''; }
+.student-fee-installments-page .empty-art::before { background-image: url('/assets/student/fee-icons/empty-states/no-installments.webp'); }
+[aria-labelledby='scholarship-title'] .empty-art::before { background-image: url('/assets/student/fee-icons/empty-states/no-scholarship.webp'); }
+.student-fee-receipts-page .student-fee-panel__header { padding: 22px 28px 0; border: 0; }
+.student-fee-receipts-page .student-fee-panel__header h2 { font-size: 22px; }
+@media(max-width:767px){
+  .student-fee-history-page,.student-fee-receipts-page{gap:16px}
+  .student-fee-history-page .student-fee-subpage__header h1,.student-fee-receipts-page .student-fee-subpage__header h1{font-size:34px}
+  .student-fee-history-page .student-fee-subpage__header p,.student-fee-receipts-page .student-fee-subpage__header p{font-size:14px}
+  .student-fee-history-page .student-fee-stat-grid,.student-fee-receipts-page .student-fee-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .student-fee-history-page .student-fee-stat-card,.student-fee-receipts-page .student-fee-stat-card{min-height:110px;padding:12px 10px}
+  .student-fee-history-page .student-fee-stat-card__icon,.student-fee-receipts-page .student-fee-stat-card__icon{width:48px;height:48px}
+  .student-fee-history-page .student-fee-stat-card strong,.student-fee-receipts-page .student-fee-stat-card strong{font-size:24px}
+  .student-fee-history-page .student-fee-stat-card:last-child{grid-column:1/-1}
+  .student-fee-history-page .student-fee-toolbar,.student-fee-receipts-page .student-fee-toolbar{grid-template-columns:1fr;gap:10px;padding:16px}
+  .student-fee-search-field{grid-column:auto}.student-fee-soft-action{width:100%}
+  .student-fee-status-pills{gap:8px;padding:8px 16px 18px;overflow-x:auto;flex-wrap:nowrap}
+  .student-fee-status-pill{flex:0 0 auto;padding-inline:14px}
+  .student-fee-table-wrap{padding:0 16px 16px}.student-fee-table{min-width:760px}
+  .student-fee-empty-state{min-height:380px;padding:34px 16px 42px}.student-fee-empty-state__image{width:124px;height:124px}.student-fee-empty-state h2{font-size:20px}
+  .student-fee-empty-actions{display:grid;gap:10px;margin-top:22px}.student-fee-process-grid{gap:10px}.student-fee-process-card{padding:14px}.student-fee-receipts-page .student-fee-panel__header{padding:18px 16px 0}
+}

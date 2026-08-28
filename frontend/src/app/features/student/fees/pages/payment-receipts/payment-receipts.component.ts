@@ -6,13 +6,14 @@ import { StudentMobileBottomNavComponent } from '../../../dashboard/components/s
 import { StudentSessionService } from '../../../shared/services/student-session.service';
 import { StudentFeesFacade } from '../../data-access/student-fees.facade';
 import { StudentFeeWorkspaceViewModel } from '../../models/student-fee-dashboard.models';
+import { LucideDownload, LucideSearch, LucideShieldCheck } from '@lucide/angular';
 
 @Component({
   selector: 'erp-payment-receipts',
   standalone: true,
-  imports: [DatePipe, RouterLink, StudentMobileBottomNavComponent],
+  imports: [DatePipe, RouterLink, StudentMobileBottomNavComponent, LucideDownload, LucideSearch, LucideShieldCheck],
   templateUrl: './payment-receipts.component.html',
-  styleUrl: '../../../styles/_student-fees.scss',
+  styleUrl: '../../../styles/_student-fee-final-pages.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentReceiptsComponent implements OnInit {
