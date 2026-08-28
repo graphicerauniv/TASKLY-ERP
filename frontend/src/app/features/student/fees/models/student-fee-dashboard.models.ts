@@ -100,11 +100,31 @@ export interface FeeLedgerDetailViewModel {
   source: FeeValueSource;
 }
 
+export type StudentPaymentStatus = 'successful' | 'pending' | 'failed' | 'refunded';
+export type StudentPaymentFeeType = 'academic' | 'hostel' | 'mixed' | 'unknown';
+
+export interface StudentPaymentRecordViewModel {
+  id: string;
+  receiptNumber: string | null;
+  orderReference: string;
+  paymentId: string | null;
+  amount: MoneyValue;
+  feeType: StudentPaymentFeeType;
+  feePeriodLabel: string;
+  status: StudentPaymentStatus;
+  rawStatus: 'created' | 'processing' | 'paid' | 'failed' | 'refunded';
+  createdAt: string | null;
+  paidAt: string | null;
+  method: string | null;
+  downloadable: boolean;
+}
+
 export interface StudentFeeWorkspaceViewModel {
   state: FeeLoadState;
   errorMessage: string | null;
   student: StudentFeeContextViewModel;
   ledgers: FeeLedgerDetailViewModel[];
+  payments: StudentPaymentRecordViewModel[];
   razorpayEnabled: boolean;
   source: FeeValueSource;
   loadedAt: string | null;

@@ -3,7 +3,7 @@ import { catchError, forkJoin, map, of } from 'rxjs';
 import { ApiService } from '../../../../core/api.service';
 import { FeePayment, StudentFeeLedger, StudentSession } from '../../../../core/models';
 import { FEE_SERVICE_CARDS } from '../config/fee-service.config';
-import { FeeActivityViewModel, FeeDueState, FeeHeadDetailViewModel, FeeLedgerDetailViewModel, FeeStatusViewModel, MoneyValue, StudentFeeContextViewModel, StudentFeeDashboardViewModel, StudentFeeWorkspaceViewModel } from '../models/student-fee-dashboard.models';
+import { FeeActivityViewModel, FeeDueState, FeeHeadDetailViewModel, FeeLedgerDetailViewModel, FeeStatusViewModel, MoneyValue, StudentFeeContextViewModel, StudentFeeDashboardViewModel, StudentFeeWorkspaceViewModel, StudentPaymentRecordViewModel } from '../models/student-fee-dashboard.models';
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
@@ -44,6 +44,7 @@ export class StudentFeesFacade {
           errorMessage: payments.ok ? null : 'Fee records are available, but payment history is temporarily unavailable.',
           student: feeContext(student),
           ledgers,
+          payments: payments.ok ? (payments.value?.items ?? []).map(toPaymentRecord) : [],
           razorpayEnabled: payments.value?.razorpayEnabled ?? false,
           source: 'backend' as const,
           loadedAt: new Date().toISOString(),
@@ -53,7 +54,7 @@ export class StudentFeesFacade {
   }
 
   workspaceLoading(storedStudent: StudentSession | null, state: 'loading' | 'error' = 'loading', errorMessage: string | null = null): StudentFeeWorkspaceViewModel {
-    return { state, errorMessage, student: feeContext(storedStudent), ledgers: [], razorpayEnabled: false, source: 'unavailable', loadedAt: null };
+    return { state, errorMessage, student: feeContext(storedStudent), ledgers: [], payments: [], razorpayEnabled: false, source: 'unavailable', loadedAt: null };
   }
 
   loading(storedStudent: StudentSession | null): StudentFeeDashboardViewModel {
@@ -145,6 +146,41 @@ function toFeeHeadDetail(entry: StudentFeeLedger['entries'][number]): FeeHeadDet
     status: entry.status,
     source: 'backend',
   };
+}
+
+function toPaymentRecord(payment: FeePayment): StudentPaymentRecordViewModel {
+  const receiptNumber = payment.receiptNumber ?? null;
+  const paymentId = payment.razorpayPaymentId ?? null;
+  return {
+    id: payment._id,
+    receiptNumber,
+    orderReference: payment.razorpayOrderId || payment._id,
+    paymentId,
+    amount: money(Number(payment.amount || 0)),
+    feeType: paymentFeeType(payment),
+    feePeriodLabel: payment.targetPeriodLabel || 'All fee periods',
+    status: mapPaymentStatus(payment.status),
+    rawStatus: payment.status,
+    createdAt: payment.createdAt ?? null,
+    paidAt: payment.paidAt ?? null,
+    method: payment.method ?? null,
+    downloadable: payment.status === 'paid' && Boolean(receiptNumber || paymentId),
+  };
+}
+
+function mapPaymentStatus(status: FeePayment['status']): StudentPaymentRecordViewModel['status'] {
+  if (status === 'paid') return 'successful';
+  if (status === 'failed') return 'failed';
+  if (status === 'refunded') return 'refunded';
+  return 'pending';
+}
+
+function paymentFeeType(payment: FeePayment): StudentPaymentRecordViewModel['feeType'] {
+  const kinds = new Set((payment.allocations ?? []).map((allocation) => allocation.ledgerKind));
+  if (kinds.size > 1) return 'mixed';
+  if (kinds.has('academic')) return 'academic';
+  if (kinds.has('hostel')) return 'hostel';
+  return 'unknown';
 }
 
 function moneyOrNull(amount: number | null | undefined): MoneyValue | null {
