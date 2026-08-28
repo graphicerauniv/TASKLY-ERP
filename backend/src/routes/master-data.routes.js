@@ -271,28 +271,25 @@ async function requireType(slug) {
 
 async function ensureBuiltinMasterTypes() {
   const now = new Date();
-  await Promise.all(
-    BUILTIN_MASTER_TYPES.map(([slug, name, parentTypeSlug], order) =>
-      db()
-        .collection('masterTypes')
-        .updateOne(
-          { slug },
-          {
-            $setOnInsert: {
-              name,
-              slug,
-              parentTypeSlug,
-              isCustom: false,
-              isActive: true,
-              order,
-              createdAt: now,
-              updatedAt: now,
-            },
+  for (const [order, [slug, name, parentTypeSlug]] of BUILTIN_MASTER_TYPES.entries())
+    await db()
+      .collection('masterTypes')
+      .updateOne(
+        { slug },
+        {
+          $setOnInsert: {
+            name,
+            slug,
+            parentTypeSlug,
+            isCustom: false,
+            isActive: true,
+            order,
+            createdAt: now,
+            updatedAt: now,
           },
-          { upsert: true },
-        ),
-    ),
-  );
+        },
+        { upsert: true },
+      );
 }
 
 async function ensureBuiltinMasterValues(slug) {
@@ -303,26 +300,23 @@ async function ensureBuiltinMasterValues(slug) {
     { name: 'Yearly', order: 1, metadata: { periodType: 'year' } },
     { name: 'Semester', order: 2, metadata: { periodType: 'semester' } },
   ];
-  await Promise.all(
-    defaults.map((value) =>
-      db()
-        .collection('masterValues')
-        .updateOne(
-          { typeSlug: slug, name: value.name, parentId: null },
-          {
-            $setOnInsert: {
-              ...value,
-              typeSlug: slug,
-              parentId: null,
-              isActive: true,
-              createdAt: now,
-              updatedAt: now,
-            },
+  for (const value of defaults)
+    await db()
+      .collection('masterValues')
+      .updateOne(
+        { typeSlug: slug, name: value.name, parentId: null },
+        {
+          $setOnInsert: {
+            ...value,
+            typeSlug: slug,
+            parentId: null,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
           },
-          { upsert: true },
-        ),
-    ),
-  );
+        },
+        { upsert: true },
+      );
 }
 
 async function ensureBuiltinMasterType(slug) {

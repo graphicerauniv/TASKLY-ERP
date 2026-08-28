@@ -43,28 +43,25 @@ export async function bootstrap() {
         { $unset: { studentId: '', studentIdGeneratedAt: '' } },
       );
     await migrateAdmissionIdentities();
-    await Promise.all(
-      BUILTIN_MASTERS.map(([slug, name, parentTypeSlug], order) =>
-        db()
-          .collection('masterTypes')
-          .updateOne(
-            { slug },
-            {
-              $setOnInsert: {
-                name,
-                slug,
-                parentTypeSlug,
-                isCustom: false,
-                isActive: true,
-                order,
-                createdAt: now,
-                updatedAt: now,
-              },
+    for (const [order, [slug, name, parentTypeSlug]] of BUILTIN_MASTERS.entries())
+      await db()
+        .collection('masterTypes')
+        .updateOne(
+          { slug },
+          {
+            $setOnInsert: {
+              name,
+              slug,
+              parentTypeSlug,
+              isCustom: false,
+              isActive: true,
+              order,
+              createdAt: now,
+              updatedAt: now,
             },
-            { upsert: true },
-          ),
-      ),
-    );
+          },
+          { upsert: true },
+        );
     await ensureDefaultFeeTypes(now);
     await migrateSpecializationsToCourses(now);
     await migrateFormSpecializationSources(now);
@@ -103,26 +100,23 @@ async function ensureDefaultFeeTypes(now) {
     { name: 'Yearly', order: 1, metadata: { periodType: 'year' } },
     { name: 'Semester', order: 2, metadata: { periodType: 'semester' } },
   ];
-  await Promise.all(
-    defaults.map((value) =>
-      db()
-        .collection('masterValues')
-        .updateOne(
-          { typeSlug: 'fee-type', name: value.name, parentId: null },
-          {
-            $setOnInsert: {
-              ...value,
-              typeSlug: 'fee-type',
-              parentId: null,
-              isActive: true,
-              createdAt: now,
-              updatedAt: now,
-            },
+  for (const value of defaults)
+    await db()
+      .collection('masterValues')
+      .updateOne(
+        { typeSlug: 'fee-type', name: value.name, parentId: null },
+        {
+          $setOnInsert: {
+            ...value,
+            typeSlug: 'fee-type',
+            parentId: null,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
           },
-          { upsert: true },
-        ),
-    ),
-  );
+        },
+        { upsert: true },
+      );
 }
 
 async function migrateSpecializationsToCourses(now) {
