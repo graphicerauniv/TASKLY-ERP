@@ -22,7 +22,7 @@
         <div class="student-fee-period-list">
           @for (ledger of payableLedgers(); track ledger.id) {
             <button type="button" class="student-fee-period" [class.is-selected]="ledger.id === selectedLedgerId()" (click)="selectLedger(ledger)">
-              <span class="student-fee-period__check">{{ ledger.id === selectedLedgerId() ? '✓' : '' }}</span>
+              <span class="student-fee-period__check">@if (ledger.id === selectedLedgerId()) { <svg lucideCheckCircle2 size="24" aria-hidden="true"></svg> }</span>
               <span><strong>{{ ledger.title }} · {{ ledger.periodLabel }}</strong><small>{{ ledger.academicSession ?? 'Academic session unavailable' }}</small></span>
               <em [class]="ledger.paymentStatus === 'due' ? 'is-due' : 'is-partial'">{{ ledger.paymentStatus === 'due' ? 'Due' : 'Partial' }}</em>
               <span class="student-fee-period__amount"><b>{{ ledger.balance?.formatted ?? '—' }}</b><small>outstanding</small></span>
@@ -30,8 +30,8 @@
           } @empty { <p class="student-fee-empty">No payable {{ selectedKind() }} fee period is available.</p> }
         </div>
         @if (selectedLedger(); as ledger) {
-          <div class="student-fee-amount-panel"><label for="amount">Amount to pay (₹)</label><input id="amount" type="number" inputmode="decimal" min="1" [max]="ledger.balance?.amount ?? 0" [value]="paymentAmount() ?? ''" (input)="onAmountInput($event)" /><small>Enter any amount up to {{ ledger.balance?.formatted ?? 'the selected balance' }}.</small><span>✓ Partial payment allowed</span></div>
-          <aside class="student-fee-info-note">ⓘ Payments are adjusted against penalties first, then fee heads by configured priority.</aside>
+          <div class="student-fee-amount-panel"><label for="amount">Amount to pay (₹)</label><input id="amount" type="number" inputmode="decimal" min="1" [max]="ledger.balance?.amount ?? 0" [value]="paymentAmount() ?? ''" (input)="onAmountInput($event)" /><small>Enter any amount up to {{ ledger.balance?.formatted ?? 'the selected balance' }}.</small><span><svg lucideCheckCircle2 size="16" aria-hidden="true"></svg> Partial payment allowed</span></div>
+          <aside class="student-fee-info-note"><svg lucideInfo size="18" aria-hidden="true"></svg> Payments are adjusted against penalties first, then fee heads by configured priority.</aside>
         }
       </section>
 
@@ -39,12 +39,12 @@
         <h2>Payment summary</h2>
         <dl><div><dt>Student</dt><dd>{{ workspace().student.name ?? '—' }}</dd></div><div><dt>Fee period</dt><dd>{{ selectedLedger()?.periodLabel ?? '—' }}</dd></div><div><dt>Total fee</dt><dd>{{ selectedLedger()?.charge?.formatted ?? '—' }}</dd></div><div><dt>Paid</dt><dd>{{ selectedLedger()?.paid?.formatted ?? '—' }}</dd></div><div class="student-fee-payment-summary__total"><dt>Amount to pay</dt><dd>{{ paymentAmount() === null ? '—' : '₹' + (paymentAmount() ?? 0).toLocaleString('en-IN') }}</dd></div></dl>
         <label class="student-fee-review"><input type="checkbox" [checked]="reviewed()" (change)="onReviewChange($event)" /> <span>I have reviewed the selected fee period and amount.</span></label>
-        <p class="student-fee-info-note">🛡 Razorpay checkout opens after review. Order creation and verification are handled securely.</p>
+        <p class="student-fee-info-note"><svg lucideShieldCheck size="18" aria-hidden="true"></svg> Razorpay checkout opens after review. Order creation and verification are handled securely.</p>
         @if (message()) { <p class="student-fee-payment-message" [class.is-error]="!message()?.includes('successfully')">{{ message() }}</p> }
         <button class="student-fee-primary-action" type="button" [disabled]="!canContinue()" (click)="continueToPayment()">{{ processing() ? 'Preparing secure payment…' : 'Continue to secure payment' }}</button>
       </aside>
     </section>
-    <section class="student-fee-payment-notes"><article><b>↻</b><span><strong>Do not refresh during checkout</strong><small>Refreshing may interrupt your payment.</small></span></article><article><b>▣</b><span><strong>Receipt appears after verification</strong><small>Successful payments are verified before a receipt is generated.</small></span></article><article><b>₹</b><span><strong>No additional payment charges</strong><small>You will not be charged extra fees on this payment.</small></span></article></section>
+    <section class="student-fee-payment-notes"><article><b><svg lucideRefreshCw size="22" aria-hidden="true"></svg></b><span><strong>Do not refresh during checkout</strong><small>Refreshing may interrupt your payment.</small></span></article><article><b><svg lucideReceiptText size="22" aria-hidden="true"></svg></b><span><strong>Receipt appears after verification</strong><small>Successful payments are verified before a receipt is generated.</small></span></article><article><b><svg lucideIndianRupee size="22" aria-hidden="true"></svg></b><span><strong>No additional payment charges</strong><small>You will not be charged extra fees on this payment.</small></span></article></section>
   }
 </main>
 <erp-student-mobile-bottom-nav />
