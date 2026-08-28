@@ -10,5 +10,5 @@ export const FEE_SERVICE_CARDS: readonly FeeServiceCardViewModel[] = [
   { id: 'challan', title: 'Challan', description: 'Generate or print a bank challan', image: `${ASSET}/exams.webp`, tone: 'coral', route: '/student/fees/challan' },
   { id: 'installments', title: 'Installments', description: 'Review your approved payment schedule', image: `${ASSET}/attendance.webp`, tone: 'sky', route: null },
   { id: 'scholarship', title: 'Scholarship Details', description: 'View applied scholarships and discounts', image: `${ASSET}/academics.webp`, tone: 'gold', route: null },
-  { id: 'support', title: 'Fee Support', description: 'Raise a discrepancy or get payment help', image: `${ASSET}/complaints.webp`, tone: 'teal', route: null },
+  { id: 'support', title: 'Fee Support', description: 'Raise a discrepancy or get payment help', image: `${ASSET}/complaints.webp`, tone: 'teal', route: '/student/fees/support' },
 ];

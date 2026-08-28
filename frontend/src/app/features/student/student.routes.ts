@@ -5,6 +5,9 @@ import { PayFeesComponent } from './fees/pages/pay-fees/pay-fees.component';
 import { FeeChallanComponent } from './fees/pages/fee-challan/fee-challan.component';
 import { PaymentHistoryComponent } from './fees/pages/payment-history/payment-history.component';
 import { PaymentReceiptsComponent } from './fees/pages/payment-receipts/payment-receipts.component';
+import { FeeInstallmentsComponent } from './fees/pages/fee-installments/fee-installments.component';
+import { ScholarshipDetailsComponent } from './fees/pages/scholarship-details/scholarship-details.component';
+import { FeeSupportComponent } from './fees/pages/fee-support/fee-support.component';
 import { StudentShellComponent } from './layout/student-shell/student-shell.component';
 
 export const STUDENT_ROUTES: Routes = [
@@ -45,6 +48,9 @@ export const STUDENT_ROUTES: Routes = [
         title: 'Fee Challan | GEU ERP',
         component: FeeChallanComponent,
       },
+      { path: 'fees/installments', title: 'Fee Installments | GEU ERP', component: FeeInstallmentsComponent },
+      { path: 'fees/scholarships', title: 'Scholarship Details | GEU ERP', component: ScholarshipDetailsComponent },
+      { path: 'fees/support', title: 'Fee Support | GEU ERP', component: FeeSupportComponent },
       {
         path: 'fees',
         title: 'Fees | GEU ERP',
