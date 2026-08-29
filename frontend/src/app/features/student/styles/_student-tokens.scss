@@ -29,6 +29,10 @@
   --student-color-danger: #df5252;
   --student-color-danger-soft: #fff0f0;
   --student-color-overlay: rgba(11, 31, 58, 0.38);
+  --student-profile-id-start: #061d4d;
+  --student-profile-id-end: #0759d5;
+  --student-profile-id-accent: #f2b934;
+  --student-profile-dialog-max: 860px;
 
   --student-module-academics: #e3f2fd;
   --student-module-attendance: #e3f8f7;
@@ -102,4 +106,5 @@
   --student-z-sidebar: 40;
   --student-z-profile: 60;
   --student-z-drawer: 80;
+  --student-z-dialog: 100;
 }

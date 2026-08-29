@@ -1,0 +1,123 @@
+<main class="student-profile-page" aria-labelledby="student-profile-title">
+  <section class="student-profile-layout">
+    <aside class="student-profile-summary" aria-label="Student summary and information">
+      <header class="student-profile-summary__identity">
+        <span class="student-profile-photo">
+          @if (profile().identity.photoUrl) {
+            <img [src]="profile().identity.photoUrl" [alt]="profile().identity.name" />
+          } @else {
+            <img src="/assets/student/profile-icons/profile-identity.webp" alt="" />
+          }
+        </span>
+        <h2>{{ profile().identity.name }}</h2>
+        <span class="student-profile-status"><i></i>{{ profile().identity.status === 'active' ? 'Active' : 'Inactive' }}</span>
+        <small>Student ID</small>
+        <strong class="student-profile-summary__id">{{ profile().identity.studentId }}</strong>
+      </header>
+
+      <div class="student-profile-information">
+        <section class="student-profile-info-group">
+          <button type="button" [attr.aria-expanded]="expandedSections()['personal']" (click)="toggleSection('personal')">
+            <span><svg lucideUserRound size="18" aria-hidden="true"></svg>Personal</span><svg class="student-profile-info-group__chevron" lucideChevronDown size="17" aria-hidden="true"></svg>
+          </button>
+          @if (expandedSections()['personal']) { <dl>@for (field of personalFields(); track field.label) { <div><dt>{{ field.label }}</dt><dd>{{ field.value }}</dd></div> }</dl> }
+        </section>
+        <section class="student-profile-info-group">
+          <button type="button" [attr.aria-expanded]="expandedSections()['academic']" (click)="toggleSection('academic')">
+            <span><svg lucideGraduationCap size="19" aria-hidden="true"></svg>Academic</span><svg class="student-profile-info-group__chevron" lucideChevronDown size="17" aria-hidden="true"></svg>
+          </button>
+          @if (expandedSections()['academic']) { <dl>@for (field of academicFields(); track field.label) { <div><dt>{{ field.label }}</dt><dd>{{ field.value }}</dd></div> }</dl> }
+        </section>
+        <section class="student-profile-info-group">
+          <button type="button" [attr.aria-expanded]="expandedSections()['contact']" (click)="toggleSection('contact')">
+            <span><svg lucideMail size="18" aria-hidden="true"></svg>Contact</span><svg class="student-profile-info-group__chevron" lucideChevronDown size="17" aria-hidden="true"></svg>
+          </button>
+          @if (expandedSections()['contact']) { <dl>@for (field of contactFields(); track field.label) { <div><dt>{{ field.label }}</dt><dd>{{ field.value }}</dd></div> }</dl> }
+        </section>
+      </div>
+    </aside>
+
+    <div class="student-profile-content">
+      <header class="student-profile-hero">
+        <div>
+          <h1 id="student-profile-title">Student <span>Profile</span></h1>
+          <p>Your verified university identity and records</p>
+          <span class="student-profile-verification"><svg lucideCheck size="15" aria-hidden="true"></svg>Verified <i>•</i> Read-only</span>
+        </div>
+        <img src="/assets/student/profile-icons/profile-hero.webp" width="700" height="362" alt="" aria-hidden="true" />
+      </header>
+
+      <section class="student-profile-services" aria-labelledby="profile-services-title">
+        <h2 id="profile-services-title">Profile services</h2>
+        <div class="student-profile-services__grid">
+          @for (service of services; track service.id) {
+            <button class="student-profile-service-card" [class]="'student-profile-service-card student-profile-service-card--' + service.tone" type="button" (click)="openService(service.id)">
+              <span class="student-profile-service-card__art"><img [src]="service.image" width="104" height="104" alt="" loading="lazy" /></span>
+              <span><strong>{{ service.title }}</strong><small>{{ service.description }}</small></span>
+              <svg lucideChevronRight size="20" aria-hidden="true"></svg>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="student-profile-id-action">
+        <img src="/assets/student/profile-icons/digital-id.webp" width="74" height="74" alt="" loading="lazy" />
+        <span><strong>Digital Student ID</strong><small>Access your university-issued identity</small></span>
+        <div>
+          <button type="button" class="student-profile-primary-action" (click)="openService('digital-id')"><svg lucideEye size="18" aria-hidden="true"></svg>View ID</button>
+          <button type="button" class="student-profile-outline-action" (click)="downloadId()"><svg lucideDownload size="18" aria-hidden="true"></svg>Download ID</button>
+        </div>
+        <p><svg lucideShieldCheck size="19" aria-hidden="true"></svg>University verified <i>•</i> Opens securely in a popup</p>
+      </section>
+
+      <footer class="student-profile-sync-note">
+        <svg lucideInfo size="19" aria-hidden="true"></svg>
+        <span><strong>Profile records are synced from the university ERP</strong><small>Information is read-only and last synced {{ profile().syncedAt | date: 'medium' }}.</small></span>
+      </footer>
+    </div>
+  </section>
+
+  @if (activeService(); as service) {
+    <div class="student-profile-dialog-layer">
+      <button class="student-profile-dialog__backdrop" type="button" aria-label="Close {{ service.title }}" (click)="closeService()"></button>
+      <section class="student-profile-dialog" role="dialog" aria-modal="true" [attr.aria-labelledby]="service.id + '-dialog-title'" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+        <span class="student-profile-dialog__handle" aria-hidden="true"></span>
+        <header>
+          <span><img [src]="service.image" width="64" height="64" alt="" /><span><h2 [id]="service.id + '-dialog-title'">{{ service.title }}</h2><p>{{ service.description }}</p></span></span>
+          <button type="button" aria-label="Close {{ service.title }}" (click)="closeService()"><svg lucideX size="22" aria-hidden="true"></svg></button>
+        </header>
+
+        <div class="student-profile-dialog__content">
+          @switch (service.id) {
+            @case ('digital-id') {
+              <div class="student-digital-id" aria-label="Digital student ID preview">
+                <div class="student-digital-id__brand"><img src="/assets/images/brand/graphic-era-mark.png" width="64" height="64" alt="" /><span><strong>GEHU</strong><small>Graphic Era (Deemed to be University)</small></span></div>
+                <div class="student-digital-id__body"><div><h3>{{ profile().identity.name }}</h3><p>Student ID <strong>{{ profile().identity.studentId }}</strong></p><p>{{ profile().academic.branch }} · Semester {{ profile().academic.semester }} · {{ profile().academic.section }}</p><p><svg lucideInfo size="18" aria-hidden="true"></svg>{{ profile().academic.campus }}</p></div><span class="student-digital-id__portrait">{{ initials() }}</span><span class="student-digital-id__qr" aria-hidden="true"></span></div>
+                <div class="student-digital-id__verified"><span><svg lucideCheck size="19" aria-hidden="true"></svg></span>University verified</div>
+              </div>
+              <p class="student-profile-dialog__security"><svg lucideShieldCheck size="20" aria-hidden="true"></svg>Official university credential</p>
+              <div class="student-profile-dialog__actions"><button type="button" class="student-profile-outline-action" (click)="closeService()">Close</button><button type="button" class="student-profile-primary-action" (click)="downloadId()"><svg lucideDownload size="18" aria-hidden="true"></svg>Download ID</button></div>
+            }
+            @case ('personal') {
+              <div class="student-profile-detail-grid">@for (field of personalFields(); track field.label) { <article><small>{{ field.label }}</small><strong>{{ field.value }}</strong></article> }<article><small>Gender</small><strong>{{ present(profile().personal.gender) }}</strong></article><article><small>Blood Group</small><strong>{{ present(profile().personal.bloodGroup) }}</strong></article><article class="student-profile-detail-grid__wide"><small>Address</small><strong>{{ present(profile().personal.address) }}</strong></article></div>
+            }
+            @case ('academic') {
+              <div class="student-profile-detail-grid">@for (field of academicFields(); track field.label) { <article><small>{{ field.label }}</small><strong>{{ field.value }}</strong></article> }<article><small>Academic Session</small><strong>{{ profile().academic.academicSession }}</strong></article><article><small>Campus</small><strong>{{ profile().academic.campus }}</strong></article></div>
+            }
+            @case ('education') {
+              <div class="student-profile-record-list">@for (record of profile().educationRecords; track record.id) { <article><span><svg lucideGraduationCap size="22" aria-hidden="true"></svg></span><div><h3>{{ record.title }}</h3>@for (field of record.fields; track field.label) { <p><small>{{ field.label }}</small><strong>{{ field.value }}</strong></p> }</div><em><svg lucideCheck size="14" aria-hidden="true"></svg>Verified</em></article> } @empty { <div class="student-profile-empty"><img src="/assets/student/profile-icons/education-records.webp" width="100" height="100" alt="" /><strong>No education records available</strong><p>Verified qualification records will appear here.</p></div> }</div>
+            }
+            @case ('documents') {
+              <div class="student-profile-record-list">@for (document of profile().documents; track document.id) { <a [href]="document.url" target="_blank" rel="noopener"><span><svg lucideShieldCheck size="22" aria-hidden="true"></svg></span><div><h3>{{ document.name }}</h3><p>{{ document.category }}</p></div><svg lucideChevronRight size="18" aria-hidden="true"></svg></a> } @empty { <div class="student-profile-empty"><img src="/assets/student/profile-icons/documents.webp" width="108" height="108" alt="" /><strong>No documents available</strong><p>Documents uploaded with your admission record will appear here.</p></div> }</div>
+            }
+            @case ('security') {
+              <div class="student-profile-security-grid"><article><svg lucideShieldCheck size="25" aria-hidden="true"></svg><span><small>Account status</small><strong>{{ profile().security.accountActive ? 'Active and protected' : 'Inactive' }}</strong></span></article><article><svg lucideInfo size="25" aria-hidden="true"></svg><span><small>Last sign in</small><strong>{{ profile().security.lastLoginAt ? (profile().security.lastLoginAt | date: 'medium') : 'Not available' }}</strong></span></article><article><svg lucideInfo size="25" aria-hidden="true"></svg><span><small>Official email</small><strong>{{ profile().contact.officialEmail }}</strong></span></article><article><svg lucideInfo size="25" aria-hidden="true"></svg><span><small>Registered mobile</small><strong>{{ profile().contact.mobile }}</strong></span></article></div><div class="student-profile-support"><svg lucideShieldCheck size="29" aria-hidden="true"></svg><span><strong>Need help with your profile?</strong><p>Contact the university student support desk for verified record corrections.</p></span></div>
+            }
+          }
+        </div>
+      </section>
+    </div>
+  }
+</main>
+
+<erp-student-mobile-bottom-nav />

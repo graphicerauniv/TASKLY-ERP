@@ -9,6 +9,7 @@ import { FeeInstallmentsComponent } from './fees/pages/fee-installments/fee-inst
 import { ScholarshipDetailsComponent } from './fees/pages/scholarship-details/scholarship-details.component';
 import { FeeSupportComponent } from './fees/pages/fee-support/fee-support.component';
 import { StudentShellComponent } from './layout/student-shell/student-shell.component';
+import { StudentProfileComponent } from './profile/pages/student-profile/student-profile.component';
 
 export const STUDENT_ROUTES: Routes = [
   {
@@ -26,10 +27,7 @@ export const STUDENT_ROUTES: Routes = [
       {
         path: 'profile',
         title: 'Student Profile | GEU ERP',
-        loadComponent: () =>
-          import('./profile/pages/student-profile/student-profile.component').then(
-            (component) => component.StudentProfileComponent,
-          ),
+        component: StudentProfileComponent,
       },
       {
         path: 'fees/pay',
