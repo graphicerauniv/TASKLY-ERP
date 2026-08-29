@@ -74,22 +74,23 @@
   }
 
   <div class="student-sidebar__profile">
-    <button
+    <a
       class="student-sidebar__profile-summary"
-      type="button"
+      routerLink="/student/profile"
       [attr.aria-label]="'Student profile for ' + (session.profile()?.name || 'student')"
+      (click)="selectNavigation()"
     >
       <span class="student-avatar">{{ session.initials() }}</span>
       <span class="student-sidebar__profile-copy">
         <strong>{{ session.profile()?.name || 'Student' }}</strong>
         <small>Student ID {{ session.profile()?.studentId || 'Unavailable' }}</small>
       </span>
-    </button>
+    </a>
     <div class="student-sidebar__profile-actions">
-      <button type="button" disabled aria-label="My profile — coming soon">
+      <a routerLink="/student/profile" aria-label="Open my profile" (click)="selectNavigation()">
         <svg lucideUserRound size="17" aria-hidden="true"></svg>
         <span>Profile</span>
-      </button>
+      </a>
       <a
         routerLink="/student/login"
         aria-label="Sign out of the student portal"

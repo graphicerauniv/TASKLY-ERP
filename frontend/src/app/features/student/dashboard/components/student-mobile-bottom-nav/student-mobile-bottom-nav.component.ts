@@ -18,8 +18,4 @@ import { StudentLayoutStateService } from '../../../shared/services/student-layo
 })
 export class StudentMobileBottomNavComponent {
   readonly layoutState = inject(StudentLayoutStateService);
-
-  openProfile(trigger: EventTarget | null): void {
-    if (trigger instanceof HTMLElement) this.layoutState.toggleProfileMenu(trigger);
-  }
 }

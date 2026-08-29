@@ -8,13 +8,7 @@
   <a routerLink="/student/fees" routerLinkActive="student-mobile-bottom-nav__item--active">
     <svg lucideLayoutGrid size="22" aria-hidden="true"></svg><span>Services</span>
   </a>
-  <button
-    type="button"
-    aria-label="Open student profile"
-    [attr.aria-expanded]="layoutState.profileMenuOpen()"
-    aria-controls="student-profile-menu"
-    (click)="openProfile($event.currentTarget)"
-  >
+  <a routerLink="/student/profile" routerLinkActive="student-mobile-bottom-nav__item--active" aria-label="Open student profile">
     <svg lucideUserRound size="22" aria-hidden="true"></svg><span>Profile</span>
-  </button>
+  </a>
 </nav>

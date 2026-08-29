@@ -48,6 +48,11 @@ export class StudentSessionService {
         studentId: value.studentId,
         name: value.name,
         mustChangePassword: value.mustChangePassword !== false,
+        academicSession: value.academicSession,
+        courseName: value.courseName,
+        currentAcademicYear: value.currentAcademicYear,
+        currentSemester: value.currentSemester,
+        feeFrequency: value.feeFrequency,
       };
     } catch {
       localStorage.removeItem(STUDENT_PROFILE_KEY);

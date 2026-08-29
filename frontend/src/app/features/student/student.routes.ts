@@ -24,6 +24,14 @@ export const STUDENT_ROUTES: Routes = [
           ),
       },
       {
+        path: 'profile',
+        title: 'Student Profile | GEU ERP',
+        loadComponent: () =>
+          import('./profile/pages/student-profile/student-profile.component').then(
+            (component) => component.StudentProfileComponent,
+          ),
+      },
+      {
         path: 'fees/pay',
         title: 'Pay Fees | GEU ERP',
         component: PayFeesComponent,

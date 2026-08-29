@@ -13,15 +13,15 @@
       </span>
     </header>
     <div class="student-profile-menu__actions">
-      <button type="button" role="menuitem" disabled>
+      <a routerLink="/student/profile" role="menuitem" (click)="close()">
         <svg lucideUserRound size="18" aria-hidden="true"></svg><span>My profile</span>
-      </button>
-      <button type="button" role="menuitem" disabled>
+      </a>
+      <a routerLink="/student/profile" [queryParams]="{ view: 'academic' }" role="menuitem" (click)="close()">
         <svg lucideGraduationCap size="18" aria-hidden="true"></svg><span>Academic record</span>
-      </button>
-      <button type="button" role="menuitem" disabled>
+      </a>
+      <a routerLink="/student/profile" [queryParams]="{ view: 'documents' }" role="menuitem" (click)="close()">
         <svg lucideFolderOpen size="18" aria-hidden="true"></svg><span>Documents</span>
-      </button>
+      </a>
       <button type="button" role="menuitem" disabled>
         <svg lucideSettings size="18" aria-hidden="true"></svg><span>Settings</span>
       </button>

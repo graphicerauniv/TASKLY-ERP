@@ -70,9 +70,9 @@
           >
         </div>
         <div class="student-mobile-drawer__profile-actions">
-          <button type="button" disabled>
+          <a routerLink="/student/profile" (click)="close()">
             <svg lucideUserRound size="17" aria-hidden="true"></svg><span>Profile</span>
-          </button>
+          </a>
           <a routerLink="/student/login" (click)="signOut()">
             <svg lucideLogOut size="17" aria-hidden="true"></svg><span>Sign out</span>
           </a>

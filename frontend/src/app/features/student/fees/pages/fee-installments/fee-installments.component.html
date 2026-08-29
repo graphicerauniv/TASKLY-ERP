@@ -1,4 +1,4 @@
-<main class="student-final-page" aria-labelledby="installments-title">
+<main class="student-final-page student-fee-installments-page" aria-labelledby="installments-title">
   @if (workspace().state === 'loading') { <section class="final-message">Loading your installment plan…</section> }
   @else if (workspace().state === 'error') { <section class="final-message" role="alert"><strong>Unable to load installments</strong><span>{{ workspace().errorMessage }}</span><button type="button" (click)="load()">Try again</button></section> }
   @else { <header class="final-heading"><div><a routerLink="/student/fees" class="final-back">← Fees Overview</a><h1 id="installments-title">Fee Installments</h1><p>Review your approved payment schedule and installment balances.</p></div><span class="final-context">{{ workspace().student.courseName || 'Course unavailable' }} · {{ workspace().student.currentPeriod || 'Current period' }} · {{ workspace().student.academicSession || 'Session unavailable' }}</span></header>

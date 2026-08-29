@@ -51,6 +51,12 @@ export class StudentHeaderComponent {
   }
 
   private updatePageTitle(url: string): void {
-    this.pageTitle.set(url.startsWith('/student/fees') ? 'Fees' : 'Dashboard');
+    this.pageTitle.set(
+      url.startsWith('/student/profile')
+        ? 'Student Profile'
+        : url.startsWith('/student/fees')
+          ? 'Fees'
+          : 'Dashboard',
+    );
   }
 }

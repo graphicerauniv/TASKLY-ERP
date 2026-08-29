@@ -7,6 +7,7 @@ import { db, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { requireAdmin, requireStudent } from '../middleware/auth.js';
 import { refreshStudentPenalties } from '../services/fee-payments.js';
+import { studentProfile } from '../services/student-profile.js';
 
 export const authRouter = express.Router();
 const loginSchema = z.object({
@@ -112,6 +113,14 @@ authRouter.post(
       );
     const student = { ...request.student, mustChangePassword: false };
     response.json({ token: await studentToken(student), student: publicStudent(student) });
+  }),
+);
+
+authRouter.get(
+  '/student/profile',
+  requireStudent,
+  asyncHandler(async (request, response) => {
+    response.json({ profile: await studentProfile(db(), request.student) });
   }),
 );
 

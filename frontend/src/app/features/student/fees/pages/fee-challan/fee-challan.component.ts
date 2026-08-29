@@ -12,7 +12,7 @@ import { FeeLedgerDetailViewModel, StudentFeeWorkspaceViewModel } from '../../mo
   standalone: true,
   imports: [DatePipe, RouterLink, StudentMobileBottomNavComponent],
   templateUrl: './fee-challan.component.html',
-  styleUrl: '../../../styles/_student-fees.scss',
+  styleUrl: '../../../styles/_student-fee-final-pages.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeeChallanComponent implements OnInit {

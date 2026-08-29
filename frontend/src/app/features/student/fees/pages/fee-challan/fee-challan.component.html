@@ -1,21 +1,32 @@
-<section class="student-fee-subpage">
+<main class="student-fee-subpage student-fee-challan-page" aria-labelledby="challan-title">
   @if (workspace().state === 'loading') {
-    <div class="student-fee-subpage__message">Loading challan workspace…</div>
+    <section class="student-fee-subpage__message">Loading challan workspace…</section>
+  } @else if (workspace().state === 'error') {
+    <section class="student-fee-subpage__message" role="alert">
+      <strong>Unable to load challan details</strong>
+      <span>{{ workspace().errorMessage }}</span>
+    </section>
   } @else {
     <header class="student-fee-subpage__header">
       <div>
         <a routerLink="/student/fees" class="student-fee-subpage__back">← Fees Overview</a>
-        <h1>Fee Challan</h1>
+        <h1 id="challan-title">Fee Challan</h1>
         <p>Generate a bank challan for an eligible fee period.</p>
       </div>
-      <span class="student-fee-subpage__context">{{ workspace().student.currentPeriod || 'Current period' }} · {{ workspace().student.academicSession || 'Academic year' }}</span>
+      <span class="student-fee-subpage__context">
+        {{ workspace().student.courseName || 'Course unavailable' }} ·
+        {{ workspace().student.currentPeriod || 'Current period' }} ·
+        {{ workspace().student.academicSession || 'Academic year' }}
+      </span>
     </header>
 
-    <div class="student-fee-challan-layout">
-      <article class="student-fee-panel student-fee-panel--padded">
-        <div class="student-fee-segment">
-          <button [class.is-active]="selectedKind() === 'academic'" (click)="selectKind('academic')">Academic Fee</button>
-          <button [class.is-active]="selectedKind() === 'hostel'" (click)="selectKind('hostel')">Hostel Fee</button>
+    <section class="student-fee-challan-layout">
+      <article class="student-fee-panel student-fee-challan-form">
+        <h2>Challan details</h2>
+
+        <div class="student-fee-segment" role="group" aria-label="Fee type">
+          <button type="button" [class.is-active]="selectedKind() === 'academic'" (click)="selectKind('academic')">Academic Fee</button>
+          <button type="button" [class.is-active]="selectedKind() === 'hostel'" (click)="selectKind('hostel')">Hostel Fee</button>
         </div>
 
         <div class="student-fee-form-grid">
@@ -24,67 +35,97 @@
             <option>HDFC Bank Challan</option>
             <option>Institution Bank Challan</option>
           </select>
+
           <label for="period">Fee period</label>
-          <select id="period" class="student-fee-filter" [value]="selectedLedger().id" (change)="onLedger($event)">
+          <select id="period" class="student-fee-filter" [value]="selectedLedgerId()" [disabled]="!ledgersForKind().length" (change)="onLedger($event)">
             @for (ledger of ledgersForKind(); track ledger.id) {
               <option [value]="ledger.id">{{ ledger.periodLabel }} · {{ ledger.academicSession || 'Current session' }}</option>
+            } @empty {
+              <option value="">No eligible fee period</option>
             }
           </select>
         </div>
 
         <div class="student-fee-student-band">
           <span>{{ workspace().student.name?.slice(0, 2) || 'ST' }}</span>
-          <div><strong>{{ workspace().student.name || 'Student' }}</strong><p>ID {{ workspace().student.studentId || '—' }} · {{ workspace().student.courseName || 'Course' }}</p></div>
+          <div>
+            <strong>{{ workspace().student.name || 'Student' }}</strong>
+            <p>ID {{ workspace().student.studentId || '—' }} · {{ workspace().student.courseName || 'Course' }}</p>
+          </div>
         </div>
 
         @if (selectedLedger(); as ledger) {
           <div class="student-fee-outstanding-card">
             <span>Outstanding</span>
             <strong>{{ ledger.balance?.formatted || '₹0' }}</strong>
-            <em [class.is-overdue]="ledger.paymentStatus === 'due'">{{ ledger.paymentStatus === 'paid' ? 'Paid' : 'Overdue' }}</em>
-            <p>Due {{ ledger.dueDate ? ((ledger.dueDate | date: 'mediumDate') || '—') : '—' }}</p>
+            <em [class.is-paid]="ledger.paymentStatus === 'paid'">{{ ledger.paymentStatus === 'paid' ? 'Paid' : 'Overdue' }}</em>
+            <p>Due {{ ledger.dueDate ? ((ledger.dueDate | date: 'dd MMM yyyy') || '—') : '—' }}</p>
           </div>
         } @else {
-          <div class="student-fee-outstanding-card"><strong>No fee period available</strong><p>There is no eligible ledger for this challan type.</p></div>
+          <div class="student-fee-outstanding-card student-fee-outstanding-card--empty">
+            <strong>No fee period available</strong>
+            <p>There is no eligible ledger for this challan type.</p>
+          </div>
         }
 
         <label class="student-fee-checkline">
           <input type="checkbox" [checked]="reviewed()" (change)="onReviewed($event)">
-          I have reviewed the fee period and amount.
+          <span>I have reviewed the fee period and amount.</span>
         </label>
-        <button class="student-fee-primary-action student-fee-wide-action" [disabled]="!canGenerate()" (click)="generateChallan()">Generate Challan</button>
+
+        <button type="button" class="student-fee-primary-action student-fee-wide-action" [disabled]="!canGenerate()" (click)="generateChallan()">Generate Challan</button>
         <p class="student-fee-mini-help">The generated challan can be downloaded or printed.</p>
       </article>
 
-      <article class="student-fee-panel student-fee-empty-state">
-        @if (generated() && selectedLedger(); as ledger) {
+      <article class="student-fee-panel student-fee-challan-preview">
+        <h2>Challan preview</h2>
+        <div class="student-fee-empty-state">
           <img src="/assets/student/fee-icons/empty-states/no-challan.webp" alt="" class="student-fee-empty-state__image">
-          <h2>Challan ready</h2>
-          <p>{{ bankChallan() }} · {{ ledger.periodLabel }} · {{ ledger.balance?.formatted || '₹0' }}</p>
-          <div class="student-fee-empty-actions">
-            <button class="student-fee-outline-action" type="button">Download PDF</button>
-            <button class="student-fee-primary-action" type="button" (click)="printChallan()">Print</button>
-          </div>
-        } @else {
-          <img src="/assets/student/fee-icons/empty-states/no-challan.webp" alt="" class="student-fee-empty-state__image">
-          <h2>No challan generated yet</h2>
-          <p>Choose the fee period and generate a challan to preview it here.</p>
-          <div class="student-fee-empty-actions">
-            <button class="student-fee-outline-action" disabled>Download PDF</button>
-            <button class="student-fee-soft-action" disabled>Print</button>
-          </div>
-        }
+          @if (generated() && selectedLedger(); as ledger) {
+            <h3>Challan ready</h3>
+            <p>{{ bankChallan() }} · {{ ledger.periodLabel }} · {{ ledger.balance?.formatted || '₹0' }}</p>
+            <div class="student-fee-empty-actions">
+              <button class="student-fee-outline-action" type="button"><span class="student-fee-button-icon" aria-hidden="true">↓</span>Download PDF</button>
+              <button class="student-fee-primary-action" type="button" (click)="printChallan()"><span class="student-fee-button-icon" aria-hidden="true">▣</span>Print</button>
+            </div>
+          } @else {
+            <h3>No challan generated yet</h3>
+            <p>Choose the fee period and generate a challan to preview it here.</p>
+            <div class="student-fee-empty-actions">
+              <button class="student-fee-outline-action" type="button" disabled><span class="student-fee-button-icon" aria-hidden="true">↓</span>Download PDF</button>
+              <button class="student-fee-soft-action" type="button" disabled><span class="student-fee-button-icon" aria-hidden="true">▣</span>Print</button>
+            </div>
+          }
+        </div>
       </article>
-    </div>
-
-    <section class="student-fee-process-grid" aria-label="How challan works">
-      <article class="student-fee-process-card"><span>1</span><div><strong>Generate</strong><p>Select an eligible fee period.</p></div></article>
-      <article class="student-fee-process-card"><span>2</span><div><strong>Pay at bank</strong><p>Use the generated challan as instructed.</p></div></article>
-      <article class="student-fee-process-card"><span>3</span><div><strong>Verification</strong><p>Payment status updates after institutional verification.</p></div></article>
     </section>
 
-    <aside class="student-fee-warning-note">⚠ Do not pay using an expired or previously settled challan.</aside>
+    <section class="student-fee-challan-steps" aria-labelledby="challan-steps-title">
+      <h2 id="challan-steps-title">How it works</h2>
+      <div class="student-fee-process-grid">
+        <article class="student-fee-process-card student-fee-process-card--generate">
+          <span>1</span><b><img src="/assets/student/fee-icons/compact/fee-challan.webp" alt=""></b>
+          <div><strong>Generate</strong><p>Select an eligible fee period.</p></div>
+          <span class="student-fee-process-arrow" aria-hidden="true">›</span>
+        </article>
+        <article class="student-fee-process-card student-fee-process-card--bank">
+          <span>2</span><b><img src="/assets/student/fee-icons/compact/pay-fees.webp" alt=""></b>
+          <div><strong>Pay at bank</strong><p>Use the generated challan as instructed.</p></div>
+          <span class="student-fee-process-arrow" aria-hidden="true">›</span>
+        </article>
+        <article class="student-fee-process-card student-fee-process-card--verify">
+          <span>3</span><b><img src="/assets/student/fee-icons/compact/payment-receipts.webp" alt=""></b>
+          <div><strong>Verification</strong><p>Payment status updates after institutional verification.</p></div>
+          <span class="student-fee-process-arrow" aria-hidden="true">›</span>
+        </article>
+      </div>
+    </section>
+
+    <aside class="student-fee-warning-note">
+      <span class="student-fee-warning-icon" aria-hidden="true">!</span>
+      <span>Do not pay using an expired or previously settled challan.</span>
+    </aside>
   }
-</section>
+</main>
 
 <erp-student-mobile-bottom-nav />

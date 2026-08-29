@@ -26,6 +26,7 @@ import {
   FeeProgressionCandidate,
   StudentPromotion,
 } from './models';
+import { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -166,6 +167,11 @@ export class ApiService {
       `${API_BASE_URL}/auth/student/fees`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
+  }
+  studentProfile(token: string) {
+    return this.http.get<{ profile: StudentProfile }>(`${API_BASE_URL}/auth/student/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }
   studentPaymentHistory(token: string) {
     return this.http.get<{ items: FeePayment[]; razorpayEnabled: boolean }>(
