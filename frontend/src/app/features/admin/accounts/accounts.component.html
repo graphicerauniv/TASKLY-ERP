@@ -116,4 +116,33 @@
       </table>
     </div>
   </section>
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>One-time discount audit <small>{{ discounts().length }}</small></h2>
+        <p>Internal remarks are restricted to administrators and Accounts.</p>
+      </div>
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead><tr><th>Student</th><th>Discount</th><th>Type</th><th>Value</th><th>Fee period</th><th>Internal remark</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          @for (discount of discounts(); track discount._id) {
+            <tr>
+              <td><strong>{{ discount.studentName }}</strong><small>{{ discount.studentId }}</small></td>
+              <td>{{ discount.name }}</td>
+              <td>{{ discount.type === 'percentage' ? 'Percentage' : 'Fixed amount' }}</td>
+              <td>{{ discount.type === 'percentage' ? discount.value + '%' : (discount.value | currency:'INR') }}</td>
+              <td>{{ discount.targetPeriodLabel }}</td>
+              <td>{{ discount.internalRemark }}</td>
+              <td>{{ discount.createdAt | date:'medium' }}</td>
+              <td><span class="erp-status">{{ discount.status }}</span></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="8" class="erp-empty-state">No one-time discount records found.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 </erp-admin-page>

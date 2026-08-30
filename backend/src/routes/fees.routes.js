@@ -14,6 +14,11 @@ import {
   removeStudentFeeLedgers,
 } from '../services/student-fee-ledger.js';
 import { promoteStudentProgression } from '../services/student-promotion.js';
+import {
+  discountAssignmentDocument,
+  refreshStudentScholarshipLedgers,
+  scholarshipAssignmentDocument,
+} from '../services/student-scholarships.js';
 
 export const feesRouter = express.Router();
 const upload = multer({
@@ -129,6 +134,36 @@ const progressionSchema = z.object({
   studentAdmissionIds: z.array(z.string()).min(1).max(500),
   penalty: penaltySchema.optional().default({ enabled: false, dailyAmount: 0, maxAmount: 0 }),
 });
+const scholarshipSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  type: z.enum(['percentage', 'fixed']),
+  value: z.coerce.number().positive().max(1_000_000_000),
+  isActive: z.boolean().optional().default(true),
+}).superRefine((data, context) => {
+  if (data.type === 'percentage' && data.value > 100)
+    context.addIssue({
+      code: 'custom',
+      path: ['value'],
+      message: 'Percentage scholarship cannot exceed 100%.',
+    });
+});
+const scholarshipAssignmentSchema = z.object({ scholarshipId: z.string().min(1) });
+const studentDiscountSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    type: z.enum(['percentage', 'fixed']),
+    value: z.coerce.number().positive().max(1_000_000_000),
+    targetLedgerId: z.string().min(1),
+    internalRemark: z.string().trim().min(3).max(1000),
+  })
+  .superRefine((data, context) => {
+    if (data.type === 'percentage' && data.value > 100)
+      context.addIssue({
+        code: 'custom',
+        path: ['value'],
+        message: 'Percentage discount cannot exceed 100%.',
+      });
+  });
 
 async function masterValue(value, typeSlug, field) {
   const item = await db()
@@ -168,6 +203,287 @@ async function feeHead(value, bookId) {
   }
   return item;
 }
+
+async function approvedStudent(value) {
+  const student = await db().collection('admissions').findOne({
+    _id: id(value, 'studentAdmissionId'),
+    status: 'approved',
+    isActive: true,
+  });
+  if (!student) {
+    const error = new Error('Approved active student was not found.');
+    error.status = 404;
+    throw error;
+  }
+  return student;
+}
+
+feesRouter.get(
+  '/scholarships',
+  asyncHandler(async (request, response) => {
+    const filter = request.query.active === 'true' ? { isActive: true } : {};
+    const items = await db()
+      .collection('scholarships')
+      .find(filter)
+      .sort({ isActive: -1, name: 1 })
+      .toArray();
+    response.json({ items: items.map(serialize) });
+  }),
+);
+
+feesRouter.post(
+  '/scholarships',
+  asyncHandler(async (request, response) => {
+    const data = scholarshipSchema.parse(request.body);
+    const normalizedName = normalizeFeeName(data.name);
+    const duplicate = await db().collection('scholarships').findOne({ normalizedName });
+    if (duplicate)
+      return response.status(409).json({ message: 'A scholarship with this name already exists.' });
+    const now = new Date();
+    const document = {
+      ...data,
+      normalizedName,
+      recurring: true,
+      appliesTo: 'tuition',
+      createdBy: id(request.admin._id),
+      createdAt: now,
+      updatedAt: now,
+    };
+    const result = await db().collection('scholarships').insertOne(document);
+    response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
+  }),
+);
+
+feesRouter.patch(
+  '/scholarships/:scholarshipId',
+  asyncHandler(async (request, response) => {
+    const data = scholarshipSchema.partial().parse(request.body);
+    const scholarshipId = id(request.params.scholarshipId, 'scholarshipId');
+    const current = await db().collection('scholarships').findOne({ _id: scholarshipId });
+    if (!current) return response.status(404).json({ message: 'Scholarship was not found.' });
+    const candidate = scholarshipSchema.parse({ ...current, ...data });
+    const update = { ...data, updatedAt: new Date() };
+    if (data.name) {
+      update.normalizedName = normalizeFeeName(data.name);
+      const duplicate = await db().collection('scholarships').findOne({
+        normalizedName: update.normalizedName,
+        _id: { $ne: scholarshipId },
+      });
+      if (duplicate)
+        return response.status(409).json({ message: 'A scholarship with this name already exists.' });
+    }
+    update.type = candidate.type;
+    update.value = candidate.value;
+    await db().collection('scholarships').updateOne({ _id: scholarshipId }, { $set: update });
+    const item = await db().collection('scholarships').findOne({ _id: scholarshipId });
+    response.json({ item: serialize(item) });
+  }),
+);
+
+feesRouter.delete(
+  '/scholarships/:scholarshipId',
+  asyncHandler(async (request, response) => {
+    const scholarshipId = id(request.params.scholarshipId, 'scholarshipId');
+    const assigned = await db()
+      .collection('studentScholarships')
+      .countDocuments({ scholarshipId });
+    if (assigned)
+      return response.status(409).json({
+        message: 'This scholarship has student history. Disable it instead of deleting it.',
+      });
+    const result = await db().collection('scholarships').deleteOne({ _id: scholarshipId });
+    if (!result.deletedCount)
+      return response.status(404).json({ message: 'Scholarship was not found.' });
+    response.status(204).end();
+  }),
+);
+
+feesRouter.get(
+  '/student-scholarships/:studentAdmissionId',
+  asyncHandler(async (request, response) => {
+    const student = await approvedStudent(request.params.studentAdmissionId);
+    const [assignments, discounts, ledgers, scholarships] = await Promise.all([
+      db()
+        .collection('studentScholarships')
+        .find({ studentAdmissionId: student._id, status: 'active' })
+        .sort({ assignedAt: 1 })
+        .toArray(),
+      db()
+        .collection('studentDiscounts')
+        .find({ studentAdmissionId: student._id, status: 'active' })
+        .sort({ createdAt: 1 })
+        .toArray(),
+      db()
+        .collection('studentFeeLedgers')
+        .find({ studentAdmissionId: student._id, kind: 'academic', status: 'active' })
+        .sort({ currentAcademicYear: 1, currentSemester: 1 })
+        .toArray(),
+      db().collection('scholarships').find({ isActive: true }).sort({ name: 1 }).toArray(),
+    ]);
+    response.json({
+      student: serialize(student),
+      assignments: assignments.map(serialize),
+      discounts: discounts.map(serialize),
+      ledgers: ledgers.map(serialize),
+      scholarships: scholarships.map(serialize),
+    });
+  }),
+);
+
+feesRouter.post(
+  '/student-scholarships/:studentAdmissionId',
+  asyncHandler(async (request, response) => {
+    const data = scholarshipAssignmentSchema.parse(request.body);
+    const student = await approvedStudent(request.params.studentAdmissionId);
+    const scholarship = await db().collection('scholarships').findOne({
+      _id: id(data.scholarshipId, 'scholarshipId'),
+      isActive: true,
+    });
+    if (!scholarship)
+      return response.status(404).json({ message: 'Active scholarship was not found.' });
+    const duplicate = await db().collection('studentScholarships').findOne({
+      studentAdmissionId: student._id,
+      scholarshipId: scholarship._id,
+      status: 'active',
+    });
+    if (duplicate)
+      return response.status(409).json({ message: 'This scholarship is already assigned.' });
+    const document = scholarshipAssignmentDocument(student, scholarship, request.admin._id);
+    const result = await db().collection('studentScholarships').insertOne(document);
+    const assignment = { ...document, _id: result.insertedId };
+    try {
+      const ledgers = await refreshStudentScholarshipLedgers(db(), student);
+      response.status(201).json({
+        item: serialize(assignment),
+        ledgers: ledgers.map(serialize),
+      });
+    } catch (error) {
+      await db().collection('studentScholarships').deleteOne({ _id: result.insertedId });
+      throw error;
+    }
+  }),
+);
+
+feesRouter.post(
+  '/student-discounts/:studentAdmissionId',
+  asyncHandler(async (request, response) => {
+    const data = studentDiscountSchema.parse(request.body);
+    const student = await approvedStudent(request.params.studentAdmissionId);
+    const ledger = await db().collection('studentFeeLedgers').findOne({
+      _id: id(data.targetLedgerId, 'targetLedgerId'),
+      studentAdmissionId: student._id,
+      kind: 'academic',
+      status: 'active',
+    });
+    if (!ledger)
+      return response.status(404).json({ message: 'Selected Academic Fee period was not found.' });
+    const hasTuitionFee = (ledger.entries || []).some(
+      (entry) => entry.category === 'fee' && /\btuition\b/i.test(entry.feeHeadName || ''),
+    );
+    if (!hasTuitionFee)
+      return response.status(409).json({
+        message: 'The selected fee period has no Tuition Fee to discount.',
+      });
+    const document = discountAssignmentDocument(student, ledger, data, request.admin._id);
+    const result = await db().collection('studentDiscounts').insertOne(document);
+    const discount = { ...document, _id: result.insertedId };
+    try {
+      const ledgers = await refreshStudentScholarshipLedgers(db(), student);
+      response.status(201).json({ item: serialize(discount), ledgers: ledgers.map(serialize) });
+    } catch (error) {
+      await db().collection('studentDiscounts').deleteOne({ _id: result.insertedId });
+      throw error;
+    }
+  }),
+);
+
+feesRouter.delete(
+  '/student-discounts/:studentAdmissionId/:discountId',
+  asyncHandler(async (request, response) => {
+    const student = await approvedStudent(request.params.studentAdmissionId);
+    const discountId = id(request.params.discountId, 'discountId');
+    const discount = await db().collection('studentDiscounts').findOne({
+      _id: discountId,
+      studentAdmissionId: student._id,
+      status: 'active',
+    });
+    if (!discount)
+      return response.status(404).json({ message: 'One-time discount was not found.' });
+    const ledger = await db().collection('studentFeeLedgers').findOne({
+      _id: discount.targetLedgerId,
+      studentAdmissionId: student._id,
+      status: 'active',
+    });
+    if (Number(ledger?.paidAmount || 0) > 0)
+      return response.status(409).json({
+        message: 'This fee period already has a payment. The discount must be reversed by Accounts.',
+      });
+    const removedAt = new Date();
+    await db().collection('studentDiscounts').updateOne(
+      { _id: discountId },
+      {
+        $set: {
+          status: 'removed',
+          removedAt,
+          removedBy: id(request.admin._id),
+          updatedAt: removedAt,
+        },
+      },
+    );
+    try {
+      const ledgers = await refreshStudentScholarshipLedgers(db(), student);
+      response.json({ removed: true, ledgers: ledgers.map(serialize) });
+    } catch (error) {
+      await db().collection('studentDiscounts').updateOne(
+        { _id: discountId },
+        {
+          $set: { status: 'active', updatedAt: new Date() },
+          $unset: { removedAt: '', removedBy: '' },
+        },
+      );
+      throw error;
+    }
+  }),
+);
+
+feesRouter.delete(
+  '/student-scholarships/:studentAdmissionId/:assignmentId',
+  asyncHandler(async (request, response) => {
+    const student = await approvedStudent(request.params.studentAdmissionId);
+    const assignmentId = id(request.params.assignmentId, 'assignmentId');
+    const assignment = await db().collection('studentScholarships').findOne({
+      _id: assignmentId,
+      studentAdmissionId: student._id,
+      status: 'active',
+    });
+    if (!assignment)
+      return response.status(404).json({ message: 'Student scholarship was not found.' });
+    const removedAt = new Date();
+    await db().collection('studentScholarships').updateOne(
+      { _id: assignmentId },
+      {
+        $set: {
+          status: 'removed',
+          removedAt,
+          removedBy: id(request.admin._id),
+          updatedAt: removedAt,
+        },
+      },
+    );
+    try {
+      const ledgers = await refreshStudentScholarshipLedgers(db(), student, {
+        preservePaidScholarships: true,
+      });
+      response.json({ removed: true, ledgers: ledgers.map(serialize) });
+    } catch (error) {
+      await db().collection('studentScholarships').updateOne(
+        { _id: assignmentId },
+        { $set: { status: 'active', updatedAt: new Date() }, $unset: { removedAt: '', removedBy: '' } },
+      );
+      throw error;
+    }
+  }),
+);
 
 feesRouter.get(
   '/books',

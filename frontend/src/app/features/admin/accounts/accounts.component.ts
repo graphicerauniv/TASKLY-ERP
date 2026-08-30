@@ -2,7 +2,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
-import { FeePayment } from '../../../core/models';
+import { FeePayment, StudentDiscount } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 
 @Component({
@@ -14,6 +14,7 @@ import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.com
 export class AccountsComponent {
   private readonly api = inject(ApiService);
   readonly items = signal<FeePayment[]>([]);
+  readonly discounts = signal<StudentDiscount[]>([]);
   readonly summary = signal({ successfulPayments: 0, collectedAmount: 0, pendingPayments: 0 });
   readonly loading = signal(false);
   readonly error = signal('');
@@ -27,8 +28,9 @@ export class AccountsComponent {
   load() {
     this.loading.set(true);
     this.api.accounts(this.search.trim(), this.status).subscribe({
-      next: ({ items, summary }) => {
+      next: ({ items, discounts, summary }) => {
         this.items.set(items);
+        this.discounts.set(discounts);
         this.summary.set(summary);
         this.loading.set(false);
       },

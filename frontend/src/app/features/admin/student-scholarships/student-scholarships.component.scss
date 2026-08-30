@@ -1,0 +1,26 @@
+/* ERP-LOCAL-STYLE: Student scholarship assignment needs fee-period comparison cards unique to this workflow. */
+:host { display: block; }
+.student-context { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--erp-space-4); margin-bottom: var(--erp-space-4); }
+.student-context div, .ledger-card__summary span { display: grid; gap: var(--erp-space-1); }
+.student-context small, .ledger-card small { color: var(--erp-text-muted); font-size: var(--erp-font-caption); }
+.assign-card { margin-bottom: var(--erp-space-4); }
+.assign-card__controls { display: grid; grid-template-columns: minmax(16rem, 1fr) auto; align-items: end; gap: var(--erp-space-3); }
+.assign-card__controls label { display: grid; gap: var(--erp-space-2); }
+.assign-card__hint { margin: var(--erp-space-3) 0 0; color: var(--erp-text-muted); }
+.discount-form__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--erp-space-3); }
+.discount-form__grid label { display: grid; align-content: start; gap: var(--erp-space-2); }
+.discount-form__remark { grid-column: 1 / -1; }
+.discount-form__remark textarea { min-height: 84px; resize: vertical; }
+.discount-form__remark small, .private-label { color: var(--erp-text-muted); font-size: var(--erp-font-caption); }
+.discount-form__actions { display: flex; justify-content: flex-end; margin-top: var(--erp-space-4); }
+.private-label { display: block; margin-top: var(--erp-space-1); }
+.private-remark { display: block; min-width: 16rem; max-width: 32rem; white-space: normal; color: var(--erp-text-body); }
+.ledger-grid { display: grid; gap: var(--erp-space-4); grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--erp-space-4); }
+.ledger-card header { display: flex; justify-content: space-between; gap: var(--erp-space-4); }
+.ledger-card header > strong { display: grid; text-align: right; }
+.ledger-card__summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--erp-space-3); margin-top: var(--erp-space-4); padding: var(--erp-space-4); border-radius: var(--erp-radius-control); background: var(--erp-surface-detail); }
+.is-discount, .ledger-card__entries strong { color: var(--erp-success-text); }
+.ledger-card__entries p { display: flex; justify-content: space-between; margin: var(--erp-space-3) 0 0; padding-top: var(--erp-space-3); border-top: 1px solid var(--erp-border-subtle); }
+.remove-actions { display: flex; gap: var(--erp-space-2); min-width: max-content; }
+@media (max-width: 900px) { .student-context, .ledger-card__summary, .discount-form__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ledger-grid { grid-template-columns: 1fr; } .discount-form__remark { grid-column: 1 / -1; } }
+@media (max-width: 620px) { .student-context, .assign-card__controls, .ledger-card__summary, .discount-form__grid { grid-template-columns: 1fr; } .discount-form__remark { grid-column: auto; } }

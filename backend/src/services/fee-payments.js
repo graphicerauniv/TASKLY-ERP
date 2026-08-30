@@ -294,7 +294,12 @@ export async function completePayment(
     if (!applied) continue;
     target.entry.paidAmount = roundMoney(target.entry.paidAmount + applied);
     target.entry.balanceAmount = roundMoney(
-      Math.max(0, target.entry.amount - target.entry.paidAmount),
+      Math.max(
+        0,
+        target.entry.amount -
+          Number(target.entry.discountAmount || 0) -
+          target.entry.paidAmount,
+      ),
     );
     target.entry.status = target.entry.balanceAmount <= 0 ? 'paid' : 'partial';
     target.ledger.entries[target.index] = target.entry;
@@ -359,13 +364,16 @@ export function paymentReceiptHtml(payment) {
 function normalizeEntry(entry) {
   const amount = Number(entry.amount || 0);
   const paidAmount = Number(entry.paidAmount || 0);
+  const discountAmount = Number(entry.discountAmount || 0);
+  const calculatedBalance = amount - discountAmount - paidAmount;
   return {
     ...entry,
     amount,
     paidAmount,
-    balanceAmount: Math.max(0, Number(entry.balanceAmount ?? amount - paidAmount)),
+    discountAmount,
+    balanceAmount: Math.max(0, Number(entry.balanceAmount ?? calculatedBalance)),
     status:
-      Number(entry.balanceAmount ?? amount - paidAmount) <= 0
+      Number(entry.balanceAmount ?? calculatedBalance) <= 0
         ? 'paid'
         : paidAmount
           ? 'partial'

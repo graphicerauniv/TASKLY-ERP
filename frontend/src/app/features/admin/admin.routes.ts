@@ -11,6 +11,8 @@ import { FeeManagementComponent } from './fee-management/fee-management.componen
 import { FeeProgressionComponent } from './fee-progression/fee-progression.component';
 import { AccountsComponent } from './accounts/accounts.component';
 import { StudentPromotionsComponent } from './student-promotions/student-promotions.component';
+import { ScholarshipsComponent } from './scholarships/scholarships.component';
+import { StudentScholarshipsComponent } from './student-scholarships/student-scholarships.component';
 
 /**
  * Admin routes share one shell and one router outlet.
@@ -62,6 +64,7 @@ export const ADMIN_ROUTES: Routes = [
         redirectTo: 'fees/books/create',
       },
       { path: 'fees/progression', component: FeeProgressionComponent },
+      { path: 'fees/scholarships', component: ScholarshipsComponent },
       { path: 'accounts', component: AccountsComponent },
       ...[
         ['books/create', 'books', 'create'],
@@ -114,6 +117,10 @@ export const ADMIN_ROUTES: Routes = [
         path: 'admission/student',
         data: { embedded: true },
         component: DynamicAdmissionComponent,
+      },
+      {
+        path: 'admissions/:admissionId/scholarships',
+        component: StudentScholarshipsComponent,
       },
       {
         path: 'admissions/:admissionId/edit',

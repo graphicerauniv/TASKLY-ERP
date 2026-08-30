@@ -51,6 +51,7 @@ export class AdmissionsComponent {
   readonly viewActions: CompactActionItem[] = [{ id: 'view', label: 'View details', icon: 'view' }];
   readonly approvedActions: CompactActionItem[] = [
     { id: 'create-fees', label: 'Create Ledger & Due Card', icon: 'edit' },
+    { id: 'scholarships', label: 'Scholarships & Discounts', icon: 'edit' },
     { id: 'delete-fees', label: 'Delete Ledger & Due Card', icon: 'delete', destructive: true },
     { id: 'edit', label: 'Edit admission data', icon: 'edit' },
     { id: 'password', label: 'Set or reset password', icon: 'edit' },
@@ -165,6 +166,8 @@ export class AdmissionsComponent {
     if (action === 'approve') this.approve(item);
     if (action === 'password') this.openCredentials(item, 'reset');
     if (action === 'create-fees') this.createFees([item._id]);
+    if (action === 'scholarships')
+      void this.router.navigate(['/admin/admissions', item._id, 'scholarships']);
     if (action === 'delete-fees') this.feeDeleteStudent.set(item);
   }
 

@@ -143,8 +143,17 @@ export interface StudentFeeEntry {
   amount: number;
   paidAmount: number;
   balanceAmount: number;
+  discountAmount?: number;
   dueDate: string;
   status: 'due' | 'paid' | 'partial';
+  isScholarship?: boolean;
+  isOneTimeDiscount?: boolean;
+  adjustmentKind?: 'scholarship' | 'discount';
+  customDiscountId?: string;
+  scholarshipAssignmentId?: string;
+  scholarshipId?: string;
+  scholarshipType?: 'percentage' | 'fixed';
+  scholarshipValue?: number;
 }
 
 export interface StudentFeeLedger {
@@ -289,6 +298,55 @@ export interface FeeHead {
   priority: number;
   divideSemesterWise: boolean;
   isActive: boolean;
+}
+
+export interface Scholarship {
+  _id: string;
+  name: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  recurring: true;
+  appliesTo: 'tuition';
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudentScholarship {
+  _id: string;
+  studentAdmissionId: string;
+  studentId: string;
+  studentName: string;
+  scholarshipId: string;
+  scholarshipName: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  startAcademicYear: number;
+  startSemester?: number | null;
+  recurring: true;
+  status: 'active' | 'removed';
+  assignedAt: string;
+}
+
+export interface StudentDiscount {
+  _id: string;
+  studentAdmissionId: string;
+  studentId: string;
+  studentName: string;
+  name: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  targetLedgerId: string;
+  targetPeriodKey: string;
+  targetPeriodLabel: string;
+  academicSession: string;
+  academicYear: number;
+  semester?: number | null;
+  feeFrequency: 'year' | 'semester';
+  internalRemark: string;
+  recurring: false;
+  status: 'active' | 'removed';
+  createdAt: string;
 }
 
 export interface CourseFeeDraft {

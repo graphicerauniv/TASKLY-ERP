@@ -1,4 +1,5 @@
 import { ObjectId } from 'bson';
+import { scholarshipEntriesForPeriod } from './student-scholarships.js';
 
 export async function generateStudentFeeLedgers(database, admission, createdBy, options = {}) {
   if (admission.status !== 'approved' || !admission.isActive)
@@ -175,8 +176,9 @@ async function academicLedger(database, admission, context, book, createdBy, pen
   if (!fees.length) return 'No matching course fee structure.';
   if (hasConflictingFeeAmounts(fees))
     return 'Multiple fee schedules match this student. Map the applicable eligibility band before creating fees.';
-  const entries = await ledgerEntries(database, fees, book, 'academic', context);
+  let entries = await ledgerEntries(database, fees, book, 'academic', context);
   if (!entries.length) return 'No active mapped Academic Fee heads.';
+  entries = await scholarshipEntriesForPeriod(database, admission, context, entries);
   await insertLedger(database, {
     admission,
     context,

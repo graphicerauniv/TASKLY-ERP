@@ -120,6 +120,7 @@ function toLedgerDetail(ledger: StudentFeeLedger): FeeLedgerDetailViewModel {
     dueDate,
     charge: moneyOrNull(ledger.chargeAmount),
     discount: moneyOrNull(ledger.discountAmount),
+    payable: moneyOrNull(ledger.totalAmount),
     paid: moneyOrNull(ledger.paidAmount),
     balance,
     penalty: moneyOrNull(ledger.penaltyAmount),
@@ -144,6 +145,7 @@ function toFeeHeadDetail(entry: StudentFeeLedger['entries'][number]): FeeHeadDet
     paid: moneyOrNull(entry.paidAmount),
     balance: moneyOrNull(entry.balanceAmount),
     status: entry.status,
+    isScholarship: Boolean(entry.isScholarship),
     source: 'backend',
   };
 }

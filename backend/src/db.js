@@ -4,8 +4,8 @@ import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-08-28-v4';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-08-28-v4';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-08-30-v6';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-08-30-v6';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -102,6 +102,10 @@ async function ensureIndexes(databaseInstance) {
     () => databaseInstance.collection('hostelAllocations').createIndex({ roomId: 1, bedNumber: 1, academicSession: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
     () => databaseInstance.collection('feeBooks').createIndex({ code: 1 }, { unique: true }),
     () => databaseInstance.collection('feeHeads').createIndex({ bookId: 1, normalizedName: 1 }, { unique: true }),
+    () => databaseInstance.collection('scholarships').createIndex({ normalizedName: 1 }, { unique: true }),
+    () => databaseInstance.collection('studentScholarships').createIndex({ studentAdmissionId: 1, status: 1 }),
+    () => databaseInstance.collection('studentScholarships').createIndex({ studentAdmissionId: 1, scholarshipId: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
+    () => databaseInstance.collection('studentDiscounts').createIndex({ studentAdmissionId: 1, status: 1, targetLedgerId: 1 }),
     () => databaseInstance.collection('hostelFees').createIndex({ bookId: 1, hostelId: 1, seater: 1, roomType: 1, feeHeadId: 1, frequency: 1 }, { unique: true }),
     () => databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1 }),
     () => databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),

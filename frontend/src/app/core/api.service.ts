@@ -25,6 +25,9 @@ import {
   FeePayment,
   FeeProgressionCandidate,
   StudentPromotion,
+  Scholarship,
+  StudentScholarship,
+  StudentDiscount,
 } from './models';
 import { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
@@ -291,6 +294,7 @@ export class ApiService {
     if (status) params = params.set('status', status);
     return this.http.get<{
       items: FeePayment[];
+      discounts: StudentDiscount[];
       summary: { successfulPayments: number; collectedAmount: number; pendingPayments: number };
     }>(`${API_BASE_URL}/payments/admin/accounts`, { params });
   }
@@ -556,6 +560,63 @@ export class ApiService {
   }
   deleteFeeHead(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/heads/${id}`);
+  }
+  scholarships(activeOnly = false) {
+    return this.http.get<{ items: Scholarship[] }>(`${API_BASE_URL}/fees/scholarships`, {
+      params: activeOnly ? { active: 'true' } : {},
+    });
+  }
+  createScholarship(body: Pick<Scholarship, 'name' | 'type' | 'value' | 'isActive'>) {
+    return this.http.post<{ item: Scholarship }>(`${API_BASE_URL}/fees/scholarships`, body);
+  }
+  updateScholarship(id: string, body: Partial<Scholarship>) {
+    return this.http.patch<{ item: Scholarship }>(
+      `${API_BASE_URL}/fees/scholarships/${id}`,
+      body,
+    );
+  }
+  deleteScholarship(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/fees/scholarships/${id}`);
+  }
+  studentScholarships(studentAdmissionId: string) {
+    return this.http.get<{
+      student: Admission;
+      assignments: StudentScholarship[];
+      discounts: StudentDiscount[];
+      ledgers: StudentFeeLedger[];
+      scholarships: Scholarship[];
+    }>(`${API_BASE_URL}/fees/student-scholarships/${studentAdmissionId}`);
+  }
+  assignStudentScholarship(studentAdmissionId: string, scholarshipId: string) {
+    return this.http.post<{ item: StudentScholarship; ledgers: StudentFeeLedger[] }>(
+      `${API_BASE_URL}/fees/student-scholarships/${studentAdmissionId}`,
+      { scholarshipId },
+    );
+  }
+  removeStudentScholarship(studentAdmissionId: string, assignmentId: string) {
+    return this.http.delete<{ removed: boolean; ledgers: StudentFeeLedger[] }>(
+      `${API_BASE_URL}/fees/student-scholarships/${studentAdmissionId}/${assignmentId}`,
+    );
+  }
+  createStudentDiscount(
+    studentAdmissionId: string,
+    body: {
+      name: string;
+      type: 'percentage' | 'fixed';
+      value: number;
+      targetLedgerId: string;
+      internalRemark: string;
+    },
+  ) {
+    return this.http.post<{ item: StudentDiscount; ledgers: StudentFeeLedger[] }>(
+      `${API_BASE_URL}/fees/student-discounts/${studentAdmissionId}`,
+      body,
+    );
+  }
+  removeStudentDiscount(studentAdmissionId: string, discountId: string) {
+    return this.http.delete<{ removed: boolean; ledgers: StudentFeeLedger[] }>(
+      `${API_BASE_URL}/fees/student-discounts/${studentAdmissionId}/${discountId}`,
+    );
   }
   hostelFees(bookId = '') {
     return this.http.get<{ items: HostelFee[] }>(`${API_BASE_URL}/fees/hostel-fees`, {

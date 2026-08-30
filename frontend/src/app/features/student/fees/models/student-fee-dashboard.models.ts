@@ -76,6 +76,7 @@ export interface FeeHeadDetailViewModel {
   paid: MoneyValue | null;
   balance: MoneyValue | null;
   status: 'due' | 'partial' | 'paid';
+  isScholarship: boolean;
   source: FeeValueSource;
 }
 
@@ -91,6 +92,7 @@ export interface FeeLedgerDetailViewModel {
   dueDate: string | null;
   charge: MoneyValue | null;
   discount: MoneyValue | null;
+  payable: MoneyValue | null;
   paid: MoneyValue | null;
   balance: MoneyValue | null;
   penalty: MoneyValue | null;

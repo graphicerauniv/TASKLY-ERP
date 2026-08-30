@@ -165,6 +165,23 @@ paymentsRouter.get(
       .sort({ createdAt: -1 })
       .limit(2000)
       .toArray();
+    const discountFilter = {};
+    if (request.query.search) {
+      const match = { $regex: escapeRegex(request.query.search), $options: 'i' };
+      discountFilter.$or = [
+        { studentId: match },
+        { studentName: match },
+        { name: match },
+        { targetPeriodLabel: match },
+        { internalRemark: match },
+      ];
+    }
+    const discounts = await db()
+      .collection('studentDiscounts')
+      .find(discountFilter)
+      .sort({ createdAt: -1 })
+      .limit(2000)
+      .toArray();
     const studentIds = [...new Set(items.map((item) => String(item.studentAdmissionId)))].map(
       (value) => id(value, 'studentAdmissionId'),
     );
@@ -192,6 +209,7 @@ paymentsRouter.get(
           outstandingBalance: outstandingByStudent.get(String(item.studentAdmissionId)) || 0,
         }),
       ),
+      discounts: discounts.map(serialize),
       summary: {
         successfulPayments: paid.length,
         collectedAmount: paid.reduce((sum, item) => sum + Number(item.amount || 0), 0),

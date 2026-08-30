@@ -1,0 +1,92 @@
+<erp-admin-page
+  eyebrow="Fee Management"
+  title="Scholarships"
+  description="Create reusable percentage or fixed scholarships. Every scholarship is applied only to Tuition Fee."
+  variant="minimal"
+>
+  @if (message()) {
+    <p class="erp-notice erp-notice--success">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="erp-notice erp-notice--error">{{ error() }}</p>
+  }
+
+  <section class="erp-card erp-card--padded scholarship-form">
+    <div class="erp-card__header">
+      <div>
+        <h2>{{ editingId() ? 'Edit scholarship' : 'Create scholarship' }}</h2>
+        <p>Scholarships recur in future fee periods after they are assigned to a student.</p>
+      </div>
+    </div>
+    <div class="erp-form-grid">
+      <label>
+        <span>Scholarship name *</span>
+        <input class="erp-control" [(ngModel)]="name" maxlength="120" placeholder="Merit Scholarship" />
+      </label>
+      <label>
+        <span>Calculation type *</span>
+        <select class="erp-control" [(ngModel)]="type">
+          <option value="percentage">Percentage</option>
+          <option value="fixed">Fixed annual amount</option>
+        </select>
+      </label>
+      <label>
+        <span>{{ type === 'percentage' ? 'Percentage *' : 'Annual amount *' }}</span>
+        <input
+          class="erp-control"
+          type="number"
+          min="0.01"
+          [max]="type === 'percentage' ? 100 : 1000000000"
+          step="0.01"
+          [(ngModel)]="value"
+        />
+      </label>
+      <label>
+        <span>Status</span>
+        <select class="erp-control" [(ngModel)]="isActive">
+          <option [ngValue]="true">Active</option>
+          <option [ngValue]="false">Inactive</option>
+        </select>
+      </label>
+    </div>
+    <div class="scholarship-form__actions">
+      @if (editingId()) {
+        <button class="erp-button erp-button--secondary" type="button" (click)="reset()">Cancel</button>
+      }
+      <button class="erp-button erp-button--primary" type="button" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Saving…' : editingId() ? 'Save changes' : 'Create scholarship' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>Scholarship master <small>{{ items().length }}</small></h2>
+        <p>Inactive scholarships remain in history but cannot be newly assigned.</p>
+      </div>
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Value</th><th>Applies to</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td><strong>{{ item.name }}</strong></td>
+              <td>{{ item.type === 'percentage' ? 'Percentage' : 'Fixed annual amount' }}</td>
+              <td>{{ displayValue(item) ?? (item.value | currency:'INR':'symbol':'1.0-2') }}</td>
+              <td>Tuition Fee</td>
+              <td><span class="scholarship-status" [class.is-inactive]="!item.isActive">{{ item.isActive ? 'Active' : 'Inactive' }}</span></td>
+              <td class="scholarship-actions">
+                <button class="erp-button erp-button--secondary" type="button" (click)="edit(item)">Edit</button>
+                <button class="erp-button erp-button--secondary" type="button" (click)="toggle(item)">{{ item.isActive ? 'Disable' : 'Enable' }}</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6">{{ loading() ? 'Loading scholarships…' : 'No scholarships created yet.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</erp-admin-page>

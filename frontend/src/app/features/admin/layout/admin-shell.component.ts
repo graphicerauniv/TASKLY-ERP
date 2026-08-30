@@ -330,6 +330,7 @@ export class AdminShellComponent {
     return this.router.url.startsWith('/admin/fees/');
   }
   isFeeGroupRoute(group: 'books' | 'heads' | 'hostel' | 'course') {
+    if (group === 'heads' && this.router.url.startsWith('/admin/fees/scholarships')) return true;
     const path = {
       books: '/admin/fees/books/',
       heads: '/admin/fees/heads/',

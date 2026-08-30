@@ -1,0 +1,8 @@
+/* ERP-LOCAL-STYLE: Scholarship master status and action layouts are specific to this fee workflow. */
+:host { display: block; }
+.scholarship-form { margin-bottom: var(--erp-space-4); }
+.scholarship-form__actions { display: flex; justify-content: flex-end; gap: var(--erp-space-3); margin-top: var(--erp-space-4); }
+.scholarship-status { display: inline-flex; padding: var(--erp-space-1) var(--erp-space-3); border-radius: var(--erp-radius-pill); background: var(--erp-success-bg); color: var(--erp-success-text); font-size: var(--erp-font-caption); font-weight: var(--erp-weight-bold); }
+.scholarship-status.is-inactive { background: var(--erp-surface-neutral); color: var(--erp-text-muted); }
+.scholarship-actions { display: flex; gap: var(--erp-space-2); }
+@media (max-width: 720px) { .scholarship-actions { min-width: 12rem; } }
