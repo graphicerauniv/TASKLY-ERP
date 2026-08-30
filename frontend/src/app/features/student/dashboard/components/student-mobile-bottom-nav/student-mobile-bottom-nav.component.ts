@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LucideBookOpen, LucideHome, LucideLayoutGrid, LucideUserRound } from '@lucide/angular';
-import { StudentLayoutStateService } from '../../../shared/services/student-layout-state.service';
 
 @Component({
   selector: 'erp-student-mobile-bottom-nav',
@@ -17,5 +16,4 @@ import { StudentLayoutStateService } from '../../../shared/services/student-layo
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentMobileBottomNavComponent {
-  readonly layoutState = inject(StudentLayoutStateService);
 }

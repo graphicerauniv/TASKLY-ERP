@@ -146,7 +146,11 @@ function findRowValue(fields, row, aliases) {
 
 function documents(fields, responses) {
   return fields
-    .filter((field) => field.type === 'file' || field.type === 'upload')
+    .filter(
+      (field) =>
+        ['file', 'image'].includes(field.type) &&
+        !/(photo|portrait|signature)/i.test(field.name || ''),
+    )
     .flatMap((field) => normalizeFiles(responses[field.id]).map((file, index) => ({
       id: `${field.id}-${index}`,
       name: file.name || field.name,

@@ -29,7 +29,7 @@ import {
   StudentScholarship,
   StudentDiscount,
 } from './models';
-import { StudentProfile } from '../features/student/profile/models/student-profile.model';
+import type { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {

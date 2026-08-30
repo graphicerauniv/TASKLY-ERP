@@ -95,6 +95,9 @@ export class StudentProfileComponent {
   ]);
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      document.body.style.overflow = '';
+    });
     this.load();
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const requested = params.get('view');
