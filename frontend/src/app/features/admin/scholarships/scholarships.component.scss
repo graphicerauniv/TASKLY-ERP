@@ -1,8 +1,125 @@
-/* ERP-LOCAL-STYLE: Scholarship master status and action layouts are specific to this fee workflow. */
-:host { display: block; }
-.scholarship-form { margin-bottom: var(--erp-space-4); }
-.scholarship-form__actions { display: flex; justify-content: flex-end; gap: var(--erp-space-3); margin-top: var(--erp-space-4); }
-.scholarship-status { display: inline-flex; padding: var(--erp-space-1) var(--erp-space-3); border-radius: var(--erp-radius-pill); background: var(--erp-success-bg); color: var(--erp-success-text); font-size: var(--erp-font-caption); font-weight: var(--erp-weight-bold); }
-.scholarship-status.is-inactive { background: var(--erp-surface-neutral); color: var(--erp-text-muted); }
-.scholarship-actions { display: flex; gap: var(--erp-space-2); }
-@media (max-width: 720px) { .scholarship-actions { min-width: 12rem; } }
+/* ERP-LOCAL-STYLE: Scholarship configuration uses separate directory/editor routes with a compact editor guidance rail. */
+:host {
+  display: block;
+}
+.scholarship-workspace-nav {
+  display: flex;
+  gap: var(--erp-space-2);
+  margin-bottom: var(--erp-space-4);
+  padding: var(--erp-space-1);
+  overflow-x: auto;
+  background: var(--erp-surface-page-panel);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-compact);
+}
+.scholarship-workspace-nav a {
+  display: grid;
+  min-width: 12rem;
+  gap: 2px;
+  padding: var(--erp-space-2) var(--erp-space-3);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+  font-weight: var(--erp-weight-bold);
+  text-decoration: none;
+  border-radius: var(--erp-radius-control);
+}
+.scholarship-workspace-nav a:hover,
+.scholarship-workspace-nav a.is-active {
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+}
+.scholarship-workspace-nav small {
+  font-size: var(--erp-font-size-2xs);
+  font-weight: var(--erp-weight-regular);
+}
+.scholarship-metrics {
+  display: flex;
+  gap: var(--erp-space-5);
+  margin-bottom: var(--erp-space-3);
+  padding: 0 var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+}
+.scholarship-metrics span + span {
+  padding-left: var(--erp-space-5);
+  border-left: 1px solid var(--erp-border-subtle);
+}
+.scholarship-metrics strong {
+  margin-right: var(--erp-space-1);
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+}
+.scholarship-table-toolbar {
+  align-items: flex-end;
+}
+.scholarship-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--erp-space-3);
+  margin-top: var(--erp-space-4);
+}
+.scholarship-status {
+  display: inline-flex;
+  padding: var(--erp-space-1) var(--erp-space-3);
+  border-radius: var(--erp-radius-pill);
+  background: var(--erp-success-bg);
+  color: var(--erp-success-text);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-bold);
+}
+.scholarship-status.is-inactive {
+  background: var(--erp-surface-neutral);
+  color: var(--erp-text-muted);
+}
+.scholarship-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--erp-space-4);
+  align-items: start;
+}
+.scholarship-guidance {
+  position: sticky;
+  top: var(--erp-space-4);
+}
+.scholarship-guidance h2 {
+  margin: 0 0 var(--erp-space-3);
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+}
+.scholarship-guidance dl {
+  margin: 0;
+}
+.scholarship-guidance dl div {
+  padding: var(--erp-space-3) 0;
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.scholarship-guidance dt {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-2xs);
+}
+.scholarship-guidance dd {
+  margin: var(--erp-space-1) 0 0;
+  color: var(--erp-text-body);
+  font-size: var(--erp-font-size-xs);
+}
+@media (max-width: 900px) {
+  .scholarship-editor-layout {
+    grid-template-columns: 1fr;
+  }
+  .scholarship-guidance {
+    position: static;
+  }
+}
+@media (max-width: 720px) {
+  .scholarship-metrics {
+    gap: var(--erp-space-3);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .scholarship-metrics span + span {
+    padding-left: var(--erp-space-3);
+  }
+  .scholarship-table-toolbar {
+    align-items: stretch;
+  }
+}

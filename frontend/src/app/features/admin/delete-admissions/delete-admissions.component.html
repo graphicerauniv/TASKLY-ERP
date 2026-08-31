@@ -4,6 +4,8 @@
   description="Find and permanently remove an incorrect or unwanted admission record."
   variant="minimal"
 >
+  <erp-admission-workspace-nav />
+
   <section class="erp-warning-panel">
     <span class="erp-warning-panel__icon"><svg lucideTriangleAlert aria-hidden="true"></svg></span>
     <div>
@@ -23,7 +25,7 @@
     <header class="erp-table-toolbar">
       <div>
         <h2>Admission records</h2>
-        <p>{{ items().length }} total records</p>
+        <p>{{ total() }} total records</p>
       </div>
       <label class="erp-search-control">
         <svg lucideSearch size="18" aria-hidden="true"></svg>
@@ -32,8 +34,12 @@
           placeholder="Search student name, Student ID, or status"
           [value]="query()"
           (input)="updateQuery($event)"
+          (keyup.enter)="searchRecords()"
         />
       </label>
+      <button class="erp-button erp-button--secondary" type="button" (click)="searchRecords()">
+        Search
+      </button>
     </header>
 
     @if (loading()) {
@@ -53,7 +59,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (item of filteredItems(); track item._id) {
+            @for (item of items(); track item._id) {
               <tr>
                 <td>
                   <strong>{{ item.studentName || 'Name not entered' }}</strong
@@ -84,46 +90,66 @@
           </tbody>
         </table>
       </div>
+      <div class="erp-pagination">
+        <span
+          >Showing {{ items().length }} of {{ total() }} records · Page {{ page }} of
+          {{ pages() }}</span
+        >
+        <div class="erp-pagination__pages">
+          <select
+            class="erp-control erp-pagination__size"
+            aria-label="Rows per page"
+            [(ngModel)]="pageSize"
+            (ngModelChange)="changePageSize()"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [ngValue]="size">{{ size }} / page</option>
+            }
+          </select>
+          <button
+            class="erp-pagination__button"
+            type="button"
+            aria-label="Previous page"
+            [disabled]="page <= 1"
+            (click)="changePage(page - 1)"
+          >
+            ‹
+          </button>
+          <button
+            class="erp-pagination__button erp-pagination__button--active"
+            type="button"
+            aria-current="page"
+          >
+            {{ page }}
+          </button>
+          <button
+            class="erp-pagination__button"
+            type="button"
+            aria-label="Next page"
+            [disabled]="page >= pages()"
+            (click)="changePage(page + 1)"
+          >
+            ›
+          </button>
+        </div>
+      </div>
     }
   </section>
 </erp-admin-page>
 
 @if (deleteTarget(); as item) {
-  <div class="dialog-backdrop">
-    <button
-      class="dialog-backdrop__close"
-      type="button"
-      aria-label="Cancel deletion"
-      (click)="cancelDelete()"
-    ></button>
-    <section
-      class="delete-dialog"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="delete-title"
-      aria-describedby="delete-description"
-    >
-      <button
-        class="delete-dialog__close"
-        type="button"
-        aria-label="Close"
-        (click)="cancelDelete()"
-        [disabled]="deleting()"
-      >
-        <svg lucideX size="18" aria-hidden="true"></svg>
-      </button>
-      <span class="delete-dialog__icon"><svg lucideTrash2 aria-hidden="true"></svg></span>
-      <h2 id="delete-title">Delete this admission?</h2>
-      <p id="delete-description">You are permanently deleting student record</p>
-      <strong>{{ item.studentName || item.studentId || 'Student record' }}</strong>
-      <div class="delete-dialog__actions">
-        <button class="cancel" type="button" (click)="cancelDelete()" [disabled]="deleting()">
-          Cancel
-        </button>
-        <button class="confirm" type="button" (click)="confirmDelete()" [disabled]="deleting()">
-          {{ deleting() ? 'Deleting…' : 'Delete permanently' }}
-        </button>
-      </div>
-    </section>
-  </div>
+  <erp-confirm-dialog
+    [open]="true"
+    eyebrow="Admission record"
+    title="Delete this admission?"
+    [message]="
+      'You are permanently deleting ' +
+      (item.studentName || item.studentId || 'this student record') +
+      '. This cannot be undone.'
+    "
+    [confirmLabel]="deleting() ? 'Deleting…' : 'Delete permanently'"
+    [destructive]="true"
+    (cancelled)="cancelDelete()"
+    (confirmed)="confirmDelete()"
+  />
 }

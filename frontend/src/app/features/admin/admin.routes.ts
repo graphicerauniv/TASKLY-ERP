@@ -64,7 +64,18 @@ export const ADMIN_ROUTES: Routes = [
         redirectTo: 'fees/books/create',
       },
       { path: 'fees/progression', component: FeeProgressionComponent },
-      { path: 'fees/scholarships', component: ScholarshipsComponent },
+      { path: 'fees/scholarships', pathMatch: 'full', redirectTo: 'fees/scholarships/view' },
+      { path: 'fees/scholarships/view', component: ScholarshipsComponent, data: { mode: 'view' } },
+      {
+        path: 'fees/scholarships/create',
+        component: ScholarshipsComponent,
+        data: { mode: 'create' },
+      },
+      {
+        path: 'fees/scholarships/:id/edit',
+        component: ScholarshipsComponent,
+        data: { mode: 'edit' },
+      },
       { path: 'accounts', component: AccountsComponent },
       ...[
         ['books/create', 'books', 'create'],

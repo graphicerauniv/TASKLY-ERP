@@ -1,33 +1,79 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
 import { Scholarship } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import {
+  CompactActionItem,
+  CompactActionMenuComponent,
+} from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
 @Component({
   selector: 'erp-scholarships',
-  imports: [AdminPageComponent, CurrencyPipe, FormsModule],
+  imports: [AdminPageComponent, CompactActionMenuComponent, CurrencyPipe, FormsModule, RouterLink],
   templateUrl: './scholarships.component.html',
   styleUrl: './scholarships.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScholarshipsComponent {
   private readonly api = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly items = signal<Scholarship[]>([]);
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal('');
   readonly message = signal('');
   readonly editingId = signal<string | null>(null);
+  readonly statusFilter = signal<'all' | 'active' | 'inactive'>('all');
+  readonly mode = signal<'view' | 'create' | 'edit'>('view');
+  search = '';
 
   name = '';
   type: Scholarship['type'] = 'percentage';
   value: number | null = null;
   isActive = true;
 
+  filteredItems() {
+    const query = this.search.trim().toLocaleLowerCase();
+    return this.items().filter((item) => {
+      const matchesSearch = !query || item.name.toLocaleLowerCase().includes(query);
+      const matchesStatus =
+        this.statusFilter() === 'all' ||
+        (this.statusFilter() === 'active' ? item.isActive : !item.isActive);
+      return matchesSearch && matchesStatus;
+    });
+  }
+
+  activeCount() {
+    return this.items().filter((item) => item.isActive).length;
+  }
+
+  actionsFor(item: Scholarship): CompactActionItem[] {
+    return [
+      { id: 'edit', label: 'Edit scholarship', icon: 'edit' },
+      {
+        id: 'toggle',
+        label: item.isActive ? 'Make inactive' : 'Make available',
+        icon: item.isActive ? 'delete' : 'check',
+        separator: true,
+      },
+    ];
+  }
+
+  handleAction(action: string, item: Scholarship) {
+    if (action === 'edit') this.edit(item);
+    if (action === 'toggle') this.toggle(item);
+  }
+
   constructor() {
-    this.load();
+    this.route.data.subscribe((data) => {
+      this.mode.set(data['mode'] || 'view');
+      this.resetForm();
+      this.load();
+    });
   }
 
   load() {
@@ -36,6 +82,12 @@ export class ScholarshipsComponent {
     this.api.scholarships().subscribe({
       next: ({ items }) => {
         this.items.set(items);
+        const editId = this.route.snapshot.paramMap.get('id');
+        if (this.mode() === 'edit' && editId) {
+          const item = items.find((scholarship) => scholarship._id === editId);
+          if (item) this.populateForm(item);
+          else this.error.set('Scholarship not found.');
+        }
         this.loading.set(false);
       },
       error: (error) => {
@@ -67,9 +119,9 @@ export class ScholarshipsComponent {
     request.subscribe({
       next: () => {
         this.message.set(this.editingId() ? 'Scholarship updated.' : 'Scholarship created.');
-        this.reset();
+        this.resetForm();
         this.saving.set(false);
-        this.load();
+        void this.router.navigate(['/admin/fees/scholarships/view']);
       },
       error: (error) => {
         this.error.set(error.error?.message || 'Could not save the scholarship.');
@@ -79,6 +131,10 @@ export class ScholarshipsComponent {
   }
 
   edit(item: Scholarship) {
+    void this.router.navigate(['/admin/fees/scholarships', item._id, 'edit']);
+  }
+
+  private populateForm(item: Scholarship) {
     this.editingId.set(item._id);
     this.name = item.name;
     this.type = item.type;
@@ -94,12 +150,15 @@ export class ScholarshipsComponent {
         this.message.set(item.isActive ? 'Scholarship disabled.' : 'Scholarship enabled.');
         this.load();
       },
-      error: (error) =>
-        this.error.set(error.error?.message || 'Could not update the scholarship.'),
+      error: (error) => this.error.set(error.error?.message || 'Could not update the scholarship.'),
     });
   }
 
-  reset() {
+  cancelForm() {
+    void this.router.navigate(['/admin/fees/scholarships/view']);
+  }
+
+  private resetForm() {
     this.editingId.set(null);
     this.name = '';
     this.type = 'percentage';

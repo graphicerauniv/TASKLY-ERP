@@ -25,6 +25,8 @@
     </button>
   </div>
 
+  <erp-admission-workspace-nav />
+
   @if (message()) {
     <p class="erp-notice erp-notice--success">{{ message() }}</p>
   }
@@ -98,7 +100,9 @@
   <section class="erp-card erp-table-shell">
     <div class="erp-table-toolbar">
       <div>
-        <h2>Student records <small>{{ items().length }}</small></h2>
+        <h2>
+          Student records <small>{{ items().length }}</small>
+        </h2>
         <p>Creating a fee does not change the academic period. Promotion happens only here.</p>
       </div>
       @if (status === 'pending' || status === 'all') {
@@ -125,7 +129,6 @@
               />
             </th>
             <th>Student</th>
-            <th>Student ID</th>
             <th>Course</th>
             <th>Session</th>
             <th>Current period</th>
@@ -147,23 +150,25 @@
                   />
                 }
               </td>
-              <td><strong>{{ item.studentName }}</strong></td>
-              <td>{{ item.studentId }}</td>
+              <td>
+                <strong>{{ item.studentName }}</strong
+                ><small>{{ item.studentId }}</small>
+              </td>
               <td>{{ item.courseName }}</td>
               <td>{{ item.academicSession }}</td>
               <td>{{ currentPeriod(item) }}</td>
-              <td><span class="erp-status">{{ item.targetPeriodLabel }}</span></td>
-              <td><span class="erp-status">{{ item.status }}</span></td>
               <td>
+                <span class="erp-status">{{ item.targetPeriodLabel }}</span>
+              </td>
+              <td>
+                <span class="erp-status">{{ item.status }}</span>
+              </td>
+              <td class="erp-table-shell__actions">
                 @if (item.status === 'pending') {
-                  <button
-                    class="erp-button erp-button--primary"
-                    type="button"
-                    [disabled]="saving()"
-                    (click)="promoteOne(item)"
-                  >
-                    Promote
-                  </button>
+                  <erp-compact-action-menu
+                    [items]="pendingActions"
+                    (selected)="handleRowAction($event, item)"
+                  />
                 } @else {
                   —
                 }
@@ -171,7 +176,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="9" class="erp-empty-state">
+              <td colspan="8" class="erp-empty-state">
                 {{ loading() ? 'Loading student promotions…' : 'No matching student promotions.' }}
               </td>
             </tr>

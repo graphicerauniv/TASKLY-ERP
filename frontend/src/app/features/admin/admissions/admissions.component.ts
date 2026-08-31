@@ -6,6 +6,7 @@ import { ApiService } from '../../../core/api.service';
 import { ERP_PAGINATION } from '../../../core/config/data-view.constants';
 import { Admission, FormField, FormSubsection } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { AdmissionWorkspaceNavComponent } from '../../../shared/ui/admission-workspace-nav/admission-workspace-nav.component';
 import {
   CompactActionItem,
   CompactActionMenuComponent,
@@ -16,12 +17,14 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
   selector: 'erp-admissions',
   imports: [
     AdminPageComponent,
+    AdmissionWorkspaceNavComponent,
     CompactActionMenuComponent,
     ConfirmDialogComponent,
     FormsModule,
     RouterLink,
   ],
   templateUrl: './admissions.component.html',
+  styleUrl: './admissions.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdmissionsComponent {
@@ -30,6 +33,8 @@ export class AdmissionsComponent {
   private readonly route = inject(ActivatedRoute);
   readonly items = signal<Admission[]>([]);
   readonly selected = signal<Admission | null>(null);
+  readonly detailTab = signal<'overview' | 'application'>('overview');
+  readonly activeDetailSectionId = signal('');
   readonly masterLabels = signal<Record<string, string>>({});
   readonly loading = signal(false);
   readonly loadingDetails = signal(false);
@@ -50,12 +55,18 @@ export class AdmissionsComponent {
   readonly pages = signal(1);
   readonly viewActions: CompactActionItem[] = [{ id: 'view', label: 'View details', icon: 'view' }];
   readonly approvedActions: CompactActionItem[] = [
-    { id: 'create-fees', label: 'Create Ledger & Due Card', icon: 'edit' },
-    { id: 'scholarships', label: 'Scholarships & Discounts', icon: 'edit' },
-    { id: 'delete-fees', label: 'Delete Ledger & Due Card', icon: 'delete', destructive: true },
+    { id: 'view', label: 'Open student profile', icon: 'view' },
     { id: 'edit', label: 'Edit admission data', icon: 'edit' },
-    { id: 'password', label: 'Set or reset password', icon: 'edit' },
-    { id: 'view', label: 'View details', icon: 'view' },
+    { id: 'scholarships', label: 'Scholarships & discounts', icon: 'scholarship' },
+    { id: 'create-fees', label: 'Generate fee account', icon: 'fees' },
+    { id: 'password', label: 'Set or reset password', icon: 'password' },
+    {
+      id: 'delete-fees',
+      label: 'Delete fee account',
+      icon: 'delete',
+      destructive: true,
+      separator: true,
+    },
   ];
   readonly draftActions: CompactActionItem[] = [
     { id: 'edit', label: 'Edit admission', icon: 'edit' },
@@ -146,6 +157,8 @@ export class AdmissionsComponent {
     this.api.admission(item._id).subscribe({
       next: ({ item: detail, masterLabels }) => {
         this.selected.set(detail);
+        this.detailTab.set('overview');
+        this.activeDetailSectionId.set(detail.formSnapshot.sections[0]?.id || '');
         this.masterLabels.set(masterLabels);
         this.loadingDetails.set(false);
       },
@@ -186,6 +199,10 @@ export class AdmissionsComponent {
 
   togglePage(selected: boolean) {
     this.selectedStudentIds.set(new Set(selected ? this.items().map((item) => item._id) : []));
+  }
+
+  clearSelection() {
+    this.selectedStudentIds.set(new Set());
   }
 
   createSelectedFees() {
@@ -435,6 +452,8 @@ export class AdmissionsComponent {
   close() {
     this.selected.set(null);
     this.masterLabels.set({});
+    this.detailTab.set('overview');
+    this.activeDetailSectionId.set('');
   }
 
   value(field: FormField, responses: Record<string, unknown>) {

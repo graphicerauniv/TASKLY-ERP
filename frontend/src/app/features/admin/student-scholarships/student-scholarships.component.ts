@@ -11,10 +11,23 @@ import {
   StudentScholarship,
 } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import {
+  CompactActionItem,
+  CompactActionMenuComponent,
+} from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
+import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'erp-student-scholarships',
-  imports: [AdminPageComponent, CurrencyPipe, DatePipe, FormsModule, RouterLink],
+  imports: [
+    AdminPageComponent,
+    CompactActionMenuComponent,
+    ConfirmDialogComponent,
+    CurrencyPipe,
+    DatePipe,
+    FormsModule,
+    RouterLink,
+  ],
   templateUrl: './student-scholarships.component.html',
   styleUrl: './student-scholarships.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,10 +46,20 @@ export class StudentScholarshipsComponent {
   readonly message = signal('');
   readonly removingId = signal<string | null>(null);
   readonly removingDiscountId = signal<string | null>(null);
+  readonly activeTab = signal<'overview' | 'scholarships' | 'discounts' | 'impact'>('overview');
+  readonly removeActions: CompactActionItem[] = [
+    { id: 'remove', label: 'Remove assignment', icon: 'delete', destructive: true },
+  ];
   readonly availableScholarships = computed(() => {
     const assigned = new Set(this.assignments().map((item) => item.scholarshipId));
     return this.scholarships().filter((item) => item.isActive && !assigned.has(item._id));
   });
+  readonly removingAssignment = computed(() =>
+    this.assignments().find((item) => item._id === this.removingId()),
+  );
+  readonly removingDiscount = computed(() =>
+    this.discounts().find((item) => item._id === this.removingDiscountId()),
+  );
   readonly studentAdmissionId = this.route.snapshot.paramMap.get('admissionId') || '';
   scholarshipId = '';
   discountName = '';
@@ -190,11 +213,17 @@ export class StudentScholarshipsComponent {
     this.removingDiscountId.set(null);
   }
 
+  handleAssignmentAction(action: string, item: StudentScholarship) {
+    if (action === 'remove') this.remove(item);
+  }
+
+  handleDiscountAction(action: string, item: StudentDiscount) {
+    if (action === 'remove') this.removeDiscount(item);
+  }
+
   tuitionAmount(ledger: StudentFeeLedger) {
     return ledger.entries
-      .filter(
-        (entry) => entry.category === 'fee' && /\btuition\b/i.test(entry.feeHeadName || ''),
-      )
+      .filter((entry) => entry.category === 'fee' && /\btuition\b/i.test(entry.feeHeadName || ''))
       .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
   }
 
@@ -222,7 +251,8 @@ export class StudentScholarshipsComponent {
     const current = ledgers.find((ledger) =>
       student.feeFrequency === 'semester'
         ? ledger.currentSemester === student.currentSemester
-        : ledger.currentAcademicYear === student.currentAcademicYear && ledger.feeFrequency === 'year',
+        : ledger.currentAcademicYear === student.currentAcademicYear &&
+          ledger.feeFrequency === 'year',
     );
     return current?._id || ledgers[0]?._id || '';
   }

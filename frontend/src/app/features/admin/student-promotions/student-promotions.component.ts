@@ -3,10 +3,20 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { MasterValue, StudentPromotion } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { AdmissionWorkspaceNavComponent } from '../../../shared/ui/admission-workspace-nav/admission-workspace-nav.component';
+import {
+  CompactActionItem,
+  CompactActionMenuComponent,
+} from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
 @Component({
   selector: 'erp-student-promotions',
-  imports: [AdminPageComponent, FormsModule],
+  imports: [
+    AdminPageComponent,
+    AdmissionWorkspaceNavComponent,
+    CompactActionMenuComponent,
+    FormsModule,
+  ],
   templateUrl: './student-promotions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -19,6 +29,9 @@ export class StudentPromotionsComponent {
   readonly saving = signal(false);
   readonly message = signal('');
   readonly error = signal('');
+  readonly pendingActions: CompactActionItem[] = [
+    { id: 'promote', label: 'Promote student', icon: 'transfer' },
+  ];
   mode: 'semester' | 'year' = 'semester';
   status = 'pending';
   search = '';
@@ -92,6 +105,10 @@ export class StudentPromotionsComponent {
 
   promoteOne(item: StudentPromotion) {
     this.promote([item._id]);
+  }
+
+  handleRowAction(action: string, item: StudentPromotion) {
+    if (action === 'promote') this.promoteOne(item);
   }
 
   promoteSelected() {

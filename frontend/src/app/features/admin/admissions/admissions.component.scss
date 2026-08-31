@@ -1,0 +1,230 @@
+/* ERP-LOCAL-STYLE: Admissions needs a compact workspace switcher and contextual detail drawer around the shared ERP data-view system. */
+:host {
+  display: block;
+}
+
+.admission-table-toolbar {
+  align-items: flex-end;
+}
+.admission-table-toolbar .erp-table-toolbar__actions {
+  flex-wrap: wrap;
+}
+.admission-table-toolbar input {
+  min-width: min(20rem, 48vw);
+}
+.admission-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-2) var(--erp-space-4);
+  color: var(--erp-blue-800);
+  background: var(--erp-blue-50);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.admission-bulk-bar span {
+  flex: 1;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+}
+.admission-student-cell button {
+  padding: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.admission-student-cell button:hover strong {
+  color: var(--erp-blue-700);
+}
+.admission-student-cell small {
+  color: var(--erp-text-muted);
+}
+.admission-secondary-value {
+  color: var(--erp-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.admission-drawer-backdrop {
+  place-items: stretch;
+  padding: 0;
+}
+
+.student-detail--drawer {
+  width: min(720px, 100%);
+  height: 100%;
+  max-height: 100dvh;
+  margin-left: auto;
+  border-radius: var(--erp-radius-overlay) 0 0 var(--erp-radius-overlay);
+}
+
+.admission-drawer__statusbar {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-2) var(--erp-space-5);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+  background: var(--erp-surface-page-panel);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.admission-drawer__tabs {
+  display: flex;
+  gap: var(--erp-space-5);
+  padding: 0 var(--erp-space-5);
+  background: var(--erp-surface-overlay);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.admission-drawer__tabs button {
+  padding: var(--erp-space-3) 0;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+  font-weight: var(--erp-weight-bold);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.admission-drawer__tabs button.is-active {
+  color: var(--erp-blue-700);
+  border-color: var(--erp-blue-600);
+}
+.admission-drawer__body {
+  padding: var(--erp-space-4);
+}
+.admission-object-page {
+  display: grid;
+  gap: var(--erp-space-4);
+}
+.admission-object-section {
+  overflow: hidden;
+  background: var(--erp-surface-overlay);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-compact);
+}
+.admission-object-section > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-3) var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.admission-object-section h3,
+.admission-object-section p {
+  margin: 0;
+}
+.admission-object-section h3 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+}
+.admission-object-section p {
+  margin-top: 2px;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-2xs);
+}
+.admission-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-4);
+}
+.admission-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: var(--erp-space-2) var(--erp-space-4) var(--erp-space-4);
+}
+.admission-facts div {
+  padding: var(--erp-space-3) 0;
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+.admission-facts div:nth-child(odd) {
+  padding-right: var(--erp-space-4);
+}
+.admission-facts dt {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-2xs);
+}
+.admission-facts dd {
+  margin: var(--erp-space-1) 0 0;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-size-xs);
+  font-weight: var(--erp-weight-semibold);
+}
+.admission-fee-settings {
+  padding: var(--erp-space-4);
+}
+.admission-section-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--erp-space-2);
+  padding: 0 var(--erp-space-4) var(--erp-space-4);
+}
+.admission-application-layout {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: var(--erp-space-4);
+  align-items: start;
+}
+.admission-application-layout > nav {
+  display: grid;
+  position: sticky;
+  top: 0;
+  gap: 2px;
+}
+.admission-application-layout > nav button {
+  padding: var(--erp-space-2) var(--erp-space-3);
+  text-align: left;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+  background: none;
+  border: 0;
+  border-radius: var(--erp-radius-control);
+  cursor: pointer;
+}
+.admission-application-layout > nav button:hover,
+.admission-application-layout > nav button.is-active {
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  font-weight: var(--erp-weight-bold);
+}
+
+@media (max-width: 720px) {
+  .admission-table-toolbar {
+    align-items: stretch;
+  }
+  .admission-table-toolbar input {
+    min-width: 0;
+    flex: 1;
+  }
+  .admission-bulk-bar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .admission-bulk-bar span {
+    flex-basis: 100%;
+    order: 3;
+  }
+  .student-detail--drawer {
+    width: 100%;
+    border-radius: 0;
+  }
+  .admission-drawer__statusbar {
+    flex-wrap: wrap;
+  }
+  .admission-facts {
+    grid-template-columns: 1fr;
+  }
+  .admission-facts div:nth-child(odd) {
+    padding-right: 0;
+  }
+  .admission-application-layout {
+    grid-template-columns: 1fr;
+  }
+  .admission-application-layout > nav {
+    display: flex;
+    position: static;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

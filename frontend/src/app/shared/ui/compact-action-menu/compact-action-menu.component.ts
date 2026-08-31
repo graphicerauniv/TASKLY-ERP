@@ -6,6 +6,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition } from '@angular/cdk/overlay';
 import {
   LucideArrowDown,
   LucideArrowUp,
@@ -21,7 +22,11 @@ import {
   LucideSquarePlus,
   LucideTrash2,
   LucideEye,
+  LucideEllipsisVertical,
+  LucideGraduationCap,
+  LucideKeyRound,
   LucideLogOut,
+  LucideWalletCards,
 } from '@lucide/angular';
 
 const ACTION_ICONS = {
@@ -37,6 +42,9 @@ const ACTION_ICONS = {
   delete: LucideTrash2,
   view: LucideEye,
   check: LucideCheck,
+  fees: LucideWalletCards,
+  scholarship: LucideGraduationCap,
+  password: LucideKeyRound,
   transfer: LucideArrowRightLeft,
   vacate: LucideLogOut,
 } as const;
@@ -54,9 +62,15 @@ export interface CompactActionItem {
 
 @Component({
   selector: 'erp-compact-action-menu',
-  imports: [LucideDynamicIcon, LucidePlus],
+  imports: [
+    CdkConnectedOverlay,
+    CdkOverlayOrigin,
+    LucideDynamicIcon,
+    LucideEllipsisVertical,
+    LucidePlus,
+  ],
   template: `
-    <div class="action-menu">
+    <div class="action-menu" cdkOverlayOrigin #menuOrigin="cdkOverlayOrigin">
       <button
         class="action-menu__trigger"
         type="button"
@@ -67,17 +81,23 @@ export interface CompactActionItem {
         @if (variant() === 'add') {
           <svg lucidePlus size="16" aria-hidden="true"></svg><span>{{ label() }}</span>
         } @else {
-          <span class="action-menu__dots" aria-hidden="true">⋮</span>
+          <svg lucideEllipsisVertical size="18" aria-hidden="true"></svg>
         }
       </button>
-      @if (open()) {
-        <div
-          class="action-menu__panel"
-          role="menu"
-          [style.top.px]="panelTop()"
-          [style.left.px]="panelLeft()"
-          (click)="$event.stopPropagation()"
-        >
+      <ng-template
+        cdk-connected-overlay
+        [cdkConnectedOverlayOrigin]="menuOrigin"
+        [cdkConnectedOverlayOpen]="open()"
+        [cdkConnectedOverlayPositions]="positions"
+        [cdkConnectedOverlayHasBackdrop]="true"
+        cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+        [cdkConnectedOverlayPush]="true"
+        [cdkConnectedOverlayFlexibleDimensions]="false"
+        [cdkConnectedOverlayViewportMargin]="8"
+        (backdropClick)="close()"
+        (detach)="close()"
+      >
+        <div class="action-menu__panel" role="menu">
           @for (item of items(); track item.id) {
             <button
               type="button"
@@ -94,7 +114,7 @@ export interface CompactActionItem {
             </button>
           }
         </div>
-      }
+      </ng-template>
     </div>
   `,
   styles: `
@@ -127,15 +147,6 @@ export interface CompactActionItem {
       font-size: var(--erp-font-caption);
       font-weight: var(--erp-weight-semibold);
     }
-    .action-menu__trigger .action-menu__dots {
-      display: block;
-      color: var(--erp-blue-700);
-      font-family: Arial, sans-serif;
-      font-size: 22px;
-      font-weight: 700;
-      line-height: 1;
-      -webkit-text-fill-color: var(--erp-blue-700);
-    }
     .action-menu__trigger:has(span) {
       width: auto;
       min-width: 62px;
@@ -143,11 +154,11 @@ export interface CompactActionItem {
       gap: 5px;
     }
     .action-menu__panel {
-      position: fixed;
-      z-index: var(--erp-z-dropdown);
       display: grid;
-      width: 168px;
+      width: min(224px, calc(100vw - 16px));
+      max-height: min(420px, calc(100dvh - 16px));
       padding: 6px;
+      overflow-y: auto;
       border: 1px solid var(--erp-border-default);
       border-radius: var(--erp-radius-compact);
       background: var(--erp-surface-overlay);
@@ -214,13 +225,33 @@ export class CompactActionMenuComponent {
   readonly label = input('Add');
   readonly selected = output<string>();
   readonly open = signal(false);
-  readonly panelTop = signal(0);
-  readonly panelLeft = signal(0);
+  readonly positions: ConnectedPosition[] = [
+    {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top',
+      offsetY: 6,
+    },
+    {
+      originX: 'end',
+      originY: 'top',
+      overlayX: 'end',
+      overlayY: 'bottom',
+      offsetY: -6,
+    },
+    {
+      originX: 'start',
+      originY: 'bottom',
+      overlayX: 'start',
+      overlayY: 'top',
+      offsetY: 6,
+    },
+  ];
 
   toggle(event: MouseEvent) {
     event.stopPropagation();
     const next = !this.open();
-    if (next) this.positionPanel(event.currentTarget as HTMLElement);
     if (next && CompactActionMenuComponent.activeMenu !== this) {
       CompactActionMenuComponent.activeMenu?.open.set(false);
       CompactActionMenuComponent.activeMenu = this;
@@ -229,26 +260,6 @@ export class CompactActionMenuComponent {
     if (!next && CompactActionMenuComponent.activeMenu === this) {
       CompactActionMenuComponent.activeMenu = null;
     }
-  }
-
-  private positionPanel(trigger: HTMLElement) {
-    const rect = trigger.getBoundingClientRect();
-    const panelWidth = 168;
-    const panelHeight = Math.min(360, this.items().length * 42 + 12);
-    const gap = 5;
-    const viewportPadding = 8;
-    const opensUp = rect.bottom + gap + panelHeight > window.innerHeight;
-    this.panelTop.set(
-      opensUp
-        ? Math.max(viewportPadding, rect.top - gap - panelHeight)
-        : Math.min(rect.bottom + gap, window.innerHeight - panelHeight - viewportPadding),
-    );
-    this.panelLeft.set(
-      Math.max(
-        viewportPadding,
-        Math.min(rect.right - panelWidth, window.innerWidth - panelWidth - viewportPadding),
-      ),
-    );
   }
 
   choose(id: string) {
@@ -263,7 +274,6 @@ export class CompactActionMenuComponent {
     return ACTION_ICONS[icon];
   }
 
-  @HostListener('document:click')
   close() {
     this.open.set(false);
     if (CompactActionMenuComponent.activeMenu === this) {
@@ -277,7 +287,6 @@ export class CompactActionMenuComponent {
   }
 
   @HostListener('window:resize')
-  @HostListener('window:scroll')
   closeOnViewportChange() {
     this.close();
   }
