@@ -1,7 +1,7 @@
 <erp-admin-page
   eyebrow="Accounts"
   title="Student Payments"
-  description="Review verified Razorpay payments, allocation details, balances and receipts."
+  description="Review online and offline payments, allocation details, balances and receipts."
   variant="minimal"
   layout="collection"
 >
@@ -37,7 +37,7 @@
         <h2>
           Payment records <small>{{ items().length }}</small>
         </h2>
-        <p>Search by student, receipt or Razorpay payment ID.</p>
+        <p>Search by student, receipt, online payment ID or offline reference.</p>
       </div>
       <div class="erp-table-toolbar__actions">
         <input
@@ -63,7 +63,7 @@
           <tr>
             <th>Receipt</th>
             <th>Student</th>
-            <th>Payment ID</th>
+            <th>Channel / reference</th>
             <th>Amount</th>
             <th>Fee period</th>
             <th>Allocation</th>
@@ -83,7 +83,7 @@
                 <strong>{{ payment.studentName }}</strong
                 ><small>{{ payment.studentId }}</small>
               </td>
-              <td>{{ payment.razorpayPaymentId || payment.razorpayOrderId }}</td>
+              <td><strong>{{ payment.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay' }}</strong><small>{{ payment.paymentReference || payment.razorpayPaymentId || payment.razorpayOrderId }}</small>@if (payment.paymentChannel === 'offline' && payment.acceptedByName) { <small>Received by {{ payment.acceptedByName }}</small> }@if (payment.paymentChannel === 'offline' && payment.internalRemark) { <small>{{ payment.internalRemark }}</small> }</td>
               <td>{{ payment.amount | currency: 'INR' }}</td>
               <td>{{ payment.targetPeriodLabel || 'Legacy payment' }}</td>
               <td>
@@ -92,7 +92,7 @@
                   track allocation.feeHeadId + allocation.ledgerId
                 ) {
                   <small
-                    >{{ allocation.feeHeadName }}: {{ allocation.amount | currency: 'INR' }}</small
+                    >{{ allocation.periodLabel ? allocation.periodLabel + ' · ' : '' }}{{ allocation.feeHeadName }}: {{ allocation.amount | currency: 'INR' }}</small
                   >
                 }
               </td>

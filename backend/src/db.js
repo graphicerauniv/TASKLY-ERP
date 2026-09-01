@@ -4,8 +4,8 @@ import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-08-30-v6';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-08-30-v6';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-01-v8';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-01-v8';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -102,6 +102,7 @@ async function ensureIndexes(databaseInstance) {
     () => databaseInstance.collection('hostelAllocations').createIndex({ roomId: 1, bedNumber: 1, academicSession: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
     () => databaseInstance.collection('feeBooks').createIndex({ code: 1 }, { unique: true }),
     () => databaseInstance.collection('feeHeads').createIndex({ bookId: 1, normalizedName: 1 }, { unique: true }),
+    () => databaseInstance.collection('feeSchedules').createIndex({ universityId: 1, collegeId: 1, academicSession: 1, mode: 1, targetNumber: 1 }, { unique: true }),
     () => databaseInstance.collection('scholarships').createIndex({ normalizedName: 1 }, { unique: true }),
     () => databaseInstance.collection('studentScholarships').createIndex({ studentAdmissionId: 1, status: 1 }),
     () => databaseInstance.collection('studentScholarships').createIndex({ studentAdmissionId: 1, scholarshipId: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
@@ -115,6 +116,7 @@ async function ensureIndexes(databaseInstance) {
     () => databaseInstance.collection('feeImportPreviews').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     () => databaseInstance.collection('feePayments').createIndex({ razorpayOrderId: 1 }, { unique: true }),
     () => databaseInstance.collection('feePayments').createIndex({ razorpayPaymentId: 1 }, { unique: true, sparse: true }),
+    () => databaseInstance.collection('feePayments').createIndex({ idempotencyKey: 1 }, { unique: true, sparse: true }),
     () => databaseInstance.collection('feePayments').createIndex({ receiptNumber: 1 }, { unique: true, sparse: true }),
     () => databaseInstance.collection('feePayments').createIndex({ studentAdmissionId: 1, createdAt: -1 }),
     () => databaseInstance.collection('studentProgressions').createIndex({ studentAdmissionId: 1, status: 1 }, { unique: true, partialFilterExpression: { status: 'pending' } }),

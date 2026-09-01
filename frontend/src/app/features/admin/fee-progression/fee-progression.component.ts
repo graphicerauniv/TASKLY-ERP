@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { FeeProgressionCandidate } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 
 @Component({
   selector: 'erp-fee-progression',
-  imports: [AdminPageComponent, FormsModule],
+  imports: [AdminPageComponent],
   templateUrl: './fee-progression.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -19,10 +18,6 @@ export class FeeProgressionComponent {
   readonly message = signal('');
   readonly error = signal('');
   mode: 'semester' | 'year' = 'semester';
-  penaltyEnabled = false;
-  penaltyDueDate = '';
-  penaltyDailyAmount: number | null = null;
-  penaltyMaxAmount: number | null = null;
 
   constructor() {
     this.load();
@@ -73,25 +68,13 @@ export class FeeProgressionComponent {
       this.error.set('Select at least one eligible student before creating the next fee period.');
       return;
     }
-    if (
-      this.penaltyEnabled &&
-      (!this.penaltyDueDate || !this.penaltyDailyAmount || !this.penaltyMaxAmount)
-    ) {
-      this.error.set('Enter the due date, daily penalty and maximum penalty.');
-      return;
-    }
     this.saving.set(true);
     this.error.set('');
     this.api
       .progressStudentFees({
         mode: this.mode,
         studentAdmissionIds: [...this.selected()],
-        penalty: {
-          enabled: this.penaltyEnabled,
-          dueDate: this.penaltyDueDate || undefined,
-          dailyAmount: Number(this.penaltyDailyAmount || 0),
-          maxAmount: Number(this.penaltyMaxAmount || 0),
-        },
+        penalty: { enabled: false },
       })
       .subscribe({
         next: ({ created, promotionsCreated, studentsProcessed, results }) => {

@@ -1,7 +1,7 @@
 <erp-admin-page
   eyebrow="Fee Management"
   title="Next Semester / Year Fee"
-  description="Create the next fee period only for eligible students. Duplicate periods are blocked."
+  description="Prepare the next hidden fee period for eligible students. Publication and fines are controlled by Fee change & publication."
   variant="minimal"
   layout="collection"
 >
@@ -32,41 +32,6 @@
   @if (error()) {
     <p class="erp-notice erp-notice--error">{{ error() }}</p>
   }
-
-  <section class="erp-card erp-card--padded">
-    <div class="erp-card__header">
-      <div>
-        <h2>Penalty configuration</h2>
-        <p>
-          The daily penalty stops when the configured cap is reached or the outstanding fee is fully
-          paid.
-        </p>
-      </div>
-    </div>
-    <div class="erp-form-grid">
-      <label
-        ><span>Late-payment penalty</span
-        ><select class="erp-control" [(ngModel)]="penaltyEnabled">
-          <option [ngValue]="false">No penalty</option>
-          <option [ngValue]="true">Enable daily penalty</option>
-        </select></label
-      >
-      @if (penaltyEnabled) {
-        <label
-          ><span>Fee due date *</span
-          ><input class="erp-control" type="date" [(ngModel)]="penaltyDueDate"
-        /></label>
-        <label
-          ><span>Daily penalty amount *</span
-          ><input class="erp-control" type="number" min="1" [(ngModel)]="penaltyDailyAmount"
-        /></label>
-        <label
-          ><span>Maximum penalty amount *</span
-          ><input class="erp-control" type="number" min="1" [(ngModel)]="penaltyMaxAmount"
-        /></label>
-      }
-    </div>
-  </section>
 
   <section class="erp-card erp-table-shell">
     <div class="erp-table-toolbar">

@@ -6,7 +6,7 @@
       <div>
         <a routerLink="/student/fees" class="student-fee-subpage__back">← Fees Overview</a>
         <h1>Payment Receipts</h1>
-        <p>Download receipts for verified successful payments only.</p>
+        <p>Download receipts for successful online and offline payments.</p>
       </div>
       <span class="student-fee-subpage__context">
         {{ workspace().student.currentPeriod || 'Current period' }} · {{ workspace().student.academicSession || 'Academic year' }}
@@ -48,17 +48,17 @@
       @if (filteredReceipts().length) {
         <div class="student-fee-table-wrap">
           <table class="student-fee-table">
-            <thead><tr><th>Receipt</th><th>Payment ID</th><th>Amount</th><th>Fee Period</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <thead><tr><th>Receipt</th><th>Channel / reference</th><th>Amount</th><th>Fee Period</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
               @for (receipt of filteredReceipts(); track receipt.id) {
                 <tr>
                   <td><strong>{{ receipt.receiptNumber || 'Receipt pending' }}</strong><small>{{ receipt.orderReference }}</small></td>
-                  <td>{{ receipt.paymentId || '—' }}</td>
+                  <td><strong>{{ receipt.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay' }}</strong><small>{{ receipt.paymentId || receipt.orderReference }}</small></td>
                   <td><strong>{{ receipt.amount.formatted }}</strong></td>
                   <td>{{ receipt.feePeriodLabel }}</td>
                   <td>{{ (receipt.paidAt || receipt.createdAt) | date: 'mediumDate' }}</td>
                   <td><span class="student-fee-status-chip is-successful">Verified</span></td>
-                  <td><button class="student-fee-table-action" [disabled]="!receipt.downloadable"><svg lucideDownload size="16" aria-hidden="true"></svg> Download</button></td>
+                  <td><button class="student-fee-table-action" [disabled]="!receipt.downloadable" (click)="download(receipt.id, receipt.receiptNumber)"><svg lucideDownload size="16" aria-hidden="true"></svg> Download</button></td>
                 </tr>
               }
             </tbody>
@@ -78,8 +78,8 @@
     </article>
 
     <section class="student-fee-process-grid" aria-label="How receipts work">
-      <article class="student-fee-process-card"><span>1</span><img src="/assets/student/fee-icons/compact/pay-fees.webp" alt=""><div><strong>Payment completed</strong><p>Checkout finishes successfully.</p></div></article>
-      <article class="student-fee-process-card"><span>2</span><img src="/assets/student/fee-icons/compact/fee-details.webp" alt=""><div><strong>Verification confirmed</strong><p>Backend verifies the payment signature.</p></div></article>
+      <article class="student-fee-process-card"><span>1</span><img src="/assets/student/fee-icons/compact/pay-fees.webp" alt=""><div><strong>Payment completed</strong><p>Payment is completed online or received by Accounts.</p></div></article>
+      <article class="student-fee-process-card"><span>2</span><img src="/assets/student/fee-icons/compact/fee-details.webp" alt=""><div><strong>Payment recorded</strong><p>The verified amount is allocated to the fee ledger.</p></div></article>
       <article class="student-fee-process-card"><span>3</span><img src="/assets/student/fee-icons/compact/payment-receipts.webp" alt=""><div><strong>Receipt available</strong><p>Download becomes available for the paid record.</p></div></article>
     </section>
 

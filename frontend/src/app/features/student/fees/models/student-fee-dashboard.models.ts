@@ -110,6 +110,7 @@ export interface StudentPaymentRecordViewModel {
   receiptNumber: string | null;
   orderReference: string;
   paymentId: string | null;
+  paymentChannel: 'online' | 'offline';
   amount: MoneyValue;
   feeType: StudentPaymentFeeType;
   feePeriodLabel: string;

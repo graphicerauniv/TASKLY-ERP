@@ -220,6 +220,13 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
         activeWhen: [branch('/admin/fees/progression')],
       },
       {
+        id: 'fee-schedules',
+        label: 'Fee change & publication',
+        route: '/admin/fees/schedules',
+        icon: 'calendar',
+        activeWhen: [branch('/admin/fees/schedules')],
+      },
+      {
         id: 'scholarships',
         label: 'Scholarships',
         route: '/admin/fees/scholarships/view',

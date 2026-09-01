@@ -43,7 +43,7 @@
         <svg lucideWalletCards size="16" aria-hidden="true"></svg> Overview
       </button>
       <button type="button" [class.is-active]="activeTab() === 'scholarships'" (click)="activeTab.set('scholarships')">
-        <svg lucideGraduationCap size="16" aria-hidden="true"></svg> Recurring <small>{{ assignments().length }}</small>
+        <svg lucideGraduationCap size="16" aria-hidden="true"></svg> Scholarships <small>{{ assignments().length }}</small>
       </button>
       <button type="button" [class.is-active]="activeTab() === 'discounts'" (click)="activeTab.set('discounts')">
         <svg lucideBadgePercent size="16" aria-hidden="true"></svg> One-time discounts <small>{{ discounts().length }}</small>
@@ -91,11 +91,11 @@
 
       <section class="support-grid">
         <article class="erp-card support-panel">
-          <header><div><svg lucideGraduationCap size="18" aria-hidden="true"></svg><h2>Recurring scholarships</h2></div><button type="button" (click)="activeTab.set('scholarships')">Manage</button></header>
+          <header><div><svg lucideGraduationCap size="18" aria-hidden="true"></svg><h2>Scholarships</h2></div><button type="button" (click)="activeTab.set('scholarships')">Manage</button></header>
           @for (assignment of assignments(); track assignment._id) {
             <div class="support-record"><div><strong>{{ assignment.scholarshipName }}</strong><small>From {{ assignment.startSemester ? 'Semester ' + assignment.startSemester : 'Year ' + assignment.startAcademicYear }}</small></div><b>{{ assignmentValue(assignment) ?? (assignment.value | currency: 'INR' : 'symbol' : '1.0-2') }}</b></div>
           } @empty {
-            <button class="support-empty" type="button" (click)="activeTab.set('scholarships')">Assign the first recurring scholarship</button>
+            <button class="support-empty" type="button" (click)="activeTab.set('scholarships')">Assign the first scholarship</button>
           }
         </article>
         <article class="erp-card support-panel">
@@ -111,22 +111,26 @@
 
     @if (activeTab() === 'scholarships') {
       <section class="erp-card action-workspace">
-        <div class="action-workspace__intro"><span class="section-icon"><svg lucideGraduationCap size="20" aria-hidden="true"></svg></span><div><h2>Assign recurring scholarship</h2><p>Applies from the current period to future eligible fee periods.</p></div></div>
+        <div class="action-workspace__intro"><span class="section-icon"><svg lucideGraduationCap size="20" aria-hidden="true"></svg></span><div><h2>Assign scholarship</h2><p>Choose the calculation and whether this assignment is one-time or recurring.</p></div></div>
         <div class="action-workspace__controls">
-          <label><span>Scholarship scheme</span><select class="erp-control" [(ngModel)]="scholarshipId"><option value="">Select an active scheme</option>@for (scholarship of availableScholarships(); track scholarship._id) {<option [value]="scholarship._id">{{ scholarship.name }} · {{ scholarship.type === 'percentage' ? scholarship.value + '%' : (scholarship.value | currency: 'INR' : 'symbol' : '1.0-2') }}</option>}</select></label>
+          <label><span>Scholarship head</span><select class="erp-control" [(ngModel)]="scholarshipId"><option value="">Select an active head</option>@for (scholarship of availableScholarships(); track scholarship._id) {<option [value]="scholarship._id">{{ scholarship.name }}</option>}</select></label>
+          <label><span>Calculation</span><select class="erp-control" [(ngModel)]="scholarshipType"><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></label>
+          <label><span>{{ scholarshipType === 'percentage' ? 'Percentage' : 'Amount' }}</span><input class="erp-control" type="number" min="0.01" [max]="scholarshipType === 'percentage' ? 100 : 1000000000" [(ngModel)]="scholarshipValue" /></label>
+          <label><span>Application</span><select class="erp-control" [(ngModel)]="scholarshipRecurring"><option [ngValue]="true">Recurring · carry forward</option><option [ngValue]="false">One-time only</option></select></label>
+          @if (!scholarshipRecurring) { <label><span>Fee period</span><select class="erp-control" [(ngModel)]="scholarshipLedgerId"><option value="">Select fee period</option>@for (ledger of ledgers(); track ledger._id) {<option [value]="ledger._id">{{ ledger.periodLabel }} · {{ ledger.academicSession }}</option>}</select></label> }
           <button class="erp-button erp-button--primary" type="button" [disabled]="saving() || !scholarshipId" (click)="assign()">{{ saving() ? 'Applying…' : 'Assign scholarship' }}</button>
         </div>
       </section>
 
       <section class="erp-card erp-table-shell">
-        <div class="erp-table-toolbar"><div><h2>Assigned recurring scholarships <small>{{ assignments().length }}</small></h2></div></div>
+        <div class="erp-table-toolbar"><div><h2>Assigned scholarships <small>{{ assignments().length }}</small></h2></div></div>
         <div class="erp-table-shell__scroll"><table>
           <thead><tr><th>Scholarship scheme</th><th>Method</th><th>Benefit</th><th>Effective from</th><th>Assigned on</th><th>Status</th><th class="erp-table-shell__actions">Actions</th></tr></thead>
           <tbody>
             @for (assignment of assignments(); track assignment._id) {
-              <tr><td><strong>{{ assignment.scholarshipName }}</strong><small>Recurring tuition concession</small></td><td>{{ assignment.type === 'percentage' ? 'Percentage' : 'Fixed annual amount' }}</td><td><strong class="amount-discount">{{ assignmentValue(assignment) ?? (assignment.value | currency: 'INR' : 'symbol' : '1.0-2') }}</strong></td><td>{{ assignment.startSemester ? 'Semester ' + assignment.startSemester : 'Year ' + assignment.startAcademicYear }}</td><td>{{ assignment.assignedAt | date: 'dd MMM yyyy' }}</td><td><span class="fee-status fee-status--paid">Active</span></td><td class="erp-table-shell__actions"><erp-compact-action-menu [items]="removeActions" (selected)="handleAssignmentAction($event, assignment)" /></td></tr>
+              <tr><td><strong>{{ assignment.scholarshipName }}</strong><small>{{ assignment.recurring ? 'Recurring tuition concession' : 'One-time tuition concession' }}</small></td><td>{{ assignment.type === 'percentage' ? 'Percentage' : 'Fixed amount' }}</td><td><strong class="amount-discount">{{ assignmentValue(assignment) ?? (assignment.value | currency: 'INR' : 'symbol' : '1.0-2') }}</strong></td><td>{{ assignment.recurring ? (assignment.startSemester ? 'From Semester ' + assignment.startSemester : 'From Year ' + assignment.startAcademicYear) : assignment.targetPeriodLabel }}</td><td>{{ assignment.assignedAt | date: 'dd MMM yyyy' }}</td><td><span class="fee-status fee-status--paid">Active</span></td><td class="erp-table-shell__actions"><erp-compact-action-menu [items]="removeActions" (selected)="handleAssignmentAction($event, assignment)" /></td></tr>
             } @empty {
-              <tr><td colspan="7" class="erp-empty-state">No recurring scholarship is assigned.</td></tr>
+              <tr><td colspan="7" class="erp-empty-state">No scholarship is assigned.</td></tr>
             }
           </tbody>
         </table></div>
@@ -209,7 +213,7 @@
 </erp-admin-page>
 
 @if (removingAssignment(); as assignment) {
-  <erp-confirm-dialog [open]="true" eyebrow="Recurring scholarship" title="Remove this scholarship?" [message]="assignment.scholarshipName + ' will be removed from future and unpaid fee periods. Paid records will be preserved.'" confirmLabel="Remove scholarship" [destructive]="true" (cancelled)="cancelRemove()" (confirmed)="remove(assignment)" />
+  <erp-confirm-dialog [open]="true" eyebrow="Scholarship" title="Remove this scholarship?" [message]="assignment.scholarshipName + ' will be removed from applicable unpaid fee periods. Paid records will be preserved.'" confirmLabel="Remove scholarship" [destructive]="true" (cancelled)="cancelRemove()" (confirmed)="remove(assignment)" />
 }
 
 @if (removingDiscount(); as discount) {

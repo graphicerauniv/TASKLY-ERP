@@ -28,6 +28,8 @@ import {
   Scholarship,
   StudentScholarship,
   StudentDiscount,
+  FeeSchedule,
+  OfflinePaymentStudent,
 } from './models';
 import type { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
@@ -182,7 +184,12 @@ export class ApiService {
       { headers: { Authorization: `Bearer ${token}` } },
     );
   }
-  createStudentPaymentOrder(token: string, amount: number, ledgerId: string) {
+  createStudentPaymentOrder(
+    token: string,
+    amount: number,
+    ledgerId: string | null,
+    kind: 'academic' | 'hostel' = 'academic',
+  ) {
     return this.http.post<{
       keyId: string;
       orderId: string;
@@ -191,7 +198,7 @@ export class ApiService {
       student: { name: string; studentId: string };
     }>(
       `${API_BASE_URL}/payments/student/orders`,
-      { amount, ledgerId },
+      { amount, ledgerId, kind },
       { headers: { Authorization: `Bearer ${token}` } },
     );
   }
@@ -302,6 +309,32 @@ export class ApiService {
     return this.http.get(`${API_BASE_URL}/payments/admin/accounts/${paymentId}/receipt`, {
       responseType: 'blob',
     });
+  }
+  offlinePaymentWorkspace(studentAdmissionId: string) {
+    return this.http.get<{
+      student: OfflinePaymentStudent;
+      ledgers: StudentFeeLedger[];
+      payments: FeePayment[];
+    }>(`${API_BASE_URL}/payments/admin/offline/${studentAdmissionId}`);
+  }
+  createOfflinePayment(
+    studentAdmissionId: string,
+    body: {
+      amount: number;
+      kind: 'academic' | 'hostel';
+      targetLedgerId: string | null;
+      method: 'cash' | 'upi' | 'bank_transfer' | 'cheque' | 'card' | 'demand_draft' | 'other';
+      referenceNumber: string;
+      paymentDate: string;
+      internalRemark: string;
+      idempotencyKey: string;
+    },
+  ) {
+    return this.http.post<{
+      item: FeePayment;
+      duplicate: boolean;
+      ledgers: StudentFeeLedger[];
+    }>(`${API_BASE_URL}/payments/admin/offline/${studentAdmissionId}`, body);
   }
   deleteStudentFees(studentAdmissionId: string) {
     return this.http.delete<{ deleted: number }>(
@@ -566,7 +599,22 @@ export class ApiService {
       params: activeOnly ? { active: 'true' } : {},
     });
   }
-  createScholarship(body: Pick<Scholarship, 'name' | 'type' | 'value' | 'isActive'>) {
+  feeSchedules() {
+    return this.http.get<{ items: FeeSchedule[] }>(`${API_BASE_URL}/fees/fee-schedules`);
+  }
+  createFeeSchedule(body: Omit<FeeSchedule, '_id' | 'universityName' | 'collegeName' | 'createdAt'>) {
+    return this.http.post<{ item: FeeSchedule }>(`${API_BASE_URL}/fees/fee-schedules`, body);
+  }
+  updateFeeSchedule(id: string, body: Partial<FeeSchedule>) {
+    return this.http.patch<{ item: FeeSchedule }>(`${API_BASE_URL}/fees/fee-schedules/${id}`, body);
+  }
+  publishFeeSchedule(id: string) {
+    return this.http.post<{ studentsProcessed: number; published: number; alreadyPublished: number }>(
+      `${API_BASE_URL}/fees/fee-schedules/${id}/publish`,
+      {},
+    );
+  }
+  createScholarship(body: Pick<Scholarship, 'name' | 'isActive'>) {
     return this.http.post<{ item: Scholarship }>(`${API_BASE_URL}/fees/scholarships`, body);
   }
   updateScholarship(id: string, body: Partial<Scholarship>) {
@@ -587,10 +635,19 @@ export class ApiService {
       scholarships: Scholarship[];
     }>(`${API_BASE_URL}/fees/student-scholarships/${studentAdmissionId}`);
   }
-  assignStudentScholarship(studentAdmissionId: string, scholarshipId: string) {
+  assignStudentScholarship(
+    studentAdmissionId: string,
+    body: {
+      scholarshipId: string;
+      type: 'percentage' | 'fixed';
+      value: number;
+      recurring: boolean;
+      targetLedgerId?: string;
+    },
+  ) {
     return this.http.post<{ item: StudentScholarship; ledgers: StudentFeeLedger[] }>(
       `${API_BASE_URL}/fees/student-scholarships/${studentAdmissionId}`,
-      { scholarshipId },
+      body,
     );
   }
   removeStudentScholarship(studentAdmissionId: string, assignmentId: string) {

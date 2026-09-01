@@ -146,6 +146,7 @@ export interface StudentFeeEntry {
   discountAmount?: number;
   dueDate: string;
   status: 'due' | 'paid' | 'partial';
+  isPenalty?: boolean;
   isScholarship?: boolean;
   isOneTimeDiscount?: boolean;
   adjustmentKind?: 'scholarship' | 'discount';
@@ -180,6 +181,9 @@ export interface StudentFeeLedger {
   status: 'active';
   paymentStatus: 'due' | 'partial' | 'paid';
   penaltyAmount?: number;
+  visibilityStatus?: 'hidden' | 'published';
+  visibleFrom?: string | null;
+  publishedAt?: string | null;
   hostelName?: string;
   roomNumber?: string;
   createdAt: string;
@@ -300,13 +304,31 @@ export interface FeeHead {
   isActive: boolean;
 }
 
+export interface FeeSchedule {
+  _id: string;
+  universityId: string;
+  universityName: string;
+  collegeId: string;
+  collegeName: string;
+  academicSession: string;
+  mode: 'semester' | 'year';
+  targetNumber: number;
+  publishAt: string;
+  previousPeriodDeadline: string;
+  dailyFineAmount: number;
+  maxFineAmount: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface Scholarship {
   _id: string;
   name: string;
-  type: 'percentage' | 'fixed';
-  value: number;
-  recurring: true;
-  appliesTo: 'tuition';
+  type?: 'percentage' | 'fixed';
+  value?: number;
+  recurring?: boolean;
+  appliesTo?: 'tuition';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -323,7 +345,10 @@ export interface StudentScholarship {
   value: number;
   startAcademicYear: number;
   startSemester?: number | null;
-  recurring: true;
+  recurring: boolean;
+  targetLedgerId?: string | null;
+  targetPeriodKey?: string | null;
+  targetPeriodLabel?: string | null;
   status: 'active' | 'removed';
   assignedAt: string;
 }
@@ -479,6 +504,8 @@ export interface StudentPromotion {
 export interface FeePaymentAllocation {
   ledgerId: string;
   ledgerKind: 'academic' | 'hostel';
+  periodKey?: string;
+  periodLabel?: string;
   feeHeadId: string;
   feeHeadName: string;
   isPenalty: boolean;
@@ -493,14 +520,32 @@ export interface FeePayment {
   studentName: string;
   razorpayOrderId: string;
   razorpayPaymentId?: string;
+  paymentChannel?: 'online' | 'offline';
+  paymentReference?: string;
+  paymentDate?: string;
+  idempotencyKey?: string;
   targetLedgerId?: string;
+  targetKind?: 'academic' | 'hostel';
   targetPeriodLabel?: string;
   amount: number;
   currency: 'INR';
   method?: string;
+  internalRemark?: string;
+  acceptedByName?: string;
   status: 'created' | 'processing' | 'paid' | 'failed' | 'refunded';
   allocations?: FeePaymentAllocation[];
   createdAt: string;
   paidAt?: string;
   outstandingBalance?: number;
+}
+
+export interface OfflinePaymentStudent {
+  _id: string;
+  studentId: string;
+  studentName: string;
+  courseName?: string;
+  academicSession?: string;
+  currentAcademicYear?: number;
+  currentSemester?: number;
+  feeFrequency?: 'year' | 'semester';
 }

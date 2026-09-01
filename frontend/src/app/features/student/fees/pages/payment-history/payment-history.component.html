@@ -42,13 +42,13 @@
       @if (filteredPayments().length) {
         <div class="student-fee-table-wrap">
           <table class="student-fee-table">
-            <thead><tr><th>Status</th><th>Order / Reference</th><th>Payment ID</th><th>Date & Time</th><th>Amount</th><th>Fee Type</th><th>Action</th></tr></thead>
+            <thead><tr><th>Status</th><th>Order / Reference</th><th>Channel</th><th>Date & Time</th><th>Amount</th><th>Fee Type</th><th>Action</th></tr></thead>
             <tbody>
               @for (payment of filteredPayments(); track payment.id) {
                 <tr>
                   <td><span class="student-fee-status-chip" [class.is-successful]="payment.status === 'successful'" [class.is-pending]="payment.status === 'pending'" [class.is-failed]="payment.status === 'failed'"><svg [lucideIcon]="payment.status === 'successful' ? 'circle-check' : payment.status === 'pending' ? 'clock-3' : 'circle-x'" size="15" aria-hidden="true"></svg>{{ payment.status }}</span></td>
                   <td><strong>{{ payment.orderReference }}</strong><small>{{ payment.receiptNumber || 'No receipt yet' }}</small></td>
-                  <td>{{ payment.paymentId || '—' }}</td>
+                  <td><strong>{{ payment.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay' }}</strong><small>{{ payment.paymentId || '—' }}</small></td>
                   <td>{{ (payment.paidAt || payment.createdAt) | date: 'medium' }}</td>
                   <td><strong>{{ payment.amount.formatted }}</strong></td>
                   <td>{{ payment.feeType }}</td>

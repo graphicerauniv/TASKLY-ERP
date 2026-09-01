@@ -7,6 +7,7 @@ import { db, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { requireAdmin, requireStudent } from '../middleware/auth.js';
 import { refreshStudentPenalties } from '../services/fee-payments.js';
+import { ensureStudentScheduledFees, isStudentVisibleLedger } from '../services/fee-visibility.js';
 import { studentProfile } from '../services/student-profile.js';
 
 export const authRouter = express.Router();
@@ -128,7 +129,10 @@ authRouter.get(
   '/student/fees',
   requireStudent,
   asyncHandler(async (request, response) => {
-    const items = await refreshStudentPenalties(db(), request.student._id);
+    await ensureStudentScheduledFees(db(), request.student);
+    const items = (await refreshStudentPenalties(db(), request.student._id)).filter(
+      isStudentVisibleLedger,
+    );
     items.sort(
       (left, right) =>
         left.kind.localeCompare(right.kind) || new Date(right.createdAt) - new Date(left.createdAt),

@@ -6,6 +6,7 @@ import { asyncHandler } from '../lib/async-handler.js';
 import { requireAdmin, requireStudent } from '../middleware/auth.js';
 import {
   completePayment,
+  createOfflinePayment,
   createRazorpayOrder,
   paymentReceiptHtml,
   razorpayEnabled,
@@ -18,13 +19,47 @@ import {
 export const paymentsRouter = express.Router();
 const orderSchema = z.object({
   amount: z.coerce.number().positive().max(10_000_000),
-  ledgerId: z.string().min(1),
+  ledgerId: z.string().min(1).nullable().optional(),
+  kind: z.enum(['academic', 'hostel']).optional().default('academic'),
 });
 const verificationSchema = z.object({
   razorpay_order_id: z.string().min(1),
   razorpay_payment_id: z.string().min(1),
   razorpay_signature: z.string().min(1),
 });
+const offlinePaymentSchema = z
+  .object({
+    amount: z.coerce.number().positive().max(10_000_000),
+    kind: z.enum(['academic', 'hostel']).default('academic'),
+    targetLedgerId: z.string().min(1).nullable().optional(),
+    method: z.enum([
+      'cash',
+      'upi',
+      'bank_transfer',
+      'cheque',
+      'card',
+      'demand_draft',
+      'other',
+    ]),
+    referenceNumber: z.string().trim().max(120).optional().default(''),
+    paymentDate: z.coerce.date(),
+    internalRemark: z.string().trim().max(1000).optional().default(''),
+    idempotencyKey: z.uuid(),
+  })
+  .superRefine((data, context) => {
+    if (data.method !== 'cash' && !data.referenceNumber)
+      context.addIssue({
+        code: 'custom',
+        path: ['referenceNumber'],
+        message: 'A payment reference is required for non-cash payments.',
+      });
+    if (data.paymentDate.getTime() > Date.now() + 5 * 60_000)
+      context.addIssue({
+        code: 'custom',
+        path: ['paymentDate'],
+        message: 'Payment date cannot be in the future.',
+      });
+  });
 
 paymentsRouter.post(
   '/student/orders',
@@ -35,7 +70,8 @@ paymentsRouter.post(
       db(),
       request.student,
       data.amount,
-      id(data.ledgerId, 'ledgerId'),
+      data.ledgerId ? id(data.ledgerId, 'ledgerId') : null,
+      data.kind,
     );
     response.status(201).json(order);
   }),
@@ -124,7 +160,71 @@ paymentsRouter.get(
       .sort({ createdAt: -1 })
       .limit(200)
       .toArray();
-    response.json({ items: items.map(serialize), razorpayEnabled: razorpayEnabled() });
+    response.json({ items: items.map(publicStudentPayment), razorpayEnabled: razorpayEnabled() });
+  }),
+);
+
+paymentsRouter.get(
+  '/admin/offline/:studentAdmissionId',
+  requireAdmin,
+  asyncHandler(async (request, response) => {
+    const student = await approvedStudent(request.params.studentAdmissionId);
+    const ledgers = (await refreshStudentPenalties(db(), student._id))
+      .filter((ledger) => ledger.visibilityStatus !== 'hidden')
+      .sort(
+        (left, right) =>
+          left.kind.localeCompare(right.kind) ||
+          Number(left.currentSemester || left.currentAcademicYear || 0) -
+            Number(right.currentSemester || right.currentAcademicYear || 0),
+      );
+    const payments = await db()
+      .collection('feePayments')
+      .find({ studentAdmissionId: student._id, status: 'paid' })
+      .sort({ paidAt: -1 })
+      .limit(20)
+      .toArray();
+    response.json({
+      student: serialize({
+        _id: student._id,
+        studentId: student.studentId,
+        studentName: student.studentName,
+        courseName: student.courseName,
+        academicSession: student.academicSession,
+        currentAcademicYear: student.currentAcademicYear,
+        currentSemester: student.currentSemester,
+        feeFrequency: student.feeFrequency,
+      }),
+      ledgers: ledgers.map(serialize),
+      payments: payments.map(serialize),
+    });
+  }),
+);
+
+paymentsRouter.post(
+  '/admin/offline/:studentAdmissionId',
+  requireAdmin,
+  asyncHandler(async (request, response) => {
+    const data = offlinePaymentSchema.parse(request.body);
+    const student = await approvedStudent(request.params.studentAdmissionId);
+    const { payment, duplicate } = await createOfflinePayment(
+      db(),
+      student,
+      {
+        ...data,
+        targetLedgerId: data.targetLedgerId
+          ? id(data.targetLedgerId, 'targetLedgerId')
+          : null,
+      },
+      request.admin,
+    );
+    const ledgers = (await refreshStudentPenalties(db(), student._id)).filter(
+      (ledger) => ledger.visibilityStatus !== 'hidden',
+    );
+    response.status(duplicate ? 200 : 201).json({
+      item: serialize(payment),
+      duplicate,
+      ledgers: ledgers.map(serialize),
+    });
   }),
 );
 
@@ -157,6 +257,7 @@ paymentsRouter.get(
         { studentName: match },
         { receiptNumber: match },
         { razorpayPaymentId: match },
+        { paymentReference: match },
       ];
     }
     const items = await db()
@@ -249,6 +350,32 @@ function sendReceipt(response, payment) {
     .set('Content-Type', 'text/html; charset=utf-8')
     .set('Content-Disposition', `attachment; filename="${payment.receiptNumber}.html"`)
     .send(paymentReceiptHtml(payment));
+}
+
+async function approvedStudent(value) {
+  const student = await db().collection('admissions').findOne({
+    _id: id(value, 'studentAdmissionId'),
+    status: 'approved',
+    isActive: true,
+  });
+  if (!student) {
+    const error = new Error('Approved active student was not found.');
+    error.status = 404;
+    throw error;
+  }
+  return student;
+}
+
+function publicStudentPayment(payment) {
+  const value = serialize(payment);
+  for (const field of [
+    'internalRemark',
+    'acceptedBy',
+    'idempotencyKey',
+    'failureDescription',
+  ])
+    delete value[field];
+  return value;
 }
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

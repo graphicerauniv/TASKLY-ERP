@@ -264,6 +264,11 @@ export class AdmissionsComponent {
     actions.push({ id: 'edit', label: 'Edit application', icon: 'edit' });
     if (item.status === 'approved') {
       actions.push({
+        id: 'offline-payment',
+        label: 'Make offline payment',
+        icon: 'fees',
+      });
+      actions.push({
         id: 'scholarships',
         label: 'Scholarships & discounts',
         icon: 'scholarship',
@@ -280,6 +285,9 @@ export class AdmissionsComponent {
     if (action === 'edit') void this.router.navigate(['/admin/admissions', item._id, 'edit']);
     if (action === 'scholarships') {
       void this.router.navigate(['/admin/admissions', item._id, 'scholarships']);
+    }
+    if (action === 'offline-payment') {
+      void this.router.navigate(['/admin/admissions', item._id, 'offline-payment']);
     }
   }
 

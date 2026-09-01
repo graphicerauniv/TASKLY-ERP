@@ -1,0 +1,26 @@
+<erp-admin-page eyebrow="Fee Management" title="Fee Change & Publication" description="Publish upcoming fees without changing the student's academic semester or year." variant="minimal">
+  @if (message()) { <p class="erp-notice erp-notice--success">{{ message() }}</p> }
+  @if (error()) { <p class="erp-notice erp-notice--error">{{ error() }}</p> }
+  <section class="erp-card erp-card--padded">
+    <div class="erp-card__header"><div><h2>Configure common deadline</h2><p>One university/college schedule applies to every course in the selected session.</p></div></div>
+    <div class="erp-form-grid">
+      <label><span>University *</span><select class="erp-control" [(ngModel)]="universityId" (ngModelChange)="changeUniversity()"><option value="">Select university</option>@for (item of universities(); track item._id) { <option [value]="item._id">{{ item.name }}</option> }</select></label>
+      <label><span>College *</span><select class="erp-control" [(ngModel)]="collegeId"><option value="">Select college</option>@for (item of collegeOptions(); track item._id) { <option [value]="item._id">{{ item.name }}</option> }</select></label>
+      <label><span>Academic session *</span><select class="erp-control" [(ngModel)]="academicSession"><option value="">Select session</option>@for (item of academicSessions(); track item._id) { <option [value]="item.name">{{ item.name }}</option> }</select></label>
+      <label><span>Transition type *</span><select class="erp-control" [(ngModel)]="mode"><option value="semester">Next semester</option><option value="year">Next academic year</option></select></label>
+      <label><span>{{ mode === 'semester' ? 'Target semester' : 'Target academic year' }} *</span><input class="erp-control" type="number" min="2" max="20" [(ngModel)]="targetNumber" /></label>
+      <label><span>Upcoming fee visible from *</span><input class="erp-control" type="datetime-local" [(ngModel)]="publishAt" /></label>
+      <label><span>Previous fee deadline *</span><input class="erp-control" type="datetime-local" [(ngModel)]="previousPeriodDeadline" /></label>
+      <label><span>Daily fine after deadline</span><input class="erp-control" type="number" min="0" [(ngModel)]="dailyFineAmount" /></label>
+      <label><span>Maximum fine</span><input class="erp-control" type="number" min="0" [(ngModel)]="maxFineAmount" /></label>
+    </div>
+    <div class="erp-form-actions"><button class="erp-button erp-button--primary" type="button" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : editingId() ? 'Save schedule' : 'Create schedule' }}</button>@if (editingId()) { <button class="erp-button erp-button--secondary" type="button" [disabled]="saving()" (click)="resetForm()">Cancel</button> }</div>
+  </section>
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar"><div><h2>Publication schedules <small>{{ items().length }}</small></h2><p>Publication creates or reveals the upcoming ledger and puts the fine rule on the previous unpaid ledger.</p></div></div>
+    <div class="erp-table-shell__scroll"><table><thead><tr><th>University / College</th><th>Session</th><th>Target</th><th>Visible from</th><th>Previous deadline</th><th>Fine</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+      @for (item of items(); track item._id) { <tr><td><strong>{{ item.collegeName }}</strong><small>{{ item.universityName }}</small></td><td>{{ item.academicSession }}</td><td>{{ item.mode === 'semester' ? 'Semester ' + item.targetNumber : 'Academic Year ' + item.targetNumber }}</td><td>{{ item.publishAt | date:'medium' }}</td><td>{{ item.previousPeriodDeadline | date:'medium' }}</td><td>{{ item.dailyFineAmount | currency:'INR' }} / day<small>Cap {{ item.maxFineAmount | currency:'INR' }}</small></td><td><span class="erp-status">{{ item.isActive ? 'Active' : 'Inactive' }}</span></td><td><button class="erp-button erp-button--primary" type="button" [disabled]="publishingId() || !item.isActive" (click)="publish(item)">{{ publishingId() === item._id ? 'Publishing…' : 'Publish now' }}</button><button class="erp-button erp-button--secondary" type="button" (click)="edit(item)">Edit</button><button class="erp-button erp-button--secondary" type="button" (click)="toggle(item)">{{ item.isActive ? 'Disable' : 'Enable' }}</button></td></tr> }
+      @empty { <tr><td colspan="8" class="erp-empty-state">No fee publication schedules configured.</td></tr> }
+    </tbody></table></div>
+  </section>
+</erp-admin-page>

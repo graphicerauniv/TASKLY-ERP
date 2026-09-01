@@ -62,6 +62,13 @@ export const ADMIN_ROUTES: Routes = [
             (component) => component.FeeProgressionComponent,
           ),
       },
+      {
+        path: 'fees/schedules',
+        loadComponent: () =>
+          import('./fee-schedules/fee-schedules.component').then(
+            (component) => component.FeeSchedulesComponent,
+          ),
+      },
       { path: 'fees/scholarships', pathMatch: 'full', redirectTo: 'fees/scholarships/view' },
       {
         path: 'fees/scholarships/view',
@@ -177,6 +184,14 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () =>
           import('./student-scholarships/student-scholarships.component').then(
             (component) => component.StudentScholarshipsComponent,
+          ),
+      },
+      {
+        path: 'admissions/:admissionId/offline-payment',
+        title: 'Make offline payment',
+        loadComponent: () =>
+          import('./offline-payment/offline-payment.component').then(
+            (component) => component.OfflinePaymentComponent,
           ),
       },
       {

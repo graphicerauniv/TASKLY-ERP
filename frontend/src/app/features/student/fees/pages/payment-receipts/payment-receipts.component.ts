@@ -5,6 +5,7 @@ import { take } from 'rxjs';
 import { StudentMobileBottomNavComponent } from '../../../dashboard/components/student-mobile-bottom-nav/student-mobile-bottom-nav.component';
 import { StudentSessionService } from '../../../shared/services/student-session.service';
 import { StudentFeesFacade } from '../../data-access/student-fees.facade';
+import { ApiService } from '../../../../../core/api.service';
 import { StudentFeeWorkspaceViewModel } from '../../models/student-fee-dashboard.models';
 import { LucideDownload, LucideSearch, LucideShieldCheck } from '@lucide/angular';
 
@@ -18,6 +19,7 @@ import { LucideDownload, LucideSearch, LucideShieldCheck } from '@lucide/angular
 })
 export class PaymentReceiptsComponent implements OnInit {
   private readonly fees = inject(StudentFeesFacade);
+  private readonly api = inject(ApiService);
   private readonly session = inject(StudentSessionService);
   private readonly inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
@@ -67,6 +69,14 @@ export class PaymentReceiptsComponent implements OnInit {
     this.dateFilter.set((event.target as HTMLSelectElement).value);
   }
 
+  download(paymentId: string, receiptNumber: string | null): void {
+    const token = this.session.token();
+    if (!token) return;
+    this.api.downloadStudentReceipt(token, paymentId).subscribe((blob) =>
+      downloadBlob(blob, `${receiptNumber || 'fee-receipt'}.html`),
+    );
+  }
+
   private load(): void {
     const token = this.session.token();
     if (!token) {
@@ -80,6 +90,15 @@ export class PaymentReceiptsComponent implements OnInit {
   private formatMoney(amount: number): string {
     return this.inr.format(amount);
   }
+}
+
+function downloadBlob(blob: Blob, name: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function withinDays(value: string | null, days: number): boolean {

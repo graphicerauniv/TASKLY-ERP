@@ -10,7 +10,7 @@
   [description]="
     mode() === 'view'
       ? 'Manage reusable scholarship schemes and their availability.'
-      : 'Define how this scholarship reduces the Tuition Fee.'
+      : 'Create a reusable scholarship head. Its value and recurrence are selected per student.'
   "
   variant="minimal"
   [layout]="mode() === 'view' ? 'collection' : 'default'"
@@ -76,8 +76,6 @@
           <thead>
             <tr>
               <th>Scholarship</th>
-              <th>Calculation</th>
-              <th>Value</th>
               <th>Applied to</th>
               <th>Availability</th>
               <th class="erp-table-shell__actions">Actions</th>
@@ -89,12 +87,6 @@
                 <td>
                   <strong>{{ item.name }}</strong
                   ><small>Reusable tuition concession</small>
-                </td>
-                <td>{{ item.type === 'percentage' ? 'Percentage' : 'Fixed annual amount' }}</td>
-                <td>
-                  <strong>{{
-                    displayValue(item) ?? (item.value | currency: 'INR' : 'symbol' : '1.0-2')
-                  }}</strong>
                 </td>
                 <td>Tuition Fee</td>
                 <td>
@@ -111,7 +103,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="6" class="erp-empty-state">
+                <td colspan="4" class="erp-empty-state">
                   {{
                     loading()
                       ? 'Loading scholarships…'
@@ -132,7 +124,7 @@
         <div class="erp-card__header">
           <div>
             <h2>Scheme definition</h2>
-            <p>Use a short administrative name and one calculation rule.</p>
+            <p>Only the reusable scholarship head is stored here.</p>
           </div>
         </div>
         <div class="erp-form-grid">
@@ -143,23 +135,6 @@
               [(ngModel)]="name"
               maxlength="120"
               placeholder="Merit Scholarship"
-          /></label>
-          <label
-            ><span>Calculation type *</span
-            ><select class="erp-control" [(ngModel)]="type">
-              <option value="percentage">Percentage of Tuition Fee</option>
-              <option value="fixed">Fixed annual amount</option>
-            </select></label
-          >
-          <label
-            ><span>{{ type === 'percentage' ? 'Percentage *' : 'Annual amount *' }}</span
-            ><input
-              class="erp-control"
-              type="number"
-              min="0.01"
-              [max]="type === 'percentage' ? 100 : 1000000000"
-              step="0.01"
-              [(ngModel)]="value"
           /></label>
           <label
             ><span>Availability</span
@@ -192,7 +167,7 @@
           </div>
           <div>
             <dt>Frequency</dt>
-            <dd>Applied to eligible academic fee periods</dd>
+            <dd>Chosen while assigning the head to a student</dd>
           </div>
           <div>
             <dt>History</dt>

@@ -67,8 +67,8 @@ export class StudentFeesFacade {
     const paid = sumMoney(unique.map((ledger) => ledger.paidAmount));
     const balance = sumMoney(unique.map((ledger) => Math.max(0, ledger.balanceAmount)));
     const nextDueDate = earliestDueDate(unique);
-    const academic = unique.find((ledger) => ledger.kind === 'academic') ?? null;
-    const hostel = unique.find((ledger) => ledger.kind === 'hostel') ?? null;
+    const academic = unique.filter((ledger) => ledger.kind === 'academic');
+    const hostel = unique.filter((ledger) => ledger.kind === 'hostel');
     return {
       ...this.base(student, feesOk ? 'ready' : 'error', paymentsOk ? 'ready' : 'error'),
       summary: {
@@ -105,7 +105,9 @@ function uniqueLedgers(ledgers: StudentFeeLedger[]): StudentFeeLedger[] {
 }
 
 function toLedgerDetail(ledger: StudentFeeLedger): FeeLedgerDetailViewModel {
-  const rows = ledger.entries.map((entry) => toFeeHeadDetail(entry));
+  const rows = ledger.entries
+    .filter((entry) => Number(entry.amount || 0) > 0 || Number(entry.paidAmount || 0) > 0)
+    .map((entry) => toFeeHeadDetail(entry));
   const dueDate = earliestEntryDueDate(ledger);
   const balance = moneyOrNull(ledger.balanceAmount);
   return {
@@ -152,12 +154,13 @@ function toFeeHeadDetail(entry: StudentFeeLedger['entries'][number]): FeeHeadDet
 
 function toPaymentRecord(payment: FeePayment): StudentPaymentRecordViewModel {
   const receiptNumber = payment.receiptNumber ?? null;
-  const paymentId = payment.razorpayPaymentId ?? null;
+  const paymentId = payment.paymentReference ?? payment.razorpayPaymentId ?? null;
   return {
     id: payment._id,
     receiptNumber,
     orderReference: payment.razorpayOrderId || payment._id,
     paymentId,
+    paymentChannel: payment.paymentChannel === 'offline' ? 'offline' : 'online',
     amount: money(Number(payment.amount || 0)),
     feeType: paymentFeeType(payment),
     feePeriodLabel: payment.targetPeriodLabel || 'All fee periods',
@@ -213,9 +216,16 @@ function dueState(balance: number, dueDate: string | null): FeeDueState {
   const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
   return days < 0 ? 'overdue' : days <= 7 ? 'due-soon' : 'upcoming';
 }
-function feeStatus(ledger: StudentFeeLedger | null, kind: 'academic' | 'hostel'): FeeStatusViewModel {
-  if (!ledger) return { kind, title: kind === 'academic' ? 'Academic Fee' : 'Hostel Fee', context: kind === 'hostel' ? 'No hostel fee is currently assigned.' : 'No academic fee is currently assigned.', status: 'not-assigned', amount: null, image: `/assets/student/fee-icons/compact/${kind === 'academic' ? 'fee-details' : 'fee-support'}.webp` };
-  return { kind, title: ledger.name, context: kind === 'hostel' ? [ledger.hostelName, ledger.roomNumber ? `Room ${ledger.roomNumber}` : null].filter(Boolean).join(' · ') || ledger.periodLabel : `${ledger.periodLabel} · ${ledger.academicSession}`, status: ledger.paymentStatus, amount: money(Math.max(0, Number(ledger.balanceAmount))), image: `/assets/student/fee-icons/compact/${kind === 'academic' ? 'fee-details' : 'fee-support'}.webp` };
+function feeStatus(ledgers: StudentFeeLedger[], kind: 'academic' | 'hostel'): FeeStatusViewModel {
+  if (!ledgers.length) return { kind, title: kind === 'academic' ? 'Academic Fee' : 'Hostel Fee', context: kind === 'hostel' ? 'No hostel fee is currently assigned.' : 'No academic fee is currently assigned.', status: 'not-assigned', amount: null, image: `/assets/student/fee-icons/compact/${kind === 'academic' ? 'fee-details' : 'fee-support'}.webp` };
+  const balance = sumMoney(ledgers.map((ledger) => Math.max(0, Number(ledger.balanceAmount))));
+  const paid = balance <= 0;
+  const partial = ledgers.some((ledger) => ledger.paymentStatus === 'partial' || Number(ledger.paidAmount) > 0);
+  const first = ledgers[0];
+  const context = kind === 'hostel'
+    ? [first.hostelName, first.roomNumber ? `Room ${first.roomNumber}` : null].filter(Boolean).join(' · ') || `${ledgers.length} published fee period(s)`
+    : `${ledgers.length} published fee period${ledgers.length === 1 ? '' : 's'} · ${first.academicSession}`;
+  return { kind, title: first.name, context, status: paid ? 'paid' : partial ? 'partial' : 'due', amount: money(balance), image: `/assets/student/fee-icons/compact/${kind === 'academic' ? 'fee-details' : 'fee-support'}.webp` };
 }
 function activities(payments: FeePayment[], ledgers: StudentFeeLedger[]): FeeActivityViewModel[] {
   const items: FeeActivityViewModel[] = payments.map((payment) => ({ id: payment._id, label: payment.status === 'paid' ? `Payment verified${payment.receiptNumber ? ` · ${payment.receiptNumber}` : ''}` : payment.status === 'failed' ? 'Payment failed' : 'Payment pending', date: payment.paidAt || payment.createdAt || null, state: payment.status === 'paid' ? 'success' : payment.status === 'failed' ? 'danger' : 'warning' }));

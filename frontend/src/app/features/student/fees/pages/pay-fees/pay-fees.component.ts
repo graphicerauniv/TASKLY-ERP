@@ -28,29 +28,41 @@ export class PayFeesComponent {
   readonly workspace = signal<StudentFeeWorkspaceViewModel>(this.fees.workspaceLoading(this.session.profile()));
   readonly selectedKind = signal<'academic' | 'hostel'>('academic');
   readonly selectedLedgerId = signal<string | null>(null);
+  readonly combinedSelected = signal(false);
   readonly paymentAmount = signal<number | null>(null);
   readonly reviewed = signal(false);
   readonly processing = signal(false);
   readonly message = signal<string | null>(null);
   readonly selectedLedger = computed(() => this.workspace().ledgers.find((ledger) => ledger.id === this.selectedLedgerId()) ?? null);
   readonly payableLedgers = computed(() => this.workspace().ledgers.filter((ledger) => ledger.kind === this.selectedKind() && ledger.isPayable));
+  readonly combinedBalance = computed(() => this.payableLedgers().reduce((sum, ledger) => sum + (ledger.balance?.amount ?? 0), 0));
   readonly canContinue = computed(() => {
     const ledger = this.selectedLedger();
     const amount = this.paymentAmount();
-    return !!ledger && !!amount && amount > 0 && amount <= (ledger.balance?.amount ?? 0) && this.reviewed() && !this.processing();
+    const maximum = this.combinedSelected() ? this.combinedBalance() : (ledger?.balance?.amount ?? 0);
+    return (this.combinedSelected() || !!ledger) && !!amount && amount > 0 && amount <= maximum && this.reviewed() && !this.processing();
   });
 
   constructor() { this.load(); }
 
   selectKind(kind: 'academic' | 'hostel'): void {
     this.selectedKind.set(kind);
-    const next = this.workspace().ledgers.find((ledger) => ledger.kind === kind && ledger.isPayable) ?? null;
-    this.selectLedger(next);
+    this.selectCombined();
   }
 
   selectLedger(ledger: FeeLedgerDetailViewModel | null): void {
+    this.combinedSelected.set(false);
     this.selectedLedgerId.set(ledger?.id ?? null);
     this.paymentAmount.set(ledger?.balance?.amount ?? null);
+    this.reviewed.set(false);
+    this.message.set(null);
+  }
+
+  selectCombined(): void {
+    const balance = this.combinedBalance();
+    this.combinedSelected.set(balance > 0);
+    this.selectedLedgerId.set(null);
+    this.paymentAmount.set(balance || null);
     this.reviewed.set(false);
     this.message.set(null);
   }
@@ -73,12 +85,13 @@ export class PayFeesComponent {
     const token = this.session.token();
     const ledger = this.selectedLedger();
     const amount = this.paymentAmount();
-    if (!token || !ledger || !amount || !this.canContinue()) return;
+    if (!token || (!ledger && !this.combinedSelected()) || !amount || !this.canContinue()) return;
     this.processing.set(true);
     this.message.set(null);
-    this.api.createStudentPaymentOrder(token, amount, ledger.id).pipe(take(1)).subscribe({
+    this.api.createStudentPaymentOrder(token, amount, ledger?.id ?? null, this.selectedKind()).pipe(take(1)).subscribe({
       next: async (order) => {
-        const opened = await this.checkout.open(order, `${ledger.title} · ${ledger.periodLabel}`, (result) => this.verify(token, result), () => this.processing.set(false));
+        const description = this.combinedSelected() ? `Combined ${this.selectedKind()} fees` : `${ledger!.title} · ${ledger!.periodLabel}`;
+        const opened = await this.checkout.open(order, description, (result) => this.verify(token, result), () => this.processing.set(false));
         if (!opened) {
           this.processing.set(false);
           this.message.set('Secure checkout could not be opened. Please try again.');
@@ -107,7 +120,11 @@ export class PayFeesComponent {
       const requestedId = this.route.snapshot.queryParamMap.get('ledger');
       const requested = workspace.ledgers.find((ledger) => ledger.id === requestedId && ledger.isPayable) ?? null;
       const first = requested ?? workspace.ledgers.find((ledger) => ledger.kind === 'academic' && ledger.isPayable) ?? workspace.ledgers.find((ledger) => ledger.isPayable) ?? null;
-      if (first) { this.selectedKind.set(first.kind); this.selectLedger(first); }
+      if (first) {
+        this.selectedKind.set(first.kind);
+        if (requested) this.selectLedger(first);
+        else this.selectCombined();
+      }
     });
   }
 }

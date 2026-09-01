@@ -1,4 +1,3 @@
-import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -20,7 +19,6 @@ import {
     AdminPageComponent,
     CompactActionMenuComponent,
     FilterPopoverComponent,
-    CurrencyPipe,
     FormsModule,
     RouterLink,
   ],
@@ -48,8 +46,6 @@ export class ScholarshipsComponent {
   search = '';
 
   name = '';
-  type: Scholarship['type'] = 'percentage';
-  value: number | null = null;
   isActive = true;
 
   filteredItems() {
@@ -116,19 +112,14 @@ export class ScholarshipsComponent {
   save() {
     if (this.saving()) return;
     const name = this.name.trim();
-    const value = Number(this.value || 0);
-    if (!name || value <= 0) {
-      this.error.set('Enter the scholarship name and a value greater than zero.');
-      return;
-    }
-    if (this.type === 'percentage' && value > 100) {
-      this.error.set('Percentage scholarship cannot exceed 100%.');
+    if (!name) {
+      this.error.set('Enter the scholarship head name.');
       return;
     }
     this.saving.set(true);
     this.error.set('');
     this.message.set('');
-    const body = { name, type: this.type, value, isActive: this.isActive };
+    const body = { name, isActive: this.isActive };
     const request = this.editingId()
       ? this.api.updateScholarship(this.editingId()!, body)
       : this.api.createScholarship(body);
@@ -153,8 +144,6 @@ export class ScholarshipsComponent {
   private populateForm(item: Scholarship) {
     this.editingId.set(item._id);
     this.name = item.name;
-    this.type = item.type;
-    this.value = item.value;
     this.isActive = item.isActive;
     this.error.set('');
     this.message.set('');
@@ -177,12 +166,6 @@ export class ScholarshipsComponent {
   private resetForm() {
     this.editingId.set(null);
     this.name = '';
-    this.type = 'percentage';
-    this.value = null;
     this.isActive = true;
-  }
-
-  displayValue(item: Scholarship) {
-    return item.type === 'percentage' ? `${item.value}%` : null;
   }
 }

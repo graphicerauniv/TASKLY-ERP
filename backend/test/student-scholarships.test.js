@@ -96,3 +96,32 @@ test('applies a one-time fixed discount in full only to its selected semester le
   });
   assert.equal(otherPeriod.some((entry) => entry.isOneTimeDiscount), false);
 });
+
+test('applies a one-time scholarship in full only to the selected ledger', () => {
+  const oneTime = {
+    ...assignment('One-time merit', 'fixed', 20_000),
+    recurring: false,
+    targetLedgerId: 'ledger-semester-2',
+    targetPeriodKey: 'semester:2',
+  };
+  const selected = applyScholarshipsToEntries([tuition(50_000)], [oneTime], {
+    ledgerId: 'ledger-semester-2',
+    periodKey: 'semester:2',
+    feeFrequency: 'semester',
+    currentAcademicYear: 1,
+    currentSemester: 2,
+  });
+  const applied = selected.find((entry) => entry.isOneTimeScholarship);
+  assert.equal(applied.amount, 20_000);
+  assert.equal(applied.isScholarship, true);
+  assert.equal(applied.frequency, 'one-time');
+
+  const next = applyScholarshipsToEntries([tuition(50_000)], [oneTime], {
+    ledgerId: 'ledger-semester-3',
+    periodKey: 'semester:3',
+    feeFrequency: 'semester',
+    currentAcademicYear: 2,
+    currentSemester: 3,
+  });
+  assert.equal(next.some((entry) => entry.isScholarship), false);
+});

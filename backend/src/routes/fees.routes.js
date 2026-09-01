@@ -14,6 +14,7 @@ import {
   removeStudentFeeLedgers,
 } from '../services/student-fee-ledger.js';
 import { promoteStudentProgression } from '../services/student-promotion.js';
+import { publishFeeSchedule } from '../services/fee-visibility.js';
 import {
   discountAssignmentDocument,
   refreshStudentScholarshipLedgers,
@@ -136,18 +137,22 @@ const progressionSchema = z.object({
 });
 const scholarshipSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  type: z.enum(['percentage', 'fixed']),
-  value: z.coerce.number().positive().max(1_000_000_000),
   isActive: z.boolean().optional().default(true),
-}).superRefine((data, context) => {
-  if (data.type === 'percentage' && data.value > 100)
-    context.addIssue({
-      code: 'custom',
-      path: ['value'],
-      message: 'Percentage scholarship cannot exceed 100%.',
-    });
 });
-const scholarshipAssignmentSchema = z.object({ scholarshipId: z.string().min(1) });
+const scholarshipAssignmentSchema = z
+  .object({
+    scholarshipId: z.string().min(1),
+    type: z.enum(['percentage', 'fixed']),
+    value: z.coerce.number().positive().max(1_000_000_000),
+    recurring: z.boolean().optional().default(true),
+    targetLedgerId: z.string().optional(),
+  })
+  .superRefine((data, context) => {
+    if (data.type === 'percentage' && data.value > 100)
+      context.addIssue({ code: 'custom', path: ['value'], message: 'Percentage scholarship cannot exceed 100%.' });
+    if (!data.recurring && !data.targetLedgerId)
+      context.addIssue({ code: 'custom', path: ['targetLedgerId'], message: 'Select the one-time scholarship fee period.' });
+  });
 const studentDiscountSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
@@ -164,6 +169,18 @@ const studentDiscountSchema = z
         message: 'Percentage discount cannot exceed 100%.',
       });
   });
+const feeScheduleSchema = z.object({
+  universityId: z.string().min(1),
+  collegeId: z.string().min(1),
+  academicSession: z.string().trim().min(4).max(30),
+  mode: z.enum(['semester', 'year']),
+  targetNumber: z.coerce.number().int().min(2).max(20),
+  publishAt: z.coerce.date(),
+  previousPeriodDeadline: z.coerce.date(),
+  dailyFineAmount: amount.optional().default(0),
+  maxFineAmount: amount.optional().default(0),
+  isActive: z.boolean().optional().default(true),
+});
 
 async function masterValue(value, typeSlug, field) {
   const item = await db()
@@ -231,6 +248,109 @@ feesRouter.get(
   }),
 );
 
+feesRouter.get(
+  '/fee-schedules',
+  asyncHandler(async (request, response) => {
+    const filter = {};
+    if (request.query.collegeId) filter.collegeId = id(request.query.collegeId, 'collegeId');
+    if (request.query.academicSession) filter.academicSession = String(request.query.academicSession);
+    const items = await db()
+      .collection('feeSchedules')
+      .find(filter)
+      .sort({ academicSession: -1, mode: 1, targetNumber: 1 })
+      .toArray();
+    response.json({ items: items.map(serialize) });
+  }),
+);
+
+feesRouter.post(
+  '/fee-schedules',
+  asyncHandler(async (request, response) => {
+    const data = feeScheduleSchema.parse(request.body);
+    const [university, college] = await Promise.all([
+      masterValue(data.universityId, 'university', 'universityId'),
+      masterValue(data.collegeId, 'college', 'collegeId'),
+    ]);
+    if (String(college.parentId || '') !== String(university._id))
+      return response.status(422).json({
+        message: 'The selected college does not belong to the selected university.',
+      });
+    const now = new Date();
+    const document = {
+      ...data,
+      universityId: university._id,
+      universityName: university.name,
+      collegeId: college._id,
+      collegeName: college.name,
+      createdBy: id(request.admin._id),
+      createdAt: now,
+      updatedAt: now,
+    };
+    const duplicate = await db().collection('feeSchedules').findOne({
+      universityId: university._id,
+      collegeId: college._id,
+      academicSession: data.academicSession,
+      mode: data.mode,
+      targetNumber: data.targetNumber,
+    });
+    if (duplicate)
+      return response.status(409).json({ message: 'This college fee transition is already configured.' });
+    const result = await db().collection('feeSchedules').insertOne(document);
+    response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
+  }),
+);
+
+feesRouter.patch(
+  '/fee-schedules/:scheduleId',
+  asyncHandler(async (request, response) => {
+    const scheduleId = id(request.params.scheduleId, 'scheduleId');
+    const current = await db().collection('feeSchedules').findOne({ _id: scheduleId });
+    if (!current) return response.status(404).json({ message: 'Fee schedule was not found.' });
+    const parsed = feeScheduleSchema.parse({
+      ...current,
+      universityId: String(current.universityId),
+      collegeId: String(current.collegeId),
+      ...request.body,
+    });
+    const [university, college] = await Promise.all([
+      masterValue(String(parsed.universityId), 'university', 'universityId'),
+      masterValue(String(parsed.collegeId), 'college', 'collegeId'),
+    ]);
+    if (String(college.parentId || '') !== String(university._id))
+      return response.status(422).json({
+        message: 'The selected college does not belong to the selected university.',
+      });
+    const update = {
+      ...parsed,
+      universityId: university._id,
+      universityName: university.name,
+      collegeId: college._id,
+      collegeName: college.name,
+      updatedAt: new Date(),
+    };
+    await db().collection('feeSchedules').updateOne({ _id: scheduleId }, { $set: update });
+    const item = await db().collection('feeSchedules').findOne({ _id: scheduleId });
+    response.json({ item: serialize(item) });
+  }),
+);
+
+feesRouter.post(
+  '/fee-schedules/:scheduleId/publish',
+  asyncHandler(async (request, response) => {
+    const schedule = await db()
+      .collection('feeSchedules')
+      .findOne({ _id: id(request.params.scheduleId, 'scheduleId'), isActive: true });
+    if (!schedule) return response.status(404).json({ message: 'Active fee schedule was not found.' });
+    const results = await publishFeeSchedule(db(), schedule, id(request.admin._id));
+    response.json({
+      studentsProcessed: results.length,
+      published: results.filter((item) => item.published && !item.alreadyPublished).length,
+      alreadyPublished: results.filter((item) => item.published && item.alreadyPublished).length,
+      results: results.map(serialize),
+    });
+  }),
+);
+
 feesRouter.post(
   '/scholarships',
   asyncHandler(async (request, response) => {
@@ -243,8 +363,6 @@ feesRouter.post(
     const document = {
       ...data,
       normalizedName,
-      recurring: true,
-      appliesTo: 'tuition',
       createdBy: id(request.admin._id),
       createdAt: now,
       updatedAt: now,
@@ -261,7 +379,6 @@ feesRouter.patch(
     const scholarshipId = id(request.params.scholarshipId, 'scholarshipId');
     const current = await db().collection('scholarships').findOne({ _id: scholarshipId });
     if (!current) return response.status(404).json({ message: 'Scholarship was not found.' });
-    const candidate = scholarshipSchema.parse({ ...current, ...data });
     const update = { ...data, updatedAt: new Date() };
     if (data.name) {
       update.normalizedName = normalizeFeeName(data.name);
@@ -272,8 +389,6 @@ feesRouter.patch(
       if (duplicate)
         return response.status(409).json({ message: 'A scholarship with this name already exists.' });
     }
-    update.type = candidate.type;
-    update.value = candidate.value;
     await db().collection('scholarships').updateOne({ _id: scholarshipId }, { $set: update });
     const item = await db().collection('scholarships').findOne({ _id: scholarshipId });
     response.json({ item: serialize(item) });
@@ -348,7 +463,23 @@ feesRouter.post(
     });
     if (duplicate)
       return response.status(409).json({ message: 'This scholarship is already assigned.' });
-    const document = scholarshipAssignmentDocument(student, scholarship, request.admin._id);
+    const targetLedger = data.recurring
+      ? null
+      : await db().collection('studentFeeLedgers').findOne({
+          _id: id(data.targetLedgerId, 'targetLedgerId'),
+          studentAdmissionId: student._id,
+          kind: 'academic',
+          status: 'active',
+        });
+    if (!data.recurring && !targetLedger)
+      return response.status(404).json({ message: 'Selected Academic Fee period was not found.' });
+    const document = scholarshipAssignmentDocument(
+      student,
+      scholarship,
+      data,
+      request.admin._id,
+      targetLedger,
+    );
     const result = await db().collection('studentScholarships').insertOne(document);
     const assignment = { ...document, _id: result.insertedId };
     try {

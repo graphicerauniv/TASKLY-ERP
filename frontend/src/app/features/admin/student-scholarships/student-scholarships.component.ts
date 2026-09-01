@@ -92,6 +92,10 @@ export class StudentScholarshipsComponent {
   );
   readonly studentAdmissionId = this.route.snapshot.paramMap.get('admissionId') || '';
   scholarshipId = '';
+  scholarshipType: 'percentage' | 'fixed' = 'percentage';
+  scholarshipValue: number | null = null;
+  scholarshipRecurring = true;
+  scholarshipLedgerId = '';
   discountName = '';
   discountType: 'percentage' | 'fixed' = 'fixed';
   discountValue: number | null = null;
@@ -116,6 +120,8 @@ export class StudentScholarshipsComponent {
           this.scholarshipId = '';
         if (!ledgers.some((ledger) => ledger._id === this.discountLedgerId))
           this.discountLedgerId = this.defaultLedgerId(student, ledgers);
+        if (!ledgers.some((ledger) => ledger._id === this.scholarshipLedgerId))
+          this.scholarshipLedgerId = this.defaultLedgerId(student, ledgers);
         this.loading.set(false);
       },
       error: (error) => {
@@ -127,13 +133,31 @@ export class StudentScholarshipsComponent {
 
   assign() {
     if (!this.scholarshipId || this.saving()) return;
+    const value = Number(this.scholarshipValue || 0);
+    if (value <= 0 || (this.scholarshipType === 'percentage' && value > 100)) {
+      this.error.set('Enter a valid scholarship percentage or fixed amount.');
+      return;
+    }
+    if (!this.scholarshipRecurring && !this.scholarshipLedgerId) {
+      this.error.set('Select the fee period for the one-time scholarship.');
+      return;
+    }
     this.saving.set(true);
     this.error.set('');
     this.message.set('');
-    this.api.assignStudentScholarship(this.studentAdmissionId, this.scholarshipId).subscribe({
+    this.api.assignStudentScholarship(this.studentAdmissionId, {
+      scholarshipId: this.scholarshipId,
+      type: this.scholarshipType,
+      value,
+      recurring: this.scholarshipRecurring,
+      targetLedgerId: this.scholarshipRecurring ? undefined : this.scholarshipLedgerId,
+    }).subscribe({
       next: () => {
         this.message.set('Scholarship assigned and Tuition Fee updated.');
         this.scholarshipId = '';
+        this.scholarshipType = 'percentage';
+        this.scholarshipValue = null;
+        this.scholarshipRecurring = true;
         this.saving.set(false);
         this.load();
       },

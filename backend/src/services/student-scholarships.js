@@ -61,12 +61,15 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
 
   for (const assignment of eligible) {
     if (availableTuition <= 0) break;
-    const isOneTimeDiscount = assignment.adjustmentKind === 'discount' || assignment.recurring === false;
+    const isOneTimeDiscount = assignment.adjustmentKind === 'discount';
+    const isOneTimeScholarship = !isOneTimeDiscount && assignment.recurring === false;
     const configuredAmount =
       assignment.type === 'percentage'
         ? tuitionAmount * (Number(assignment.value || 0) / 100)
         : Number(assignment.value || 0) /
-          (!isOneTimeDiscount && context.feeFrequency === 'semester' ? 2 : 1);
+          (!isOneTimeDiscount && !isOneTimeScholarship && context.feeFrequency === 'semester'
+            ? 2
+            : 1);
     const appliedAmount = roundMoney(Math.min(availableTuition, configuredAmount));
     if (appliedAmount <= 0) continue;
     adjustmentEntries.push({
@@ -78,7 +81,7 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
         : assignment.scholarshipName,
       category: 'discount',
       priority: tuitionPriority,
-      frequency: isOneTimeDiscount
+      frequency: isOneTimeDiscount || isOneTimeScholarship
         ? 'one-time'
         : context.feeFrequency === 'semester'
           ? 'semester'
@@ -96,6 +99,7 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
       dueDate: tuitionDueDate || null,
       status: 'paid',
       isScholarship: !isOneTimeDiscount,
+      isOneTimeScholarship,
       isOneTimeDiscount,
       adjustmentKind: isOneTimeDiscount ? 'discount' : 'scholarship',
       scholarshipAssignmentId: isOneTimeDiscount ? undefined : assignment._id,
@@ -234,7 +238,7 @@ function roundMoney(value) {
   return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 }
 
-export function scholarshipAssignmentDocument(admission, scholarship, assignedBy) {
+export function scholarshipAssignmentDocument(admission, scholarship, assignment, assignedBy, ledger) {
   const now = new Date();
   return {
     studentAdmissionId: admission._id,
@@ -242,14 +246,17 @@ export function scholarshipAssignmentDocument(admission, scholarship, assignedBy
     studentName: admission.studentName,
     scholarshipId: scholarship._id,
     scholarshipName: scholarship.name,
-    type: scholarship.type,
-    value: Number(scholarship.value),
+    type: assignment.type,
+    value: Number(assignment.value),
     startAcademicYear: Number(admission.currentAcademicYear || 1),
     startSemester:
       admission.feeFrequency === 'semester'
         ? Number(admission.currentSemester || admission.currentAcademicYear * 2 - 1 || 1)
         : null,
-    recurring: true,
+    recurring: assignment.recurring,
+    targetLedgerId: ledger?._id || null,
+    targetPeriodKey: ledger?.periodKey || null,
+    targetPeriodLabel: ledger?.periodLabel || null,
     status: 'active',
     assignedBy: objectId(assignedBy),
     assignedAt: now,

@@ -35,6 +35,8 @@ export async function generateStudentFeeLedgers(database, admission, createdBy, 
     book,
     createdBy,
     options.penalty,
+    options.visibilityStatus,
+    options.visibleFrom,
   );
   if (academic === 'created') createdKinds.push('academic');
   else skippedKinds.push({ kind: 'academic', reason: academic });
@@ -159,7 +161,16 @@ export function totalsForEntries(entries) {
   };
 }
 
-async function academicLedger(database, admission, context, book, createdBy, penalty) {
+async function academicLedger(
+  database,
+  admission,
+  context,
+  book,
+  createdBy,
+  penalty,
+  visibilityStatus,
+  visibleFrom,
+) {
   const periodKey = academicPeriodKey(context);
   const existing = await existingLedger(database, admission._id, book._id, 'academic', periodKey);
   if (existing) {
@@ -190,6 +201,8 @@ async function academicLedger(database, admission, context, book, createdBy, pen
     penalty,
     periodKey,
     periodLabel: academicPeriodLabel(context),
+    visibilityStatus,
+    visibleFrom,
   });
   return 'created';
 }
@@ -404,6 +417,9 @@ async function insertLedger(database, input) {
     balanceAmount: totals.totalAmount,
     status: 'active',
     paymentStatus: 'due',
+    visibilityStatus: input.visibilityStatus || 'published',
+    visibleFrom: input.visibleFrom || null,
+    publishedAt: input.visibilityStatus === 'hidden' ? null : now,
     penalty: normalizePenalty(input.penalty),
     penaltyAmount: 0,
     hostelAllocationId: input.hostelAllocationId || null,
@@ -515,6 +531,7 @@ export async function progressStudentFee(database, admission, mode, createdBy, p
   const result = await generateStudentFeeLedgers(database, target, createdBy, {
     academicOnly: true,
     penalty,
+    visibilityStatus: 'hidden',
   });
   const targetPeriodKey = academicPeriodKey(target);
   const ledger = await database.collection('studentFeeLedgers').findOne({
