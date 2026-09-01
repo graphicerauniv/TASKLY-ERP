@@ -10,7 +10,7 @@
   [description]="
     mode() === 'view'
       ? 'Manage reusable scholarship schemes and their availability.'
-      : 'Create a reusable scholarship head. Its value and recurrence are selected per student.'
+      : 'Create a reusable Tuition Fee scholarship with its default calculation and value.'
   "
   variant="minimal"
   [layout]="mode() === 'view' ? 'collection' : 'default'"
@@ -76,6 +76,9 @@
           <thead>
             <tr>
               <th>Scholarship</th>
+              <th>Value source</th>
+              <th>Calculation</th>
+              <th>Value</th>
               <th>Applied to</th>
               <th>Availability</th>
               <th class="erp-table-shell__actions">Actions</th>
@@ -87,6 +90,31 @@
                 <td>
                   <strong>{{ item.name }}</strong
                   ><small>Reusable tuition concession</small>
+                </td>
+                <td>{{ item.valueMode === 'custom' ? 'Custom at assignment' : 'Preconfigured' }}</td>
+                <td>
+                  {{
+                    item.valueMode === 'custom'
+                      ? 'Selected at assignment'
+                      : !item.type
+                      ? 'Needs configuration'
+                      : item.type === 'percentage'
+                        ? 'Percentage'
+                        : 'Fixed amount'
+                  }}
+                </td>
+                <td>
+                  <strong>
+                    {{
+                      item.valueMode === 'custom'
+                        ? 'Entered at assignment'
+                        : !item.value
+                        ? '—'
+                        : item.type === 'percentage'
+                        ? item.value + '%'
+                        : (item.value | currency: 'INR' : 'symbol' : '1.0-2')
+                    }}
+                  </strong>
                 </td>
                 <td>Tuition Fee</td>
                 <td>
@@ -103,7 +131,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="4" class="erp-empty-state">
+                <td colspan="7" class="erp-empty-state">
                   {{
                     loading()
                       ? 'Loading scholarships…'
@@ -124,7 +152,7 @@
         <div class="erp-card__header">
           <div>
             <h2>Scheme definition</h2>
-            <p>Only the reusable scholarship head is stored here.</p>
+            <p>Choose whether this scheme uses a saved value or a custom value during assignment.</p>
           </div>
         </div>
         <div class="erp-form-grid">
@@ -136,6 +164,33 @@
               maxlength="120"
               placeholder="Merit Scholarship"
           /></label>
+          <label
+            ><span>Value configuration *</span
+            ><select class="erp-control" [(ngModel)]="valueMode">
+              <option value="preconfigured">Preconfigured value</option>
+              <option value="custom">Custom during student assignment</option>
+            </select></label
+          >
+          @if (valueMode === 'preconfigured') {
+            <label
+              ><span>Calculation *</span
+              ><select class="erp-control" [(ngModel)]="type">
+                <option value="percentage">Percentage</option>
+                <option value="fixed">Fixed amount</option>
+              </select></label
+            >
+            <label
+              ><span>{{ type === 'percentage' ? 'Percentage *' : 'Fixed amount *' }}</span
+              ><input
+                class="erp-control"
+                type="number"
+                min="0.01"
+                step="0.01"
+                [max]="type === 'percentage' ? 100 : 1000000000"
+                [(ngModel)]="value"
+                [placeholder]="type === 'percentage' ? '5' : '10000'"
+            /></label>
+          }
           <label
             ><span>Availability</span
             ><select class="erp-control" [(ngModel)]="isActive">
@@ -166,8 +221,12 @@
             <dd>Tuition Fee only</dd>
           </div>
           <div>
+            <dt>Calculation</dt>
+            <dd>Preconfigured schemes reuse their saved value. Custom schemes ask for a value during assignment.</dd>
+          </div>
+          <div>
             <dt>Frequency</dt>
-            <dd>Chosen while assigning the head to a student</dd>
+            <dd>One-time or carry-forward is chosen while assigning it to a student</dd>
           </div>
           <div>
             <dt>History</dt>

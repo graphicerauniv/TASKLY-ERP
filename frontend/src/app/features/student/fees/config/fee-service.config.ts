@@ -9,6 +9,6 @@ export const FEE_SERVICE_CARDS: readonly FeeServiceCardViewModel[] = [
   { id: 'history', title: 'Payment History', description: 'Track successful, pending and failed payments', image: `${ASSET}/payment-history.webp`, tone: 'orange', route: '/student/fees/history' },
   { id: 'challan', title: 'Challan', description: 'Generate or print a bank challan', image: `${ASSET}/fee-challan.webp`, tone: 'coral', route: '/student/fees/challan' },
   { id: 'installments', title: 'Installments', description: 'Review your approved payment schedule', image: `${ASSET}/fee-installments.webp`, tone: 'sky', route: '/student/fees/installments' },
-  { id: 'scholarship', title: 'Scholarship Details', description: 'View applied scholarships and discounts', image: `${ASSET}/scholarship-details.webp`, tone: 'gold', route: '/student/fees/scholarships' },
+  { id: 'scholarship', title: 'My Scholarships', description: 'View scholarships applied to your Tuition Fee', image: `${ASSET}/scholarship-details.webp`, tone: 'gold', route: '/student/fees/scholarships' },
   { id: 'support', title: 'Fee Support', description: 'Raise a discrepancy or get payment help', image: `${ASSET}/fee-support.webp`, tone: 'teal', route: '/student/fees/support' },
 ];

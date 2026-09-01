@@ -1,3 +1,106 @@
-import { DatePipe } from '@angular/common'; import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'; import { RouterLink } from '@angular/router'; import { LucideBadgePercent, LucideGraduationCap, LucideHeadset, LucideInfo, LucideReceipt, LucideShieldCheck, LucideWalletCards } from '@lucide/angular'; import { take } from 'rxjs'; import { StudentMobileBottomNavComponent } from '../../../dashboard/components/student-mobile-bottom-nav/student-mobile-bottom-nav.component'; import { StudentSessionService } from '../../../shared/services/student-session.service'; import { StudentFeesFacade } from '../../data-access/student-fees.facade'; import { FeeLedgerDetailViewModel, StudentFeeWorkspaceViewModel } from '../../models/student-fee-dashboard.models';
-@Component({ selector: 'erp-scholarship-details', imports: [DatePipe, RouterLink, StudentMobileBottomNavComponent, LucideBadgePercent, LucideGraduationCap, LucideHeadset, LucideInfo, LucideReceipt, LucideShieldCheck, LucideWalletCards], templateUrl: './scholarship-details.component.html', styleUrl: '../../../styles/_student-fee-final-pages.scss', changeDetection: ChangeDetectionStrategy.OnPush })
-export class ScholarshipDetailsComponent { private readonly facade=inject(StudentFeesFacade); private readonly session=inject(StudentSessionService); readonly workspace=signal<StudentFeeWorkspaceViewModel>(this.facade.workspaceLoading(this.session.profile())); readonly kind=signal<'academic'|'hostel'>('academic'); readonly id=signal<string|null>(null); readonly ledgers=computed(()=>this.workspace().ledgers.filter(x=>x.kind===this.kind())); readonly selected=computed(()=>this.workspace().ledgers.find(x=>x.id===this.id())??null); readonly discounts=computed(()=>this.selected()?.rows.filter(x=>x.category==='discount')??[]); readonly scholarships=computed(()=>this.discounts().filter(x=>x.isScholarship)); readonly otherDiscounts=computed(()=>this.discounts().filter(x=>!x.isScholarship)); constructor(){this.load();} load(){const token=this.session.token(); if(!token){this.workspace.set(this.facade.workspaceLoading(this.session.profile(),'error','Please sign in again to access fees.'));return;} this.facade.loadWorkspace(token,this.session.profile()).pipe(take(1)).subscribe(v=>{this.workspace.set(v);const l=v.ledgers.find(x=>x.kind==='academic')??v.ledgers[0];this.kind.set(l?.kind??'academic');this.id.set(l?.id??null);});} choose(k:'academic'|'hostel'){this.kind.set(k);this.id.set(this.ledgers()[0]?.id??null);} change(e:Event){this.id.set((e.target as HTMLSelectElement).value);} }
+import { CurrencyPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import {
+  LucideGraduationCap,
+  LucideHeadset,
+  LucideInfo,
+  LucideShieldCheck,
+  LucideWalletCards,
+} from '@lucide/angular';
+import { take } from 'rxjs';
+import { StudentMobileBottomNavComponent } from '../../../dashboard/components/student-mobile-bottom-nav/student-mobile-bottom-nav.component';
+import { StudentSessionService } from '../../../shared/services/student-session.service';
+import { StudentFeesFacade } from '../../data-access/student-fees.facade';
+import {
+  FeeHeadDetailViewModel,
+  StudentFeeWorkspaceViewModel,
+} from '../../models/student-fee-dashboard.models';
+
+interface ScholarshipLedgerRow {
+  row: FeeHeadDetailViewModel;
+  ledgerId: string;
+  periodLabel: string;
+  academicSession: string | null;
+}
+
+@Component({
+  selector: 'erp-scholarship-details',
+  imports: [
+    CurrencyPipe,
+    RouterLink,
+    StudentMobileBottomNavComponent,
+    LucideGraduationCap,
+    LucideHeadset,
+    LucideInfo,
+    LucideShieldCheck,
+    LucideWalletCards,
+  ],
+  templateUrl: './scholarship-details.component.html',
+  styleUrl: '../../../styles/_student-fee-final-pages.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ScholarshipDetailsComponent {
+  private readonly facade = inject(StudentFeesFacade);
+  private readonly session = inject(StudentSessionService);
+
+  readonly workspace = signal<StudentFeeWorkspaceViewModel>(
+    this.facade.workspaceLoading(this.session.profile()),
+  );
+  readonly scholarships = computed<ScholarshipLedgerRow[]>(() =>
+    this.workspace()
+      .ledgers.filter((ledger) => ledger.kind === 'academic')
+      .flatMap((ledger) =>
+        ledger.rows
+          .filter((row) => row.isScholarship)
+          .map((row) => ({
+            row,
+            ledgerId: ledger.id,
+            periodLabel: ledger.periodLabel,
+            academicSession: ledger.academicSession,
+          })),
+      ),
+  );
+  readonly totalBenefit = computed(() =>
+    this.scholarships().reduce((sum, item) => sum + Number(item.row.discount?.amount || 0), 0),
+  );
+  readonly schemeCount = computed(
+    () => new Set(this.scholarships().map((item) => `${item.row.id}:${item.row.name}`)).size,
+  );
+  readonly periodCount = computed(
+    () => new Set(this.scholarships().map((item) => item.ledgerId)).size,
+  );
+
+  constructor() {
+    this.load();
+  }
+
+  load() {
+    const token = this.session.token();
+    if (!token) {
+      this.workspace.set(
+        this.facade.workspaceLoading(
+          this.session.profile(),
+          'error',
+          'Please sign in again to access scholarships.',
+        ),
+      );
+      return;
+    }
+    this.facade
+      .loadWorkspace(token, this.session.profile())
+      .pipe(take(1))
+      .subscribe((workspace) => this.workspace.set(workspace));
+  }
+
+  configuredValue(row: FeeHeadDetailViewModel) {
+    if (row.scholarshipType === 'percentage') return `${row.scholarshipValue ?? 0}%`;
+    return row.scholarshipValue === null
+      ? 'Configured by Accounts'
+      : new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          maximumFractionDigits: 2,
+        }).format(row.scholarshipValue);
+  }
+}

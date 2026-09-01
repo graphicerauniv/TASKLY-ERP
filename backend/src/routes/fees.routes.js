@@ -135,21 +135,48 @@ const progressionSchema = z.object({
   studentAdmissionIds: z.array(z.string()).min(1).max(500),
   penalty: penaltySchema.optional().default({ enabled: false, dailyAmount: 0, maxAmount: 0 }),
 });
-const scholarshipSchema = z.object({
+const scholarshipBaseSchema = z.object({
   name: z.string().trim().min(2).max(120),
+  valueMode: z.enum(['preconfigured', 'custom']).optional().default('preconfigured'),
+  type: z.enum(['percentage', 'fixed']).nullish(),
+  value: z.coerce.number().positive().max(1_000_000_000).nullish(),
   isActive: z.boolean().optional().default(true),
+});
+const scholarshipSchema = scholarshipBaseSchema.superRefine((data, context) => {
+  if (data.valueMode === 'preconfigured' && (!data.type || !data.value))
+    context.addIssue({
+      code: 'custom',
+      path: ['value'],
+      message: 'Choose the calculation and value for a preconfigured scholarship.',
+    });
+  if (data.type === 'percentage' && Number(data.value || 0) > 100)
+    context.addIssue({
+      code: 'custom',
+      path: ['value'],
+      message: 'Percentage scholarship cannot exceed 100%.',
+    });
 });
 const scholarshipAssignmentSchema = z
   .object({
     scholarshipId: z.string().min(1),
-    type: z.enum(['percentage', 'fixed']),
-    value: z.coerce.number().positive().max(1_000_000_000),
+    type: z.enum(['percentage', 'fixed']).optional(),
+    value: z.coerce.number().positive().max(1_000_000_000).optional(),
     recurring: z.boolean().optional().default(true),
     targetLedgerId: z.string().optional(),
   })
   .superRefine((data, context) => {
-    if (data.type === 'percentage' && data.value > 100)
-      context.addIssue({ code: 'custom', path: ['value'], message: 'Percentage scholarship cannot exceed 100%.' });
+    if ((data.type && !data.value) || (!data.type && data.value))
+      context.addIssue({
+        code: 'custom',
+        path: ['value'],
+        message: 'Choose both the custom calculation and value.',
+      });
+    if (data.type === 'percentage' && Number(data.value || 0) > 100)
+      context.addIssue({
+        code: 'custom',
+        path: ['value'],
+        message: 'Percentage scholarship cannot exceed 100%.',
+      });
     if (!data.recurring && !data.targetLedgerId)
       context.addIssue({ code: 'custom', path: ['targetLedgerId'], message: 'Select the one-time scholarship fee period.' });
   });
@@ -362,6 +389,8 @@ feesRouter.post(
     const now = new Date();
     const document = {
       ...data,
+      type: data.valueMode === 'custom' ? null : data.type,
+      value: data.valueMode === 'custom' ? null : Number(data.value),
       normalizedName,
       createdBy: id(request.admin._id),
       createdAt: now,
@@ -375,11 +404,17 @@ feesRouter.post(
 feesRouter.patch(
   '/scholarships/:scholarshipId',
   asyncHandler(async (request, response) => {
-    const data = scholarshipSchema.partial().parse(request.body);
+    const data = scholarshipBaseSchema.partial().parse(request.body);
     const scholarshipId = id(request.params.scholarshipId, 'scholarshipId');
     const current = await db().collection('scholarships').findOne({ _id: scholarshipId });
     if (!current) return response.status(404).json({ message: 'Scholarship was not found.' });
-    const update = { ...data, updatedAt: new Date() };
+    const candidate = scholarshipSchema.parse({ ...current, ...data });
+    const update = {
+      ...candidate,
+      type: candidate.valueMode === 'custom' ? null : candidate.type,
+      value: candidate.valueMode === 'custom' ? null : Number(candidate.value),
+      updatedAt: new Date(),
+    };
     if (data.name) {
       update.normalizedName = normalizeFeeName(data.name);
       const duplicate = await db().collection('scholarships').findOne({
@@ -456,6 +491,15 @@ feesRouter.post(
     });
     if (!scholarship)
       return response.status(404).json({ message: 'Active scholarship was not found.' });
+    const customValue = scholarship.valueMode === 'custom';
+    if (customValue && (!data.type || Number(data.value || 0) <= 0))
+      return response.status(400).json({
+        message: 'Choose the calculation and value for this custom scholarship.',
+      });
+    if (!customValue && (!scholarship.type || Number(scholarship.value || 0) <= 0))
+      return response.status(409).json({
+        message: 'Configure the scholarship calculation and value before assigning this head.',
+      });
     const duplicate = await db().collection('studentScholarships').findOne({
       studentAdmissionId: student._id,
       scholarshipId: scholarship._id,

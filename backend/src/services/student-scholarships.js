@@ -240,14 +240,15 @@ function roundMoney(value) {
 
 export function scholarshipAssignmentDocument(admission, scholarship, assignment, assignedBy, ledger) {
   const now = new Date();
+  const usesCustomValue = scholarship.valueMode === 'custom';
   return {
     studentAdmissionId: admission._id,
     studentId: admission.studentId,
     studentName: admission.studentName,
     scholarshipId: scholarship._id,
     scholarshipName: scholarship.name,
-    type: assignment.type,
-    value: Number(assignment.value),
+    type: usesCustomValue ? assignment.type : scholarship.type,
+    value: Number(usesCustomValue ? assignment.value : scholarship.value),
     startAcademicYear: Number(admission.currentAcademicYear || 1),
     startSemester:
       admission.feeFrequency === 'semester'

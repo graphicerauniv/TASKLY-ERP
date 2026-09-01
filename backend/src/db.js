@@ -4,8 +4,8 @@ import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-01-v8';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-01-v8';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-01-v10';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-01-v10';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {

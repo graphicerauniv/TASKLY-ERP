@@ -67,8 +67,16 @@ export class StudentScholarshipsComponent {
   ];
   readonly availableScholarships = computed(() => {
     const assigned = new Set(this.assignments().map((item) => item.scholarshipId));
-    return this.scholarships().filter((item) => item.isActive && !assigned.has(item._id));
+    return this.scholarships().filter(
+      (item) =>
+        item.isActive &&
+        (item.valueMode === 'custom' || Number(item.value || 0) > 0) &&
+        !assigned.has(item._id),
+    );
   });
+  readonly selectedScholarship = computed(() =>
+    this.availableScholarships().find((item) => item._id === this.scholarshipId),
+  );
   readonly removingAssignment = computed(() =>
     this.assignments().find((item) => item._id === this.removingId()),
   );
@@ -92,8 +100,8 @@ export class StudentScholarshipsComponent {
   );
   readonly studentAdmissionId = this.route.snapshot.paramMap.get('admissionId') || '';
   scholarshipId = '';
-  scholarshipType: 'percentage' | 'fixed' = 'percentage';
-  scholarshipValue: number | null = null;
+  customScholarshipType: 'percentage' | 'fixed' = 'percentage';
+  customScholarshipValue: number | null = null;
   scholarshipRecurring = true;
   scholarshipLedgerId = '';
   discountName = '';
@@ -133,9 +141,13 @@ export class StudentScholarshipsComponent {
 
   assign() {
     if (!this.scholarshipId || this.saving()) return;
-    const value = Number(this.scholarshipValue || 0);
-    if (value <= 0 || (this.scholarshipType === 'percentage' && value > 100)) {
-      this.error.set('Enter a valid scholarship percentage or fixed amount.');
+    const customValue = this.selectedScholarship()?.valueMode === 'custom';
+    const value = Number(this.customScholarshipValue || 0);
+    if (
+      customValue &&
+      (value <= 0 || (this.customScholarshipType === 'percentage' && value > 100))
+    ) {
+      this.error.set('Enter a valid custom scholarship percentage or fixed amount.');
       return;
     }
     if (!this.scholarshipRecurring && !this.scholarshipLedgerId) {
@@ -147,16 +159,16 @@ export class StudentScholarshipsComponent {
     this.message.set('');
     this.api.assignStudentScholarship(this.studentAdmissionId, {
       scholarshipId: this.scholarshipId,
-      type: this.scholarshipType,
-      value,
+      type: customValue ? this.customScholarshipType : undefined,
+      value: customValue ? value : undefined,
       recurring: this.scholarshipRecurring,
       targetLedgerId: this.scholarshipRecurring ? undefined : this.scholarshipLedgerId,
     }).subscribe({
       next: () => {
         this.message.set('Scholarship assigned and Tuition Fee updated.');
         this.scholarshipId = '';
-        this.scholarshipType = 'percentage';
-        this.scholarshipValue = null;
+        this.customScholarshipType = 'percentage';
+        this.customScholarshipValue = null;
         this.scholarshipRecurring = true;
         this.saving.set(false);
         this.load();

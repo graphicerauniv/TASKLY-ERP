@@ -1,3 +1,4 @@
+import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -18,6 +19,7 @@ import {
   imports: [
     AdminPageComponent,
     CompactActionMenuComponent,
+    CurrencyPipe,
     FilterPopoverComponent,
     FormsModule,
     RouterLink,
@@ -46,6 +48,9 @@ export class ScholarshipsComponent {
   search = '';
 
   name = '';
+  valueMode: 'preconfigured' | 'custom' = 'preconfigured';
+  type: 'percentage' | 'fixed' = 'percentage';
+  value: number | null = null;
   isActive = true;
 
   filteredItems() {
@@ -116,10 +121,24 @@ export class ScholarshipsComponent {
       this.error.set('Enter the scholarship head name.');
       return;
     }
+    const value = Number(this.value || 0);
+    if (
+      this.valueMode === 'preconfigured' &&
+      (value <= 0 || (this.type === 'percentage' && value > 100))
+    ) {
+      this.error.set('Enter a valid percentage or fixed scholarship amount.');
+      return;
+    }
     this.saving.set(true);
     this.error.set('');
     this.message.set('');
-    const body = { name, isActive: this.isActive };
+    const body = {
+      name,
+      valueMode: this.valueMode,
+      type: this.valueMode === 'preconfigured' ? this.type : null,
+      value: this.valueMode === 'preconfigured' ? value : null,
+      isActive: this.isActive,
+    };
     const request = this.editingId()
       ? this.api.updateScholarship(this.editingId()!, body)
       : this.api.createScholarship(body);
@@ -144,6 +163,9 @@ export class ScholarshipsComponent {
   private populateForm(item: Scholarship) {
     this.editingId.set(item._id);
     this.name = item.name;
+    this.valueMode = item.valueMode || 'preconfigured';
+    this.type = item.type || 'percentage';
+    this.value = Number(item.value || 0) || null;
     this.isActive = item.isActive;
     this.error.set('');
     this.message.set('');
@@ -166,6 +188,9 @@ export class ScholarshipsComponent {
   private resetForm() {
     this.editingId.set(null);
     this.name = '';
+    this.valueMode = 'preconfigured';
+    this.type = 'percentage';
+    this.value = null;
     this.isActive = true;
   }
 }

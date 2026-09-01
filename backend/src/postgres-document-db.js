@@ -81,7 +81,7 @@ const DOMAIN_TABLES = Object.freeze({
   },
   scholarships: {
     table: 'scholarships',
-    columns: ['name', 'isActive'],
+    columns: ['name', 'valueMode', 'type', 'value', 'isActive'],
   },
   studentScholarships: {
     table: 'student_scholarships',

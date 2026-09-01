@@ -148,6 +148,12 @@ function toFeeHeadDetail(entry: StudentFeeLedger['entries'][number]): FeeHeadDet
     balance: moneyOrNull(entry.balanceAmount),
     status: entry.status,
     isScholarship: Boolean(entry.isScholarship),
+    isOneTimeScholarship: Boolean(entry.isOneTimeScholarship),
+    scholarshipType: entry.scholarshipType ?? null,
+    scholarshipValue:
+      entry.scholarshipValue === undefined || entry.scholarshipValue === null
+        ? null
+        : Number(entry.scholarshipValue),
     source: 'backend',
   };
 }

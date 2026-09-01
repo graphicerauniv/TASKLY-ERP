@@ -77,6 +77,9 @@ export interface FeeHeadDetailViewModel {
   balance: MoneyValue | null;
   status: 'due' | 'partial' | 'paid';
   isScholarship: boolean;
+  isOneTimeScholarship: boolean;
+  scholarshipType: 'percentage' | 'fixed' | null;
+  scholarshipValue: number | null;
   source: FeeValueSource;
 }
 

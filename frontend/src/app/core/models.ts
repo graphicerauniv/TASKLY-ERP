@@ -148,6 +148,7 @@ export interface StudentFeeEntry {
   status: 'due' | 'paid' | 'partial';
   isPenalty?: boolean;
   isScholarship?: boolean;
+  isOneTimeScholarship?: boolean;
   isOneTimeDiscount?: boolean;
   adjustmentKind?: 'scholarship' | 'discount';
   customDiscountId?: string;
@@ -325,10 +326,9 @@ export interface FeeSchedule {
 export interface Scholarship {
   _id: string;
   name: string;
-  type?: 'percentage' | 'fixed';
-  value?: number;
-  recurring?: boolean;
-  appliesTo?: 'tuition';
+  valueMode: 'preconfigured' | 'custom';
+  type?: 'percentage' | 'fixed' | null;
+  value?: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

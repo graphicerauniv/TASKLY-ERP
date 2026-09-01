@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { applyScholarshipsToEntries } from '../src/services/student-scholarships.js';
+import {
+  applyScholarshipsToEntries,
+  scholarshipAssignmentDocument,
+} from '../src/services/student-scholarships.js';
 
 const tuition = (amount) => ({
   feeHeadId: 'tuition',
@@ -24,6 +27,59 @@ const assignment = (name, type, value) => ({
   startAcademicYear: 1,
   startSemester: 1,
   status: 'active',
+});
+
+test('copies the reusable scholarship calculation into each student assignment', () => {
+  const document = scholarshipAssignmentDocument(
+    {
+      _id: 'admission-1',
+      studentId: '26CSE0001',
+      studentName: 'Student',
+      currentAcademicYear: 1,
+      currentSemester: 1,
+      feeFrequency: 'semester',
+    },
+    {
+      _id: 'scholarship-1',
+      name: 'Girl Scholarship',
+      type: 'percentage',
+      value: 5,
+    },
+    { recurring: true },
+    'admin-1',
+    null,
+  );
+
+  assert.equal(document.type, 'percentage');
+  assert.equal(document.value, 5);
+  assert.equal(document.recurring, true);
+});
+
+test('copies an assignment-time value for a custom scholarship head', () => {
+  const document = scholarshipAssignmentDocument(
+    {
+      _id: 'admission-2',
+      studentId: '26CSE0002',
+      studentName: 'Student Two',
+      currentAcademicYear: 1,
+      feeFrequency: 'year',
+    },
+    {
+      _id: 'scholarship-2',
+      name: 'Management Scholarship',
+      valueMode: 'custom',
+      type: null,
+      value: null,
+    },
+    { type: 'fixed', value: 12_500, recurring: false },
+    'admin-1',
+    { _id: 'ledger-1', periodKey: 'year:1', periodLabel: 'Year 1' },
+  );
+
+  assert.equal(document.type, 'fixed');
+  assert.equal(document.value, 12_500);
+  assert.equal(document.recurring, false);
+  assert.equal(document.targetLedgerId, 'ledger-1');
 });
 
 test('applies multiple scholarships only against Tuition Fee and caps their total', () => {

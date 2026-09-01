@@ -111,11 +111,13 @@
 
     @if (activeTab() === 'scholarships') {
       <section class="erp-card action-workspace">
-        <div class="action-workspace__intro"><span class="section-icon"><svg lucideGraduationCap size="20" aria-hidden="true"></svg></span><div><h2>Assign scholarship</h2><p>Choose the calculation and whether this assignment is one-time or recurring.</p></div></div>
+        <div class="action-workspace__intro"><span class="section-icon"><svg lucideGraduationCap size="20" aria-hidden="true"></svg></span><div><h2>Assign scholarship</h2><p>Preconfigured schemes use their saved value. Custom schemes let you enter the student’s value here.</p></div></div>
         <div class="action-workspace__controls">
-          <label><span>Scholarship head</span><select class="erp-control" [(ngModel)]="scholarshipId"><option value="">Select an active head</option>@for (scholarship of availableScholarships(); track scholarship._id) {<option [value]="scholarship._id">{{ scholarship.name }}</option>}</select></label>
-          <label><span>Calculation</span><select class="erp-control" [(ngModel)]="scholarshipType"><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></label>
-          <label><span>{{ scholarshipType === 'percentage' ? 'Percentage' : 'Amount' }}</span><input class="erp-control" type="number" min="0.01" [max]="scholarshipType === 'percentage' ? 100 : 1000000000" [(ngModel)]="scholarshipValue" /></label>
+          <label><span>Scholarship scheme</span><select class="erp-control" [(ngModel)]="scholarshipId"><option value="">Select an active scheme</option>@for (scholarship of availableScholarships(); track scholarship._id) {<option [value]="scholarship._id">{{ scholarship.name }} · {{ scholarship.valueMode === 'custom' ? 'Custom value' : scholarship.type === 'percentage' ? scholarship.value + '%' : (scholarship.value | currency: 'INR' : 'symbol' : '1.0-2') }}</option>}</select></label>
+          @if (selectedScholarship()?.valueMode === 'custom') {
+            <label><span>Calculation</span><select class="erp-control" [(ngModel)]="customScholarshipType"><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></label>
+            <label><span>{{ customScholarshipType === 'percentage' ? 'Percentage' : 'Amount' }}</span><input class="erp-control" type="number" min="0.01" step="0.01" [max]="customScholarshipType === 'percentage' ? 100 : 1000000000" [(ngModel)]="customScholarshipValue" /></label>
+          }
           <label><span>Application</span><select class="erp-control" [(ngModel)]="scholarshipRecurring"><option [ngValue]="true">Recurring · carry forward</option><option [ngValue]="false">One-time only</option></select></label>
           @if (!scholarshipRecurring) { <label><span>Fee period</span><select class="erp-control" [(ngModel)]="scholarshipLedgerId"><option value="">Select fee period</option>@for (ledger of ledgers(); track ledger._id) {<option [value]="ledger._id">{{ ledger.periodLabel }} · {{ ledger.academicSession }}</option>}</select></label> }
           <button class="erp-button erp-button--primary" type="button" [disabled]="saving() || !scholarshipId" (click)="assign()">{{ saving() ? 'Applying…' : 'Assign scholarship' }}</button>

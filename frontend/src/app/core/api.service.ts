@@ -614,7 +614,9 @@ export class ApiService {
       {},
     );
   }
-  createScholarship(body: Pick<Scholarship, 'name' | 'isActive'>) {
+  createScholarship(
+    body: Pick<Scholarship, 'name' | 'valueMode' | 'type' | 'value' | 'isActive'>,
+  ) {
     return this.http.post<{ item: Scholarship }>(`${API_BASE_URL}/fees/scholarships`, body);
   }
   updateScholarship(id: string, body: Partial<Scholarship>) {
@@ -639,8 +641,8 @@ export class ApiService {
     studentAdmissionId: string,
     body: {
       scholarshipId: string;
-      type: 'percentage' | 'fixed';
-      value: number;
+      type?: 'percentage' | 'fixed';
+      value?: number;
       recurring: boolean;
       targetLedgerId?: string;
     },

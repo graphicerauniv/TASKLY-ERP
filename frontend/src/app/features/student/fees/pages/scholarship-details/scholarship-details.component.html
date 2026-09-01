@@ -1,38 +1,101 @@
 <main class="student-final-page" aria-labelledby="scholarship-title">
   @if (workspace().state === 'loading') {
-    <section class="final-message">Loading scholarship details…</section>
+    <section class="final-message">Loading scholarships…</section>
   } @else if (workspace().state === 'error') {
-    <section class="final-message" role="alert"><strong>Unable to load scholarship details</strong><span>{{ workspace().errorMessage }}</span><button (click)="load()">Try again</button></section>
+    <section class="final-message" role="alert">
+      <strong>Unable to load scholarships</strong>
+      <span>{{ workspace().errorMessage }}</span>
+      <button type="button" (click)="load()">Try again</button>
+    </section>
   } @else {
     <header class="final-heading">
-      <div><a routerLink="/student/fees" class="final-back">← Fees Overview</a><h1 id="scholarship-title">Scholarship Details</h1><p>Review scholarships and discounts reflected in your Tuition Fee.</p></div>
-      <span class="final-context">{{ workspace().student.courseName || 'Course unavailable' }} · {{ workspace().student.currentPeriod || 'Current period' }} · {{ workspace().student.academicSession || 'Session unavailable' }}</span>
+      <div>
+        <a routerLink="/student/fees" class="final-back">← Fees Overview</a>
+        <h1 id="scholarship-title">My Scholarships</h1>
+        <p>View every scholarship applied to your Tuition Fee.</p>
+      </div>
+      <span class="final-context">
+        {{ workspace().student.courseName || 'Course unavailable' }} ·
+        {{ workspace().student.currentPeriod || 'Current period' }} ·
+        {{ workspace().student.academicSession || 'Session unavailable' }}
+      </span>
     </header>
-    <section class="final-stat-grid four">
-      <article><span class="final-icon blue"><svg lucideReceipt></svg></span><div><small>Gross Fee</small><strong>{{ selected()?.charge?.formatted || '—' }}</strong></div></article>
-      <article><span class="final-icon green"><svg lucideGraduationCap></svg></span><div><small>Scholarships</small><strong>{{ scholarships().length }}</strong></div></article>
-      <article><span class="final-icon orange"><svg lucideBadgePercent></svg></span><div><small>All Discounts</small><strong>{{ selected()?.discount?.formatted || '—' }}</strong></div></article>
-      <article><span class="final-icon violet"><svg lucideWalletCards></svg></span><div><small>Net Payable</small><strong>{{ selected()?.payable?.formatted || '—' }}</strong></div></article>
+
+    <section class="final-stat-grid four" aria-label="Scholarship summary">
+      <article>
+        <span class="final-icon green"><svg lucideGraduationCap></svg></span>
+        <div><small>Scholarship schemes</small><strong>{{ schemeCount() }}</strong></div>
+      </article>
+      <article>
+        <span class="final-icon blue"><svg lucideWalletCards></svg></span>
+        <div>
+          <small>Total benefit received</small>
+          <strong>{{ totalBenefit() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+        </div>
+      </article>
+      <article>
+        <span class="final-icon violet"><svg lucideShieldCheck></svg></span>
+        <div><small>Fee periods benefited</small><strong>{{ periodCount() }}</strong></div>
+      </article>
+      <article>
+        <span class="final-icon orange"><svg lucideInfo></svg></span>
+        <div><small>Applied to</small><strong>Tuition Fee</strong></div>
+      </article>
     </section>
-    <section class="final-toolbar">
-      <div class="final-segment"><button [class.active]="kind() === 'academic'" (click)="choose('academic')">Academic Fee</button><button [class.active]="kind() === 'hostel'" (click)="choose('hostel')">Hostel Fee</button></div>
-      <label><span class="visually-hidden">Fee period</span><select [value]="id() || ''" (change)="change($event)">@for (ledger of ledgers(); track ledger.id) { <option [value]="ledger.id">{{ ledger.periodLabel }} · {{ ledger.academicSession || 'Unavailable' }}</option> }</select></label>
-      <span class="status-pill info">{{ scholarships().length ? 'Scholarship applied' : 'No scholarship applied' }}</span>
+
+    <section class="final-panel">
+      <h2>Scholarship history</h2>
+      @if (scholarships().length) {
+        <div class="final-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Scholarship</th>
+                <th>Configured value</th>
+                <th>Application</th>
+                <th>Fee period</th>
+                <th>Benefit received</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of scholarships(); track item.ledgerId + ':' + item.row.id + ':' + item.row.name) {
+                <tr>
+                  <td><strong>{{ item.row.name }}</strong></td>
+                  <td>{{ configuredValue(item.row) }}</td>
+                  <td>{{ item.row.isOneTimeScholarship ? 'One-time' : 'Carry-forward' }}</td>
+                  <td>
+                    <strong>{{ item.periodLabel }}</strong><br />
+                    <small>{{ item.academicSession || 'Session unavailable' }}</small>
+                  </td>
+                  <td><strong>{{ item.row.discount?.formatted || '—' }}</strong></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="final-empty compact">
+          <span class="empty-art gold-art"><svg lucideGraduationCap></svg></span>
+          <strong>You don’t have any scholarship.</strong>
+          <p>When an approved scholarship is applied to your Tuition Fee, it will appear here.</p>
+          <a routerLink="/student/fees/details">View Fee Details</a>
+        </div>
+      }
     </section>
-    <div class="final-two-col scholarship-grid">
-      <section class="final-panel">
-        <h2>Scholarship &amp; Discount Ledger</h2>
-        <div class="final-table-wrap"><table><thead><tr><th>Scheme / Adjustment</th><th>Fee Period</th><th>Type</th><th>Amount</th><th>Approval Status</th><th>Effective Date</th></tr></thead><tbody>
-          @for (row of discounts(); track row.id + row.name) { <tr><td>{{ row.name }}</td><td>{{ row.periodLabel }}</td><td>{{ row.isScholarship ? 'Scholarship' : 'Discount' }}</td><td>{{ row.discount?.formatted || '—' }}</td><td>Applied</td><td>{{ row.dueDate ? (row.dueDate | date:'dd MMM yyyy') : '—' }}</td></tr> }
-          @if (!discounts().length) { <tr><td colspan="6"><div class="final-empty compact"><span class="empty-art gold-art"><svg lucideGraduationCap></svg></span><strong>No scholarship or discount applied</strong><p>Approved Tuition Fee scholarships will appear here.</p><a routerLink="/student/fees/details">View Fee Details</a></div></td></tr> }
-        </tbody></table></div>
-      </section>
-      <section class="final-panel fee-impact">
-        <h2>Fee impact</h2><p>Gross fee <strong>{{ selected()?.charge?.formatted || '—' }}</strong></p><p>All discounts <strong>- {{ selected()?.discount?.formatted || '—' }}</strong></p><hr/><p class="primary-text">Net payable <strong>{{ selected()?.payable?.formatted || '—' }}</strong></p><hr/><p><b>Paid</b><strong>{{ selected()?.paid?.formatted || '—' }}</strong></p><p><b>Balance</b><strong>{{ selected()?.balance?.formatted || '—' }}</strong></p>
-      </section>
+
+    <div class="final-two-col">
+      <div class="final-note">
+        <svg lucideInfo></svg>
+        <span><b>How it works</b><br />Recurring scholarships continue into eligible future fee periods. One-time scholarships apply only to their selected period.</span>
+      </div>
+      <div class="final-callout violet-note">
+        <svg lucideHeadset></svg>
+        <span><b>Approved scholarship not visible?</b><br />Contact Fee Support with your approval details.<br /><a routerLink="/student/fees/support">Contact Fee Support</a></span>
+      </div>
     </div>
-    <div class="final-two-col"><div class="final-note"><svg lucideInfo></svg><span><b>How scholarship updates work</b><br/>Each approved scholarship is posted separately to Tuition Fee for the applicable fee period.</span></div><div class="final-callout violet-note"><svg lucideHeadset></svg><span><b>Approved scholarship not visible?</b><br/>Share your approval details with Fee Support.<br/><a routerLink="/student/fees/support">Contact Fee Support</a></span></div></div>
-    <div class="final-security"><svg lucideShieldCheck></svg> Records shown here come from your authenticated student fee ledger.</div>
+    <div class="final-security">
+      <svg lucideShieldCheck></svg> Records shown here come from your authenticated student fee ledger.
+    </div>
   }
 </main>
 <erp-student-mobile-bottom-nav />
