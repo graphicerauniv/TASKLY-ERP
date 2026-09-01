@@ -231,7 +231,7 @@ export class ApplicationReviewComponent {
     this.confirmPassword = '';
     this.currentAcademicYear = Number(item.currentAcademicYear || 1);
     this.currentSemester = Number(item.currentSemester || this.currentAcademicYear * 2 - 1);
-    this.feeFrequency = item.feeFrequency || 'year';
+    this.feeFrequency = item.feeFrequencyChoice || item.feeFrequency || 'year';
     this.activationError.set('');
     this.activationOpen.set(true);
   }

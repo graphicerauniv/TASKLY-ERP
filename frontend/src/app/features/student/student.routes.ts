@@ -8,6 +8,7 @@ import { PaymentReceiptsComponent } from './fees/pages/payment-receipts/payment-
 import { FeeInstallmentsComponent } from './fees/pages/fee-installments/fee-installments.component';
 import { ScholarshipDetailsComponent } from './fees/pages/scholarship-details/scholarship-details.component';
 import { FeeSupportComponent } from './fees/pages/fee-support/fee-support.component';
+import { FeeModeComparisonComponent } from './fees/pages/fee-mode-comparison/fee-mode-comparison.component';
 import { StudentShellComponent } from './layout/student-shell/student-shell.component';
 import { StudentProfileComponent } from './profile/pages/student-profile/student-profile.component';
 
@@ -54,9 +55,22 @@ export const STUDENT_ROUTES: Routes = [
         title: 'Fee Challan | GEU ERP',
         component: FeeChallanComponent,
       },
-      { path: 'fees/installments', title: 'Fee Installments | GEU ERP', component: FeeInstallmentsComponent },
-      { path: 'fees/scholarships', title: 'Scholarship Details | GEU ERP', component: ScholarshipDetailsComponent },
+      {
+        path: 'fees/installments',
+        title: 'Fee Installments | GEU ERP',
+        component: FeeInstallmentsComponent,
+      },
+      {
+        path: 'fees/scholarships',
+        title: 'Scholarship Details | GEU ERP',
+        component: ScholarshipDetailsComponent,
+      },
       { path: 'fees/support', title: 'Fee Support | GEU ERP', component: FeeSupportComponent },
+      {
+        path: 'fees/compare',
+        title: 'Compare Fee Modes | GEU ERP',
+        component: FeeModeComparisonComponent,
+      },
       {
         path: 'fees',
         title: 'Fees | GEU ERP',

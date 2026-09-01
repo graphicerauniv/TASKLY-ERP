@@ -5,36 +5,113 @@
   variant="minimal"
 >
   <div page-actions>
-    <a class="erp-button erp-button--secondary" routerLink="/admin/admissions">Back to approved students</a>
+    <a class="erp-button erp-button--secondary" routerLink="/admin/admissions"
+      >Back to approved students</a
+    >
   </div>
 
-  @if (message()) { <p class="erp-notice erp-notice--success">{{ message() }}</p> }
-  @if (error()) { <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p> }
+  @if (message()) {
+    <p class="erp-notice erp-notice--success">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+  }
 
   @if (loading()) {
     <section class="erp-card erp-card--padded">Loading the student fee account…</section>
   } @else if (student(); as item) {
     <section class="erp-card erp-card--padded offline-student">
-      <div><small>Student</small><strong>{{ item.studentName }}</strong><span>{{ item.studentId }}</span></div>
-      <div><small>Course</small><strong>{{ item.courseName || 'Not available' }}</strong><span>{{ item.academicSession || 'Session unavailable' }}</span></div>
-      <div><small>Current academic period</small><strong>{{ item.feeFrequency === 'semester' ? 'Semester ' + item.currentSemester : 'Year ' + item.currentAcademicYear }}</strong><span>Fee publication does not change this period</span></div>
+      <div>
+        <small>Student</small><strong>{{ item.studentName }}</strong
+        ><span>{{ item.studentId }}</span>
+      </div>
+      <div>
+        <small>Course</small><strong>{{ item.courseName || 'Not available' }}</strong
+        ><span>{{ item.academicSession || 'Session unavailable' }}</span>
+      </div>
+      <div>
+        <small>Current academic period</small
+        ><strong>{{
+          item.feeFrequency === 'semester'
+            ? 'Semester ' + item.currentSemester
+            : 'Year ' + item.currentAcademicYear
+        }}</strong
+        ><span>Fee publication does not change this period</span>
+      </div>
+      <div>
+        <small>Available excess credit</small
+        ><strong>{{ excessCreditBalance() | currency: 'INR' }}</strong
+        ><span>Automatically adjusted against future published {{ selectedKind() }} fees</span>
+      </div>
     </section>
 
     <div class="offline-layout">
       <section class="erp-card erp-card--padded">
-        <div class="erp-card__header"><div><h2>Published fee structure</h2><p>Only published fee periods can receive an offline payment.</p></div></div>
+        <div class="erp-card__header">
+          <div>
+            <h2>Published fee structure</h2>
+            <p>Only published fee periods can receive an offline payment.</p>
+          </div>
+        </div>
         <div class="offline-tabs">
-          <button type="button" [class.is-active]="selectedKind() === 'academic'" (click)="selectKind('academic')">Academic Fee</button>
-          <button type="button" [class.is-active]="selectedKind() === 'hostel'" (click)="selectKind('hostel')">Hostel Fee</button>
+          <button
+            type="button"
+            [class.is-active]="selectedKind() === 'academic'"
+            (click)="selectKind('academic')"
+          >
+            Academic Fee
+          </button>
+          <button
+            type="button"
+            [class.is-active]="selectedKind() === 'hostel'"
+            (click)="selectKind('hostel')"
+          >
+            Hostel Fee
+          </button>
         </div>
         @for (ledger of kindLedgers(); track ledger._id) {
           <article class="offline-ledger">
-            <header><div><strong>{{ ledger.name }} · {{ ledger.periodLabel }}</strong><small>{{ ledger.academicSession }}</small></div><b>{{ ledger.balanceAmount | currency:'INR' }}</b></header>
-            <div class="erp-table-shell__scroll"><table><thead><tr><th>Fee head</th><th>Charge</th><th>Discount</th><th>Received</th><th>Left amount</th></tr></thead><tbody>
-              @for (entry of visibleEntries(ledger); track entry.feeHeadId + entry.periodLabel) {
-                <tr><td><strong>{{ entry.feeHeadName }}</strong><small>{{ entry.isPenalty ? 'Penalty · paid first' : 'Priority ' + entry.priority }}</small></td><td>{{ entry.amount | currency:'INR' }}</td><td>{{ (entry.discountAmount || 0) | currency:'INR' }}</td><td>{{ entry.paidAmount | currency:'INR' }}</td><td><strong>{{ entry.balanceAmount | currency:'INR' }}</strong></td></tr>
-              }
-            </tbody></table></div>
+            <header>
+              <div>
+                <strong>{{ ledger.name }} · {{ ledger.periodLabel }}</strong
+                ><small>{{ ledger.academicSession }}</small>
+              </div>
+              <b>{{ ledger.balanceAmount | currency: 'INR' }}</b>
+            </header>
+            <div class="erp-table-shell__scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fee head</th>
+                    <th>Charge</th>
+                    <th>Discount</th>
+                    <th>Received</th>
+                    <th>Left amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    entry of visibleEntries(ledger);
+                    track entry.feeHeadId + entry.periodLabel
+                  ) {
+                    <tr>
+                      <td>
+                        <strong>{{ entry.feeHeadName }}</strong
+                        ><small>{{
+                          entry.isPenalty ? 'Penalty · paid first' : 'Priority ' + entry.priority
+                        }}</small>
+                      </td>
+                      <td>{{ entry.amount | currency: 'INR' }}</td>
+                      <td>{{ entry.discountAmount || 0 | currency: 'INR' }}</td>
+                      <td>{{ entry.paidAmount | currency: 'INR' }}</td>
+                      <td>
+                        <strong>{{ entry.balanceAmount | currency: 'INR' }}</strong>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </article>
         } @empty {
           <p class="erp-empty-state">No published {{ selectedKind() }} fee balance is available.</p>
@@ -42,32 +119,159 @@
       </section>
 
       <aside class="erp-card erp-card--padded offline-form">
-        <div class="erp-card__header"><div><h2>Receive and adjust</h2><p>The oldest period is adjusted first, followed by penalty and fee-head priority.</p></div></div>
-        <label><span>Apply payment to *</span><select class="erp-control" [ngModel]="targetLedgerId() || ''" (ngModelChange)="selectTarget($event)"><option value="">All published {{ selectedKind() }} fees</option>@for (ledger of payableLedgers(); track ledger._id) { <option [value]="ledger._id">{{ ledger.periodLabel }} · balance {{ ledger.balanceAmount | currency:'INR' }}</option> }</select></label>
-        <label><span>Amount received *</span><input class="erp-control" type="number" min="1" [max]="maximum()" [(ngModel)]="amount" /><small>Maximum adjustable: {{ maximum() | currency:'INR' }}</small></label>
-        <label><span>Payment mode *</span><select class="erp-control" [(ngModel)]="method"><option value="cash">Cash</option><option value="upi">UPI</option><option value="bank_transfer">Bank transfer</option><option value="cheque">Cheque</option><option value="card">Card at counter</option><option value="demand_draft">Demand draft</option><option value="other">Other</option></select></label>
-        <label><span>Payment date *</span><input class="erp-control" type="date" [(ngModel)]="paymentDate" /></label>
-        <label><span>Reference number {{ method === 'cash' ? '(optional)' : '*' }}</span><input class="erp-control" [(ngModel)]="referenceNumber" placeholder="Transaction, cheque or bank reference" /></label>
-        <label><span>Internal remark</span><textarea class="erp-control" rows="3" maxlength="1000" [(ngModel)]="internalRemark" placeholder="Visible only to administrators and Accounts"></textarea></label>
-        <button class="erp-button erp-button--primary" type="button" [disabled]="saving() || !payableLedgers().length" (click)="adjust()">{{ saving() ? 'Adjusting payment…' : 'Adjust payment' }}</button>
-        <small class="offline-warning">Adjustment updates the student ledger immediately and cannot be submitted twice.</small>
+        <div class="erp-card__header">
+          <div>
+            <h2>Receive and adjust</h2>
+            <p>The oldest period is adjusted first, followed by penalty and fee-head priority.</p>
+          </div>
+        </div>
+        <label
+          ><span>Apply payment to *</span
+          ><select
+            class="erp-control"
+            [ngModel]="targetLedgerId() || ''"
+            (ngModelChange)="selectTarget($event)"
+          >
+            <option value="">All published {{ selectedKind() }} fees</option>
+            @for (ledger of payableLedgers(); track ledger._id) {
+              <option [value]="ledger._id">
+                {{ ledger.periodLabel }} · balance {{ ledger.balanceAmount | currency: 'INR' }}
+              </option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Amount received *</span
+          ><input class="erp-control" type="number" min="1" [(ngModel)]="amount" /><small
+            >Current dues: {{ maximum() | currency: 'INR' }}. Any additional amount becomes excess
+            credit.</small
+          ></label
+        >
+        @if (projectedExcess() > 0) {
+          <p class="erp-notice erp-notice--info">
+            Excess credit after this payment: {{ projectedExcess() | currency: 'INR' }}
+          </p>
+        }
+        <label
+          ><span>Payment mode *</span
+          ><select class="erp-control" [(ngModel)]="method">
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="bank_transfer">Bank transfer</option>
+            <option value="cheque">Cheque</option>
+            <option value="card">Card at counter</option>
+            <option value="demand_draft">Demand draft</option>
+            <option value="other">Other</option>
+          </select></label
+        >
+        <label
+          ><span>Payment date *</span
+          ><input class="erp-control" type="date" [(ngModel)]="paymentDate"
+        /></label>
+        <label
+          ><span>Reference number {{ method === 'cash' ? '(optional)' : '*' }}</span
+          ><input
+            class="erp-control"
+            [(ngModel)]="referenceNumber"
+            placeholder="Transaction, cheque or bank reference"
+        /></label>
+        <label
+          ><span>Internal remark</span
+          ><textarea
+            class="erp-control"
+            rows="3"
+            maxlength="1000"
+            [(ngModel)]="internalRemark"
+            placeholder="Visible only to administrators and Accounts"
+          ></textarea>
+        </label>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="saving() || !payableLedgers().length"
+          (click)="adjust()"
+        >
+          {{ saving() ? 'Adjusting payment…' : 'Adjust payment' }}
+        </button>
+        <small class="offline-warning"
+          >Adjustment updates the student ledger immediately and cannot be submitted twice.</small
+        >
       </aside>
     </div>
 
     @if (receipt(); as payment) {
       <section class="erp-card erp-card--padded offline-receipt">
-        <div><small>Receipt generated</small><strong>{{ payment.receiptNumber }}</strong><span>{{ payment.amount | currency:'INR' }} · {{ payment.method }}</span></div>
-        <button class="erp-button erp-button--primary" type="button" (click)="downloadReceipt(payment)">Download receipt</button>
+        <div>
+          <small>Receipt generated</small><strong>{{ payment.receiptNumber }}</strong
+          ><span
+            >Received {{ payment.amount | currency: 'INR' }} · Applied
+            {{ payment.appliedAmount || 0 | currency: 'INR' }} · Excess
+            {{ payment.excessCreditAmount || 0 | currency: 'INR' }} · {{ payment.method }}</span
+          >
+        </div>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          (click)="downloadReceipt(payment)"
+        >
+          Download receipt
+        </button>
       </section>
     }
 
     <section class="erp-card erp-table-shell">
-      <div class="erp-table-toolbar"><div><h2>Recent receipts <small>{{ payments().length }}</small></h2><p>Online and offline payments recorded for this student.</p></div></div>
-      <div class="erp-table-shell__scroll"><table><thead><tr><th>Receipt</th><th>Channel</th><th>Reference</th><th>Fee period</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody>
-        @for (payment of payments(); track payment._id) {
-          <tr><td><strong>{{ payment.receiptNumber }}</strong></td><td>{{ payment.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay' }}</td><td>{{ payment.paymentReference || payment.razorpayPaymentId || '—' }}</td><td>{{ payment.targetPeriodLabel }}</td><td>{{ payment.amount | currency:'INR' }}</td><td>{{ payment.paidAt | date:'medium' }}</td><td><button class="erp-button erp-button--secondary" type="button" (click)="downloadReceipt(payment)">Receipt</button></td></tr>
-        } @empty { <tr><td colspan="7" class="erp-empty-state">No completed payments found.</td></tr> }
-      </tbody></table></div>
+      <div class="erp-table-toolbar">
+        <div>
+          <h2>
+            Recent receipts <small>{{ payments().length }}</small>
+          </h2>
+          <p>Online and offline payments recorded for this student.</p>
+        </div>
+      </div>
+      <div class="erp-table-shell__scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Receipt</th>
+              <th>Channel</th>
+              <th>Reference</th>
+              <th>Fee period</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (payment of payments(); track payment._id) {
+              <tr>
+                <td>
+                  <strong>{{ payment.receiptNumber }}</strong>
+                </td>
+                <td>
+                  {{ payment.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay' }}
+                </td>
+                <td>{{ payment.paymentReference || payment.razorpayPaymentId || '—' }}</td>
+                <td>{{ payment.targetPeriodLabel }}</td>
+                <td>{{ payment.amount | currency: 'INR' }}</td>
+                <td>{{ payment.paidAt | date: 'medium' }}</td>
+                <td>
+                  <button
+                    class="erp-button erp-button--secondary"
+                    type="button"
+                    (click)="downloadReceipt(payment)"
+                  >
+                    Receipt
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="erp-empty-state">No completed payments found.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </section>
   }
 </erp-admin-page>

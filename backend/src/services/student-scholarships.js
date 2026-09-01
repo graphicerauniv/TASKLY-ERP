@@ -20,14 +20,29 @@ export async function discountAssignments(database, studentAdmissionId) {
 }
 
 export async function scholarshipEntriesForPeriod(database, admission, context, entries) {
-  const assignments = await scholarshipAssignments(database, admission._id);
+  const [scholarships, discounts] = await Promise.all([
+    scholarshipAssignments(database, admission._id),
+    discountAssignments(database, admission._id),
+  ]);
+  const assignments = [...scholarships, ...discounts];
+  if (context.feeFrequency === 'year')
+    assignments.push({
+      _id: `yearly-discount-${context.currentAcademicYear}`,
+      name: 'Yearly Payment Discount',
+      scholarshipName: 'Yearly Payment Discount',
+      type: 'percentage',
+      value: 5,
+      recurring: true,
+      startAcademicYear: 1,
+      adjustmentKind: 'annual-discount',
+      isSystemAnnualDiscount: true,
+      status: 'active',
+    });
   return applyScholarshipsToEntries(entries, assignments, context);
 }
 
 export function applyScholarshipsToEntries(sourceEntries, assignments, context) {
-  let entries = sourceEntries.filter(
-    (entry) => !entry.isScholarship && !entry.isOneTimeDiscount,
-  );
+  let entries = sourceEntries.filter((entry) => !entry.isScholarship && !entry.isOneTimeDiscount);
   const eligible = assignments.filter((assignment) => assignmentApplies(assignment, context));
   const tuitionEntries = entries.filter(
     (entry) => entry.category === 'fee' && TUITION_PATTERN.test(entry.feeHeadName || ''),
@@ -35,8 +50,7 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
   const tuitionAmount = roundMoney(
     tuitionEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
   );
-  if (!tuitionAmount)
-    return entries.filter((entry) => entry.category !== 'discount');
+  if (!tuitionAmount) return entries.filter((entry) => entry.category !== 'discount');
   let availableTuition = tuitionAmount;
   entries = entries
     .map((entry) => {
@@ -56,11 +70,15 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
   const tuitionPriority = Math.min(
     ...tuitionEntries.map((entry) => Number(entry.priority || 9999)),
   );
-  const tuitionDueDate = tuitionEntries.map((entry) => entry.dueDate).filter(Boolean).sort()[0];
+  const tuitionDueDate = tuitionEntries
+    .map((entry) => entry.dueDate)
+    .filter(Boolean)
+    .sort()[0];
   const adjustmentEntries = [];
 
   for (const assignment of eligible) {
     if (availableTuition <= 0) break;
+    const isAnnualDiscount = assignment.isSystemAnnualDiscount === true;
     const isOneTimeDiscount = assignment.adjustmentKind === 'discount';
     const isOneTimeScholarship = !isOneTimeDiscount && assignment.recurring === false;
     const configuredAmount =
@@ -73,22 +91,26 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
     const appliedAmount = roundMoney(Math.min(availableTuition, configuredAmount));
     if (appliedAmount <= 0) continue;
     adjustmentEntries.push({
-      feeHeadId: isOneTimeDiscount
-        ? `discount-${String(assignment._id)}`
-        : assignment.scholarshipId,
-      feeHeadName: isOneTimeDiscount
-        ? assignment.name || 'One-time Discount'
-        : assignment.scholarshipName,
+      feeHeadId: isAnnualDiscount
+        ? `yearly-payment-discount-${Number(context.currentAcademicYear || 1)}`
+        : isOneTimeDiscount
+          ? `discount-${String(assignment._id)}`
+          : assignment.scholarshipId,
+      feeHeadName: isAnnualDiscount
+        ? 'Yearly Payment Discount (5%)'
+        : isOneTimeDiscount
+          ? assignment.name || 'One-time Discount'
+          : assignment.scholarshipName,
       category: 'discount',
       priority: tuitionPriority,
-      frequency: isOneTimeDiscount || isOneTimeScholarship
-        ? 'one-time'
-        : context.feeFrequency === 'semester'
-          ? 'semester'
-          : 'yearly',
+      frequency:
+        isOneTimeDiscount || isOneTimeScholarship
+          ? 'one-time'
+          : context.feeFrequency === 'semester'
+            ? 'semester'
+            : 'yearly',
       academicYear: Number(context.currentAcademicYear || 1),
-      semester:
-        context.feeFrequency === 'semester' ? Number(context.currentSemester || 1) : null,
+      semester: context.feeFrequency === 'semester' ? Number(context.currentSemester || 1) : null,
       periodLabel:
         context.feeFrequency === 'semester'
           ? `Semester ${Number(context.currentSemester || 1)}`
@@ -98,15 +120,21 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
       balanceAmount: 0,
       dueDate: tuitionDueDate || null,
       status: 'paid',
-      isScholarship: !isOneTimeDiscount,
+      isScholarship: !isOneTimeDiscount && !isAnnualDiscount,
+      isAnnualDiscount,
       isOneTimeScholarship,
       isOneTimeDiscount,
-      adjustmentKind: isOneTimeDiscount ? 'discount' : 'scholarship',
-      scholarshipAssignmentId: isOneTimeDiscount ? undefined : assignment._id,
-      scholarshipId: isOneTimeDiscount ? undefined : assignment.scholarshipId,
+      adjustmentKind: isAnnualDiscount
+        ? 'annual-discount'
+        : isOneTimeDiscount
+          ? 'discount'
+          : 'scholarship',
+      scholarshipAssignmentId: isOneTimeDiscount || isAnnualDiscount ? undefined : assignment._id,
+      scholarshipId: isOneTimeDiscount || isAnnualDiscount ? undefined : assignment.scholarshipId,
       customDiscountId: isOneTimeDiscount ? assignment._id : undefined,
-      scholarshipType: isOneTimeDiscount ? undefined : assignment.type,
-      scholarshipValue: isOneTimeDiscount ? undefined : Number(assignment.value || 0),
+      scholarshipType: isOneTimeDiscount || isAnnualDiscount ? undefined : assignment.type,
+      scholarshipValue:
+        isOneTimeDiscount || isAnnualDiscount ? undefined : Number(assignment.value || 0),
     });
     availableTuition = roundMoney(availableTuition - appliedAmount);
   }
@@ -145,8 +173,7 @@ export async function refreshStudentScholarshipLedgers(database, admission, opti
     const update = {
       entries,
       ...totals,
-      paymentStatus:
-        totals.balanceAmount <= 0 ? 'paid' : totals.paidAmount > 0 ? 'partial' : 'due',
+      paymentStatus: totals.balanceAmount <= 0 ? 'paid' : totals.paidAmount > 0 ? 'partial' : 'due',
       scholarshipsUpdatedAt: new Date(),
       adjustmentsUpdatedAt: new Date(),
       updatedAt: new Date(),
@@ -193,8 +220,8 @@ function assignmentApplies(assignment, context) {
       return String(assignment.targetLedgerId) === String(context.ledgerId);
     return Boolean(
       assignment.targetPeriodKey &&
-        context.periodKey &&
-        assignment.targetPeriodKey === context.periodKey,
+      context.periodKey &&
+      assignment.targetPeriodKey === context.periodKey,
     );
   }
   const currentYear = Number(context.currentAcademicYear || 1);
@@ -238,7 +265,13 @@ function roundMoney(value) {
   return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 }
 
-export function scholarshipAssignmentDocument(admission, scholarship, assignment, assignedBy, ledger) {
+export function scholarshipAssignmentDocument(
+  admission,
+  scholarship,
+  assignment,
+  assignedBy,
+  ledger,
+) {
   const now = new Date();
   const usesCustomValue = scholarship.valueMode === 'custom';
   return {
@@ -280,8 +313,7 @@ export function discountAssignmentDocument(admission, ledger, discount, createdB
     targetPeriodLabel: ledger.periodLabel,
     academicSession: ledger.academicSession,
     academicYear: Number(ledger.currentAcademicYear || 1),
-    semester:
-      ledger.feeFrequency === 'semester' ? Number(ledger.currentSemester || 1) : null,
+    semester: ledger.feeFrequency === 'semester' ? Number(ledger.currentSemester || 1) : null,
     feeFrequency: ledger.feeFrequency,
     internalRemark: discount.internalRemark,
     recurring: false,

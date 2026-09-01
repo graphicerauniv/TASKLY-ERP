@@ -12,6 +12,7 @@ import {
   razorpayEnabled,
   razorpayPaymentDetails,
   refreshStudentPenalties,
+  studentCreditBalance,
   verifyCheckoutSignature,
   verifyWebhookSignature,
 } from '../services/fee-payments.js';
@@ -32,15 +33,7 @@ const offlinePaymentSchema = z
     amount: z.coerce.number().positive().max(10_000_000),
     kind: z.enum(['academic', 'hostel']).default('academic'),
     targetLedgerId: z.string().min(1).nullable().optional(),
-    method: z.enum([
-      'cash',
-      'upi',
-      'bank_transfer',
-      'cheque',
-      'card',
-      'demand_draft',
-      'other',
-    ]),
+    method: z.enum(['cash', 'upi', 'bank_transfer', 'cheque', 'card', 'demand_draft', 'other']),
     referenceNumber: z.string().trim().max(120).optional().default(''),
     paymentDate: z.coerce.date(),
     internalRemark: z.string().trim().max(1000).optional().default(''),
@@ -160,7 +153,11 @@ paymentsRouter.get(
       .sort({ createdAt: -1 })
       .limit(200)
       .toArray();
-    response.json({ items: items.map(publicStudentPayment), razorpayEnabled: razorpayEnabled() });
+    response.json({
+      items: items.map(publicStudentPayment),
+      razorpayEnabled: razorpayEnabled(),
+      excessCreditBalance: await studentCreditBalance(db(), request.student._id),
+    });
   }),
 );
 
@@ -196,6 +193,7 @@ paymentsRouter.get(
       }),
       ledgers: ledgers.map(serialize),
       payments: payments.map(serialize),
+      excessCreditBalance: await studentCreditBalance(db(), student._id),
     });
   }),
 );
@@ -211,9 +209,7 @@ paymentsRouter.post(
       student,
       {
         ...data,
-        targetLedgerId: data.targetLedgerId
-          ? id(data.targetLedgerId, 'targetLedgerId')
-          : null,
+        targetLedgerId: data.targetLedgerId ? id(data.targetLedgerId, 'targetLedgerId') : null,
       },
       request.admin,
     );
@@ -224,6 +220,7 @@ paymentsRouter.post(
       item: serialize(payment),
       duplicate,
       ledgers: ledgers.map(serialize),
+      excessCreditBalance: await studentCreditBalance(db(), student._id),
     });
   }),
 );
@@ -283,6 +280,21 @@ paymentsRouter.get(
       .sort({ createdAt: -1 })
       .limit(2000)
       .toArray();
+    const creditFilter = {};
+    if (request.query.search) {
+      const match = { $regex: escapeRegex(request.query.search), $options: 'i' };
+      creditFilter.$or = [
+        { studentId: match },
+        { studentName: match },
+        { sourceReceiptNumber: match },
+      ];
+    }
+    const credits = await db()
+      .collection('feeCredits')
+      .find(creditFilter)
+      .sort({ createdAt: -1 })
+      .limit(2000)
+      .toArray();
     const studentIds = [...new Set(items.map((item) => String(item.studentAdmissionId)))].map(
       (value) => id(value, 'studentAdmissionId'),
     );
@@ -311,10 +323,12 @@ paymentsRouter.get(
         }),
       ),
       discounts: discounts.map(serialize),
+      credits: credits.map(serialize),
       summary: {
         successfulPayments: paid.length,
         collectedAmount: paid.reduce((sum, item) => sum + Number(item.amount || 0), 0),
         pendingPayments: items.filter((item) => item.status === 'created').length,
+        availableCredit: credits.reduce((sum, item) => sum + Number(item.remainingAmount || 0), 0),
       },
     });
   }),
@@ -353,11 +367,13 @@ function sendReceipt(response, payment) {
 }
 
 async function approvedStudent(value) {
-  const student = await db().collection('admissions').findOne({
-    _id: id(value, 'studentAdmissionId'),
-    status: 'approved',
-    isActive: true,
-  });
+  const student = await db()
+    .collection('admissions')
+    .findOne({
+      _id: id(value, 'studentAdmissionId'),
+      status: 'approved',
+      isActive: true,
+    });
   if (!student) {
     const error = new Error('Approved active student was not found.');
     error.status = 404;
@@ -368,12 +384,7 @@ async function approvedStudent(value) {
 
 function publicStudentPayment(payment) {
   const value = serialize(payment);
-  for (const field of [
-    'internalRemark',
-    'acceptedBy',
-    'idempotencyKey',
-    'failureDescription',
-  ])
+  for (const field of ['internalRemark', 'acceptedBy', 'idempotencyKey', 'failureDescription'])
     delete value[field];
   return value;
 }

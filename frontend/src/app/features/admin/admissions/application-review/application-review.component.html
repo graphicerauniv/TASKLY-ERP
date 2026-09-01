@@ -365,10 +365,19 @@
           <div class="application-review__form-grid">
             <label>
               <span>Fee calculation mode</span>
-              <select class="erp-control" [(ngModel)]="feeFrequency">
+              <select
+                class="erp-control"
+                [(ngModel)]="feeFrequency"
+                [disabled]="!!application.feeFrequencyChoice"
+              >
                 <option value="year">Full academic year</option>
                 <option value="semester">Semester-wise</option>
               </select>
+              <small>{{
+                application.feeFrequencyChoice
+                  ? 'Selected in the admission form.'
+                  : 'No applicant selection was saved; verify before approval.'
+              }}</small>
             </label>
             <label>
               <span>Current academic year</span>

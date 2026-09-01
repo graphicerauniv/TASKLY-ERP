@@ -8,8 +8,9 @@
     </div>
     @if (vm.student.courseName || vm.student.currentPeriod || vm.student.academicSession) {
       <div class="student-fees-context" aria-label="Current academic context">
-        <span>{{ vm.student.courseName || 'Course' }}</span><b>•</b>
-        <span>{{ vm.student.currentPeriod || 'Current period' }}</span><b>•</b>
+        <span>{{ vm.student.courseName || 'Course' }}</span
+        ><b>•</b> <span>{{ vm.student.currentPeriod || 'Current period' }}</span
+        ><b>•</b>
         <span>{{ vm.student.academicSession || 'Session' }}</span>
       </div>
     }
@@ -17,52 +18,137 @@
 
   @if (vm.feeState === 'loading') {
     <section class="student-fees-skeleton" aria-label="Loading fee overview" aria-busy="true">
-      @for (item of [1, 2, 3, 4]; track item) { <span></span> }
+      @for (item of [1, 2, 3, 4]; track item) {
+        <span></span>
+      }
     </section>
   } @else if (vm.feeState === 'error') {
     <section class="student-fees-message" role="alert">
-      <div><strong>Fee information is temporarily unavailable.</strong><span>Your dashboard shell is still available.</span></div>
+      <div>
+        <strong>Fee information is temporarily unavailable.</strong
+        ><span>Your dashboard shell is still available.</span>
+      </div>
       <button type="button" (click)="retry()">Try again</button>
     </section>
   } @else {
     <section class="student-fees-summary" aria-label="Fee summary">
       <article class="student-fees-stat student-fees-stat--blue">
-        <img src="/assets/student/fee-icons/compact/gross-total-fee.webp" alt="" width="64" height="64" />
-        <div><span>Total Fee</span><strong>{{ vm.summary.totalFee?.formatted || 'Unavailable' }}</strong></div>
-      </article>
-      <article class="student-fees-stat student-fees-stat--green">
-        <img src="/assets/student/fee-icons/compact/payment-receipts.webp" alt="" width="64" height="64" />
-        <div><span>Paid Amount</span><strong>{{ vm.summary.paidAmount?.formatted || 'Unavailable' }}</strong></div>
-      </article>
-      <article class="student-fees-stat student-fees-stat--orange">
-        <img src="/assets/student/fee-icons/compact/outstanding-due.webp" alt="" width="64" height="64" />
-        <div><span>Outstanding</span><strong>{{ vm.summary.outstandingAmount?.formatted || 'Unavailable' }}</strong></div>
-      </article>
-      <article class="student-fees-stat student-fees-stat--violet">
-        <img src="/assets/student/fee-icons/compact/latest-payment.webp" alt="" width="64" height="64" />
-        <div><span>Next Due Date</span><strong>{{ vm.summary.nextDueDate ? (vm.summary.nextDueDate | date: 'dd MMM yyyy') : 'Not scheduled' }}</strong>
-          @if (vm.summary.dueState === 'overdue') { <small>Overdue</small> }
+        <img
+          src="/assets/student/fee-icons/compact/gross-total-fee.webp"
+          alt=""
+          width="64"
+          height="64"
+        />
+        <div>
+          <span>Total Fee</span
+          ><strong>{{ vm.summary.totalFee?.formatted || 'Unavailable' }}</strong>
         </div>
       </article>
+      <article class="student-fees-stat student-fees-stat--green">
+        <img
+          src="/assets/student/fee-icons/compact/payment-receipts.webp"
+          alt=""
+          width="64"
+          height="64"
+        />
+        <div>
+          <span>Paid Amount</span
+          ><strong>{{ vm.summary.paidAmount?.formatted || 'Unavailable' }}</strong>
+        </div>
+      </article>
+      <article class="student-fees-stat student-fees-stat--orange">
+        <img
+          src="/assets/student/fee-icons/compact/outstanding-due.webp"
+          alt=""
+          width="64"
+          height="64"
+        />
+        <div>
+          <span>Outstanding</span
+          ><strong>{{ vm.summary.outstandingAmount?.formatted || 'Unavailable' }}</strong>
+        </div>
+      </article>
+      <article class="student-fees-stat student-fees-stat--violet">
+        <img
+          src="/assets/student/fee-icons/compact/latest-payment.webp"
+          alt=""
+          width="64"
+          height="64"
+        />
+        <div>
+          <span>Next Due Date</span
+          ><strong>{{
+            vm.summary.nextDueDate
+              ? (vm.summary.nextDueDate | date: 'dd MMM yyyy')
+              : 'Not scheduled'
+          }}</strong>
+          @if (vm.summary.dueState === 'overdue') {
+            <small>Overdue</small>
+          }
+        </div>
+      </article>
+      @if ((vm.summary.excessCredit?.amount || 0) > 0) {
+        <article class="student-fees-stat student-fees-stat--green">
+          <img
+            src="/assets/student/fee-icons/compact/payment-receipts.webp"
+            alt=""
+            width="64"
+            height="64"
+          />
+          <div>
+            <span>Excess credit</span><strong>{{ vm.summary.excessCredit?.formatted }}</strong
+            ><small>Automatically used for future published fees</small>
+          </div>
+        </article>
+      }
     </section>
 
     <section class="student-fees-mobile-hero" aria-label="Outstanding fee">
-      <div><span>Total Outstanding</span><strong>{{ vm.summary.outstandingAmount?.formatted || 'Unavailable' }}</strong>
-        @if (vm.summary.dueState === 'overdue') { <em>Overdue</em> }
-        <small>{{ vm.summary.nextDueDate ? 'Due ' + (vm.summary.nextDueDate | date: 'dd MMM yyyy') : 'No due date assigned' }}</small>
+      <div>
+        <span>Total Outstanding</span
+        ><strong>{{ vm.summary.outstandingAmount?.formatted || 'Unavailable' }}</strong>
+        @if (vm.summary.dueState === 'overdue') {
+          <em>Overdue</em>
+        }
+        <small>{{
+          vm.summary.nextDueDate
+            ? 'Due ' + (vm.summary.nextDueDate | date: 'dd MMM yyyy')
+            : 'No due date assigned'
+        }}</small>
       </div>
       <img src="/assets/student/fee-icons/compact/pay-fees.webp" alt="" width="130" height="130" />
-      <dl><div><dt>Total Fee</dt><dd>{{ vm.summary.totalFee?.formatted || '—' }}</dd></div><div><dt>Paid</dt><dd>{{ vm.summary.paidAmount?.formatted || '—' }}</dd></div></dl>
+      <dl>
+        <div>
+          <dt>Total Fee</dt>
+          <dd>{{ vm.summary.totalFee?.formatted || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Paid</dt>
+          <dd>{{ vm.summary.paidAmount?.formatted || '—' }}</dd>
+        </div>
+      </dl>
     </section>
   }
 
   <section class="student-fee-services" aria-labelledby="student-fee-services-title">
-    <div class="student-fee-section-title"><h2 id="student-fee-services-title">Fee Services</h2><p>Choose what you want to do</p></div>
+    <div class="student-fee-section-title">
+      <h2 id="student-fee-services-title">Fee Services</h2>
+      <p>Choose what you want to do</p>
+    </div>
     <div class="student-fee-services__grid">
       @for (card of vm.services; track card.id) {
-        <button type="button" class="student-fee-service student-fee-service--{{ card.tone }}" [disabled]="!card.route" [attr.aria-label]="serviceLabel(card)" (click)="openService(card)">
+        <button
+          type="button"
+          class="student-fee-service student-fee-service--{{ card.tone }}"
+          [disabled]="!card.route"
+          [attr.aria-label]="serviceLabel(card)"
+          (click)="openService(card)"
+        >
           <img [src]="card.image" alt="" width="72" height="72" loading="lazy" decoding="async" />
-          <span><strong>{{ card.title }}</strong><small>{{ card.description }}</small></span><b aria-hidden="true">›</b>
+          <span
+            ><strong>{{ card.title }}</strong
+            ><small>{{ card.description }}</small></span
+          ><b aria-hidden="true">›</b>
         </button>
       }
     </div>
@@ -74,22 +160,48 @@
       <div class="student-fee-status-list">
         @for (status of [vm.academicFee, vm.hostelFee]; track status?.kind) {
           @if (status) {
-            <article><img [src]="status.image" alt="" width="52" height="52" /><div><strong>{{ status.title }}</strong><small>{{ status.context }}</small></div>
-              <span class="student-fee-status student-fee-status--{{ status.status }}">{{ status.status === 'not-assigned' ? 'Not assigned' : status.status }}</span>
-              @if (status.amount) { <b>{{ status.amount.formatted }}</b> }<i aria-hidden="true">›</i>
+            <article>
+              <img [src]="status.image" alt="" width="52" height="52" />
+              <div>
+                <strong>{{ status.title }}</strong
+                ><small>{{ status.context }}</small>
+              </div>
+              <span class="student-fee-status student-fee-status--{{ status.status }}">{{
+                status.status === 'not-assigned' ? 'Not assigned' : status.status
+              }}</span>
+              @if (status.amount) {
+                <b>{{ status.amount.formatted }}</b>
+              }
+              <i aria-hidden="true">›</i>
             </article>
           }
         }
       </div>
     </section>
     <section class="student-fee-panel" aria-labelledby="recent-fee-activity-title">
-      <div class="student-fee-panel__heading"><h2 id="recent-fee-activity-title">Recent Activity</h2></div>
-      @if (vm.activityState === 'error') { <p class="student-fee-empty">Recent payment activity is temporarily unavailable.</p> }
-      @else if (!vm.recentActivity.length) { <p class="student-fee-empty">No payments recorded yet.</p> }
-      @else { <ol class="student-fee-activity">@for (activity of vm.recentActivity; track activity.id) { <li><span></span><strong>{{ activity.label }}</strong><time>{{ activity.date ? (activity.date | date: 'dd MMM yyyy') : '—' }}</time></li> }</ol> }
+      <div class="student-fee-panel__heading">
+        <h2 id="recent-fee-activity-title">Recent Activity</h2>
+      </div>
+      @if (vm.activityState === 'error') {
+        <p class="student-fee-empty">Recent payment activity is temporarily unavailable.</p>
+      } @else if (!vm.recentActivity.length) {
+        <p class="student-fee-empty">No payments recorded yet.</p>
+      } @else {
+        <ol class="student-fee-activity">
+          @for (activity of vm.recentActivity; track activity.id) {
+            <li>
+              <span></span><strong>{{ activity.label }}</strong
+              ><time>{{ activity.date ? (activity.date | date: 'dd MMM yyyy') : '—' }}</time>
+            </li>
+          }
+        </ol>
+      }
     </section>
   </div>
 
-  <aside class="student-fee-security"><span aria-hidden="true">✓</span><p>Payments are verified securely. Successful receipts appear after payment verification.</p></aside>
+  <aside class="student-fee-security">
+    <span aria-hidden="true">✓</span>
+    <p>Payments are verified securely. Successful receipts appear after payment verification.</p>
+  </aside>
   <erp-student-mobile-bottom-nav />
 </div>

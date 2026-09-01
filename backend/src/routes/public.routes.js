@@ -70,6 +70,7 @@ publicRouter.post(
       currentSectionId: form.sections.find((s) => s.isActive)?.id || null,
       responses: {},
       repeatableResponses: {},
+      feeFrequencyChoice: null,
       accessKeyHash: hashKey(key),
       createdAt: now,
       updatedAt: now,
@@ -116,6 +117,12 @@ publicRouter.patch(
       !Array.isArray(request.body.repeatableResponses)
     )
       update.repeatableResponses = request.body.repeatableResponses;
+    if (request.body.feeFrequencyChoice !== undefined) {
+      if (!['year', 'semester'].includes(request.body.feeFrequencyChoice))
+        return response.status(400).json({ message: 'Choose yearly or semester-wise fees.' });
+      update.feeFrequencyChoice = request.body.feeFrequencyChoice;
+      update.feeFrequency = request.body.feeFrequencyChoice;
+    }
     let item = await db()
       .collection('admissions')
       .findOneAndUpdate(
@@ -185,6 +192,10 @@ publicRouter.post(
       return response
         .status(422)
         .json({ message: 'Complete all required fields before submitting.', errors });
+    if (!['year', 'semester'].includes(request.admission.feeFrequencyChoice))
+      return response
+        .status(422)
+        .json({ message: 'Choose yearly or semester-wise fees before submitting.' });
     const identity = await syncAdmissionIdentity(
       db(),
       request.admission,

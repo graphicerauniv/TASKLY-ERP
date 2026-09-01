@@ -93,9 +93,39 @@ test('applies multiple scholarships only against Tuition Fee and caps their tota
     discounts.map((entry) => entry.amount),
     [25_000, 75_000],
   );
-  assert.equal(discounts.reduce((sum, entry) => sum + entry.amount, 0), 100_000);
+  assert.equal(
+    discounts.reduce((sum, entry) => sum + entry.amount, 0),
+    100_000,
+  );
   assert.equal(entries.find((entry) => entry.feeHeadName === 'Tuition Fee').balanceAmount, 0);
-  assert.equal(entries.find((entry) => entry.feeHeadName === 'Admission Fee').balanceAmount, 15_000);
+  assert.equal(
+    entries.find((entry) => entry.feeHeadName === 'Admission Fee').balanceAmount,
+    15_000,
+  );
+});
+
+test('applies the yearly payment discount without marking it as a scholarship', () => {
+  const entries = applyScholarshipsToEntries(
+    [tuition(100_000)],
+    [
+      {
+        _id: 'annual-discount-1',
+        scholarshipName: 'Yearly Payment Discount',
+        type: 'percentage',
+        value: 5,
+        recurring: true,
+        startAcademicYear: 1,
+        adjustmentKind: 'annual-discount',
+        isSystemAnnualDiscount: true,
+        status: 'active',
+      },
+    ],
+    { feeFrequency: 'year', currentAcademicYear: 1 },
+  );
+  const discount = entries.find((entry) => entry.isAnnualDiscount);
+  assert.equal(discount.amount, 5_000);
+  assert.equal(discount.isScholarship, false);
+  assert.equal(entries.find((entry) => entry.feeHeadName === 'Tuition Fee').balanceAmount, 95_000);
 });
 
 test('divides fixed annual scholarships between semester fee periods', () => {
@@ -114,7 +144,10 @@ test('does not apply a scholarship before its assigned semester', () => {
     currentAcademicYear: 1,
     currentSemester: 1,
   });
-  assert.equal(entries.some((entry) => entry.isScholarship), false);
+  assert.equal(
+    entries.some((entry) => entry.isScholarship),
+    false,
+  );
 });
 
 test('applies a one-time fixed discount in full only to its selected semester ledger', () => {
@@ -150,7 +183,10 @@ test('applies a one-time fixed discount in full only to its selected semester le
     currentAcademicYear: 2,
     currentSemester: 3,
   });
-  assert.equal(otherPeriod.some((entry) => entry.isOneTimeDiscount), false);
+  assert.equal(
+    otherPeriod.some((entry) => entry.isOneTimeDiscount),
+    false,
+  );
 });
 
 test('applies a one-time scholarship in full only to the selected ledger', () => {
@@ -179,5 +215,8 @@ test('applies a one-time scholarship in full only to the selected ledger', () =>
     currentAcademicYear: 2,
     currentSemester: 3,
   });
-  assert.equal(next.some((entry) => entry.isScholarship), false);
+  assert.equal(
+    next.some((entry) => entry.isScholarship),
+    false,
+  );
 });

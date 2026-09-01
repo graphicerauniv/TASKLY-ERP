@@ -6,37 +6,73 @@
       <div>
         <a routerLink="/student/fees" class="student-fee-subpage__back">← Fees Overview</a>
         <h1>Payment Receipts</h1>
-        <p>Download receipts for successful online and offline payments.</p>
+        <p>Download receipts for successful online, offline and excess-credit adjustments.</p>
       </div>
       <span class="student-fee-subpage__context">
-        {{ workspace().student.currentPeriod || 'Current period' }} · {{ workspace().student.academicSession || 'Academic year' }}
+        {{ workspace().student.currentPeriod || 'Current period' }} ·
+        {{ workspace().student.academicSession || 'Academic year' }}
       </span>
     </header>
 
     <div class="student-fee-stat-grid">
       <article class="student-fee-stat-card">
-        <img src="/assets/student/fee-icons/compact/payment-receipts.webp" alt="" class="student-fee-stat-card__icon">
-        <div><span>Verified Receipts</span><strong>{{ receipts().length }}</strong></div>
+        <img
+          src="/assets/student/fee-icons/compact/payment-receipts.webp"
+          alt=""
+          class="student-fee-stat-card__icon"
+        />
+        <div>
+          <span>Verified Receipts</span><strong>{{ receipts().length }}</strong>
+        </div>
       </article>
       <article class="student-fee-stat-card">
-        <img src="/assets/student/fee-icons/compact/pay-fees.webp" alt="" class="student-fee-stat-card__icon is-green">
-        <div><span>Total Received</span><strong>{{ totalReceived() }}</strong></div>
+        <img
+          src="/assets/student/fee-icons/compact/pay-fees.webp"
+          alt=""
+          class="student-fee-stat-card__icon is-green"
+        />
+        <div>
+          <span>Total Received</span><strong>{{ totalReceived() }}</strong>
+        </div>
       </article>
       <article class="student-fee-stat-card">
-        <img src="/assets/student/fee-icons/compact/latest-payment.webp" alt="" class="student-fee-stat-card__icon is-purple">
-        <div><span>Latest Payment</span><strong>{{ latestPaymentDate() ? ((latestPaymentDate() | date: 'mediumDate') || '—') : '—' }}</strong></div>
+        <img
+          src="/assets/student/fee-icons/compact/latest-payment.webp"
+          alt=""
+          class="student-fee-stat-card__icon is-purple"
+        />
+        <div>
+          <span>Latest Payment</span
+          ><strong>{{
+            latestPaymentDate() ? (latestPaymentDate() | date: 'mediumDate') || '—' : '—'
+          }}</strong>
+        </div>
       </article>
     </div>
 
     <article class="student-fee-panel">
       <div class="student-fee-panel__header">
-        <div><h2>Receipts <span>{{ filteredReceipts().length }}</span></h2></div>
+        <div>
+          <h2>
+            Receipts <span>{{ filteredReceipts().length }}</span>
+          </h2>
+        </div>
       </div>
       <div class="student-fee-toolbar">
-        <label class="student-fee-search-field"><svg lucideSearch size="19" aria-hidden="true"></svg><input class="student-fee-search" type="search" placeholder="Search receipt or payment ID" [value]="searchTerm()" (input)="onSearch($event)"></label>
+        <label class="student-fee-search-field"
+          ><svg lucideSearch size="19" aria-hidden="true"></svg
+          ><input
+            class="student-fee-search"
+            type="search"
+            placeholder="Search receipt or payment ID"
+            [value]="searchTerm()"
+            (input)="onSearch($event)"
+        /></label>
         <select class="student-fee-filter" [value]="periodFilter()" (change)="onPeriod($event)">
           <option value="all">All fee periods</option>
-          @for (period of periods(); track period) { <option [value]="period">{{ period }}</option> }
+          @for (period of periods(); track period) {
+            <option [value]="period">{{ period }}</option>
+          }
         </select>
         <select class="student-fee-filter" [value]="dateFilter()" (change)="onDate($event)">
           <option value="all">All dates</option>
@@ -48,17 +84,49 @@
       @if (filteredReceipts().length) {
         <div class="student-fee-table-wrap">
           <table class="student-fee-table">
-            <thead><tr><th>Receipt</th><th>Channel / reference</th><th>Amount</th><th>Fee Period</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Receipt</th>
+                <th>Channel / reference</th>
+                <th>Amount</th>
+                <th>Fee Period</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
             <tbody>
               @for (receipt of filteredReceipts(); track receipt.id) {
                 <tr>
-                  <td><strong>{{ receipt.receiptNumber || 'Receipt pending' }}</strong><small>{{ receipt.orderReference }}</small></td>
-                  <td><strong>{{ receipt.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay' }}</strong><small>{{ receipt.paymentId || receipt.orderReference }}</small></td>
-                  <td><strong>{{ receipt.amount.formatted }}</strong></td>
+                  <td>
+                    <strong>{{ receipt.receiptNumber || 'Receipt pending' }}</strong
+                    ><small>{{ receipt.orderReference }}</small>
+                  </td>
+                  <td>
+                    <strong>{{
+                      receipt.paymentChannel === 'offline'
+                        ? 'Offline'
+                        : receipt.paymentChannel === 'credit'
+                          ? 'Excess credit adjustment'
+                          : 'Online · Razorpay'
+                    }}</strong
+                    ><small>{{ receipt.paymentId || receipt.orderReference }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ receipt.amount.formatted }}</strong>
+                  </td>
                   <td>{{ receipt.feePeriodLabel }}</td>
-                  <td>{{ (receipt.paidAt || receipt.createdAt) | date: 'mediumDate' }}</td>
+                  <td>{{ receipt.paidAt || receipt.createdAt | date: 'mediumDate' }}</td>
                   <td><span class="student-fee-status-chip is-successful">Verified</span></td>
-                  <td><button class="student-fee-table-action" [disabled]="!receipt.downloadable" (click)="download(receipt.id, receipt.receiptNumber)"><svg lucideDownload size="16" aria-hidden="true"></svg> Download</button></td>
+                  <td>
+                    <button
+                      class="student-fee-table-action"
+                      [disabled]="!receipt.downloadable"
+                      (click)="download(receipt.id, receipt.receiptNumber)"
+                    >
+                      <svg lucideDownload size="16" aria-hidden="true"></svg> Download
+                    </button>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -66,24 +134,51 @@
         </div>
       } @else {
         <div class="student-fee-empty-state">
-          <img src="/assets/student/fee-icons/empty-states/no-receipts.webp" alt="" class="student-fee-empty-state__image">
+          <img
+            src="/assets/student/fee-icons/empty-states/no-receipts.webp"
+            alt=""
+            class="student-fee-empty-state__image"
+          />
           <h2>No verified receipts yet</h2>
           <p>Receipts will appear here after a successful payment is verified.</p>
           <div class="student-fee-empty-actions">
             <a routerLink="/student/fees/pay" class="student-fee-primary-action">Go to Pay Fees</a>
-            <a routerLink="/student/fees/history" class="student-fee-outline-action">View Payment History</a>
+            <a routerLink="/student/fees/history" class="student-fee-outline-action"
+              >View Payment History</a
+            >
           </div>
         </div>
       }
     </article>
 
     <section class="student-fee-process-grid" aria-label="How receipts work">
-      <article class="student-fee-process-card"><span>1</span><img src="/assets/student/fee-icons/compact/pay-fees.webp" alt=""><div><strong>Payment completed</strong><p>Payment is completed online or received by Accounts.</p></div></article>
-      <article class="student-fee-process-card"><span>2</span><img src="/assets/student/fee-icons/compact/fee-details.webp" alt=""><div><strong>Payment recorded</strong><p>The verified amount is allocated to the fee ledger.</p></div></article>
-      <article class="student-fee-process-card"><span>3</span><img src="/assets/student/fee-icons/compact/payment-receipts.webp" alt=""><div><strong>Receipt available</strong><p>Download becomes available for the paid record.</p></div></article>
+      <article class="student-fee-process-card">
+        <span>1</span><img src="/assets/student/fee-icons/compact/pay-fees.webp" alt="" />
+        <div>
+          <strong>Payment completed</strong>
+          <p>Payment is completed online or received by Accounts.</p>
+        </div>
+      </article>
+      <article class="student-fee-process-card">
+        <span>2</span><img src="/assets/student/fee-icons/compact/fee-details.webp" alt="" />
+        <div>
+          <strong>Payment recorded</strong>
+          <p>The verified amount is allocated to the fee ledger.</p>
+        </div>
+      </article>
+      <article class="student-fee-process-card">
+        <span>3</span><img src="/assets/student/fee-icons/compact/payment-receipts.webp" alt="" />
+        <div>
+          <strong>Receipt available</strong>
+          <p>Download becomes available for the paid record.</p>
+        </div>
+      </article>
     </section>
 
-    <aside class="student-fee-secure-note"><svg lucideShieldCheck size="20" aria-hidden="true"></svg> Receipt downloads are authorized for your student account.</aside>
+    <aside class="student-fee-secure-note">
+      <svg lucideShieldCheck size="20" aria-hidden="true"></svg> Receipt downloads are authorized
+      for your student account.
+    </aside>
   }
 </section>
 

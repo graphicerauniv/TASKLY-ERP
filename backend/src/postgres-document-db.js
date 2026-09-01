@@ -135,12 +135,55 @@ const DOMAIN_TABLES = Object.freeze({
       'targetKind',
       'targetPeriodLabel',
       'amount',
+      'appliedAmount',
+      'excessCreditAmount',
       'method',
       'internalRemark',
       'acceptedBy',
       'acceptedByName',
       'paidAt',
       'status',
+    ],
+  },
+  feeCredits: {
+    table: 'fee_credits',
+    columns: [
+      'studentAdmissionId',
+      'studentId',
+      'studentName',
+      'kind',
+      'sourcePaymentId',
+      'sourceReceiptNumber',
+      'originalAmount',
+      'remainingAmount',
+      'status',
+    ],
+  },
+  feeCreditAllocations: {
+    table: 'fee_credit_allocations',
+    columns: [
+      'studentAdmissionId',
+      'studentId',
+      'studentName',
+      'feeCreditId',
+      'sourcePaymentId',
+      'sourceReceiptNumber',
+      'kind',
+      'amount',
+      'status',
+      'appliedAt',
+    ],
+  },
+  feeModeChanges: {
+    table: 'fee_mode_changes',
+    columns: [
+      'studentAdmissionId',
+      'studentId',
+      'studentName',
+      'fromMode',
+      'toMode',
+      'changedBy',
+      'changedAt',
     ],
   },
   forms: { table: 'forms', columns: ['name', 'slug', 'status', 'version', 'isActive'] },
@@ -326,9 +369,13 @@ async function collectionsWithSchemaDrift(pool, collectionNames) {
     .filter(({ definition }) => {
       const columns = columnsByTable.get(definition.table);
       if (!columns) return true;
-      return ['id', 'document', 'migrated_at', 'updated_at', ...definition.columns.map(snakeCase)].some(
-        (column) => !columns.has(column),
-      );
+      return [
+        'id',
+        'document',
+        'migrated_at',
+        'updated_at',
+        ...definition.columns.map(snakeCase),
+      ].some((column) => !columns.has(column));
     })
     .map(({ name }) => name);
 }

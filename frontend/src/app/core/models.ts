@@ -96,6 +96,7 @@ export interface Admission {
   currentAcademicYear?: number;
   currentSemester?: number;
   feeFrequency?: 'year' | 'semester';
+  feeFrequencyChoice?: 'year' | 'semester' | null;
   academicSessionId?: string | null;
   courseName?: string;
   courseId?: string | null;
@@ -150,7 +151,8 @@ export interface StudentFeeEntry {
   isScholarship?: boolean;
   isOneTimeScholarship?: boolean;
   isOneTimeDiscount?: boolean;
-  adjustmentKind?: 'scholarship' | 'discount';
+  adjustmentKind?: 'scholarship' | 'discount' | 'annual-discount';
+  isAnnualDiscount?: boolean;
   customDiscountId?: string;
   scholarshipAssignmentId?: string;
   scholarshipId?: string;
@@ -188,6 +190,25 @@ export interface StudentFeeLedger {
   hostelName?: string;
   roomNumber?: string;
   createdAt: string;
+}
+
+export interface StudentFeePreview {
+  feeFrequency: 'year' | 'semester';
+  academicYear: number;
+  semester: number | null;
+  periodLabel: string;
+  entries: StudentFeeEntry[];
+  chargeAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+}
+
+export interface StudentFeeComparison {
+  activeMode: 'year' | 'semester';
+  yearly: StudentFeePreview | null;
+  semesters: StudentFeePreview[];
+  semesterWiseTotal?: number;
+  difference?: number;
 }
 
 export interface Hostel {
@@ -520,7 +541,7 @@ export interface FeePayment {
   studentName: string;
   razorpayOrderId: string;
   razorpayPaymentId?: string;
-  paymentChannel?: 'online' | 'offline';
+  paymentChannel?: 'online' | 'offline' | 'credit';
   paymentReference?: string;
   paymentDate?: string;
   idempotencyKey?: string;
@@ -528,6 +549,8 @@ export interface FeePayment {
   targetKind?: 'academic' | 'hostel';
   targetPeriodLabel?: string;
   amount: number;
+  appliedAmount?: number;
+  excessCreditAmount?: number;
   currency: 'INR';
   method?: string;
   internalRemark?: string;
@@ -537,6 +560,19 @@ export interface FeePayment {
   createdAt: string;
   paidAt?: string;
   outstandingBalance?: number;
+}
+
+export interface FeeCredit {
+  _id: string;
+  studentAdmissionId: string;
+  studentId: string;
+  studentName: string;
+  kind: 'academic' | 'hostel';
+  sourceReceiptNumber?: string;
+  originalAmount: number;
+  remainingAmount: number;
+  status: 'available' | 'consumed' | 'refunded';
+  createdAt: string;
 }
 
 export interface OfflinePaymentStudent {

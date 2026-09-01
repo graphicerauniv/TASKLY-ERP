@@ -1,58 +1,228 @@
 <main class="student-fee-workspace" aria-labelledby="pay-fees-title">
   @if (workspace().state === 'loading') {
-    <section class="student-fee-workspace__loading" aria-live="polite">Loading your payable fee periods…</section>
+    <section class="student-fee-workspace__loading" aria-live="polite">
+      Loading your payable fee periods…
+    </section>
   } @else if (workspace().state === 'error') {
-    <section class="student-fee-workspace__message" role="alert"><strong>Unable to load fees</strong><span>{{ workspace().errorMessage }}</span><button type="button" (click)="load()">Try again</button></section>
+    <section class="student-fee-workspace__message" role="alert">
+      <strong>Unable to load fees</strong><span>{{ workspace().errorMessage }}</span
+      ><button type="button" (click)="load()">Try again</button>
+    </section>
   } @else {
     <header class="student-fee-workspace__header">
-      <div><a routerLink="/student/fees" class="student-fee-workspace__back">← Fees Overview</a><h1 id="pay-fees-title">Pay Fees</h1><p>Pay all published dues together or choose one fee period.</p></div>
-      <span class="student-fee-workspace__context">{{ workspace().student.courseName ?? 'Course unavailable' }} · {{ workspace().student.currentPeriod ?? 'Current period' }} · {{ workspace().student.academicSession ?? 'Session unavailable' }}</span>
+      <div>
+        <a routerLink="/student/fees" class="student-fee-workspace__back">← Fees Overview</a>
+        <h1 id="pay-fees-title">Pay Fees</h1>
+        <p>Pay all published dues together or choose one fee period.</p>
+      </div>
+      <span class="student-fee-workspace__context"
+        >{{ workspace().student.courseName ?? 'Course unavailable' }} ·
+        {{ workspace().student.currentPeriod ?? 'Current period' }} ·
+        {{ workspace().student.academicSession ?? 'Session unavailable' }}</span
+      >
     </header>
 
-    <ol class="student-fee-stepper" aria-label="Payment steps"><li class="is-current"><b>1</b><span>Select</span></li><li><b>2</b><span>Review</span></li><li><b>3</b><span>Payment</span></li></ol>
+    <ol class="student-fee-stepper" aria-label="Payment steps">
+      <li class="is-current"><b>1</b><span>Select</span></li>
+      <li><b>2</b><span>Review</span></li>
+      <li><b>3</b><span>Payment</span></li>
+    </ol>
 
     <section class="student-fee-pay-layout">
       <section class="student-fee-pay-card">
         <h2>Choose fee type</h2>
         <div class="student-fee-segmented" role="tablist" aria-label="Fee type">
-          <button type="button" [class.is-active]="selectedKind() === 'academic'" (click)="selectKind('academic')">Academic Fee</button>
-          <button type="button" [class.is-active]="selectedKind() === 'hostel'" (click)="selectKind('hostel')">Hostel Fee</button>
+          <button
+            type="button"
+            [class.is-active]="selectedKind() === 'academic'"
+            (click)="selectKind('academic')"
+          >
+            Academic Fee
+          </button>
+          <button
+            type="button"
+            [class.is-active]="selectedKind() === 'hostel'"
+            (click)="selectKind('hostel')"
+          >
+            Hostel Fee
+          </button>
         </div>
         <h2 class="student-fee-pay-card__label">Payable fee periods</h2>
         <div class="student-fee-period-list">
           @if (payableLedgers().length) {
-            <button type="button" class="student-fee-period" [class.is-selected]="combinedSelected()" (click)="selectCombined()">
-              <span class="student-fee-period__check">@if (combinedSelected()) { <svg lucideCheckCircle2 size="24" aria-hidden="true"></svg> }</span>
-              <span><strong>All published {{ selectedKind() === 'academic' ? 'Academic' : 'Hostel' }} Fees</strong><small>Includes every visible unpaid period</small></span>
+            <button
+              type="button"
+              class="student-fee-period"
+              [class.is-selected]="combinedSelected()"
+              (click)="selectCombined()"
+            >
+              <span class="student-fee-period__check">
+                @if (combinedSelected()) {
+                  <svg lucideCheckCircle2 size="24" aria-hidden="true"></svg>
+                }
+              </span>
+              <span
+                ><strong
+                  >All published
+                  {{ selectedKind() === 'academic' ? 'Academic' : 'Hostel' }} Fees</strong
+                ><small>Includes every visible unpaid period</small></span
+              >
               <em class="is-due">Combined</em>
-              <span class="student-fee-period__amount"><b>₹{{ combinedBalance().toLocaleString('en-IN') }}</b><small>total outstanding</small></span>
+              <span class="student-fee-period__amount"
+                ><b>₹{{ combinedBalance().toLocaleString('en-IN') }}</b
+                ><small>total outstanding</small></span
+              >
             </button>
           }
           @for (ledger of payableLedgers(); track ledger.id) {
-            <button type="button" class="student-fee-period" [class.is-selected]="ledger.id === selectedLedgerId()" (click)="selectLedger(ledger)">
-              <span class="student-fee-period__check">@if (ledger.id === selectedLedgerId()) { <svg lucideCheckCircle2 size="24" aria-hidden="true"></svg> }</span>
-              <span><strong>{{ ledger.title }} · {{ ledger.periodLabel }}</strong><small>{{ ledger.academicSession ?? 'Academic session unavailable' }}</small></span>
-              <em [class]="ledger.paymentStatus === 'due' ? 'is-due' : 'is-partial'">{{ ledger.paymentStatus === 'due' ? 'Due' : 'Partial' }}</em>
-              <span class="student-fee-period__amount"><b>{{ ledger.balance?.formatted ?? '—' }}</b><small>outstanding</small></span>
+            <button
+              type="button"
+              class="student-fee-period"
+              [class.is-selected]="ledger.id === selectedLedgerId()"
+              (click)="selectLedger(ledger)"
+            >
+              <span class="student-fee-period__check">
+                @if (ledger.id === selectedLedgerId()) {
+                  <svg lucideCheckCircle2 size="24" aria-hidden="true"></svg>
+                }
+              </span>
+              <span
+                ><strong>{{ ledger.title }} · {{ ledger.periodLabel }}</strong
+                ><small>{{ ledger.academicSession ?? 'Academic session unavailable' }}</small></span
+              >
+              <em [class]="ledger.paymentStatus === 'due' ? 'is-due' : 'is-partial'">{{
+                ledger.paymentStatus === 'due' ? 'Due' : 'Partial'
+              }}</em>
+              <span class="student-fee-period__amount"
+                ><b>{{ ledger.balance?.formatted ?? '—' }}</b
+                ><small>outstanding</small></span
+              >
             </button>
-          } @empty { <p class="student-fee-empty">No payable {{ selectedKind() }} fee period is available.</p> }
+          } @empty {
+            <p class="student-fee-empty">
+              No payable {{ selectedKind() }} fee period is available.
+            </p>
+          }
         </div>
         @if (combinedSelected() || selectedLedger()) {
-          <div class="student-fee-amount-panel"><label for="amount">Amount to pay (₹)</label><input id="amount" type="number" inputmode="decimal" min="1" [max]="combinedSelected() ? combinedBalance() : (selectedLedger()?.balance?.amount ?? 0)" [value]="paymentAmount() ?? ''" (input)="onAmountInput($event)" /><small>Enter any amount up to {{ combinedSelected() ? '₹' + combinedBalance().toLocaleString('en-IN') : (selectedLedger()?.balance?.formatted ?? 'the selected balance') }}.</small><span><svg lucideCheckCircle2 size="16" aria-hidden="true"></svg> Partial payment allowed</span></div>
-          <aside class="student-fee-info-note"><svg lucideInfo size="18" aria-hidden="true"></svg> Payments are adjusted against penalties first, then fee heads by configured priority.</aside>
+          <div class="student-fee-amount-panel">
+            <label for="amount">Amount to pay (₹)</label
+            ><input
+              id="amount"
+              type="number"
+              inputmode="decimal"
+              min="1"
+              [max]="
+                combinedSelected() ? combinedBalance() : (selectedLedger()?.balance?.amount ?? 0)
+              "
+              [value]="paymentAmount() ?? ''"
+              (input)="onAmountInput($event)"
+            /><small
+              >Enter any amount up to
+              {{
+                combinedSelected()
+                  ? '₹' + combinedBalance().toLocaleString('en-IN')
+                  : (selectedLedger()?.balance?.formatted ?? 'the selected balance')
+              }}.</small
+            ><span
+              ><svg lucideCheckCircle2 size="16" aria-hidden="true"></svg> Partial payment
+              allowed</span
+            >
+          </div>
+          <aside class="student-fee-info-note">
+            <svg lucideInfo size="18" aria-hidden="true"></svg> Payments are adjusted against
+            penalties first, then the institutional fee allocation order.
+          </aside>
         }
       </section>
 
       <aside class="student-fee-payment-summary">
         <h2>Payment summary</h2>
-        <dl><div><dt>Student</dt><dd>{{ workspace().student.name ?? '—' }}</dd></div><div><dt>Fee period</dt><dd>{{ combinedSelected() ? 'All published ' + selectedKind() + ' fees' : (selectedLedger()?.periodLabel ?? '—') }}</dd></div><div><dt>Outstanding</dt><dd>{{ combinedSelected() ? '₹' + combinedBalance().toLocaleString('en-IN') : (selectedLedger()?.balance?.formatted ?? '—') }}</dd></div><div class="student-fee-payment-summary__total"><dt>Amount to pay</dt><dd>{{ paymentAmount() === null ? '—' : '₹' + (paymentAmount() ?? 0).toLocaleString('en-IN') }}</dd></div></dl>
-        <label class="student-fee-review"><input type="checkbox" [checked]="reviewed()" (change)="onReviewChange($event)" /> <span>I have reviewed the selected dues and amount.</span></label>
-        <p class="student-fee-info-note"><svg lucideShieldCheck size="18" aria-hidden="true"></svg> Razorpay checkout opens after review. Order creation and verification are handled securely.</p>
-        @if (message()) { <p class="student-fee-payment-message" [class.is-error]="!message()?.includes('successfully')">{{ message() }}</p> }
-        <button class="student-fee-primary-action" type="button" [disabled]="!canContinue()" (click)="continueToPayment()">{{ processing() ? 'Preparing secure payment…' : 'Continue to secure payment' }}</button>
+        <dl>
+          <div>
+            <dt>Student</dt>
+            <dd>{{ workspace().student.name ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Fee period</dt>
+            <dd>
+              {{
+                combinedSelected()
+                  ? 'All published ' + selectedKind() + ' fees'
+                  : (selectedLedger()?.periodLabel ?? '—')
+              }}
+            </dd>
+          </div>
+          <div>
+            <dt>Outstanding</dt>
+            <dd>
+              {{
+                combinedSelected()
+                  ? '₹' + combinedBalance().toLocaleString('en-IN')
+                  : (selectedLedger()?.balance?.formatted ?? '—')
+              }}
+            </dd>
+          </div>
+          <div class="student-fee-payment-summary__total">
+            <dt>Amount to pay</dt>
+            <dd>
+              {{
+                paymentAmount() === null
+                  ? '—'
+                  : '₹' + (paymentAmount() ?? 0).toLocaleString('en-IN')
+              }}
+            </dd>
+          </div>
+        </dl>
+        <label class="student-fee-review"
+          ><input type="checkbox" [checked]="reviewed()" (change)="onReviewChange($event)" />
+          <span>I have reviewed the selected dues and amount.</span></label
+        >
+        <p class="student-fee-info-note">
+          <svg lucideShieldCheck size="18" aria-hidden="true"></svg> Razorpay checkout opens after
+          review. Order creation and verification are handled securely.
+        </p>
+        @if (message()) {
+          <p
+            class="student-fee-payment-message"
+            [class.is-error]="!message()?.includes('successfully')"
+          >
+            {{ message() }}
+          </p>
+        }
+        <button
+          class="student-fee-primary-action"
+          type="button"
+          [disabled]="!canContinue()"
+          (click)="continueToPayment()"
+        >
+          {{ processing() ? 'Preparing secure payment…' : 'Continue to secure payment' }}
+        </button>
       </aside>
     </section>
-    <section class="student-fee-payment-notes"><article><b><svg lucideRefreshCw size="22" aria-hidden="true"></svg></b><span><strong>Do not refresh during checkout</strong><small>Refreshing may interrupt your payment.</small></span></article><article><b><svg lucideReceiptText size="22" aria-hidden="true"></svg></b><span><strong>Receipt appears after verification</strong><small>Successful payments are verified before a receipt is generated.</small></span></article><article><b><svg lucideIndianRupee size="22" aria-hidden="true"></svg></b><span><strong>No additional payment charges</strong><small>You will not be charged extra fees on this payment.</small></span></article></section>
+    <section class="student-fee-payment-notes">
+      <article>
+        <b><svg lucideRefreshCw size="22" aria-hidden="true"></svg></b
+        ><span
+          ><strong>Do not refresh during checkout</strong
+          ><small>Refreshing may interrupt your payment.</small></span
+        >
+      </article>
+      <article>
+        <b><svg lucideReceiptText size="22" aria-hidden="true"></svg></b
+        ><span
+          ><strong>Receipt appears after verification</strong
+          ><small>Successful payments are verified before a receipt is generated.</small></span
+        >
+      </article>
+      <article>
+        <b><svg lucideIndianRupee size="22" aria-hidden="true"></svg></b
+        ><span
+          ><strong>No additional payment charges</strong
+          ><small>You will not be charged extra fees on this payment.</small></span
+        >
+      </article>
+    </section>
   }
 </main>
 <erp-student-mobile-bottom-nav />

@@ -3,10 +3,18 @@ import assert from 'node:assert/strict';
 import { semesterFeeDecision } from '../src/services/student-fee-ledger.js';
 import {
   allocatePaymentAcrossLedgers,
+  paymentAmounts,
   calculatePenaltyAmount,
   createOfflinePayment,
   paymentReceiptHtml,
 } from '../src/services/fee-payments.js';
+
+test('keeps an offline overpayment as excess credit', () => {
+  assert.deepEqual(paymentAmounts(50_000, 40_000, true), {
+    appliedAmount: 40_000,
+    excessCreditAmount: 10_000,
+  });
+});
 import { promoteStudentProgression } from '../src/services/student-promotion.js';
 
 test('splits only configured annual fee heads for semester-wise students', () => {
@@ -107,7 +115,11 @@ test('repeated offline submission returns the existing paid transaction without 
   const database = {
     collection(name) {
       assert.equal(name, 'feePayments');
-      return { async findOne() { return existing; } };
+      return {
+        async findOne() {
+          return existing;
+        },
+      };
     },
   };
   const result = await createOfflinePayment(

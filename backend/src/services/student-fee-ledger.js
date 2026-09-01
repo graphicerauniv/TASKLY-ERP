@@ -1,5 +1,6 @@
 import { ObjectId } from 'bson';
 import { scholarshipEntriesForPeriod } from './student-scholarships.js';
+import { applyAvailableStudentCredit } from './fee-payments.js';
 
 export async function generateStudentFeeLedgers(database, admission, createdBy, options = {}) {
   if (admission.status !== 'approved' || !admission.isActive)
@@ -45,6 +46,19 @@ export async function generateStudentFeeLedgers(database, admission, createdBy, 
     if (hostel === 'created') createdKinds.push('hostel');
     else skippedKinds.push({ kind: 'hostel', reason: hostel });
   }
+  let preparedNextPeriod = null;
+  if (
+    !options.academicOnly &&
+    options.prepareSemesterPair !== false &&
+    admission.feeFrequency === 'semester'
+  ) {
+    const prepared = await progressStudentFee(database, admission, 'semester', createdBy, {
+      enabled: false,
+    });
+    if (prepared.promotionCreated) preparedNextPeriod = prepared.targetPeriodLabel || null;
+  }
+  if (options.visibilityStatus !== 'hidden' && createdKinds.length)
+    await applyAvailableStudentCredit(database, admission._id);
   return {
     studentAdmissionId: admission._id,
     studentId: admission.studentId,
@@ -52,6 +66,7 @@ export async function generateStudentFeeLedgers(database, admission, createdBy, 
     createdKinds,
     skippedKinds,
     success: createdKinds.length > 0,
+    preparedNextPeriod,
   };
 }
 
@@ -108,20 +123,24 @@ export async function recalculateStudentAcademicLedger(database, admission, crea
   }
   const existingIds = existing.map((ledger) => ledger._id);
   if (existingIds.length)
-    await database.collection('studentFeeLedgers').updateMany(
-      { _id: { $in: existingIds }, status: 'active' },
-      { $set: { status: 'recalculating', updatedAt: new Date() } },
-    );
+    await database
+      .collection('studentFeeLedgers')
+      .updateMany(
+        { _id: { $in: existingIds }, status: 'active' },
+        { $set: { status: 'recalculating', updatedAt: new Date() } },
+      );
   try {
     const result = await generateStudentFeeLedgers(database, admission, createdBy, {
       academicOnly: true,
     });
     if (!result.createdKinds.includes('academic')) {
       if (existingIds.length)
-        await database.collection('studentFeeLedgers').updateMany(
-          { _id: { $in: existingIds }, status: 'recalculating' },
-          { $set: { status: 'active', updatedAt: new Date() } },
-        );
+        await database
+          .collection('studentFeeLedgers')
+          .updateMany(
+            { _id: { $in: existingIds }, status: 'recalculating' },
+            { $set: { status: 'active', updatedAt: new Date() } },
+          );
       return result;
     }
     if (existingIds.length)
@@ -139,10 +158,12 @@ export async function recalculateStudentAcademicLedger(database, admission, crea
     return result;
   } catch (error) {
     if (existingIds.length)
-      await database.collection('studentFeeLedgers').updateMany(
-        { _id: { $in: existingIds }, status: 'recalculating' },
-        { $set: { status: 'active', updatedAt: new Date() } },
-      );
+      await database
+        .collection('studentFeeLedgers')
+        .updateMany(
+          { _id: { $in: existingIds }, status: 'recalculating' },
+          { $set: { status: 'active', updatedAt: new Date() } },
+        );
     throw error;
   }
 }
@@ -181,7 +202,7 @@ async function academicLedger(
     .find({ bookId: book._id, courseId: context.courseId })
     .toArray();
   const fees = feesForAcademicYear(
-    selectMatchingCourseFees(candidates, context),
+    selectMatchingCourseFees(feesForMode(candidates, context.feeFrequency), context),
     context.currentAcademicYear,
   );
   if (!fees.length) return 'No matching course fee structure.';
@@ -189,7 +210,12 @@ async function academicLedger(
     return 'Multiple fee schedules match this student. Map the applicable eligibility band before creating fees.';
   let entries = await ledgerEntries(database, fees, book, 'academic', context);
   if (!entries.length) return 'No active mapped Academic Fee heads.';
-  entries = await scholarshipEntriesForPeriod(database, admission, context, entries);
+  entries = await scholarshipEntriesForPeriod(
+    database,
+    admission,
+    { ...context, periodKey },
+    entries,
+  );
   await insertLedger(database, {
     admission,
     context,
@@ -205,6 +231,71 @@ async function academicLedger(
     visibleFrom,
   });
   return 'created';
+}
+
+export async function previewStudentFeeModes(database, admission) {
+  const base = await feeContext(database, admission);
+  const book = await database.collection('feeBooks').findOne(
+    {
+      collegeId: base.collegeId,
+      academicSession: base.academicSession,
+      isActive: true,
+    },
+    { sort: { startDate: -1, createdAt: -1 } },
+  );
+  if (!book) return { activeMode: admission.feeFrequency || 'year', yearly: null, semesters: [] };
+  const candidates = await database
+    .collection('courseFees')
+    .find({ bookId: book._id, courseId: base.courseId })
+    .toArray();
+  const preview = async (feeFrequency, currentSemester = null) => {
+    const context = {
+      ...base,
+      feeFrequency,
+      currentSemester: currentSemester || base.currentAcademicYear * 2 - 1,
+    };
+    context.periodKey = academicPeriodKey(context);
+    const applicable = feesForAcademicYear(
+      selectMatchingCourseFees(feesForMode(candidates, feeFrequency), context),
+      context.currentAcademicYear,
+    );
+    let entries = await ledgerEntries(database, applicable, book, 'academic', context);
+    entries = await scholarshipEntriesForPeriod(
+      database,
+      { ...admission, feeFrequency },
+      context,
+      entries,
+    );
+    return {
+      feeFrequency,
+      academicYear: context.currentAcademicYear,
+      semester: feeFrequency === 'semester' ? context.currentSemester : null,
+      periodLabel:
+        feeFrequency === 'semester'
+          ? `Semester ${context.currentSemester}`
+          : `Year ${context.currentAcademicYear}`,
+      entries,
+      ...totalsForEntries(entries),
+    };
+  };
+  const firstSemester = base.currentAcademicYear * 2 - 1;
+  const [yearly, semesterOne, semesterTwo] = await Promise.all([
+    preview('year'),
+    preview('semester', firstSemester),
+    preview('semester', firstSemester + 1),
+  ]);
+  return {
+    activeMode: admission.feeFrequency === 'semester' ? 'semester' : 'year',
+    yearly,
+    semesters: [semesterOne, semesterTwo],
+    semesterWiseTotal: semesterOne.totalAmount + semesterTwo.totalAmount,
+    difference: semesterOne.totalAmount + semesterTwo.totalAmount - yearly.totalAmount,
+  };
+}
+
+function feesForMode(fees, feeFrequency) {
+  const exact = fees.filter((fee) => fee.periodType === feeFrequency);
+  return exact.length ? exact : fees.filter((fee) => !fee.periodType);
 }
 
 export function selectMatchingCourseFees(fees, context) {
@@ -530,6 +621,7 @@ export async function progressStudentFee(database, admission, mode, createdBy, p
   }
   const result = await generateStudentFeeLedgers(database, target, createdBy, {
     academicOnly: true,
+    prepareSemesterPair: false,
     penalty,
     visibilityStatus: 'hidden',
   });

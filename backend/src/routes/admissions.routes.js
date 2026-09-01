@@ -12,6 +12,7 @@ import { syncAdmissionIdentity } from '../services/admission-identity.js';
 import { validateSubmission } from '../services/admission-validation.js';
 import { storeObject } from '../services/object-storage.js';
 import { allowedMimeTypes, extensionForMimeType } from '../services/upload-rules.js';
+import { generateStudentFeeLedgers } from '../services/student-fee-ledger.js';
 
 export const admissionsRouter = express.Router();
 const upload = multer({
@@ -95,6 +96,28 @@ admissionsRouter.patch(
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
     if (!['draft', 'pending_approval', 'approved'].includes(admission.status))
       return response.status(409).json({ message: 'This student record cannot be edited.' });
+    const requestedFeeFrequency = request.body.feeFrequency
+      ? z.enum(['year', 'semester']).parse(request.body.feeFrequency)
+      : null;
+    const feeModeChanged =
+      admission.status === 'approved' &&
+      requestedFeeFrequency &&
+      requestedFeeFrequency !== (admission.feeFrequency === 'semester' ? 'semester' : 'year');
+    if (feeModeChanged) {
+      const paidLedger = await db()
+        .collection('studentFeeLedgers')
+        .findOne({
+          studentAdmissionId: admissionId,
+          kind: 'academic',
+          status: 'active',
+          paidAmount: { $gt: 0 },
+        });
+      if (paidLedger)
+        return response.status(409).json({
+          message:
+            'This student has Academic Fee payments. Accounts must complete a controlled fee-mode adjustment.',
+        });
+    }
     if (
       admission.status === 'approved' &&
       ['currentAcademicYear', 'currentSemester', 'feeFrequency'].some(
@@ -120,6 +143,12 @@ admissionsRouter.patch(
     if (plainObject(request.body.responses)) update.responses = request.body.responses;
     if (plainObject(request.body.repeatableResponses))
       update.repeatableResponses = request.body.repeatableResponses;
+    if (request.body.feeFrequencyChoice !== undefined) {
+      update.feeFrequencyChoice = z
+        .enum(['year', 'semester'])
+        .parse(request.body.feeFrequencyChoice);
+      update.feeFrequency = update.feeFrequencyChoice;
+    }
     if (request.body.currentAcademicYear !== undefined)
       update.currentAcademicYear = currentAcademicYearSchema.parse(
         request.body.currentAcademicYear,
@@ -140,6 +169,41 @@ admissionsRouter.patch(
         .collection('admissions')
         .updateOne({ _id: admissionId }, { $set: explicitFeePeriod });
     item = await db().collection('admissions').findOne({ _id: admissionId });
+    if (feeModeChanged) {
+      const now = new Date();
+      await db().collection('studentFeeLedgers').deleteMany({
+        studentAdmissionId: admissionId,
+        kind: 'academic',
+        status: 'active',
+      });
+      await db()
+        .collection('studentProgressions')
+        .updateMany(
+          { studentAdmissionId: admissionId, status: 'pending' },
+          {
+            $set: {
+              status: 'cancelled',
+              cancelledReason: 'Fee payment mode changed by administrator.',
+              cancelledAt: now,
+              updatedAt: now,
+            },
+          },
+        );
+      await db()
+        .collection('feeModeChanges')
+        .insertOne({
+          studentAdmissionId: admissionId,
+          studentId: item.studentId,
+          studentName: item.studentName,
+          fromMode: admission.feeFrequency === 'semester' ? 'semester' : 'year',
+          toMode: requestedFeeFrequency,
+          changedBy: id(request.admin._id),
+          changedAt: now,
+          createdAt: now,
+          updatedAt: now,
+        });
+      await generateStudentFeeLedgers(db(), item, id(request.admin._id));
+    }
     response.json({ item: serialize(item) });
   }),
 );
@@ -159,6 +223,10 @@ admissionsRouter.post(
       return response
         .status(422)
         .json({ message: 'Complete all required fields before submitting.', errors });
+    if (!['year', 'semester'].includes(admission.feeFrequencyChoice))
+      return response
+        .status(422)
+        .json({ message: 'Choose yearly or semester-wise fees before submitting.' });
     const identity = await syncAdmissionIdentity(db(), admission, admission.responses || {}, {
       generateStudentId: true,
     });
@@ -203,6 +271,10 @@ admissionsRouter.post(
     if (!admission.studentId)
       return response.status(422).json({ message: 'Generate the Student ID before approval.' });
     const passwordSetup = approvalSchema.parse(request.body);
+    if (admission.feeFrequencyChoice && passwordSetup.feeFrequency !== admission.feeFrequencyChoice)
+      return response.status(409).json({
+        message: 'The approval fee mode must match the mode selected in the admission form.',
+      });
     if (passwordSetup.feeFrequency === 'semester') {
       passwordSetup.currentSemester ||= passwordSetup.currentAcademicYear * 2 - 1;
       passwordSetup.currentAcademicYear = Math.ceil(passwordSetup.currentSemester / 2);
@@ -230,7 +302,13 @@ admissionsRouter.post(
         },
         { returnDocument: 'after' },
       );
-    response.json({ item: safeAdmission(item) });
+    let feeGeneration;
+    try {
+      feeGeneration = await generateStudentFeeLedgers(db(), item, id(request.admin._id));
+    } catch (error) {
+      feeGeneration = { success: false, reason: error.message };
+    }
+    response.json({ item: safeAdmission(item), feeGeneration: serialize(feeGeneration) });
   }),
 );
 admissionsRouter.post(

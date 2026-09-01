@@ -1,0 +1,154 @@
+<main class="student-final-page" aria-labelledby="comparison-title">
+  @if (workspace().state === 'loading') {
+    <section class="final-message">Preparing your fee-mode comparison…</section>
+  } @else if (workspace().state === 'error') {
+    <section class="final-message" role="alert">
+      <strong>Comparison unavailable</strong><span>{{ workspace().errorMessage }}</span
+      ><button type="button" (click)="load()">Try again</button>
+    </section>
+  } @else if (workspace().feeComparison; as comparison) {
+    <header class="final-heading">
+      <div>
+        <a routerLink="/student/fees" class="final-back">← Fees Overview</a>
+        <h1 id="comparison-title">Compare Fee Modes</h1>
+        <p>Review yearly and semester-wise pricing before requesting a billing-mode change.</p>
+      </div>
+      <span class="final-context"
+        >Active mode ·
+        {{ comparison.activeMode === 'year' ? 'Yearly fee' : 'Semester-wise fee' }}</span
+      >
+    </header>
+
+    <section class="final-stat-grid four">
+      <article>
+        <span class="final-icon blue"><svg lucideScale></svg></span>
+        <div>
+          <small>Active billing mode</small
+          ><strong>{{ comparison.activeMode === 'year' ? 'Yearly' : 'Semester-wise' }}</strong>
+        </div>
+      </article>
+      <article>
+        <span class="final-icon green"><svg lucideShieldCheck></svg></span>
+        <div>
+          <small>Yearly payable</small
+          ><strong>{{
+            comparison.yearly?.totalAmount | currency: 'INR' : 'symbol' : '1.0-2'
+          }}</strong>
+        </div>
+      </article>
+      <article>
+        <span class="final-icon violet"><svg lucideScale></svg></span>
+        <div>
+          <small>Semester-wise total</small
+          ><strong>{{
+            comparison.semesterWiseTotal | currency: 'INR' : 'symbol' : '1.0-2'
+          }}</strong>
+        </div>
+      </article>
+      <article>
+        <span class="final-icon orange"><svg lucideInfo></svg></span>
+        <div>
+          <small>Difference</small
+          ><strong>{{ comparison.difference | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+        </div>
+      </article>
+    </section>
+
+    <div class="final-two-col">
+      <section class="final-panel">
+        <h2>Yearly fee · includes 5% discount</h2>
+        @if (comparison.yearly; as yearly) {
+          <div class="final-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fee head / concession</th>
+                  <th>Charge</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of yearly.entries; track entry.feeHeadId + entry.feeHeadName) {
+                  <tr>
+                    <td>{{ entry.feeHeadName }}</td>
+                    <td>
+                      {{
+                        (entry.category === 'discount' ? -entry.amount : entry.amount)
+                          | currency: 'INR' : 'symbol' : '1.0-2'
+                      }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <b>Gross</b
+            ><strong>{{ yearly.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          </p>
+          <p>
+            <b>Scholarships and discounts</b
+            ><strong>{{ yearly.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          </p>
+          <p class="primary-text">
+            <b>Net yearly payable</b
+            ><strong>{{ yearly.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          </p>
+        } @else {
+          <div class="final-empty compact"><strong>Yearly structure unavailable</strong></div>
+        }
+      </section>
+
+      <section class="final-panel">
+        <h2>Semester-wise fee · no yearly discount</h2>
+        @for (semester of comparison.semesters; track semester.periodLabel) {
+          <h3>{{ semester.periodLabel }}</h3>
+          <div class="final-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fee head / concession</th>
+                  <th>Charge</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of semester.entries; track entry.feeHeadId + entry.feeHeadName) {
+                  <tr>
+                    <td>{{ entry.feeHeadName }}</td>
+                    <td>
+                      {{
+                        (entry.category === 'discount' ? -entry.amount : entry.amount)
+                          | currency: 'INR' : 'symbol' : '1.0-2'
+                      }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <b>Net payable</b
+            ><strong>{{ semester.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          </p>
+        } @empty {
+          <div class="final-empty compact">
+            <strong>Semester-wise structure unavailable</strong>
+          </div>
+        }
+      </section>
+    </div>
+
+    <div class="final-note">
+      <svg lucideInfo></svg
+      ><span
+        ><b>Want to change your fee mode?</b><br />This page is a comparison only. Contact the
+        administration; paid ledgers require an Accounts-controlled adjustment.</span
+      >
+    </div>
+  } @else {
+    <section class="final-message">
+      <strong>No comparison is available</strong
+      ><span>Ask Accounts to configure both yearly and semester-wise fee structures.</span>
+    </section>
+  }
+</main>
+<erp-student-mobile-bottom-nav />

@@ -4,8 +4,8 @@ import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-01-v10';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-01-v10';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-01-v12';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-01-v12';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -87,40 +87,151 @@ async function ensureIndexes(databaseInstance) {
   const indexOperations = [
     () => databaseInstance.collection('admins').createIndex({ email: 1 }, { unique: true }),
     () => databaseInstance.collection('masterTypes').createIndex({ slug: 1 }, { unique: true }),
-    () => databaseInstance.collection('masterValues').createIndex({ typeSlug: 1, name: 1, parentId: 1 }),
+    () =>
+      databaseInstance
+        .collection('masterValues')
+        .createIndex({ typeSlug: 1, name: 1, parentId: 1 }),
     () => databaseInstance.collection('forms').createIndex({ slug: 1 }, { unique: true }),
     () => databaseInstance.collection('admissions').createIndex({ formId: 1, createdAt: -1 }),
-    () => databaseInstance.collection('admissions').createIndex({ studentId: 1 }, { unique: true, sparse: true }),
+    () =>
+      databaseInstance
+        .collection('admissions')
+        .createIndex({ studentId: 1 }, { unique: true, sparse: true }),
     () => databaseInstance.collection('admissions').createIndex({ status: 1, updatedAt: -1 }),
     () => databaseInstance.collection('hostels').createIndex({ code: 1 }, { unique: true }),
     () => databaseInstance.collection('hostels').createIndex({ name: 1 }),
-    () => databaseInstance.collection('hostelBlocks').createIndex({ hostelId: 1, name: 1 }, { unique: true }),
-    () => databaseInstance.collection('hostelFloors').createIndex({ hostelId: 1, name: 1 }, { unique: true }),
-    () => databaseInstance.collection('hostelRooms').createIndex({ hostelId: 1, roomNumber: 1 }, { unique: true }),
-    () => databaseInstance.collection('hostelRoomConfigurations').createIndex({ roomId: 1, academicSession: 1 }, { unique: true }),
-    () => databaseInstance.collection('hostelAllocations').createIndex({ studentAdmissionId: 1, academicSession: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
-    () => databaseInstance.collection('hostelAllocations').createIndex({ roomId: 1, bedNumber: 1, academicSession: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
+    () =>
+      databaseInstance
+        .collection('hostelBlocks')
+        .createIndex({ hostelId: 1, name: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('hostelFloors')
+        .createIndex({ hostelId: 1, name: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('hostelRooms')
+        .createIndex({ hostelId: 1, roomNumber: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('hostelRoomConfigurations')
+        .createIndex({ roomId: 1, academicSession: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('hostelAllocations')
+        .createIndex(
+          { studentAdmissionId: 1, academicSession: 1 },
+          { unique: true, partialFilterExpression: { status: 'active' } },
+        ),
+    () =>
+      databaseInstance
+        .collection('hostelAllocations')
+        .createIndex(
+          { roomId: 1, bedNumber: 1, academicSession: 1 },
+          { unique: true, partialFilterExpression: { status: 'active' } },
+        ),
     () => databaseInstance.collection('feeBooks').createIndex({ code: 1 }, { unique: true }),
-    () => databaseInstance.collection('feeHeads').createIndex({ bookId: 1, normalizedName: 1 }, { unique: true }),
-    () => databaseInstance.collection('feeSchedules').createIndex({ universityId: 1, collegeId: 1, academicSession: 1, mode: 1, targetNumber: 1 }, { unique: true }),
-    () => databaseInstance.collection('scholarships').createIndex({ normalizedName: 1 }, { unique: true }),
-    () => databaseInstance.collection('studentScholarships').createIndex({ studentAdmissionId: 1, status: 1 }),
-    () => databaseInstance.collection('studentScholarships').createIndex({ studentAdmissionId: 1, scholarshipId: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
-    () => databaseInstance.collection('studentDiscounts').createIndex({ studentAdmissionId: 1, status: 1, targetLedgerId: 1 }),
-    () => databaseInstance.collection('hostelFees').createIndex({ bookId: 1, hostelId: 1, seater: 1, roomType: 1, feeHeadId: 1, frequency: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('feeHeads')
+        .createIndex({ bookId: 1, normalizedName: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('feeSchedules')
+        .createIndex(
+          { universityId: 1, collegeId: 1, academicSession: 1, mode: 1, targetNumber: 1 },
+          { unique: true },
+        ),
+    () =>
+      databaseInstance
+        .collection('scholarships')
+        .createIndex({ normalizedName: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('studentScholarships')
+        .createIndex({ studentAdmissionId: 1, status: 1 }),
+    () =>
+      databaseInstance
+        .collection('studentScholarships')
+        .createIndex(
+          { studentAdmissionId: 1, scholarshipId: 1 },
+          { unique: true, partialFilterExpression: { status: 'active' } },
+        ),
+    () =>
+      databaseInstance
+        .collection('studentDiscounts')
+        .createIndex({ studentAdmissionId: 1, status: 1, targetLedgerId: 1 }),
+    () =>
+      databaseInstance
+        .collection('hostelFees')
+        .createIndex(
+          { bookId: 1, hostelId: 1, seater: 1, roomType: 1, feeHeadId: 1, frequency: 1 },
+          { unique: true },
+        ),
     () => databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1 }),
-    () => databaseInstance.collection('courseFees').createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),
+    () =>
+      databaseInstance
+        .collection('courseFees')
+        .createIndex({ bookId: 1, courseId: 1, domicileId: 1, studentTypeId: 1 }),
     () => databaseInstance.collection('courseFees').createIndex({ importPreviewId: 1 }),
-    () => databaseInstance.collection('studentFeeLedgers').createIndex({ studentAdmissionId: 1, feeBookId: 1, kind: 1, periodKey: 1 }, { unique: true, partialFilterExpression: { status: 'active' } }),
-    () => databaseInstance.collection('studentFeeLedgers').createIndex({ studentAdmissionId: 1, status: 1, kind: 1 }),
-    () => databaseInstance.collection('feeImportPreviews').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-    () => databaseInstance.collection('feePayments').createIndex({ razorpayOrderId: 1 }, { unique: true }),
-    () => databaseInstance.collection('feePayments').createIndex({ razorpayPaymentId: 1 }, { unique: true, sparse: true }),
-    () => databaseInstance.collection('feePayments').createIndex({ idempotencyKey: 1 }, { unique: true, sparse: true }),
-    () => databaseInstance.collection('feePayments').createIndex({ receiptNumber: 1 }, { unique: true, sparse: true }),
-    () => databaseInstance.collection('feePayments').createIndex({ studentAdmissionId: 1, createdAt: -1 }),
-    () => databaseInstance.collection('studentProgressions').createIndex({ studentAdmissionId: 1, status: 1 }, { unique: true, partialFilterExpression: { status: 'pending' } }),
-    () => databaseInstance.collection('studentProgressions').createIndex({ mode: 1, status: 1, academicSession: 1, toAcademicYear: 1, toSemester: 1 }),
+    () =>
+      databaseInstance
+        .collection('studentFeeLedgers')
+        .createIndex(
+          { studentAdmissionId: 1, feeBookId: 1, kind: 1, periodKey: 1 },
+          { unique: true, partialFilterExpression: { status: 'active' } },
+        ),
+    () =>
+      databaseInstance
+        .collection('studentFeeLedgers')
+        .createIndex({ studentAdmissionId: 1, status: 1, kind: 1 }),
+    () =>
+      databaseInstance
+        .collection('feeImportPreviews')
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    () =>
+      databaseInstance
+        .collection('feePayments')
+        .createIndex({ razorpayOrderId: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('feePayments')
+        .createIndex({ razorpayPaymentId: 1 }, { unique: true, sparse: true }),
+    () =>
+      databaseInstance
+        .collection('feePayments')
+        .createIndex({ idempotencyKey: 1 }, { unique: true, sparse: true }),
+    () =>
+      databaseInstance
+        .collection('feePayments')
+        .createIndex({ receiptNumber: 1 }, { unique: true, sparse: true }),
+    () =>
+      databaseInstance
+        .collection('feePayments')
+        .createIndex({ studentAdmissionId: 1, createdAt: -1 }),
+    () =>
+      databaseInstance
+        .collection('feeCredits')
+        .createIndex({ studentAdmissionId: 1, kind: 1, status: 1, createdAt: 1 }),
+    () =>
+      databaseInstance
+        .collection('feeCreditAllocations')
+        .createIndex({ studentAdmissionId: 1, appliedAt: -1 }),
+    () =>
+      databaseInstance
+        .collection('feeModeChanges')
+        .createIndex({ studentAdmissionId: 1, changedAt: -1 }),
+    () =>
+      databaseInstance
+        .collection('studentProgressions')
+        .createIndex(
+          { studentAdmissionId: 1, status: 1 },
+          { unique: true, partialFilterExpression: { status: 'pending' } },
+        ),
+    () =>
+      databaseInstance
+        .collection('studentProgressions')
+        .createIndex({ mode: 1, status: 1, academicSession: 1, toAcademicYear: 1, toSemester: 1 }),
   ];
   for (const operation of indexOperations) await operation();
 }

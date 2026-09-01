@@ -3,21 +3,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
-import {
-  FeePayment,
-  OfflinePaymentStudent,
-  StudentFeeLedger,
-} from '../../../core/models';
+import { FeePayment, OfflinePaymentStudent, StudentFeeLedger } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 
 type OfflineMethod =
-  | 'cash'
-  | 'upi'
-  | 'bank_transfer'
-  | 'cheque'
-  | 'card'
-  | 'demand_draft'
-  | 'other';
+  'cash' | 'upi' | 'bank_transfer' | 'cheque' | 'card' | 'demand_draft' | 'other';
 
 @Component({
   selector: 'erp-offline-payment',
@@ -40,16 +30,15 @@ export class OfflinePaymentComponent {
   readonly error = signal('');
   readonly message = signal('');
   readonly receipt = signal<FeePayment | null>(null);
+  readonly excessCreditBalance = signal(0);
   readonly kindLedgers = computed(() =>
     this.ledgers().filter((ledger) => ledger.kind === this.selectedKind()),
   );
   readonly payableLedgers = computed(() =>
-    this.kindLedgers().filter(
-      (ledger) => Number(ledger.balanceAmount || 0) > 0,
-    ),
+    this.kindLedgers().filter((ledger) => Number(ledger.balanceAmount || 0) > 0),
   );
-  readonly selectedLedger = computed(() =>
-    this.payableLedgers().find((ledger) => ledger._id === this.targetLedgerId()) ?? null,
+  readonly selectedLedger = computed(
+    () => this.payableLedgers().find((ledger) => ledger._id === this.targetLedgerId()) ?? null,
   );
   readonly maximum = computed(() =>
     this.selectedLedger()
@@ -59,6 +48,7 @@ export class OfflinePaymentComponent {
           0,
         ),
   );
+  readonly projectedExcess = computed(() => Math.max(0, Number(this.amount || 0) - this.maximum()));
   amount: number | null = null;
   method: OfflineMethod = 'cash';
   referenceNumber = '';
@@ -74,10 +64,11 @@ export class OfflinePaymentComponent {
     this.loading.set(true);
     this.error.set('');
     this.api.offlinePaymentWorkspace(this.studentAdmissionId).subscribe({
-      next: ({ student, ledgers, payments }) => {
+      next: ({ student, ledgers, payments, excessCreditBalance }) => {
         this.student.set(student);
         this.ledgers.set(ledgers);
         this.payments.set(payments);
+        this.excessCreditBalance.set(Number(excessCreditBalance || 0));
         if (!this.kindLedgers().length && ledgers.some((ledger) => ledger.kind === 'hostel'))
           this.selectedKind.set('hostel');
         this.loading.set(false);
@@ -107,8 +98,8 @@ export class OfflinePaymentComponent {
   adjust() {
     if (this.saving()) return;
     const amount = Number(this.amount || 0);
-    if (amount <= 0 || amount > this.maximum()) {
-      this.error.set(`Enter an amount between ₹1 and ₹${this.maximum().toLocaleString('en-IN')}.`);
+    if (amount <= 0) {
+      this.error.set('Enter an amount greater than zero.');
       return;
     }
     if (this.method !== 'cash' && !this.referenceNumber.trim()) {
@@ -130,10 +121,14 @@ export class OfflinePaymentComponent {
         idempotencyKey: this.idempotencyKey,
       })
       .subscribe({
-        next: ({ item, duplicate, ledgers }) => {
+        next: ({ item, duplicate, ledgers, excessCreditBalance }) => {
           this.ledgers.set(ledgers);
-          this.payments.update((items) => [item, ...items.filter((value) => value._id !== item._id)]);
+          this.payments.update((items) => [
+            item,
+            ...items.filter((value) => value._id !== item._id),
+          ]);
           this.receipt.set(item);
+          this.excessCreditBalance.set(Number(excessCreditBalance || 0));
           this.message.set(
             duplicate
               ? 'This payment was already adjusted. The existing receipt is shown below.'
@@ -156,9 +151,11 @@ export class OfflinePaymentComponent {
   }
 
   downloadReceipt(payment: FeePayment) {
-    this.api.downloadAdminReceipt(payment._id).subscribe((blob) =>
-      downloadBlob(blob, `${payment.receiptNumber || 'offline-fee-receipt'}.html`),
-    );
+    this.api
+      .downloadAdminReceipt(payment._id)
+      .subscribe((blob) =>
+        downloadBlob(blob, `${payment.receiptNumber || 'offline-fee-receipt'}.html`),
+      );
   }
 
   visibleEntries(ledger: StudentFeeLedger) {

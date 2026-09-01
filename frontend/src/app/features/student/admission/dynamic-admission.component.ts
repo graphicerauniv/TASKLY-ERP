@@ -290,10 +290,20 @@ export class DynamicAdmissionComponent implements OnInit {
     else this.save(true);
   }
   applicationMissingRequired() {
-    return (this.form()?.sections || []).reduce(
+    const formMissing = (this.form()?.sections || []).reduce(
       (total, section) => total + this.requiredMissingFields(section),
       0,
     );
+    return formMissing + (this.admission()?.feeFrequencyChoice ? 0 : 1);
+  }
+  chooseFeeFrequency(value: 'year' | 'semester') {
+    const admission = this.admission();
+    if (!admission) return;
+    admission.feeFrequencyChoice = value;
+    admission.feeFrequency = value;
+    this.admission.set(structuredClone(admission));
+    this.dirty.set(true);
+    this.error.set('');
   }
   backAction() {
     if (this.reviewMode()) {
@@ -620,7 +630,10 @@ export class DynamicAdmissionComponent implements OnInit {
     }));
     const savedYear = Number(admission.responses[yearField.id] || admission.currentAcademicYear);
     const selectedYear =
-      !useConfiguredDefault && Number.isInteger(savedYear) && savedYear >= 1 && savedYear <= duration
+      !useConfiguredDefault &&
+      Number.isInteger(savedYear) &&
+      savedYear >= 1 &&
+      savedYear <= duration
         ? savedYear
         : defaultYear;
     admission.responses[yearField.id] = String(selectedYear);

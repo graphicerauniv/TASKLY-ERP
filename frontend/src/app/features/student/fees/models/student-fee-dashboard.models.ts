@@ -44,6 +44,7 @@ export interface StudentFeeDashboardViewModel {
     totalFee: MoneyValue | null;
     paidAmount: MoneyValue | null;
     outstandingAmount: MoneyValue | null;
+    excessCredit: MoneyValue | null;
     nextDueDate: string | null;
     dueState: FeeDueState;
   };
@@ -113,7 +114,7 @@ export interface StudentPaymentRecordViewModel {
   receiptNumber: string | null;
   orderReference: string;
   paymentId: string | null;
-  paymentChannel: 'online' | 'offline';
+  paymentChannel: 'online' | 'offline' | 'credit';
   amount: MoneyValue;
   feeType: StudentPaymentFeeType;
   feePeriodLabel: string;
@@ -132,6 +133,9 @@ export interface StudentFeeWorkspaceViewModel {
   ledgers: FeeLedgerDetailViewModel[];
   payments: StudentPaymentRecordViewModel[];
   razorpayEnabled: boolean;
+  excessCredit: MoneyValue | null;
+  feeComparison: StudentFeeComparison | null;
   source: FeeValueSource;
   loadedAt: string | null;
 }
+import type { StudentFeeComparison } from '../../../../core/models';

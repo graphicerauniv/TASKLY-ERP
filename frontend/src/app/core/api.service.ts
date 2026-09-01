@@ -16,6 +16,7 @@ import {
   MasterValue,
   StudentSession,
   StudentFeeLedger,
+  StudentFeeComparison,
   CourseFee,
   CourseFeeDraft,
   FeeBook,
@@ -23,6 +24,7 @@ import {
   FeeImportPreview,
   HostelFee,
   FeePayment,
+  FeeCredit,
   FeeProgressionCandidate,
   StudentPromotion,
   Scholarship,
@@ -117,6 +119,7 @@ export class ApiService {
       currentAcademicYear: admission.currentAcademicYear,
       currentSemester: admission.currentSemester,
       feeFrequency: admission.feeFrequency,
+      feeFrequencyChoice: admission.feeFrequencyChoice,
       responses: admission.responses,
       repeatableResponses: admission.repeatableResponses,
     });
@@ -168,10 +171,12 @@ export class ApiService {
     );
   }
   studentFees(token: string) {
-    return this.http.get<{ items: StudentFeeLedger[]; student: StudentSession }>(
-      `${API_BASE_URL}/auth/student/fees`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
+    return this.http.get<{
+      items: StudentFeeLedger[];
+      student: StudentSession;
+      excessCreditBalance: number;
+      feeComparison: StudentFeeComparison;
+    }>(`${API_BASE_URL}/auth/student/fees`, { headers: { Authorization: `Bearer ${token}` } });
   }
   studentProfile(token: string) {
     return this.http.get<{ profile: StudentProfile }>(`${API_BASE_URL}/auth/student/profile`, {
@@ -283,10 +288,9 @@ export class ApiService {
     let params = new HttpParams();
     for (const [key, value] of Object.entries(filters))
       if (value !== undefined && value !== null && value !== '') params = params.set(key, value);
-    return this.http.get<{ items: StudentPromotion[] }>(
-      `${API_BASE_URL}/fees/student-promotions`,
-      { params },
-    );
+    return this.http.get<{ items: StudentPromotion[] }>(`${API_BASE_URL}/fees/student-promotions`, {
+      params,
+    });
   }
   promoteStudents(progressionIds: string[]) {
     return this.http.post<{
@@ -302,7 +306,13 @@ export class ApiService {
     return this.http.get<{
       items: FeePayment[];
       discounts: StudentDiscount[];
-      summary: { successfulPayments: number; collectedAmount: number; pendingPayments: number };
+      credits: FeeCredit[];
+      summary: {
+        successfulPayments: number;
+        collectedAmount: number;
+        pendingPayments: number;
+        availableCredit: number;
+      };
     }>(`${API_BASE_URL}/payments/admin/accounts`, { params });
   }
   downloadAdminReceipt(paymentId: string) {
@@ -315,6 +325,7 @@ export class ApiService {
       student: OfflinePaymentStudent;
       ledgers: StudentFeeLedger[];
       payments: FeePayment[];
+      excessCreditBalance: number;
     }>(`${API_BASE_URL}/payments/admin/offline/${studentAdmissionId}`);
   }
   createOfflinePayment(
@@ -334,6 +345,7 @@ export class ApiService {
       item: FeePayment;
       duplicate: boolean;
       ledgers: StudentFeeLedger[];
+      excessCreditBalance: number;
     }>(`${API_BASE_URL}/payments/admin/offline/${studentAdmissionId}`, body);
   }
   deleteStudentFees(studentAdmissionId: string) {
@@ -380,6 +392,7 @@ export class ApiService {
         currentSectionId: admission.currentSectionId,
         responses: admission.responses,
         repeatableResponses: admission.repeatableResponses,
+        feeFrequencyChoice: admission.feeFrequencyChoice,
       },
       { headers: { 'x-admission-key': key } },
     );
@@ -602,28 +615,26 @@ export class ApiService {
   feeSchedules() {
     return this.http.get<{ items: FeeSchedule[] }>(`${API_BASE_URL}/fees/fee-schedules`);
   }
-  createFeeSchedule(body: Omit<FeeSchedule, '_id' | 'universityName' | 'collegeName' | 'createdAt'>) {
+  createFeeSchedule(
+    body: Omit<FeeSchedule, '_id' | 'universityName' | 'collegeName' | 'createdAt'>,
+  ) {
     return this.http.post<{ item: FeeSchedule }>(`${API_BASE_URL}/fees/fee-schedules`, body);
   }
   updateFeeSchedule(id: string, body: Partial<FeeSchedule>) {
     return this.http.patch<{ item: FeeSchedule }>(`${API_BASE_URL}/fees/fee-schedules/${id}`, body);
   }
   publishFeeSchedule(id: string) {
-    return this.http.post<{ studentsProcessed: number; published: number; alreadyPublished: number }>(
-      `${API_BASE_URL}/fees/fee-schedules/${id}/publish`,
-      {},
-    );
+    return this.http.post<{
+      studentsProcessed: number;
+      published: number;
+      alreadyPublished: number;
+    }>(`${API_BASE_URL}/fees/fee-schedules/${id}/publish`, {});
   }
-  createScholarship(
-    body: Pick<Scholarship, 'name' | 'valueMode' | 'type' | 'value' | 'isActive'>,
-  ) {
+  createScholarship(body: Pick<Scholarship, 'name' | 'valueMode' | 'type' | 'value' | 'isActive'>) {
     return this.http.post<{ item: Scholarship }>(`${API_BASE_URL}/fees/scholarships`, body);
   }
   updateScholarship(id: string, body: Partial<Scholarship>) {
-    return this.http.patch<{ item: Scholarship }>(
-      `${API_BASE_URL}/fees/scholarships/${id}`,
-      body,
-    );
+    return this.http.patch<{ item: Scholarship }>(`${API_BASE_URL}/fees/scholarships/${id}`, body);
   }
   deleteScholarship(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/fees/scholarships/${id}`);

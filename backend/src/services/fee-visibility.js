@@ -1,4 +1,4 @@
-import { refreshLedgerPenalty } from './fee-payments.js';
+import { applyAvailableStudentCredit, refreshLedgerPenalty } from './fee-payments.js';
 import { progressStudentFee } from './student-fee-ledger.js';
 
 export async function ensureStudentScheduledFees(database, admission, now = new Date()) {
@@ -39,7 +39,8 @@ export async function publishFeeSchedule(database, schedule, actorId) {
 
 export async function publishScheduleForStudent(database, schedule, admission, actorId) {
   const target = targetForSchedule(schedule, admission);
-  if (!target) return { studentAdmissionId: admission._id, published: false, reason: 'Not eligible.' };
+  if (!target)
+    return { studentAdmissionId: admission._id, published: false, reason: 'Not eligible.' };
   let ledger = await database.collection('studentFeeLedgers').findOne({
     studentAdmissionId: admission._id,
     kind: 'academic',
@@ -110,6 +111,7 @@ export async function publishScheduleForStudent(database, schedule, admission, a
     );
     await refreshLedgerPenalty(database, { ...previous, penalty });
   }
+  await applyAvailableStudentCredit(database, admission._id, 'academic');
   return {
     studentAdmissionId: admission._id,
     studentId: admission.studentId,

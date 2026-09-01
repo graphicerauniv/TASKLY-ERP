@@ -8,7 +8,7 @@
   @if (error()) {
     <p class="erp-notice erp-notice--error">{{ error() }}</p>
   }
-  <section class="erp-metric-strip erp-metric-strip--three" aria-label="Payments summary">
+  <section class="erp-metric-strip" aria-label="Payments summary">
     <article class="erp-metric-strip__item">
       <span class="erp-metric-strip__icon erp-metric-strip__icon--image"
         ><img src="assets/admin/finance-icons/accounts-payments.png" alt="" aria-hidden="true"
@@ -16,6 +16,12 @@
       <div>
         <small>Total collected</small>
         <strong>{{ summary().collectedAmount | currency: 'INR' }}</strong>
+      </div>
+    </article>
+    <article class="erp-metric-strip__item">
+      <div>
+        <small>Available excess credit</small
+        ><strong>{{ summary().availableCredit | currency: 'INR' }}</strong>
       </div>
     </article>
     <article class="erp-metric-strip__item">
@@ -30,6 +36,55 @@
         <strong>{{ summary().pendingPayments }}</strong>
       </div>
     </article>
+  </section>
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>
+          Student excess credit <small>{{ credits().length }}</small>
+        </h2>
+        <p>Unallocated offline receipts retained for matching future fees.</p>
+      </div>
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Fee type</th>
+            <th>Source receipt</th>
+            <th>Original excess</th>
+            <th>Available credit</th>
+            <th>Status</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (credit of credits(); track credit._id) {
+            <tr>
+              <td>
+                <strong>{{ credit.studentName }}</strong
+                ><small>{{ credit.studentId }}</small>
+              </td>
+              <td>{{ credit.kind === 'academic' ? 'Academic Fee' : 'Hostel Fee' }}</td>
+              <td>{{ credit.sourceReceiptNumber || '—' }}</td>
+              <td>{{ credit.originalAmount | currency: 'INR' }}</td>
+              <td>
+                <strong>{{ credit.remainingAmount | currency: 'INR' }}</strong>
+              </td>
+              <td>
+                <span class="erp-status">{{ credit.status }}</span>
+              </td>
+              <td>{{ credit.createdAt | date: 'medium' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="erp-empty-state">No excess-credit records found.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </section>
   <section class="erp-card erp-table-shell">
     <div class="erp-table-toolbar">
@@ -83,7 +138,24 @@
                 <strong>{{ payment.studentName }}</strong
                 ><small>{{ payment.studentId }}</small>
               </td>
-              <td><strong>{{ payment.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay' }}</strong><small>{{ payment.paymentReference || payment.razorpayPaymentId || payment.razorpayOrderId }}</small>@if (payment.paymentChannel === 'offline' && payment.acceptedByName) { <small>Received by {{ payment.acceptedByName }}</small> }@if (payment.paymentChannel === 'offline' && payment.internalRemark) { <small>{{ payment.internalRemark }}</small> }</td>
+              <td>
+                <strong>{{
+                  payment.paymentChannel === 'offline'
+                    ? 'Offline'
+                    : payment.paymentChannel === 'credit'
+                      ? 'Excess credit'
+                      : 'Online · Razorpay'
+                }}</strong
+                ><small>{{
+                  payment.paymentReference || payment.razorpayPaymentId || payment.razorpayOrderId
+                }}</small>
+                @if (payment.paymentChannel === 'offline' && payment.acceptedByName) {
+                  <small>Received by {{ payment.acceptedByName }}</small>
+                }
+                @if (payment.paymentChannel === 'offline' && payment.internalRemark) {
+                  <small>{{ payment.internalRemark }}</small>
+                }
+              </td>
               <td>{{ payment.amount | currency: 'INR' }}</td>
               <td>{{ payment.targetPeriodLabel || 'Legacy payment' }}</td>
               <td>
@@ -92,7 +164,8 @@
                   track allocation.feeHeadId + allocation.ledgerId
                 ) {
                   <small
-                    >{{ allocation.periodLabel ? allocation.periodLabel + ' · ' : '' }}{{ allocation.feeHeadName }}: {{ allocation.amount | currency: 'INR' }}</small
+                    >{{ allocation.periodLabel ? allocation.periodLabel + ' · ' : ''
+                    }}{{ allocation.feeHeadName }}: {{ allocation.amount | currency: 'INR' }}</small
                   >
                 }
               </td>

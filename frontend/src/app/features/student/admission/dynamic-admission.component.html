@@ -231,6 +231,41 @@
       </div>
     }
 
+    <section class="erp-card erp-card--padded" aria-labelledby="fee-mode-title">
+      <div class="erp-card__header">
+        <div>
+          <h2 id="fee-mode-title">Fee payment mode *</h2>
+          <p>
+            Choose how you want your Academic Fee to be billed. This selection is saved with your
+            application.
+          </p>
+        </div>
+      </div>
+      <div class="erp-segmented-control" role="radiogroup" aria-label="Fee payment mode">
+        <button
+          type="button"
+          role="radio"
+          [attr.aria-checked]="admission()?.feeFrequencyChoice === 'year'"
+          [class.is-active]="admission()?.feeFrequencyChoice === 'year'"
+          (click)="chooseFeeFrequency('year')"
+        >
+          Yearly fee · includes yearly-payment discount
+        </button>
+        <button
+          type="button"
+          role="radio"
+          [attr.aria-checked]="admission()?.feeFrequencyChoice === 'semester'"
+          [class.is-active]="admission()?.feeFrequencyChoice === 'semester'"
+          (click)="chooseFeeFrequency('semester')"
+        >
+          Semester-wise fee
+        </button>
+      </div>
+      @if (!admission()?.feeFrequencyChoice && reviewMode()) {
+        <p class="erp-field-error">Select a fee payment mode before submitting.</p>
+      }
+    </section>
+
     <erp-form-action-bar
       [saveStatus]="saveStatusText()"
       [showBack]="activeIndex() > 0 || reviewMode()"

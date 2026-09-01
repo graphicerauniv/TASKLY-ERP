@@ -8,51 +8,174 @@
         <h1>Payment History</h1>
         <p>Track every payment attempt and its verification status.</p>
       </div>
-      <span class="student-fee-subpage__context">{{ workspace().student.courseName || 'Course' }} · {{ workspace().student.currentPeriod || 'Period' }} · {{ workspace().student.academicSession || 'Session' }}</span>
+      <span class="student-fee-subpage__context"
+        >{{ workspace().student.courseName || 'Course' }} ·
+        {{ workspace().student.currentPeriod || 'Period' }} ·
+        {{ workspace().student.academicSession || 'Session' }}</span
+      >
     </header>
 
     <div class="student-fee-stat-grid student-fee-stat-grid--four">
-      <article class="student-fee-stat-card"><img src="/assets/student/fee-icons/compact/payment-history.webp" alt="" class="student-fee-stat-card__icon"><div><span>All Transactions</span><strong>{{ workspace().payments.length }}</strong></div></article>
-      <article class="student-fee-stat-card"><img src="/assets/student/fee-icons/compact/payment-receipts.webp" alt="" class="student-fee-stat-card__icon is-green"><div><span>Successful</span><strong>{{ successfulCount() }}</strong></div></article>
-      <article class="student-fee-stat-card"><img src="/assets/student/fee-icons/compact/latest-payment.webp" alt="" class="student-fee-stat-card__icon is-orange"><div><span>Pending</span><strong>{{ pendingCount() }}</strong></div></article>
-      <article class="student-fee-stat-card"><img src="/assets/student/fee-icons/compact/outstanding-due.webp" alt="" class="student-fee-stat-card__icon is-red"><div><span>Failed</span><strong>{{ failedCount() }}</strong></div></article>
+      <article class="student-fee-stat-card">
+        <img
+          src="/assets/student/fee-icons/compact/payment-history.webp"
+          alt=""
+          class="student-fee-stat-card__icon"
+        />
+        <div>
+          <span>All Transactions</span><strong>{{ workspace().payments.length }}</strong>
+        </div>
+      </article>
+      <article class="student-fee-stat-card">
+        <img
+          src="/assets/student/fee-icons/compact/payment-receipts.webp"
+          alt=""
+          class="student-fee-stat-card__icon is-green"
+        />
+        <div>
+          <span>Successful</span><strong>{{ successfulCount() }}</strong>
+        </div>
+      </article>
+      <article class="student-fee-stat-card">
+        <img
+          src="/assets/student/fee-icons/compact/latest-payment.webp"
+          alt=""
+          class="student-fee-stat-card__icon is-orange"
+        />
+        <div>
+          <span>Pending</span><strong>{{ pendingCount() }}</strong>
+        </div>
+      </article>
+      <article class="student-fee-stat-card">
+        <img
+          src="/assets/student/fee-icons/compact/outstanding-due.webp"
+          alt=""
+          class="student-fee-stat-card__icon is-red"
+        />
+        <div>
+          <span>Failed</span><strong>{{ failedCount() }}</strong>
+        </div>
+      </article>
     </div>
 
     <article class="student-fee-panel">
       <div class="student-fee-toolbar">
-        <label class="student-fee-search-field"><svg lucideSearch size="19" aria-hidden="true"></svg><input class="student-fee-search" type="search" placeholder="Search reference or payment ID" [value]="searchTerm()" (input)="onSearch($event)"></label>
+        <label class="student-fee-search-field"
+          ><svg lucideSearch size="19" aria-hidden="true"></svg
+          ><input
+            class="student-fee-search"
+            type="search"
+            placeholder="Search reference or payment ID"
+            [value]="searchTerm()"
+            (input)="onSearch($event)"
+        /></label>
         <select class="student-fee-filter" [value]="periodFilter()" (change)="onPeriod($event)">
           <option value="all">All fee periods</option>
-          @for (period of periods(); track period) { <option [value]="period">{{ period }}</option> }
+          @for (period of periods(); track period) {
+            <option [value]="period">{{ period }}</option>
+          }
         </select>
         <select class="student-fee-filter" [value]="dateFilter()" (change)="onDate($event)">
           <option value="all">All dates</option>
           <option value="30">Last 30 days</option>
           <option value="90">Last 90 days</option>
         </select>
-        <button class="student-fee-soft-action" disabled><svg lucideDownload size="17" aria-hidden="true"></svg> Export</button>
+        <button class="student-fee-soft-action" disabled>
+          <svg lucideDownload size="17" aria-hidden="true"></svg> Export
+        </button>
       </div>
       <div class="student-fee-status-pills">
-        <button class="student-fee-status-pill" [class.is-active]="statusFilter() === 'all'" (click)="setStatus('all')">All</button>
-        <button class="student-fee-status-pill" [class.is-active]="statusFilter() === 'successful'" (click)="setStatus('successful')"><svg lucideCheckCircle2 size="15" aria-hidden="true"></svg> Successful</button>
-        <button class="student-fee-status-pill" [class.is-active]="statusFilter() === 'pending'" (click)="setStatus('pending')"><svg lucideClock3 size="15" aria-hidden="true"></svg> Pending</button>
-        <button class="student-fee-status-pill" [class.is-active]="statusFilter() === 'failed'" (click)="setStatus('failed')"><svg lucideXCircle size="15" aria-hidden="true"></svg> Failed</button>
+        <button
+          class="student-fee-status-pill"
+          [class.is-active]="statusFilter() === 'all'"
+          (click)="setStatus('all')"
+        >
+          All
+        </button>
+        <button
+          class="student-fee-status-pill"
+          [class.is-active]="statusFilter() === 'successful'"
+          (click)="setStatus('successful')"
+        >
+          <svg lucideCheckCircle2 size="15" aria-hidden="true"></svg> Successful
+        </button>
+        <button
+          class="student-fee-status-pill"
+          [class.is-active]="statusFilter() === 'pending'"
+          (click)="setStatus('pending')"
+        >
+          <svg lucideClock3 size="15" aria-hidden="true"></svg> Pending
+        </button>
+        <button
+          class="student-fee-status-pill"
+          [class.is-active]="statusFilter() === 'failed'"
+          (click)="setStatus('failed')"
+        >
+          <svg lucideXCircle size="15" aria-hidden="true"></svg> Failed
+        </button>
       </div>
 
       @if (filteredPayments().length) {
         <div class="student-fee-table-wrap">
           <table class="student-fee-table">
-            <thead><tr><th>Status</th><th>Order / Reference</th><th>Channel</th><th>Date & Time</th><th>Amount</th><th>Fee Type</th><th>Action</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Order / Reference</th>
+                <th>Channel</th>
+                <th>Date & Time</th>
+                <th>Amount</th>
+                <th>Fee Type</th>
+                <th>Action</th>
+              </tr>
+            </thead>
             <tbody>
               @for (payment of filteredPayments(); track payment.id) {
                 <tr>
-                  <td><span class="student-fee-status-chip" [class.is-successful]="payment.status === 'successful'" [class.is-pending]="payment.status === 'pending'" [class.is-failed]="payment.status === 'failed'"><svg [lucideIcon]="payment.status === 'successful' ? 'circle-check' : payment.status === 'pending' ? 'clock-3' : 'circle-x'" size="15" aria-hidden="true"></svg>{{ payment.status }}</span></td>
-                  <td><strong>{{ payment.orderReference }}</strong><small>{{ payment.receiptNumber || 'No receipt yet' }}</small></td>
-                  <td><strong>{{ payment.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay' }}</strong><small>{{ payment.paymentId || '—' }}</small></td>
-                  <td>{{ (payment.paidAt || payment.createdAt) | date: 'medium' }}</td>
-                  <td><strong>{{ payment.amount.formatted }}</strong></td>
+                  <td>
+                    <span
+                      class="student-fee-status-chip"
+                      [class.is-successful]="payment.status === 'successful'"
+                      [class.is-pending]="payment.status === 'pending'"
+                      [class.is-failed]="payment.status === 'failed'"
+                      ><svg
+                        [lucideIcon]="
+                          payment.status === 'successful'
+                            ? 'circle-check'
+                            : payment.status === 'pending'
+                              ? 'clock-3'
+                              : 'circle-x'
+                        "
+                        size="15"
+                        aria-hidden="true"
+                      ></svg
+                      >{{ payment.status }}</span
+                    >
+                  </td>
+                  <td>
+                    <strong>{{ payment.orderReference }}</strong
+                    ><small>{{ payment.receiptNumber || 'No receipt yet' }}</small>
+                  </td>
+                  <td>
+                    <strong>{{
+                      payment.paymentChannel === 'offline'
+                        ? 'Offline'
+                        : payment.paymentChannel === 'credit'
+                          ? 'Excess credit adjustment'
+                          : 'Online · Razorpay'
+                    }}</strong
+                    ><small>{{ payment.paymentId || '—' }}</small>
+                  </td>
+                  <td>{{ payment.paidAt || payment.createdAt | date: 'medium' }}</td>
+                  <td>
+                    <strong>{{ payment.amount.formatted }}</strong>
+                  </td>
                   <td>{{ payment.feeType }}</td>
-                  <td><a routerLink="/student/fees/receipts" class="student-fee-table-link">Receipts</a></td>
+                  <td>
+                    <a routerLink="/student/fees/receipts" class="student-fee-table-link"
+                      >Receipts</a
+                    >
+                  </td>
                 </tr>
               }
             </tbody>
@@ -60,23 +183,50 @@
         </div>
       } @else {
         <div class="student-fee-empty-state">
-          <img src="/assets/student/fee-icons/empty-states/no-payment-history.webp" alt="" class="student-fee-empty-state__image">
+          <img
+            src="/assets/student/fee-icons/empty-states/no-payment-history.webp"
+            alt=""
+            class="student-fee-empty-state__image"
+          />
           <h2>No payment transactions yet</h2>
           <p>Your payment attempts will appear here after you start a fee payment.</p>
           <div class="student-fee-empty-actions">
             <a routerLink="/student/fees/pay" class="student-fee-primary-action">Go to Pay Fees</a>
-            <a routerLink="/student/fees/receipts" class="student-fee-outline-action">View Receipts</a>
+            <a routerLink="/student/fees/receipts" class="student-fee-outline-action"
+              >View Receipts</a
+            >
           </div>
         </div>
       }
     </article>
 
     <section class="student-fee-process-grid" aria-label="Payment statuses">
-      <article class="student-fee-process-card is-success"><span>✓</span><div><strong>Successful</strong><p>Verified by the backend.</p></div></article>
-      <article class="student-fee-process-card is-warning"><span>◷</span><div><strong>Pending</strong><p>Awaiting confirmation.</p></div></article>
-      <article class="student-fee-process-card is-danger"><span>×</span><div><strong>Failed</strong><p>Payment did not complete.</p></div></article>
+      <article class="student-fee-process-card is-success">
+        <span>✓</span>
+        <div>
+          <strong>Successful</strong>
+          <p>Verified by the backend.</p>
+        </div>
+      </article>
+      <article class="student-fee-process-card is-warning">
+        <span>◷</span>
+        <div>
+          <strong>Pending</strong>
+          <p>Awaiting confirmation.</p>
+        </div>
+      </article>
+      <article class="student-fee-process-card is-danger">
+        <span>×</span>
+        <div>
+          <strong>Failed</strong>
+          <p>Payment did not complete.</p>
+        </div>
+      </article>
     </section>
-    <aside class="student-fee-secure-note"><svg lucideInfo size="20" aria-hidden="true"></svg> Money debited but not successful? Contact Fee Support with the order reference.</aside>
+    <aside class="student-fee-secure-note">
+      <svg lucideInfo size="20" aria-hidden="true"></svg> Money debited but not successful? Contact
+      Fee Support with the order reference.
+    </aside>
   }
 </section>
 

@@ -65,7 +65,8 @@ async function entriesWithCurrentPriorities(database, sourceEntries) {
   const entries = sourceEntries
     .map(normalizeEntry)
     .filter(
-      (entry) => entry.isPenalty || Number(entry.amount || 0) > 0 || Number(entry.paidAmount || 0) > 0,
+      (entry) =>
+        entry.isPenalty || Number(entry.amount || 0) > 0 || Number(entry.paidAmount || 0) > 0,
     );
   const feeHeadIds = entries
     .filter((entry) => !entry.isPenalty && entry.feeHeadId)
@@ -126,8 +127,13 @@ export async function createRazorpayOrder(
     targets.reduce((sum, ledger) => sum + Number(ledger.balanceAmount || 0), 0),
   );
   const amount = roundMoney(amountRupees);
-  if (amount <= 0 || amount > outstanding) {
-    const error = new Error(`Enter an amount between ₹1 and ₹${outstanding.toFixed(2)}.`);
+  if (amount <= 0) {
+    const error = new Error('Enter an amount greater than zero.');
+    error.status = 422;
+    throw error;
+  }
+  if (amount > outstanding) {
+    const error = new Error(`The maximum payable amount is ${outstanding}.`);
     error.status = 422;
     throw error;
   }
@@ -185,12 +191,7 @@ export async function createRazorpayOrder(
   };
 }
 
-export async function createOfflinePayment(
-  database,
-  student,
-  data,
-  acceptedBy,
-) {
+export async function createOfflinePayment(database, student, data, acceptedBy) {
   const existing = await database
     .collection('feePayments')
     .findOne({ idempotencyKey: data.idempotencyKey });
@@ -223,9 +224,7 @@ export async function createOfflinePayment(
           String(ledger._id) === String(data.targetLedgerId) &&
           ledger.visibilityStatus !== 'hidden',
       )
-    : ledgers.filter(
-        (ledger) => ledger.kind === data.kind && ledger.visibilityStatus !== 'hidden',
-      );
+    : ledgers.filter((ledger) => ledger.kind === data.kind && ledger.visibilityStatus !== 'hidden');
   if (!targets.length) {
     const error = new Error('No published fee balance was found for this selection.');
     error.status = 404;
@@ -251,9 +250,7 @@ export async function createOfflinePayment(
     studentName: student.studentName,
     targetLedgerId: data.targetLedgerId || null,
     targetKind: data.kind,
-    targetPeriodLabel: data.targetLedgerId
-      ? targets[0].periodLabel
-      : `Combined ${data.kind} fees`,
+    targetPeriodLabel: data.targetLedgerId ? targets[0].periodLabel : `Combined ${data.kind} fees`,
     razorpayOrderId: orderId,
     paymentChannel: 'offline',
     paymentReference,
@@ -263,6 +260,7 @@ export async function createOfflinePayment(
     currency: 'INR',
     method: data.method,
     internalRemark: data.internalRemark || '',
+    allowExcessCredit: true,
     acceptedBy: acceptedBy._id,
     acceptedByName: acceptedBy.name || acceptedBy.email || 'Administrator',
     status: 'created',
@@ -397,7 +395,15 @@ export async function completePayment(
     error.status = 409;
     throw error;
   }
-  const allocations = allocatePaymentAcrossLedgers(ledgers, payment.amount);
+  const outstanding = roundMoney(
+    ledgers.reduce((sum, ledger) => sum + Number(ledger.balanceAmount || 0), 0),
+  );
+  const { appliedAmount, excessCreditAmount } = paymentAmounts(
+    payment.amount,
+    outstanding,
+    payment.allowExcessCredit,
+  );
+  const allocations = appliedAmount > 0 ? allocatePaymentAcrossLedgers(ledgers, appliedAmount) : [];
   for (const ledger of ledgers) {
     const totals = ledgerTotals(ledger.entries.map(normalizeEntry));
     await database.collection('studentFeeLedgers').updateOne(
@@ -413,6 +419,20 @@ export async function completePayment(
     );
   }
   const receiptNumber = `RCPT-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${crypto.randomInt(100_000, 1_000_000)}`;
+  if (excessCreditAmount > 0)
+    await database.collection('feeCredits').insertOne({
+      studentAdmissionId: payment.studentAdmissionId,
+      studentId: payment.studentId,
+      studentName: payment.studentName,
+      kind: payment.targetKind || 'academic',
+      sourcePaymentId: payment._id,
+      sourceReceiptNumber: receiptNumber,
+      originalAmount: excessCreditAmount,
+      remainingAmount: excessCreditAmount,
+      status: 'available',
+      createdAt: paidAt,
+      updatedAt: new Date(),
+    });
   const updated = await database.collection('feePayments').findOneAndUpdate(
     { _id: payment._id, status: 'processing' },
     {
@@ -424,6 +444,8 @@ export async function completePayment(
         email,
         contact,
         allocations,
+        appliedAmount,
+        excessCreditAmount,
         receiptNumber,
         status: 'paid',
         paidAt,
@@ -433,6 +455,120 @@ export async function completePayment(
     { returnDocument: 'after' },
   );
   return updated || database.collection('feePayments').findOne({ _id: payment._id });
+}
+
+export function paymentAmounts(amount, outstanding, allowExcessCredit = false) {
+  const received = roundMoney(amount);
+  const due = roundMoney(outstanding);
+  const appliedAmount = roundMoney(allowExcessCredit ? Math.min(received, due) : received);
+  return {
+    appliedAmount,
+    excessCreditAmount: roundMoney(Math.max(0, received - appliedAmount)),
+  };
+}
+
+export async function studentCreditBalance(database, studentAdmissionId, kind = null) {
+  const filter = { studentAdmissionId, status: 'available', remainingAmount: { $gt: 0 } };
+  if (kind) filter.kind = kind;
+  const credits = await database.collection('feeCredits').find(filter).toArray();
+  return roundMoney(credits.reduce((sum, credit) => sum + Number(credit.remainingAmount || 0), 0));
+}
+
+export async function applyAvailableStudentCredit(database, studentAdmissionId, kind = null) {
+  const creditFilter = {
+    studentAdmissionId,
+    status: 'available',
+    remainingAmount: { $gt: 0 },
+  };
+  if (kind) creditFilter.kind = kind;
+  const credits = await database
+    .collection('feeCredits')
+    .find(creditFilter)
+    .sort({ createdAt: 1 })
+    .toArray();
+  const adjustments = [];
+  for (const credit of credits) {
+    let ledgers = await refreshStudentPenalties(database, studentAdmissionId);
+    ledgers = ledgers.filter(
+      (ledger) =>
+        ledger.visibilityStatus !== 'hidden' &&
+        ledger.status === 'active' &&
+        ledger.kind === credit.kind &&
+        Number(ledger.balanceAmount || 0) > 0,
+    );
+    const outstanding = roundMoney(
+      ledgers.reduce((sum, ledger) => sum + Number(ledger.balanceAmount || 0), 0),
+    );
+    const amount = roundMoney(Math.min(Number(credit.remainingAmount || 0), outstanding));
+    if (amount <= 0) continue;
+    const allocations = allocatePaymentAcrossLedgers(ledgers, amount);
+    for (const ledger of ledgers) {
+      const totals = ledgerTotals(ledger.entries.map(normalizeEntry));
+      await database.collection('studentFeeLedgers').updateOne(
+        { _id: ledger._id },
+        {
+          $set: {
+            entries: ledger.entries,
+            ...totals,
+            paymentStatus: totals.balanceAmount ? 'partial' : 'paid',
+            updatedAt: new Date(),
+          },
+        },
+      );
+    }
+    const remainingAmount = roundMoney(Number(credit.remainingAmount) - amount);
+    await database.collection('feeCredits').updateOne(
+      { _id: credit._id },
+      {
+        $set: {
+          remainingAmount,
+          status: remainingAmount > 0 ? 'available' : 'consumed',
+          updatedAt: new Date(),
+        },
+      },
+    );
+    const now = new Date();
+    const adjustment = {
+      studentAdmissionId,
+      studentId: credit.studentId,
+      studentName: credit.studentName,
+      feeCreditId: credit._id,
+      sourcePaymentId: credit.sourcePaymentId,
+      sourceReceiptNumber: credit.sourceReceiptNumber,
+      kind: credit.kind,
+      amount,
+      allocations,
+      status: 'applied',
+      appliedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const result = await database.collection('feeCreditAllocations').insertOne(adjustment);
+    adjustments.push({ ...adjustment, _id: result.insertedId });
+    await database.collection('feePayments').insertOne({
+      studentAdmissionId,
+      studentId: credit.studentId,
+      studentName: credit.studentName,
+      targetLedgerId: null,
+      targetKind: credit.kind,
+      targetPeriodLabel: `Automatic ${credit.kind} fee credit adjustment`,
+      razorpayOrderId: `CREDIT-${crypto.randomUUID()}`,
+      paymentChannel: 'credit',
+      paymentReference: credit.sourceReceiptNumber,
+      amount,
+      appliedAmount: amount,
+      excessCreditAmount: 0,
+      currency: 'INR',
+      method: 'excess_credit',
+      allocations,
+      receiptNumber: `CRADJ-${now.toISOString().slice(0, 10).replaceAll('-', '')}-${crypto.randomInt(100_000, 1_000_000)}`,
+      status: 'paid',
+      paidAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  return adjustments;
 }
 
 export function allocatePaymentAcrossLedgers(ledgers, paymentAmount) {
@@ -466,9 +602,7 @@ export function allocatePaymentAcrossLedgers(ledgers, paymentAmount) {
     target.entry.balanceAmount = roundMoney(
       Math.max(
         0,
-        target.entry.amount -
-          Number(target.entry.discountAmount || 0) -
-          target.entry.paidAmount,
+        target.entry.amount - Number(target.entry.discountAmount || 0) - target.entry.paidAmount,
       ),
     );
     target.entry.status = target.entry.balanceAmount <= 0 ? 'paid' : 'partial';
@@ -505,12 +639,20 @@ export function paymentReceiptHtml(payment) {
         `<tr><td>${escapeHtml(item.feeHeadName)}</td><td>${escapeHtml(item.periodLabel || item.ledgerKind)}</td><td style="text-align:right">₹${Number(item.amount).toFixed(2)}</td></tr>`,
     )
     .join('');
-  const channel = payment.paymentChannel === 'offline' ? 'Offline' : 'Online · Razorpay';
+  const channel =
+    payment.paymentChannel === 'offline'
+      ? 'Offline'
+      : payment.paymentChannel === 'credit'
+        ? 'Excess credit adjustment'
+        : 'Online · Razorpay';
   const reference = payment.paymentReference || payment.razorpayPaymentId || '';
-  const collector = payment.paymentChannel === 'offline' && payment.acceptedByName
-    ? `<p><strong>Received by:</strong> ${escapeHtml(payment.acceptedByName)}</p>`
-    : '';
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(payment.receiptNumber)}</title><style>body{font:14px Arial;color:#172033;max-width:760px;margin:40px auto;padding:24px}header{border-bottom:2px solid #172033;margin-bottom:24px}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:20px;text-align:right;margin-top:20px}</style></head><body><header><h1>Taskly ERP Fee Receipt</h1><p>Receipt ${escapeHtml(payment.receiptNumber)}</p></header><p><strong>Student:</strong> ${escapeHtml(payment.studentName)} (${escapeHtml(payment.studentId)})</p><p><strong>Fee period:</strong> ${escapeHtml(payment.targetPeriodLabel || 'Fee payment')}</p><p><strong>Payment channel:</strong> ${escapeHtml(channel)}</p><p><strong>Payment method:</strong> ${escapeHtml(payment.method || 'Not recorded')}</p><p><strong>Reference:</strong> ${escapeHtml(reference)}</p>${collector}<p><strong>Paid at:</strong> ${escapeHtml(new Date(payment.paidAt).toLocaleString('en-IN'))}</p><table><thead><tr><th>Fee head</th><th>Fee period</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><p class="total"><strong>Total paid: ₹${Number(payment.amount).toFixed(2)}</strong></p><p>This is a system-generated receipt.</p></body></html>`;
+  const collector =
+    payment.paymentChannel === 'offline' && payment.acceptedByName
+      ? `<p><strong>Received by:</strong> ${escapeHtml(payment.acceptedByName)}</p>`
+      : '';
+  const appliedAmount = Number(payment.appliedAmount ?? payment.amount);
+  const excessCreditAmount = Number(payment.excessCreditAmount || 0);
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(payment.receiptNumber)}</title><style>body{font:14px Arial;color:#172033;max-width:760px;margin:40px auto;padding:24px}header{border-bottom:2px solid #172033;margin-bottom:24px}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:20px;text-align:right;margin-top:20px}</style></head><body><header><h1>Taskly ERP Fee Receipt</h1><p>Receipt ${escapeHtml(payment.receiptNumber)}</p></header><p><strong>Student:</strong> ${escapeHtml(payment.studentName)} (${escapeHtml(payment.studentId)})</p><p><strong>Fee period:</strong> ${escapeHtml(payment.targetPeriodLabel || 'Fee payment')}</p><p><strong>Payment channel:</strong> ${escapeHtml(channel)}</p><p><strong>Payment method:</strong> ${escapeHtml(payment.method || 'Not recorded')}</p><p><strong>Reference:</strong> ${escapeHtml(reference)}</p>${collector}<p><strong>Paid at:</strong> ${escapeHtml(new Date(payment.paidAt).toLocaleString('en-IN'))}</p><table><thead><tr><th>Fee head</th><th>Fee period</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><p><strong>Adjusted against fees:</strong> ₹${appliedAmount.toFixed(2)}</p>${excessCreditAmount > 0 ? `<p><strong>Excess student credit:</strong> ₹${excessCreditAmount.toFixed(2)}</p>` : ''}<p class="total"><strong>Total received: ₹${Number(payment.amount).toFixed(2)}</strong></p><p>This is a system-generated receipt.</p></body></html>`;
 }
 
 function normalizeEntry(entry) {

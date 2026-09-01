@@ -6,9 +6,10 @@ import { config } from '../config.js';
 import { db, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { requireAdmin, requireStudent } from '../middleware/auth.js';
-import { refreshStudentPenalties } from '../services/fee-payments.js';
+import { refreshStudentPenalties, studentCreditBalance } from '../services/fee-payments.js';
 import { ensureStudentScheduledFees, isStudentVisibleLedger } from '../services/fee-visibility.js';
 import { studentProfile } from '../services/student-profile.js';
+import { previewStudentFeeModes } from '../services/student-fee-ledger.js';
 
 export const authRouter = express.Router();
 const loginSchema = z.object({
@@ -137,7 +138,12 @@ authRouter.get(
       (left, right) =>
         left.kind.localeCompare(right.kind) || new Date(right.createdAt) - new Date(left.createdAt),
     );
-    response.json({ items: items.map(serialize), student: publicStudent(request.student) });
+    response.json({
+      items: items.map(serialize),
+      student: publicStudent(request.student),
+      excessCreditBalance: await studentCreditBalance(db(), request.student._id),
+      feeComparison: await previewStudentFeeModes(db(), request.student),
+    });
   }),
 );
 
