@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { MasterValue, StudentPromotion } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
-import { AdmissionWorkspaceNavComponent } from '../../../shared/ui/admission-workspace-nav/admission-workspace-nav.component';
 import {
   CompactActionItem,
   CompactActionMenuComponent,
@@ -13,7 +12,6 @@ import {
   selector: 'erp-student-promotions',
   imports: [
     AdminPageComponent,
-    AdmissionWorkspaceNavComponent,
     CompactActionMenuComponent,
     FormsModule,
   ],

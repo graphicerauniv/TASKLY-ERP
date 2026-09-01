@@ -13,6 +13,7 @@
       : 'Define how this scholarship reduces the Tuition Fee.'
   "
   variant="minimal"
+  [layout]="mode() === 'view' ? 'collection' : 'default'"
 >
   <div page-actions class="erp-table-toolbar__actions">
     @if (mode() === 'view') {
@@ -25,15 +26,6 @@
       >
     }
   </div>
-
-  <nav class="scholarship-workspace-nav" aria-label="Scholarship workspace">
-    <a routerLink="/admin/fees/scholarships/view" routerLinkActive="is-active"
-      >Scholarship directory <small>Search and manage schemes</small></a
-    >
-    <a routerLink="/admin/fees/scholarships/create" routerLinkActive="is-active"
-      >Create scheme <small>Add a reusable rule</small></a
-    >
-  </nav>
 
   @if (message()) {
     <p class="erp-notice erp-notice--success">{{ message() }}</p>
@@ -71,16 +63,12 @@
             placeholder="Search scholarship name"
             aria-label="Search scholarships"
           />
-          <select
-            class="erp-control"
-            [ngModel]="statusFilter()"
-            (ngModelChange)="statusFilter.set($event)"
-            aria-label="Filter by status"
-          >
-            <option value="all">All statuses</option>
-            <option value="active">Active only</option>
-            <option value="inactive">Inactive only</option>
-          </select>
+          <erp-filter-popover
+            label="Status filters"
+            [options]="statusFilterOptions"
+            [value]="statusFilter()"
+            (valueChange)="statusFilter.set($any($event))"
+          />
         </div>
       </div>
       <div class="erp-table-shell__scroll">

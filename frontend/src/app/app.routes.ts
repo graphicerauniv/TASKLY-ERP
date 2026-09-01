@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { ADMIN_ROUTES } from './features/admin/admin.routes';
 import { STUDENT_ROUTES } from './features/student/student.routes';
 
 export const appRoutes: Routes = [
@@ -10,7 +9,8 @@ export const appRoutes: Routes = [
   },
   {
     path: 'admin',
-    children: ADMIN_ROUTES,
+    loadChildren: () =>
+      import('./features/admin/admin.routes').then((routes) => routes.ADMIN_ROUTES),
   },
   {
     path: 'student',

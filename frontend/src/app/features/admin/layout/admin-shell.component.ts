@@ -1,357 +1,248 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   HostListener,
+  ViewChild,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import {
-  LucideArrowLeft,
-  LucideBedDouble,
-  LucideBookOpen,
-  LucideBookOpenCheck,
-  LucideBookPlus,
-  LucideCalendarCheck,
-  LucideBell,
-  LucideBuilding2,
+  LucideChevronDown,
+  LucideChevronLeft,
   LucideChevronRight,
-  LucideClipboardList,
-  LucideDatabase,
-  LucideDoorOpen,
-  LucideGlobe,
-  LucideHouse,
-  LucideLandmark,
-  LucideLayers,
-  LucideLayoutDashboard,
+  LucideDynamicIcon,
   LucideLifeBuoy,
   LucideLogOut,
-  LucideMap,
-  LucideMapPinned,
   LucideMenu,
-  LucideFilePenLine,
-  LucidePlus,
-  LucideReceiptIndianRupee,
-  LucideSearch,
-  LucideUniversity,
-  LucideUserPlus,
-  LucideUsersRound,
   LucideX,
-  LucideTags,
-  LucideTableProperties,
-  LucideWalletCards,
 } from '@lucide/angular';
-import { AuthService } from '../../../core/auth.service';
-import { MasterDataStore } from '../../../core/master-data.store';
-import { MasterType } from '../../../core/models';
 import { filter } from 'rxjs';
+
+import { AuthService } from '../../../core/auth.service';
+import {
+  ADMIN_NAVIGATION,
+  AdminNavigationEntry,
+  AdminNavigationSection,
+  adminNavigationIcon,
+  matchesAdminRoute,
+  resolveAdminPageContext,
+} from './navigation/admin-navigation.config';
 
 @Component({
   selector: 'erp-admin-shell',
+  standalone: true,
   imports: [
-    RouterOutlet,
+    CdkTrapFocus,
+    NgTemplateOutlet,
     RouterLink,
-    RouterLinkActive,
-    LucideArrowLeft,
-    LucideBedDouble,
-    LucideBookOpen,
-    LucideBookOpenCheck,
-    LucideBookPlus,
-    LucideCalendarCheck,
-    LucideBell,
-    LucideBuilding2,
+    RouterOutlet,
+    LucideChevronDown,
+    LucideChevronLeft,
     LucideChevronRight,
-    LucideClipboardList,
-    LucideDatabase,
-    LucideDoorOpen,
-    LucideGlobe,
-    LucideHouse,
-    LucideLandmark,
-    LucideLayers,
-    LucideLayoutDashboard,
+    LucideDynamicIcon,
     LucideLifeBuoy,
     LucideLogOut,
-    LucideMap,
-    LucideMapPinned,
     LucideMenu,
-    LucideFilePenLine,
-    LucidePlus,
-    LucideReceiptIndianRupee,
-    LucideSearch,
-    LucideUniversity,
-    LucideUserPlus,
-    LucideUsersRound,
     LucideX,
-    LucideTags,
-    LucideTableProperties,
-    LucideWalletCards,
   ],
   templateUrl: './admin-shell.component.html',
+  styleUrl: './admin-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminShellComponent {
-  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
-  private readonly masterDataStore = inject(MasterDataStore);
-  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  readonly masterTypes = this.masterDataStore.types;
-  readonly menuOpen = signal(false);
-  readonly navigationSearch = signal('');
-  readonly masterMenuOpen = signal(false);
-  readonly hostelMenuOpen = signal(false);
-  readonly admissionMenuOpen = signal(false);
-  readonly feeMenuOpen = signal(false);
-  readonly feeGroupOpen = signal<'books' | 'heads' | 'hostel' | 'course' | null>(null);
-  readonly masterGroupOpen = signal<string | null>(null);
-  readonly masterTypeOpen = signal<string | null>(null);
-  readonly masterSearch = signal('');
-  readonly currentModule = signal('Dashboard');
-  private masterMenuTrigger: HTMLElement | null = null;
-  private hostelMenuTrigger: HTMLElement | null = null;
-  readonly masterGroups = computed(() => {
-    const types = this.masterTypes();
-    const bySlug = new Map(types.map((type) => [type.slug, type]));
-    const group = (title: string, slugs: string[]) => ({
-      title,
-      items: slugs.map((slug) => bySlug.get(slug)).filter((item): item is MasterType => !!item),
-    });
-    return [
-      group('Academic Masters', [
-        'academic',
-        'university',
-        'college',
-        'department',
-        'level',
-        'course',
-        'domicile',
-        'student-type',
-        'fee-type',
-      ]),
-      group('Location Masters', ['country', 'state', 'district', 'city']),
-      {
-        title: 'Custom Masters',
-        items: types.filter((type) => type.isCustom),
-      },
-    ];
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly document = inject(DOCUMENT);
+
+  readonly auth = inject(AuthService);
+  readonly navigation = ADMIN_NAVIGATION;
+  readonly matchesAdminRoute = matchesAdminRoute;
+  readonly currentUrl = signal(this.router.url);
+  readonly desktopCollapsed = signal(true);
+  readonly mobileOpen = signal(false);
+  readonly expandedSectionId = signal<string | null>(null);
+  readonly expandedSubgroupId = signal<string | null>(null);
+  readonly desktopFlyoutTop = signal(72);
+  readonly desktopFlyoutMaxHeight = signal(480);
+  readonly pageContext = signal(resolveAdminPageContext(this.router.url));
+  readonly adminInitials = computed(() => {
+    const name = this.auth.admin()?.name?.trim() || 'Administrator';
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
   });
-  readonly filteredMasterGroups = computed(() => {
-    const query = this.masterSearch().trim().toLocaleLowerCase();
-    return this.masterGroups()
-      .map((group) => ({
-        ...group,
-        items: query
-          ? group.items.filter((item) => item.name.toLocaleLowerCase().includes(query))
-          : group.items,
-      }))
-      .filter((group) => group.items.length > 0 || group.title === 'Custom Masters');
-  });
+
+  @ViewChild('mobileMenuButton') private mobileMenuButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('mobileCloseButton') private mobileCloseButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('pageTitle') private pageTitle?: ElementRef<HTMLElement>;
+  private desktopFlyoutAnchor: HTMLElement | null = null;
+
   constructor() {
-    this.updateCurrentModule(this.router.url);
+    this.syncNavigation(this.router.url);
+
     this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => this.updateCurrentModule(event.urlAfterRedirects));
-    this.masterDataStore.load().subscribe();
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe((event) => {
+        this.syncNavigation(event.urlAfterRedirects);
+        this.closeMobileNavigation(false);
+        window.setTimeout(() => this.pageTitle?.nativeElement.focus(), 0);
+      });
+
+    effect((onCleanup) => {
+      const body = this.document.body;
+      const previousOverflow = body.style.overflow;
+      body.style.overflow = this.mobileOpen() ? 'hidden' : previousOverflow;
+      onCleanup(() => {
+        body.style.overflow = previousOverflow;
+      });
+    });
   }
-  logout() {
+
+  iconFor = adminNavigationIcon;
+
+  toggleDesktopSidebar(): void {
+    this.desktopCollapsed.update((collapsed) => !collapsed);
+  }
+
+  openMobileNavigation(): void {
+    this.mobileOpen.set(true);
+    window.setTimeout(() => this.mobileCloseButton?.nativeElement.focus(), 0);
+  }
+
+  closeMobileNavigation(restoreFocus = true): void {
+    if (!this.mobileOpen()) return;
+    this.mobileOpen.set(false);
+    if (restoreFocus) {
+      window.setTimeout(() => this.mobileMenuButton?.nativeElement.focus(), 0);
+    }
+  }
+
+  toggleSection(section: AdminNavigationSection, event?: Event, mobile = false): void {
+    if (!section.children?.length) return;
+    const opening = this.expandedSectionId() !== section.id;
+    this.expandedSectionId.set(opening ? section.id : null);
+    if (!opening) this.expandedSubgroupId.set(null);
+
+    if (!mobile && opening) {
+      this.desktopFlyoutAnchor = event?.currentTarget as HTMLElement | null;
+      window.requestAnimationFrame(() => this.repositionDesktopFlyout());
+    } else if (!mobile) {
+      this.desktopFlyoutAnchor = null;
+    }
+  }
+
+  repositionDesktopFlyout(): void {
+    if (!this.desktopFlyoutAnchor || !this.expandedSectionId()) return;
+    const rect = this.desktopFlyoutAnchor.getBoundingClientRect();
+    const viewportPadding = 12;
+    const minimumHeight = 220;
+    const preferredTop = Math.max(viewportPadding, rect.top - 8);
+    const maximumTop = Math.max(viewportPadding, window.innerHeight - minimumHeight - viewportPadding);
+    const top = Math.min(preferredTop, maximumTop);
+    this.desktopFlyoutTop.set(top);
+    this.desktopFlyoutMaxHeight.set(Math.max(minimumHeight, window.innerHeight - top - viewportPadding));
+  }
+
+  closeDesktopFlyout(): void {
+    this.expandedSectionId.set(null);
+    this.expandedSubgroupId.set(null);
+    this.desktopFlyoutAnchor?.focus();
+    this.desktopFlyoutAnchor = null;
+  }
+
+  toggleSubgroup(entry: AdminNavigationEntry): void {
+    this.expandedSubgroupId.update((current) => (current === entry.id ? null : entry.id));
+  }
+
+  isSectionExpanded(section: AdminNavigationSection): boolean {
+    return this.expandedSectionId() === section.id;
+  }
+
+  isSubgroupExpanded(entry: AdminNavigationEntry): boolean {
+    return this.expandedSubgroupId() === entry.id;
+  }
+
+  isSectionActive(section: AdminNavigationSection): boolean {
+    return matchesAdminRoute(section.activeWhen, this.currentUrl());
+  }
+
+  isEntryActive(entry: AdminNavigationEntry): boolean {
+    if (matchesAdminRoute(entry.activeWhen, this.currentUrl())) return true;
+    return (
+      entry.children?.some((link) => matchesAdminRoute(link.activeWhen, this.currentUrl())) ?? false
+    );
+  }
+
+  selectNavigation(): void {
+    this.closeMobileNavigation(false);
+  }
+
+  logout(): void {
+    this.closeMobileNavigation(false);
     this.auth.clear();
     void this.router.navigate(['/login']);
   }
-  toggleMasterMenu(event?: Event) {
-    this.masterMenuTrigger = (event?.currentTarget as HTMLElement | null) || this.masterMenuTrigger;
-    if (this.masterMenuOpen()) {
-      this.closeMasterMenu();
-      return;
-    }
-    this.admissionMenuOpen.set(false);
-    this.feeMenuOpen.set(false);
-    this.feeGroupOpen.set(null);
-    this.hostelMenuOpen.set(false);
-    this.masterMenuOpen.set(true);
-    this.masterDataStore.load().subscribe();
-    setTimeout(() =>
-      this.host.nativeElement.querySelector<HTMLInputElement>('.master-search input')?.focus(),
-    );
-  }
-  toggleAdmissionMenu() {
-    this.masterMenuOpen.set(false);
-    this.hostelMenuOpen.set(false);
-    this.feeMenuOpen.set(false);
-    this.feeGroupOpen.set(null);
-    this.admissionMenuOpen.update((open) => !open);
-  }
-  closeNavigation() {
-    this.masterMenuOpen.set(false);
-    this.hostelMenuOpen.set(false);
-    this.admissionMenuOpen.set(false);
-    this.feeMenuOpen.set(false);
-    this.feeGroupOpen.set(null);
-    this.menuOpen.set(false);
-    this.masterSearch.set('');
-    this.masterGroupOpen.set(null);
-    this.masterTypeOpen.set(null);
-  }
-  closeFlyouts() {
-    const restoreMasterFocus = this.masterMenuOpen();
-    this.masterMenuOpen.set(false);
-    this.hostelMenuOpen.set(false);
-    this.admissionMenuOpen.set(false);
-    this.feeMenuOpen.set(false);
-    this.feeGroupOpen.set(null);
-    this.masterSearch.set('');
-    this.masterGroupOpen.set(null);
-    this.masterTypeOpen.set(null);
-    if (restoreMasterFocus) setTimeout(() => this.masterMenuTrigger?.focus());
-  }
-  closeMasterMenu(restoreFocus = true) {
-    this.masterMenuOpen.set(false);
-    this.hostelMenuOpen.set(false);
-    this.masterSearch.set('');
-    this.masterGroupOpen.set(null);
-    this.masterTypeOpen.set(null);
-    if (restoreFocus) setTimeout(() => this.masterMenuTrigger?.focus());
-  }
-  toggleHostelMenu(event?: Event) {
-    this.hostelMenuTrigger = (event?.currentTarget as HTMLElement | null) || this.hostelMenuTrigger;
-    if (this.hostelMenuOpen()) {
-      this.closeHostelMenu();
-      return;
-    }
-    this.hostelMenuOpen.set(true);
-    setTimeout(() =>
-      this.host.nativeElement.querySelector<HTMLElement>('.hostel-flyout a')?.focus(),
-    );
-  }
-  closeHostelMenu(restoreFocus = true) {
-    this.hostelMenuOpen.set(false);
-    if (restoreFocus) setTimeout(() => this.hostelMenuTrigger?.focus());
-  }
-  toggleFeeMenu() {
-    this.masterMenuOpen.set(false);
-    this.hostelMenuOpen.set(false);
-    this.admissionMenuOpen.set(false);
-    const nextOpen = !this.feeMenuOpen();
-    this.feeMenuOpen.set(nextOpen);
-    if (!nextOpen) this.feeGroupOpen.set(null);
-  }
-  toggleFeeGroup(group: 'books' | 'heads' | 'hostel' | 'course') {
-    this.feeGroupOpen.update((open) => (open === group ? null : group));
-  }
-  toggleMasterGroup(group: string) {
-    this.masterGroupOpen.update((open) => (open === group ? null : group));
-    this.masterTypeOpen.set(null);
-  }
-  isMasterGroupExpanded(group: string) {
-    return this.masterSearch().trim().length > 0 || this.masterGroupOpen() === group;
-  }
-  toggleMasterType(slug: string) {
-    this.masterTypeOpen.update((open) => (open === slug ? null : slug));
-  }
-  isMasterTypeExpanded(slug: string) {
-    return this.masterSearch().trim().length > 0 || this.masterTypeOpen() === slug;
-  }
-  isMasterGroupRoute(group: { items: MasterType[] }) {
-    return group.items.some((type) =>
-      this.router.url.startsWith(`/admin/master-data/${type.slug}`),
-    );
-  }
-  matchesNavigation(label: string) {
-    const query = this.navigationSearch().trim().toLocaleLowerCase();
-    return !query || label.toLocaleLowerCase().includes(query);
-  }
+
   @HostListener('document:keydown.escape')
-  closeOnEscape() {
-    if (this.hostelMenuOpen()) {
-      this.closeHostelMenu();
+  onEscape(): void {
+    if (this.mobileOpen()) {
+      this.closeMobileNavigation();
       return;
     }
-    if (this.masterMenuOpen()) {
-      this.closeMasterMenu();
-      return;
-    }
-    if (this.admissionMenuOpen()) {
-      this.admissionMenuOpen.set(false);
-      return;
-    }
-    if (this.feeMenuOpen()) {
-      this.feeMenuOpen.set(false);
-      this.feeGroupOpen.set(null);
-      return;
-    }
-    if (this.menuOpen()) {
-      this.closeNavigation();
-      this.masterSearch.set('');
+    this.closeDesktopFlyout();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (this.expandedSectionId() && !target?.closest('.admin-sidebar--desktop')) {
+      this.expandedSectionId.set(null);
+      this.expandedSubgroupId.set(null);
+      this.desktopFlyoutAnchor = null;
     }
   }
-  @HostListener('document:keydown.tab', ['$event'])
-  keepFocusInOpenPanel(event: Event) {
-    const keyboardEvent = event as KeyboardEvent;
-    if (!this.masterMenuOpen() && !this.admissionMenuOpen() && !this.feeMenuOpen()) return;
-    const panel = this.host.nativeElement.querySelector<HTMLElement>(
-      this.hostelMenuOpen() ? '.hostel-flyout' : '.master-flyout',
-    );
-    const focusable = Array.from(
-      panel?.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ) || [],
-    );
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (keyboardEvent.shiftKey && document.activeElement === first) {
-      keyboardEvent.preventDefault();
-      last.focus();
-    } else if (!keyboardEvent.shiftKey && document.activeElement === last) {
-      keyboardEvent.preventDefault();
-      first.focus();
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    const width = window.innerWidth;
+    if (width > 767) this.closeMobileNavigation(false);
+    if (width <= 1080 && width > 767) this.desktopCollapsed.set(true);
+    this.repositionDesktopFlyout();
+  }
+
+  private syncNavigation(url: string): void {
+    this.currentUrl.set(url);
+    this.expandedSectionId.set(null);
+    this.expandedSubgroupId.set(null);
+    this.desktopFlyoutAnchor = null;
+    this.pageContext.set(resolveAdminPageContext(url, this.deepestRouteTitle()));
+  }
+
+  private deepestRouteTitle(): string {
+    let route: ActivatedRoute | null | undefined = this.activatedRoute;
+    let title = '';
+    while (route) {
+      const snapshot = route.snapshot;
+      if (!snapshot) {
+        route = route.firstChild;
+        continue;
+      }
+      const candidate = snapshot.title ?? snapshot.data?.['title'];
+      if (typeof candidate === 'string' && candidate.trim()) title = candidate.trim();
+      route = route.firstChild ?? null;
     }
-  }
-  isMasterRoute() {
-    return (
-      this.router.url.startsWith('/admin/master-data/') ||
-      this.router.url.startsWith('/admin/form-builder')
-    );
-  }
-  isHostelRoute() {
-    return this.router.url.startsWith('/admin/master-data/hostel/');
-  }
-  isAdmissionRoute() {
-    return (
-      this.router.url.startsWith('/admin/admission/') ||
-      this.router.url.startsWith('/admin/admissions') ||
-      this.router.url === '/admin/delete-admissions'
-    );
-  }
-  isFormBuilderRoute() {
-    return this.router.url.startsWith('/admin/form-builder');
-  }
-  isFeeRoute() {
-    return this.router.url.startsWith('/admin/fees/');
-  }
-  isFeeGroupRoute(group: 'books' | 'heads' | 'hostel' | 'course') {
-    if (group === 'heads' && this.router.url.startsWith('/admin/fees/scholarships')) return true;
-    const path = {
-      books: '/admin/fees/books/',
-      heads: '/admin/fees/heads/',
-      hostel: '/admin/fees/hostel-fees/',
-      course: '/admin/fees/course-fees/',
-    }[group];
-    return this.router.url.startsWith(path);
-  }
-  private updateCurrentModule(url: string) {
-    if (url.includes('/accounts')) this.currentModule.set('Accounts');
-    else if (url.includes('/fees/')) this.currentModule.set('Fee Management');
-    else if (url.includes('/master-data/')) this.currentModule.set('Master Data');
-    else if (url.includes('/form-builder')) this.currentModule.set('Master Data');
-    else if (url.includes('/admissions/unfilled'))
-      this.currentModule.set('Admission Unfilled Data');
-    else if (url.includes('/admissions/not-approved'))
-      this.currentModule.set('Not Approved Students');
-    else if (url.includes('/admissions/approved')) this.currentModule.set('Approved Students');
-    else if (url.includes('/admissions/')) this.currentModule.set('Student Admission');
-    else if (url.includes('/delete-admissions')) this.currentModule.set('Delete Admission');
-    else if (url.includes('/admission/student')) this.currentModule.set('Student Admission');
-    else this.currentModule.set('Dashboard');
+    return title;
   }
 }

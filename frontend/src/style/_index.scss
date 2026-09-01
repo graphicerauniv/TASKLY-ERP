@@ -3,9 +3,9 @@
  * - tokens: theme, spacing, motion, layout values
  * - system: reusable erp-* UI contracts for pages, cards, tables, forms, states
  *
- * Feature pages should consume variables/classes from here and keep local SCSS
- * only for truly unique screens such as auth artwork, sidebar shell, dialogs,
- * and advanced builders.
+ * Feature pages consume these tokens and primitives while keeping their own
+ * token-based geometry and responsive composition encapsulated locally.
  */
 @forward 'tokens';
 @forward 'system';
+@forward 'admin-primitives';

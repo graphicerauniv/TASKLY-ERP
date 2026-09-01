@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,14 +8,19 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
+  LucideArrowLeft,
   LucideCheck,
+  LucideCircleAlert,
+  LucideCircleCheck,
   LucideCopy,
   LucideListTree,
   LucideSave,
   LucideSend,
   LucideSettings2,
   LucideTrash2,
+  LucideTriangleAlert,
 } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
 import {
@@ -36,6 +42,7 @@ import {
   StructureSubsectionEvent,
 } from './components/form-structure-panel.component';
 import { CanvasFieldActionEvent, FormCanvasComponent } from './components/form-canvas.component';
+import { FormPublishIssue, validateFormForPublish } from './form-publish-validation';
 
 const FIELD_TYPES = [
   ['text', 'Text'],
@@ -70,25 +77,34 @@ type DeleteDialog = {
   selector: 'erp-form-builder',
   imports: [
     BuilderPageHeaderComponent,
+    CdkTrapFocus,
     FormBuilderToolbarComponent,
     FormStructurePanelComponent,
     FormCanvasComponent,
     FormsModule,
     SettingsModalComponent,
+    RouterLink,
+    LucideArrowLeft,
     LucideCheck,
+    LucideCircleAlert,
+    LucideCircleCheck,
     LucideCopy,
     LucideListTree,
     LucideSave,
     LucideSend,
     LucideSettings2,
     LucideTrash2,
+    LucideTriangleAlert,
   ],
   templateUrl: './form-builder.component.html',
+  styleUrl: './form-builder.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormBuilderComponent {
   private readonly api = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
   private compactStructureLayout = false;
+  private readonly requestedFormId = this.route.snapshot.paramMap.get('formId');
   readonly forms = signal<AdmissionForm[]>([]);
   readonly form = signal<AdmissionForm | null>(null);
   readonly types = signal<MasterType[]>([]);
@@ -109,6 +125,14 @@ export class FormBuilderComponent {
   readonly createFormDialog = signal(false);
   readonly creatingForm = signal(false);
   readonly createFormError = signal('');
+  readonly publishDialog = signal(false);
+  readonly publishIssues = signal<FormPublishIssue[]>([]);
+  readonly publishBlockers = computed(() =>
+    this.publishIssues().filter((issue) => issue.severity === 'blocker'),
+  );
+  readonly publishWarnings = computed(() =>
+    this.publishIssues().filter((issue) => issue.severity === 'warning'),
+  );
   readonly inspectorVisible = signal(false);
   readonly structureVisible = signal(true);
   readonly saveStateText = computed(() => {
@@ -149,10 +173,21 @@ export class FormBuilderComponent {
     this.compactStructureLayout = compact;
     this.structureVisible.set(!compact);
   }
+  @HostListener('document:keydown.escape')
+  closePublishChecklistOnEscape() {
+    if (this.publishDialog()) this.closePublishChecklist();
+  }
   load() {
     this.api.forms().subscribe(({ items }) => {
       this.forms.set(items);
-      if (!this.form() && items.length) this.choose(items[0]);
+      if (this.form() || !items.length) return;
+      const requested = this.requestedFormId
+        ? items.find((item) => item._id === this.requestedFormId)
+        : null;
+      if (this.requestedFormId && !requested) {
+        this.error.set('The requested admission form is no longer available.');
+      }
+      this.choose(requested || items[0]);
     });
   }
   chooseForm(id: string) {
@@ -205,6 +240,44 @@ export class FormBuilderComponent {
     if (this.creatingForm()) return;
     this.createFormDialog.set(false);
     this.createFormError.set('');
+  }
+  openPublishChecklist() {
+    const form = this.form();
+    if (!form) return;
+    this.publishIssues.set(validateFormForPublish(form));
+    this.publishDialog.set(true);
+  }
+  closePublishChecklist() {
+    if (this.saving()) return;
+    this.publishDialog.set(false);
+  }
+  confirmPublish() {
+    if (this.publishBlockers().length || this.saving()) return;
+    this.publishDialog.set(false);
+    this.save(true);
+  }
+  focusPublishIssue(issue: FormPublishIssue) {
+    this.publishDialog.set(false);
+    if (!issue.sectionId) return;
+    const section = this.form()?.sections.find((candidate) => candidate.id === issue.sectionId);
+    if (!section) return;
+    this.expandedSectionIds.update((ids) => new Set([...ids, section.id]));
+    if (!issue.subsectionId) {
+      this.selectSection(section);
+      return;
+    }
+    const subsection = section.subsections.find((candidate) => candidate.id === issue.subsectionId);
+    if (!subsection) {
+      this.selectSection(section);
+      return;
+    }
+    if (!issue.fieldId) {
+      this.selectSubsection(section, subsection);
+      return;
+    }
+    const field = subsection.fields.find((candidate) => candidate.id === issue.fieldId);
+    if (field) this.selectFieldFromTree(section, subsection, field);
+    else this.selectSubsection(section, subsection);
   }
   handleFormAction(action: string) {
     if (action !== 'delete') return;
@@ -690,12 +763,13 @@ export class FormBuilderComponent {
   save(publish = false) {
     const form = this.form();
     if (!form) return;
+    const payload = structuredClone(form);
     if (publish) {
-      form.status = 'published';
-      form.isActive = true;
+      payload.status = 'published';
+      payload.isActive = true;
     }
     this.saving.set(true);
-    this.api.saveForm(form).subscribe({
+    this.api.saveForm(payload).subscribe({
       next: ({ item }) => {
         this.form.set(item);
         this.forms.update((items) => items.map((f) => (f._id === item._id ? item : f)));

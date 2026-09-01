@@ -11,6 +11,129 @@
   gap: var(--erp-space-2);
 }
 
+.fee-working-context,
+.fee-course-explorer {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  gap: var(--erp-space-3);
+  margin-bottom: var(--erp-space-2);
+  padding: var(--erp-space-2) var(--erp-space-3);
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-card);
+  background: var(--erp-surface-raised);
+}
+
+.fee-working-context {
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+}
+
+.fee-context-gate {
+  display: grid;
+  min-height: 300px;
+  place-items: center;
+  align-content: center;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-8) var(--erp-space-4);
+  border: 1px dashed var(--erp-border-strong);
+  border-radius: var(--erp-radius-card);
+  background: var(--erp-surface-raised);
+  text-align: center;
+}
+
+.fee-context-gate img {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--erp-space-2);
+  object-fit: contain;
+}
+
+.fee-context-gate span {
+  color: var(--erp-primary);
+  font-size: var(--erp-font-size-2xs);
+  font-weight: var(--erp-weight-semibold);
+  letter-spacing: var(--erp-letter-normal);
+  text-transform: uppercase;
+}
+
+.fee-context-gate h2 {
+  margin: 0;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-section-title);
+}
+
+.fee-context-gate p {
+  max-width: 460px;
+  margin: 0 0 var(--erp-space-3);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-sm);
+}
+
+.fee-course-explorer {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+}
+
+.fee-working-context > img,
+.fee-course-explorer > img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.fee-course-explorer > img {
+  width: 44px;
+  height: 44px;
+}
+
+.fee-working-context > div,
+.fee-course-explorer > div {
+  min-width: 0;
+}
+
+.fee-working-context span {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-2xs);
+  font-weight: var(--erp-weight-semibold);
+  text-transform: uppercase;
+}
+
+.fee-working-context h2,
+.fee-course-explorer h2 {
+  margin: 0;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.fee-working-context p,
+.fee-course-explorer p {
+  overflow: hidden;
+  margin: 2px 0 0;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fee-view-filter-drawer {
+  width: min(560px, 100%);
+}
+
+.fee-view-filter-drawer__icon {
+  overflow: hidden;
+  background: transparent;
+}
+
+.fee-view-filter-drawer__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fee-view-filter-drawer .fee-view-filter-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .fee-form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -83,7 +206,8 @@
   height: 7px;
   border-radius: var(--erp-radius-pill);
   background: var(--erp-primary);
-  animation: fee-draft-pulse var(--erp-status-pulse-duration) var(--erp-ease-standard) infinite alternate;
+  animation: fee-draft-pulse var(--erp-status-pulse-duration) var(--erp-ease-standard) infinite
+    alternate;
 }
 
 .course-fee-draft-state__check {
@@ -109,7 +233,9 @@
 }
 
 @keyframes fee-draft-pulse {
-  to { opacity: 0.4; }
+  to {
+    opacity: 0.4;
+  }
 }
 
 .fee-picker-control {
@@ -734,7 +860,9 @@
   border-radius: var(--erp-radius-xs);
   color: var(--erp-text-muted);
   background: var(--erp-surface-raised);
-  transition: border-color var(--erp-control-transition), background-color var(--erp-control-transition);
+  transition:
+    border-color var(--erp-control-transition),
+    background-color var(--erp-control-transition);
 }
 
 .fee-matrix-cell:focus-within,
@@ -814,6 +942,16 @@
 }
 
 @media (max-width: 720px) {
+  .fee-working-context,
+  .fee-course-explorer {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .fee-working-context > .erp-button,
+  .fee-course-explorer > .erp-button {
+    grid-column: 1 / -1;
+  }
+
   .fee-page-actions {
     width: 100%;
     align-items: stretch;

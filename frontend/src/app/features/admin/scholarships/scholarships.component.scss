@@ -2,46 +2,18 @@
 :host {
   display: block;
 }
-.scholarship-workspace-nav {
-  display: flex;
-  gap: var(--erp-space-2);
-  margin-bottom: var(--erp-space-4);
-  padding: var(--erp-space-1);
-  overflow-x: auto;
-  background: var(--erp-surface-page-panel);
-  border: 1px solid var(--erp-border-subtle);
-  border-radius: var(--erp-radius-compact);
-}
-.scholarship-workspace-nav a {
-  display: grid;
-  min-width: 12rem;
-  gap: 2px;
-  padding: var(--erp-space-2) var(--erp-space-3);
-  color: var(--erp-text-muted);
-  font-size: var(--erp-font-size-xs);
-  font-weight: var(--erp-weight-bold);
-  text-decoration: none;
-  border-radius: var(--erp-radius-control);
-}
-.scholarship-workspace-nav a:hover,
-.scholarship-workspace-nav a.is-active {
-  color: var(--erp-blue-700);
-  background: var(--erp-blue-50);
-}
-.scholarship-workspace-nav small {
-  font-size: var(--erp-font-size-2xs);
-  font-weight: var(--erp-weight-regular);
-}
 .scholarship-metrics {
   display: flex;
-  gap: var(--erp-space-5);
-  margin-bottom: var(--erp-space-3);
-  padding: 0 var(--erp-space-1);
+  min-height: 28px;
+  align-items: center;
+  gap: var(--erp-space-4);
+  margin-bottom: var(--erp-space-2);
+  padding: 0 var(--erp-space-2);
   color: var(--erp-text-muted);
   font-size: var(--erp-font-size-xs);
 }
 .scholarship-metrics span + span {
-  padding-left: var(--erp-space-5);
+  padding-left: var(--erp-space-4);
   border-left: 1px solid var(--erp-border-subtle);
 }
 .scholarship-metrics strong {

@@ -1,7 +1,15 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  LucideArrowLeft,
+  LucideBadgePercent,
+  LucideGraduationCap,
+  LucideReceiptText,
+  LucideUserRound,
+  LucideWalletCards,
+} from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
 import {
   Admission,
@@ -26,7 +34,14 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
     CurrencyPipe,
     DatePipe,
     FormsModule,
+    LucideArrowLeft,
+    LucideBadgePercent,
+    LucideGraduationCap,
+    LucideReceiptText,
+    LucideUserRound,
+    LucideWalletCards,
     RouterLink,
+    TitleCasePipe,
   ],
   templateUrl: './student-scholarships.component.html',
   styleUrl: './student-scholarships.component.scss',
@@ -59,6 +74,21 @@ export class StudentScholarshipsComponent {
   );
   readonly removingDiscount = computed(() =>
     this.discounts().find((item) => item._id === this.removingDiscountId()),
+  );
+  readonly totalCharges = computed(() =>
+    this.ledgers().reduce((sum, ledger) => sum + Number(ledger.chargeAmount || 0), 0),
+  );
+  readonly totalDiscounts = computed(() =>
+    this.ledgers().reduce((sum, ledger) => sum + Number(ledger.discountAmount || 0), 0),
+  );
+  readonly totalPayable = computed(() =>
+    this.ledgers().reduce((sum, ledger) => sum + Number(ledger.totalAmount || 0), 0),
+  );
+  readonly totalPaid = computed(() =>
+    this.ledgers().reduce((sum, ledger) => sum + Number(ledger.paidAmount || 0), 0),
+  );
+  readonly totalBalance = computed(() =>
+    this.ledgers().reduce((sum, ledger) => sum + Number(ledger.balanceAmount || 0), 0),
   );
   readonly studentAdmissionId = this.route.snapshot.paramMap.get('admissionId') || '';
   scholarshipId = '';
@@ -237,6 +267,22 @@ export class StudentScholarshipsComponent {
     return ledger.entries
       .filter((entry) => entry.isOneTimeDiscount)
       .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+  }
+
+  entryType(entry: StudentFeeLedger['entries'][number]) {
+    if (entry.isScholarship) return 'Recurring scholarship';
+    if (entry.isOneTimeDiscount) return 'One-time discount';
+    if (entry.category === 'payment-option') return 'Payment option';
+    return 'Fee head';
+  }
+
+  entryNetAmount(entry: StudentFeeLedger['entries'][number]) {
+    if (entry.isScholarship || entry.isOneTimeDiscount) return -Number(entry.amount || 0);
+    return Math.max(0, Number(entry.amount || 0) - Number(entry.discountAmount || 0));
+  }
+
+  statusLabel(status: StudentFeeLedger['entries'][number]['status']) {
+    return status === 'paid' ? 'Paid' : status === 'partial' ? 'Part paid' : 'Due';
   }
 
   assignmentValue(item: StudentScholarship) {

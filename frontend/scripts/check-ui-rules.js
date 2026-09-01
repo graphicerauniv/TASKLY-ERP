@@ -24,12 +24,9 @@ const scopedThemeTokenFiles = new Set([
 const rawColorPattern = /#[0-9a-fA-F]{3,8}\b|rgba?\(/;
 const tailwindArbitraryColorPattern =
   /\b(?:bg|text|border|ring|shadow|from|via|to)-\[[^\]]*(?:#[0-9a-fA-F]{3,8}|rgba?\()[^\]]*\]/;
-const localStyleExceptionPattern = /ERP-LOCAL-STYLE:\s*\S+/;
 const internalHrefPattern = /<a\b[^>]*\bhref=["']\/(?!\/)[^"']*["']/i;
 const directTableActionButtonPattern =
   /<td\b[^>]*class=["'][^"']*erp-table-shell__actions[^"']*["'][\s\S]{0,360}<button\b[\s\S]{0,260}>\s*(?:<svg[\s\S]{0,120}<\/svg>\s*)?(Edit|Delete|View(?: details)?|Enable|Disable)\s*</i;
-const lazyImportPattern =
-  /load(?:Component|Children)\s*:\s*\(\)\s*=>[\s\S]{0,320}?import\(["']([^"']+)["']\)/g;
 
 function walk(dir) {
   if (!existsSync(dir)) return [];
@@ -48,6 +45,29 @@ function walk(dir) {
 
 const files = walk(srcRoot).filter((file) => /\.(scss|css|html|ts)$/.test(file));
 const errors = [];
+const appRoutesPath = join(srcRoot, 'app', 'app.routes.ts');
+const adminRoutesPath = join(srcRoot, 'app', 'features', 'admin', 'admin.routes.ts');
+
+if (existsSync(appRoutesPath)) {
+  const appRoutes = readFileSync(appRoutesPath, 'utf8');
+  if (
+    /import\s*\{\s*ADMIN_ROUTES\s*\}/.test(appRoutes) ||
+    !/path:\s*['"]admin['"][\s\S]{0,180}loadChildren:/.test(appRoutes)
+  ) {
+    errors.push(
+      'src/app/app.routes.ts: the admin portal must remain a lazy loadChildren boundary.',
+    );
+  }
+}
+
+if (existsSync(adminRoutesPath)) {
+  const adminRoutes = readFileSync(adminRoutesPath, 'utf8');
+  if (/\bcomponent\s*:/.test(adminRoutes)) {
+    errors.push(
+      'src/app/features/admin/admin.routes.ts: admin pages must use loadComponent/loadChildren route boundaries.',
+    );
+  }
+}
 
 const htmlFiles = files.filter((file) => file.endsWith('.html')).map(normalise);
 const browserEntryFiles = htmlFiles.filter(
@@ -71,17 +91,6 @@ for (const htmlFile of htmlFiles) {
 for (const file of files) {
   const rel = normalise(file);
   const content = readFileSync(file, 'utf8');
-
-  if (
-    rel.startsWith('src/app/features/') &&
-    rel.endsWith('.scss') &&
-    !rel.startsWith('src/app/features/student/styles/') &&
-    !localStyleExceptionPattern.test(content)
-  ) {
-    errors.push(
-      `${rel}: feature SCSS requires a first-line "ERP-LOCAL-STYLE: <reason>" exception. Prefer src/style/_system.scss, shared/ui, or layout utilities.`,
-    );
-  }
 
   const canDeclareRawColors =
     rel === 'src/style/_tokens.scss' ||
@@ -107,19 +116,6 @@ for (const file of files) {
     errors.push(
       `${rel}: table/list action columns must use erp-compact-action-menu instead of visible row action buttons.`,
     );
-  }
-
-  if (rel.endsWith('.routes.ts') || rel === 'src/app/app.routes.ts') {
-    for (const match of content.matchAll(lazyImportPattern)) {
-      const target = match[1];
-      const authLazy = rel.includes('/auth/') || target.includes('/auth');
-      const dashboardLazy = target.includes('dashboard');
-      if (!authLazy && !dashboardLazy) {
-        errors.push(
-          `${rel}: lazy loading is limited to Auth/Login and Dashboard. Import ${target} as a normal route component.`,
-        );
-      }
-    }
   }
 }
 

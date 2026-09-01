@@ -1,4 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { LucideFilter, LucideX } from '@lucide/angular';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -32,6 +34,10 @@ import {
   CompactActionMenuComponent,
 } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
+import {
+  FilterPopoverComponent,
+  FilterPopoverOption,
+} from '../../../shared/ui/filter-popover/filter-popover.component';
 
 type FeeSection = 'books' | 'heads' | 'hostel-fees' | 'course-fees' | 'course-fee-view';
 type FeePageMode = 'create' | 'view' | 'import' | 'drafts';
@@ -114,12 +120,16 @@ interface ConfirmDialogState {
   selector: 'erp-fee-management',
   imports: [
     AdminPageComponent,
+    CdkTrapFocus,
     CompactActionMenuComponent,
     ConfirmDialogComponent,
+    FilterPopoverComponent,
     FormsModule,
     CurrencyPipe,
     DatePipe,
     RouterLink,
+    LucideFilter,
+    LucideX,
   ],
   templateUrl: './fee-management.component.html',
   styleUrl: './fee-management.component.scss',
@@ -230,6 +240,7 @@ export class FeeManagementComponent implements OnDestroy {
   readonly courseFeeDraftSavedAt = signal('');
   readonly courseFeeDraftResumePending = signal(false);
   readonly confirmDialog = signal<ConfirmDialogState | null>(null);
+  readonly courseViewFiltersOpen = signal(false);
   private readonly courseFeeContextVersion = signal(0);
   readonly creationSuccess = signal('');
   readonly listSearch = signal('');
@@ -238,6 +249,18 @@ export class FeeManagementComponent implements OnDestroy {
   readonly listPage = signal<number>(ERP_PAGINATION.defaultPage);
   readonly listPageSize = signal<number>(ERP_PAGINATION.defaultPageSize);
   readonly pageSizeOptions = ERP_PAGINATION.pageSizeOptions;
+  readonly statusFilterOptions: readonly FilterPopoverOption[] = [
+    { label: 'All statuses', value: 'all' },
+    { label: 'Active', value: 'active' },
+    { label: 'Disabled', value: 'disabled' },
+  ];
+  readonly frequencyFilterOptions: readonly FilterPopoverOption[] = [
+    { label: 'All frequencies', value: 'all' },
+    { label: 'One-time', value: 'one-time' },
+    { label: 'Semester wise', value: 'semester' },
+    { label: 'Half-yearly', value: 'half-yearly' },
+    { label: 'Yearly', value: 'yearly' },
+  ];
   readonly editingBook = signal<FeeBook | null>(null);
   readonly editingHead = signal<FeeHead | null>(null);
   readonly showOnlyNeedsMapping = signal(false);
@@ -1157,12 +1180,10 @@ export class FeeManagementComponent implements OnDestroy {
         confirmLabel: 'Delete book',
         destructive: true,
         action: () => {
-          this.api
-            .deleteFeeBook(book._id)
-            .subscribe({
-              next: () => this.saved('Fee book deleted.'),
-              error: (error) => this.fail(error),
-            });
+          this.api.deleteFeeBook(book._id).subscribe({
+            next: () => this.saved('Fee book deleted.'),
+            error: (error) => this.fail(error),
+          });
         },
       });
     }
@@ -1228,12 +1249,10 @@ export class FeeManagementComponent implements OnDestroy {
         confirmLabel: 'Delete head',
         destructive: true,
         action: () => {
-          this.api
-            .deleteFeeHead(head._id)
-            .subscribe({
-              next: () => this.saved('Fee head deleted.'),
-              error: (error) => this.fail(error),
-            });
+          this.api.deleteFeeHead(head._id).subscribe({
+            next: () => this.saved('Fee head deleted.'),
+            error: (error) => this.fail(error),
+          });
         },
       });
     }
@@ -1288,12 +1307,10 @@ export class FeeManagementComponent implements OnDestroy {
         confirmLabel: 'Delete fee',
         destructive: true,
         action: () => {
-          this.api
-            .deleteHostelFee(fee._id)
-            .subscribe({
-              next: () => this.saved('Hostel fee deleted.'),
-              error: (error) => this.fail(error),
-            });
+          this.api.deleteHostelFee(fee._id).subscribe({
+            next: () => this.saved('Hostel fee deleted.'),
+            error: (error) => this.fail(error),
+          });
         },
       });
     }
@@ -1749,6 +1766,7 @@ export class FeeManagementComponent implements OnDestroy {
       .subscribe({
         next: ({ items }) => {
           this.courseFeeViewRecords.set(items);
+          this.courseViewFiltersOpen.set(false);
           this.loading.set(false);
           if (!items.length)
             this.message.set('No fees are configured for the selected course and book.');

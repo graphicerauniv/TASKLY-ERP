@@ -1,0 +1,318 @@
+<erp-admin-page
+  eyebrow="Admissions / Application record"
+  [title]="item()?.studentName || (loading() ? 'Application record' : 'Application unavailable')"
+  description="Read-only application evidence and lifecycle context."
+  variant="compact"
+>
+  <div page-actions class="application-record__page-actions">
+    <a class="erp-button erp-button--secondary" routerLink="/admin/admissions/applications">
+      <svg lucideArrowLeft size="16" aria-hidden="true"></svg>
+      Applications
+    </a>
+    @if (item(); as record) {
+      @if (record.status === 'pending_approval' || record.status === 'submitted') {
+        <a
+          class="erp-button erp-button--secondary"
+          [routerLink]="['/admin/admissions', record._id, 'edit']"
+        >
+          <svg lucidePencil size="15" aria-hidden="true"></svg>
+          Edit application
+        </a>
+        <a
+          class="erp-button erp-button--primary"
+          [routerLink]="['/admin/admissions/applications', record._id, 'review']"
+        >
+          <svg lucideClipboardList size="16" aria-hidden="true"></svg>
+          Review application
+        </a>
+      } @else {
+        <a
+          class="erp-button erp-button--primary"
+          [routerLink]="['/admin/admissions', record._id, 'edit']"
+        >
+          <svg lucidePencil size="15" aria-hidden="true"></svg>
+          Edit application
+        </a>
+      }
+    }
+  </div>
+
+  @if (loading()) {
+    <section class="erp-card application-record__loading" aria-label="Loading application record">
+      <span class="erp-skeleton application-record__skeleton-title"></span>
+      <span class="erp-skeleton application-record__skeleton-tabs"></span>
+      <div>
+        <span class="erp-skeleton"></span>
+        <span class="erp-skeleton"></span>
+        <span class="erp-skeleton"></span>
+        <span class="erp-skeleton"></span>
+      </div>
+    </section>
+  } @else if (error()) {
+    <section class="erp-card erp-empty-panel" role="alert">
+      <span class="erp-empty-panel__icon"
+        ><svg lucideCircleAlert size="21" aria-hidden="true"></svg
+      ></span>
+      <h2>Application record unavailable</h2>
+      <p>{{ error() }}</p>
+      <button class="erp-button erp-button--secondary" type="button" (click)="load()">
+        <svg lucideRefreshCw size="15" aria-hidden="true"></svg>
+        Try again
+      </button>
+    </section>
+  } @else if (item(); as record) {
+    <section class="erp-card application-record__shell">
+      <header class="application-record__identity">
+        <span class="application-record__identity-icon"
+          ><svg lucideUserRound size="21" aria-hidden="true"></svg
+        ></span>
+        <div>
+          <span>{{ reference(record) }}</span>
+          <h2>{{ record.studentName || 'Unnamed application' }}</h2>
+          <p>
+            {{ record.courseName || 'Programme not selected' }} ·
+            {{ record.academicSession || 'Session not selected' }}
+          </p>
+        </div>
+        <div class="application-record__identity-status">
+          <span
+            class="erp-status"
+            [class.erp-status--draft]="record.status === 'draft'"
+            [class.erp-status--warning]="
+              record.status === 'pending_approval' || record.status === 'submitted'
+            "
+            >{{ statusLabel(record) }}</span
+          >
+          <small>{{ captureLabel(record) }}</small>
+        </div>
+      </header>
+
+      <nav class="application-record__tabs" aria-label="Application record sections">
+        <a
+          [routerLink]="[]"
+          [queryParams]="{ tab: null, section: null }"
+          queryParamsHandling="merge"
+          [class.is-active]="tab() === 'overview'"
+          [attr.aria-current]="tab() === 'overview' ? 'page' : null"
+        >
+          <svg lucideClipboardList size="16" aria-hidden="true"></svg>
+          Overview
+        </a>
+        <a
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'application' }"
+          queryParamsHandling="merge"
+          [class.is-active]="tab() === 'application'"
+          [attr.aria-current]="tab() === 'application' ? 'page' : null"
+        >
+          <svg lucideFileText size="16" aria-hidden="true"></svg>
+          Application
+        </a>
+      </nav>
+
+      <div class="application-record__content">
+        @if (tab() === 'overview') {
+          <div class="application-record__overview">
+            <section class="application-record__section">
+              <header>
+                <div>
+                  <h3>Academic and identity context</h3>
+                  <p>Primary information used when locating and validating this record.</p>
+                </div>
+              </header>
+              <dl class="application-record__facts">
+                <div>
+                  <dt>Application reference</dt>
+                  <dd>{{ reference(record) }}</dd>
+                </div>
+                <div>
+                  <dt>Student ID</dt>
+                  <dd>{{ record.studentId || 'Not generated' }}</dd>
+                </div>
+                <div>
+                  <dt>Programme</dt>
+                  <dd>{{ record.courseName || 'Not selected' }}</dd>
+                </div>
+                <div>
+                  <dt>Academic session</dt>
+                  <dd>{{ record.academicSession || 'Not selected' }}</dd>
+                </div>
+                <div>
+                  <dt>College</dt>
+                  <dd>{{ record.collegeName || 'Not selected' }}</dd>
+                </div>
+                <div>
+                  <dt>Department</dt>
+                  <dd>{{ record.departmentName || 'Not selected' }}</dd>
+                </div>
+                <div>
+                  <dt>Level</dt>
+                  <dd>{{ record.levelName || 'Not selected' }}</dd>
+                </div>
+                <div>
+                  <dt>Student type</dt>
+                  <dd>{{ record.studentTypeName || 'Not selected' }}</dd>
+                </div>
+                <div>
+                  <dt>Domicile</dt>
+                  <dd>{{ record.domicileName || 'Not selected' }}</dd>
+                </div>
+                <div>
+                  <dt>Country</dt>
+                  <dd>{{ record.countryName || 'Not selected' }}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <aside class="application-record__side">
+              <section class="application-record__section">
+                <header>
+                  <div>
+                    <h3>Lifecycle</h3>
+                    <p>Dates available from the current record.</p>
+                  </div>
+                </header>
+                <dl class="application-record__timeline">
+                  <div>
+                    <dt>Created</dt>
+                    <dd>{{ dateLabel(record.createdAt) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Submitted</dt>
+                    <dd>{{ dateLabel(record.submittedAt) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Approved</dt>
+                    <dd>{{ dateLabel(record.approvedAt) }}</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section class="application-record__section">
+                <header>
+                  <div>
+                    <h3>Form snapshot</h3>
+                    <p>The schema version retained with this application.</p>
+                  </div>
+                </header>
+                <dl class="application-record__timeline">
+                  <div>
+                    <dt>Form</dt>
+                    <dd>{{ record.formSnapshot.name || 'Not recorded' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Version</dt>
+                    <dd>
+                      {{ record.formVersion || record.formSnapshot.version || 'Not recorded' }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Evidence</dt>
+                    <dd>{{ captureLabel(record) }}</dd>
+                  </div>
+                </dl>
+              </section>
+            </aside>
+          </div>
+        } @else {
+          @if (record.formSnapshot.sections.length) {
+            <div class="application-record__application">
+              <nav aria-label="Application form sections">
+                <span>Form sections</span>
+                @for (section of record.formSnapshot.sections; track section.id) {
+                  <button
+                    type="button"
+                    [class.is-active]="activeSectionId() === section.id"
+                    (click)="setSection(section.id)"
+                  >
+                    <span>{{ section.name }}</span>
+                    <small
+                      >{{ section.subsections.length }} group{{
+                        section.subsections.length === 1 ? '' : 's'
+                      }}</small
+                    >
+                  </button>
+                }
+              </nav>
+
+              <div class="application-record__evidence">
+                @if (activeSection(); as section) {
+                  <header>
+                    <span class="application-record__evidence-icon"
+                      ><svg lucideBadgeCheck size="18" aria-hidden="true"></svg
+                    ></span>
+                    <div>
+                      <h3>{{ section.name }}</h3>
+                      <p>
+                        {{ section.description || 'Saved application responses for this section.' }}
+                      </p>
+                    </div>
+                  </header>
+                  @for (subsection of section.subsections; track subsection.id) {
+                    <section class="application-record__subsection">
+                      <header>
+                        <h4>{{ subsection.name }}</h4>
+                        @if (subsection.description) {
+                          <p>{{ subsection.description }}</p>
+                        }
+                      </header>
+                      @if (subsection.isRepeatable) {
+                        @for (
+                          entry of entries(record, subsection);
+                          track $index;
+                          let entryIndex = $index
+                        ) {
+                          <article class="application-record__repeat-entry">
+                            <strong>{{ subsection.name }} {{ entryIndex + 1 }}</strong>
+                            <dl>
+                              @for (field of subsection.fields; track field.id) {
+                                <div>
+                                  <dt>{{ field.name }}</dt>
+                                  <dd>{{ value(field, entry) }}</dd>
+                                </div>
+                              }
+                            </dl>
+                          </article>
+                        } @empty {
+                          <p class="application-record__no-data">
+                            No entries were saved for this group.
+                          </p>
+                        }
+                      } @else {
+                        <dl class="application-record__responses">
+                          @for (field of subsection.fields; track field.id) {
+                            <div>
+                              <dt>{{ field.name }}</dt>
+                              <dd>{{ value(field, record.responses) }}</dd>
+                            </div>
+                          } @empty {
+                            <div>
+                              <dt>Responses</dt>
+                              <dd>No fields were configured in this group.</dd>
+                            </div>
+                          }
+                        </dl>
+                      }
+                    </section>
+                  } @empty {
+                    <div class="application-record__no-data">
+                      No response groups are present in this section.
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="erp-empty-panel">
+              <span class="erp-empty-panel__icon"
+                ><svg lucideFileText size="20" aria-hidden="true"></svg
+              ></span>
+              <h2>No application snapshot</h2>
+              <p>This record does not contain a saved form structure to display.</p>
+            </div>
+          }
+        }
+      </div>
+    </section>
+  }
+</erp-admin-page>

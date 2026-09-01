@@ -1,22 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/auth.guard';
-import { DynamicAdmissionComponent } from '../student/admission/dynamic-admission.component';
-import { AdmissionsComponent } from './admissions/admissions.component';
-import { DeleteAdmissionsComponent } from './delete-admissions/delete-admissions.component';
-import { FormBuilderComponent } from './form-builder/form-builder.component';
-import { AdminShellComponent } from './layout/admin-shell.component';
-import { MasterDataComponent } from './master-data/master-data.component';
-import { HostelManagementComponent } from './hostel-management/hostel-management.component';
-import { FeeManagementComponent } from './fee-management/fee-management.component';
-import { FeeProgressionComponent } from './fee-progression/fee-progression.component';
-import { AccountsComponent } from './accounts/accounts.component';
-import { StudentPromotionsComponent } from './student-promotions/student-promotions.component';
-import { ScholarshipsComponent } from './scholarships/scholarships.component';
-import { StudentScholarshipsComponent } from './student-scholarships/student-scholarships.component';
+import { unsavedChangesGuard } from './admissions/application-editor/unsaved-changes.guard';
 
 /**
- * Admin routes share one shell and one router outlet.
- * Only Dashboard is intentionally lazy loaded; ERP feature routes stay statically imported.
+ * Admin routes share one shell and one router outlet. Page components are loaded
+ * at their route boundary so each domain can migrate independently.
  */
 export const ADMIN_ROUTES: Routes = [
   {
@@ -27,7 +15,8 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     canActivate: [authGuard],
-    component: AdminShellComponent,
+    loadComponent: () =>
+      import('./layout/admin-shell.component').then((component) => component.AdminShellComponent),
     children: [
       {
         path: 'dashboard',
@@ -55,7 +44,10 @@ export const ADMIN_ROUTES: Routes = [
         ['overview', 'overview'],
       ].map(([path, section]) => ({
         path: `master-data/hostel/${path}`,
-        component: HostelManagementComponent,
+        loadComponent: () =>
+          import('./hostel-management/hostel-management.component').then(
+            (component) => component.HostelManagementComponent,
+          ),
         data: { section },
       })),
       {
@@ -63,20 +55,43 @@ export const ADMIN_ROUTES: Routes = [
         pathMatch: 'full',
         redirectTo: 'fees/books/create',
       },
-      { path: 'fees/progression', component: FeeProgressionComponent },
+      {
+        path: 'fees/progression',
+        loadComponent: () =>
+          import('./fee-progression/fee-progression.component').then(
+            (component) => component.FeeProgressionComponent,
+          ),
+      },
       { path: 'fees/scholarships', pathMatch: 'full', redirectTo: 'fees/scholarships/view' },
-      { path: 'fees/scholarships/view', component: ScholarshipsComponent, data: { mode: 'view' } },
+      {
+        path: 'fees/scholarships/view',
+        loadComponent: () =>
+          import('./scholarships/scholarships.component').then(
+            (component) => component.ScholarshipsComponent,
+          ),
+        data: { mode: 'view' },
+      },
       {
         path: 'fees/scholarships/create',
-        component: ScholarshipsComponent,
+        loadComponent: () =>
+          import('./scholarships/scholarships.component').then(
+            (component) => component.ScholarshipsComponent,
+          ),
         data: { mode: 'create' },
       },
       {
         path: 'fees/scholarships/:id/edit',
-        component: ScholarshipsComponent,
+        loadComponent: () =>
+          import('./scholarships/scholarships.component').then(
+            (component) => component.ScholarshipsComponent,
+          ),
         data: { mode: 'edit' },
       },
-      { path: 'accounts', component: AccountsComponent },
+      {
+        path: 'accounts',
+        loadComponent: () =>
+          import('./accounts/accounts.component').then((component) => component.AccountsComponent),
+      },
       ...[
         ['books/create', 'books', 'create'],
         ['books/view', 'books', 'view'],
@@ -92,7 +107,10 @@ export const ADMIN_ROUTES: Routes = [
         ['course-fees/view', 'course-fee-view', 'view'],
       ].map(([path, section, mode]) => ({
         path: `fees/${path}`,
-        component: FeeManagementComponent,
+        loadComponent: () =>
+          import('./fee-management/fee-management.component').then(
+            (component) => component.FeeManagementComponent,
+          ),
         data: { section, mode },
       })),
       ...[
@@ -112,7 +130,10 @@ export const ADMIN_ROUTES: Routes = [
         [':typeSlug/:id/edit', 'create'],
       ].map(([path, mode]) => ({
         path: `master-data/${path}`,
-        component: MasterDataComponent,
+        loadComponent: () =>
+          import('./master-data/master-data.component').then(
+            (component) => component.MasterDataComponent,
+          ),
         data: { mode },
       })),
       {
@@ -122,61 +143,126 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'form-builder',
-        component: FormBuilderComponent,
+        loadComponent: () =>
+          import('./form-builder/form-builder.component').then(
+            (component) => component.FormBuilderComponent,
+          ),
       },
       {
         path: 'admission/student',
         data: { embedded: true },
-        component: DynamicAdmissionComponent,
+        loadComponent: () =>
+          import('../student/admission/dynamic-admission.component').then(
+            (component) => component.DynamicAdmissionComponent,
+          ),
+      },
+      {
+        path: 'admissions/forms/:formId/edit',
+        title: 'Edit admission form',
+        loadComponent: () =>
+          import('./form-builder/form-builder.component').then(
+            (component) => component.FormBuilderComponent,
+          ),
+      },
+      {
+        path: 'admissions/forms',
+        title: 'Admission forms',
+        loadComponent: () =>
+          import('./admissions/forms-library/forms-library.component').then(
+            (component) => component.FormsLibraryComponent,
+          ),
       },
       {
         path: 'admissions/:admissionId/scholarships',
-        component: StudentScholarshipsComponent,
+        loadComponent: () =>
+          import('./student-scholarships/student-scholarships.component').then(
+            (component) => component.StudentScholarshipsComponent,
+          ),
       },
       {
         path: 'admissions/:admissionId/edit',
-        data: { embedded: true },
-        component: DynamicAdmissionComponent,
+        title: 'Edit application',
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./admissions/application-editor/application-editor.component').then(
+            (component) => component.ApplicationEditorComponent,
+          ),
+      },
+      {
+        path: 'admissions/applications/:admissionId/review',
+        title: 'Application review',
+        loadComponent: () =>
+          import('./admissions/application-review/application-review.component').then(
+            (component) => component.ApplicationReviewComponent,
+          ),
+      },
+      {
+        path: 'admissions/applications/:admissionId',
+        title: 'Application record',
+        loadComponent: () =>
+          import('./admissions/application-record/application-record.component').then(
+            (component) => component.ApplicationRecordComponent,
+          ),
+      },
+      {
+        path: 'admissions/applications',
+        title: 'Applications',
+        loadComponent: () =>
+          import('./admissions/admissions.component').then(
+            (component) => component.AdmissionsComponent,
+          ),
       },
       {
         path: 'admissions/unfilled',
-        component: AdmissionsComponent,
+        loadComponent: () =>
+          import('./admissions/admissions.component').then(
+            (component) => component.AdmissionsComponent,
+          ),
         data: {
           status: 'draft',
-          title: 'Admission Unfilled Data',
-          description: 'Saved admission forms that still need required information.',
+          title: 'Applications',
         },
       },
       {
         path: 'admissions/not-approved',
-        component: AdmissionsComponent,
+        loadComponent: () =>
+          import('./admissions/admissions.component').then(
+            (component) => component.AdmissionsComponent,
+          ),
         data: {
           status: 'pending_approval',
-          title: 'Not Approved Students',
-          description: 'Completed admissions waiting for approval.',
+          title: 'Applications',
         },
       },
       {
         path: 'admissions/approved',
-        component: AdmissionsComponent,
+        loadComponent: () =>
+          import('./admissions/admissions.component').then(
+            (component) => component.AdmissionsComponent,
+          ),
         data: {
           status: 'approved',
-          title: 'Approved Students',
-          description: 'Students whose completed admission records have been approved.',
+          title: 'Applications',
         },
       },
       {
         path: 'admissions/promotions',
-        component: StudentPromotionsComponent,
+        loadComponent: () =>
+          import('./student-promotions/student-promotions.component').then(
+            (component) => component.StudentPromotionsComponent,
+          ),
       },
       {
         path: 'admissions',
         pathMatch: 'full',
-        redirectTo: 'admissions/approved',
+        redirectTo: 'admissions/applications',
       },
       {
         path: 'delete-admissions',
-        component: DeleteAdmissionsComponent,
+        loadComponent: () =>
+          import('./delete-admissions/delete-admissions.component').then(
+            (component) => component.DeleteAdmissionsComponent,
+          ),
       },
       {
         path: 'admission/database',

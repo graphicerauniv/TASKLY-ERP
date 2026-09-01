@@ -6,7 +6,6 @@ import { ApiService } from '../../../core/api.service';
 import { ERP_PAGINATION } from '../../../core/config/data-view.constants';
 import { Admission } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
-import { AdmissionWorkspaceNavComponent } from '../../../shared/ui/admission-workspace-nav/admission-workspace-nav.component';
 import {
   CompactActionItem,
   CompactActionMenuComponent,
@@ -17,7 +16,6 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
   selector: 'erp-delete-admissions',
   imports: [
     AdminPageComponent,
-    AdmissionWorkspaceNavComponent,
     CompactActionMenuComponent,
     ConfirmDialogComponent,
     DatePipe,

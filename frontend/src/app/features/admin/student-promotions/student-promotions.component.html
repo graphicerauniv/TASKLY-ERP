@@ -3,6 +3,7 @@
   title="Student Promotion"
   description="Promote students only after their next semester or year fee period has been prepared."
   variant="minimal"
+  layout="collection"
 >
   <div page-actions class="erp-table-toolbar__actions">
     <button
@@ -24,8 +25,6 @@
       Year-wise
     </button>
   </div>
-
-  <erp-admission-workspace-nav />
 
   @if (message()) {
     <p class="erp-notice erp-notice--success">{{ message() }}</p>

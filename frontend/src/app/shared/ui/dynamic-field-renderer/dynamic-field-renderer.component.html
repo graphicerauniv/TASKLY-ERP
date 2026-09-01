@@ -9,6 +9,7 @@
 @if (field().type === 'textarea') {
   <textarea
     [id]="controlId()"
+    [attr.aria-label]="field().name"
     rows="4"
     [placeholder]="field().placeholder"
     [ngModel]="modelValue()"
@@ -26,6 +27,7 @@
   }
   <select
     [id]="controlId()"
+    [attr.aria-label]="field().name"
     [multiple]="field().type === 'multi-select'"
     [ngModel]="modelValue()"
     (ngModelChange)="modelChanged.emit($event)"
@@ -79,6 +81,7 @@
 } @else {
   <input
     [id]="controlId()"
+    [attr.aria-label]="field().name"
     [type]="field().type === 'mobile' ? 'tel' : field().type"
     [placeholder]="field().placeholder"
     [ngModel]="modelValue()"

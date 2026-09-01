@@ -13,6 +13,7 @@ import {
   LucideArrowRightLeft,
   LucideCopy,
   LucideCheck,
+  LucideDownload,
   LucideDynamicIcon,
   LucideFilePlus2,
   LucideFolderPlus,
@@ -42,6 +43,7 @@ const ACTION_ICONS = {
   delete: LucideTrash2,
   view: LucideEye,
   check: LucideCheck,
+  download: LucideDownload,
   fees: LucideWalletCards,
   scholarship: LucideGraduationCap,
   password: LucideKeyRound,
@@ -220,7 +222,7 @@ export interface CompactActionItem {
 export class CompactActionMenuComponent {
   private static activeMenu: CompactActionMenuComponent | null = null;
 
-  readonly items = input.required<CompactActionItem[]>();
+  readonly items = input.required<readonly CompactActionItem[]>();
   readonly variant = input<'more' | 'add'>('more');
   readonly label = input('Add');
   readonly selected = output<string>();

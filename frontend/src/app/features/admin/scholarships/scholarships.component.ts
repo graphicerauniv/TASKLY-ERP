@@ -6,13 +6,24 @@ import { ApiService } from '../../../core/api.service';
 import { Scholarship } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 import {
+  FilterPopoverComponent,
+  FilterPopoverOption,
+} from '../../../shared/ui/filter-popover/filter-popover.component';
+import {
   CompactActionItem,
   CompactActionMenuComponent,
 } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
 @Component({
   selector: 'erp-scholarships',
-  imports: [AdminPageComponent, CompactActionMenuComponent, CurrencyPipe, FormsModule, RouterLink],
+  imports: [
+    AdminPageComponent,
+    CompactActionMenuComponent,
+    FilterPopoverComponent,
+    CurrencyPipe,
+    FormsModule,
+    RouterLink,
+  ],
   templateUrl: './scholarships.component.html',
   styleUrl: './scholarships.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +40,11 @@ export class ScholarshipsComponent {
   readonly editingId = signal<string | null>(null);
   readonly statusFilter = signal<'all' | 'active' | 'inactive'>('all');
   readonly mode = signal<'view' | 'create' | 'edit'>('view');
+  readonly statusFilterOptions: readonly FilterPopoverOption[] = [
+    { label: 'All statuses', value: 'all' },
+    { label: 'Available', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+  ];
   search = '';
 
   name = '';

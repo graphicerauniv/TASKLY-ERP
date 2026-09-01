@@ -4,27 +4,47 @@
   description="Manage master data, admission forms, and student applications."
   variant="module"
 >
+  @if (error()) {
+    <div class="erp-notice erp-notice--error" role="alert">
+      {{ error() }}
+      <button
+        class="erp-button erp-button--secondary erp-button--compact"
+        type="button"
+        (click)="load()"
+      >
+        Try again
+      </button>
+    </div>
+  }
   <section class="erp-kpi-grid">
     <article class="erp-kpi-card">
-      <span class="erp-kpi-card__icon"><svg lucideDatabase size="20" aria-hidden="true"></svg></span>
+      <span class="erp-kpi-card__icon"
+        ><svg lucideDatabase size="20" aria-hidden="true"></svg
+      ></span>
       <div>
         <small>Master values</small><strong>{{ stats()['masterValues'] }}</strong>
       </div>
     </article>
     <article class="erp-kpi-card">
-      <span class="erp-kpi-card__icon erp-kpi-card__icon--purple"><svg lucideFileText size="20" aria-hidden="true"></svg></span>
+      <span class="erp-kpi-card__icon erp-kpi-card__icon--purple"
+        ><svg lucideFileText size="20" aria-hidden="true"></svg
+      ></span>
       <div>
         <small>Admission forms</small><strong>{{ stats()['forms'] }}</strong>
       </div>
     </article>
     <article class="erp-kpi-card">
-      <span class="erp-kpi-card__icon erp-kpi-card__icon--orange"><svg lucideClock3 size="20" aria-hidden="true"></svg></span>
+      <span class="erp-kpi-card__icon erp-kpi-card__icon--orange"
+        ><svg lucideClock3 size="20" aria-hidden="true"></svg
+      ></span>
       <div>
         <small>Draft applications</small><strong>{{ stats()['drafts'] }}</strong>
       </div>
     </article>
     <article class="erp-kpi-card">
-      <span class="erp-kpi-card__icon erp-kpi-card__icon--green"><svg lucideCircleCheck size="20" aria-hidden="true"></svg></span>
+      <span class="erp-kpi-card__icon erp-kpi-card__icon--green"
+        ><svg lucideCircleCheck size="20" aria-hidden="true"></svg
+      ></span>
       <div>
         <small>Submitted</small><strong>{{ stats()['submitted'] }}</strong>
       </div>

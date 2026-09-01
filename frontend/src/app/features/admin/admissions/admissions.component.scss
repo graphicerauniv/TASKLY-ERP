@@ -1,230 +1,451 @@
-/* ERP-LOCAL-STYLE: Admissions needs a compact workspace switcher and contextual detail drawer around the shared ERP data-view system. */
+/* ERP-LOCAL-STYLE: Applications Workbench composes shared data-view and drawer primitives into an admissions-specific operating surface. */
 :host {
   display: block;
 }
 
-.admission-table-toolbar {
-  align-items: flex-end;
+.applications-feedback:empty {
+  display: none;
 }
-.admission-table-toolbar .erp-table-toolbar__actions {
-  flex-wrap: wrap;
-}
-.admission-table-toolbar input {
-  min-width: min(20rem, 48vw);
-}
-.admission-bulk-bar {
+
+.applications-feedback .erp-notice {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--erp-space-3);
-  padding: var(--erp-space-2) var(--erp-space-4);
-  color: var(--erp-blue-800);
-  background: var(--erp-blue-50);
-  border-bottom: 1px solid var(--erp-border-subtle);
 }
-.admission-bulk-bar span {
-  flex: 1;
-  color: var(--erp-text-muted);
-  font-size: var(--erp-font-size-xs);
-}
-.admission-student-cell button {
+
+.applications-feedback .erp-notice button {
+  display: inline-grid;
+  width: var(--erp-space-6);
+  height: var(--erp-space-6);
+  flex: 0 0 auto;
   padding: 0;
-  text-align: left;
-  background: none;
+  place-items: center;
+  color: inherit;
+  background: transparent;
   border: 0;
+  border-radius: var(--erp-radius-control);
   cursor: pointer;
 }
-.admission-student-cell button:hover strong {
-  color: var(--erp-blue-700);
+
+.applications-toolbar {
+  align-items: flex-end;
 }
-.admission-student-cell small {
-  color: var(--erp-text-muted);
+
+.applications-toolbar__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
-.admission-secondary-value {
+
+.applications-search {
+  display: flex;
+  width: min(25rem, 42vw);
+  min-height: var(--erp-control-height-compact);
+  align-items: center;
+  gap: var(--erp-space-2);
+  padding: 0 var(--erp-space-3);
   color: var(--erp-text-muted);
+  background: var(--erp-input-bg);
+  border: 1px solid var(--erp-input-border);
+  border-radius: var(--erp-radius-control);
+  transition: var(--erp-standard-transition);
+}
+
+.applications-search:focus-within {
+  border-color: var(--erp-input-focus-border);
+  box-shadow: 0 0 0 var(--erp-space-1) var(--erp-focus-ring);
+}
+
+.applications-search input {
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  color: var(--erp-text-heading);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: var(--erp-font-label);
+}
+
+.applications-search > button,
+.applications-icon-button {
+  display: inline-grid;
+  width: var(--erp-control-height-compact);
+  height: var(--erp-control-height-compact);
+  flex: 0 0 auto;
+  padding: 0;
+  place-items: center;
+  color: var(--erp-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--erp-radius-control);
+  cursor: pointer;
+}
+
+.applications-search > button {
+  width: var(--erp-space-6);
+  height: var(--erp-space-6);
+}
+
+.applications-search > button:hover,
+.applications-icon-button:hover {
+  color: var(--erp-text-heading);
+  background: var(--erp-surface-hover);
+}
+
+.applications-selection {
+  margin: var(--erp-space-3) var(--erp-space-5);
+}
+
+.applications-selection > span {
+  min-width: 0;
+  flex: 1;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.applications-directory table {
+  min-width: 66rem;
+}
+
+.applications-select-column {
+  width: var(--erp-space-12);
+  padding-right: 0 !important;
+  text-align: center !important;
+}
+
+.applications-select-column input {
+  width: var(--erp-space-4);
+  height: var(--erp-space-4);
+  accent-color: var(--erp-blue-600);
+}
+
+.applications-select-column input:disabled {
+  opacity: 0.36;
+}
+
+.applications-reference strong,
+.applications-activity strong {
   font-variant-numeric: tabular-nums;
 }
 
-.admission-drawer-backdrop {
-  place-items: stretch;
-  padding: 0;
-}
-
-.student-detail--drawer {
-  width: min(720px, 100%);
-  height: 100%;
-  max-height: 100dvh;
-  margin-left: auto;
-  border-radius: var(--erp-radius-overlay) 0 0 var(--erp-radius-overlay);
-}
-
-.admission-drawer__statusbar {
-  display: flex;
+.applications-applicant {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--erp-space-3);
-  padding: var(--erp-space-2) var(--erp-space-5);
-  color: var(--erp-text-muted);
-  font-size: var(--erp-font-size-xs);
-  background: var(--erp-surface-page-panel);
-  border-bottom: 1px solid var(--erp-border-subtle);
-}
-.admission-drawer__tabs {
-  display: flex;
-  gap: var(--erp-space-5);
-  padding: 0 var(--erp-space-5);
-  background: var(--erp-surface-overlay);
-  border-bottom: 1px solid var(--erp-border-subtle);
-}
-.admission-drawer__tabs button {
-  padding: var(--erp-space-3) 0;
-  color: var(--erp-text-muted);
-  font-size: var(--erp-font-size-xs);
-  font-weight: var(--erp-weight-bold);
-  background: none;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
   border: 0;
-  border-bottom: 2px solid transparent;
   cursor: pointer;
 }
-.admission-drawer__tabs button.is-active {
+
+.applications-applicant:hover strong {
   color: var(--erp-blue-700);
-  border-color: var(--erp-blue-600);
+  text-decoration: underline;
+  text-underline-offset: var(--erp-space-1);
 }
-.admission-drawer__body {
-  padding: var(--erp-space-4);
+
+.applications-avatar {
+  display: inline-grid;
+  width: var(--erp-control-height-compact);
+  height: var(--erp-control-height-compact);
+  place-items: center;
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-avatar);
+  font-size: var(--erp-font-size-xs);
+  font-weight: var(--erp-weight-bold);
 }
-.admission-object-page {
+
+.applications-state {
+  display: grid;
+  min-height: var(--erp-state-panel-min-height);
+  place-items: center;
+  align-content: center;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-8);
+  color: var(--erp-text-muted);
+  text-align: center;
+}
+
+.applications-state h3,
+.applications-state p {
+  margin: 0;
+}
+
+.applications-state h3 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+}
+
+.applications-state p {
+  max-width: 28rem;
+  font-size: var(--erp-font-caption);
+}
+
+.applications-skeleton--check,
+.applications-skeleton--action {
+  width: var(--erp-space-5);
+}
+
+.applications-skeleton--reference,
+.applications-skeleton--status {
+  width: 55%;
+}
+
+.applications-skeleton--person,
+.applications-skeleton--programme,
+.applications-skeleton--date {
+  width: 76%;
+}
+
+.applications-skeleton--title {
+  width: 42%;
+}
+
+.applications-skeleton--block {
+  min-height: calc(var(--erp-space-12) * 2);
+}
+
+.applications-pagination {
+  padding: var(--erp-space-2) var(--erp-space-5);
+  font-size: var(--erp-font-caption);
+}
+
+.applications-page-number {
+  min-width: 6rem;
+  color: var(--erp-text-muted);
+  text-align: center;
+  font-size: var(--erp-font-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.applications-preview {
+  width: min(var(--erp-modal-width), 100%);
+}
+
+.applications-preview-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.applications-preview-loading {
   display: grid;
   gap: var(--erp-space-4);
 }
-.admission-object-section {
+
+.applications-preview-section {
   overflow: hidden;
   background: var(--erp-surface-overlay);
   border: 1px solid var(--erp-border-subtle);
   border-radius: var(--erp-radius-compact);
 }
-.admission-object-section > header {
+
+.applications-preview-section > header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--erp-space-3);
   padding: var(--erp-space-3) var(--erp-space-4);
+  background: var(--erp-surface-detail-soft);
   border-bottom: 1px solid var(--erp-border-subtle);
 }
-.admission-object-section h3,
-.admission-object-section p {
+
+.applications-preview-section h3,
+.applications-preview-section p {
   margin: 0;
 }
-.admission-object-section h3 {
+
+.applications-preview-section h3 {
   color: var(--erp-text-heading);
   font-size: var(--erp-font-label);
 }
-.admission-object-section p {
-  margin-top: 2px;
+
+.applications-preview-section p {
+  margin-top: var(--erp-space-1);
   color: var(--erp-text-muted);
-  font-size: var(--erp-font-size-2xs);
+  font-size: var(--erp-font-size-xs);
 }
-.admission-quick-actions {
-  display: flex;
-  flex-wrap: wrap;
+
+.applications-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--erp-space-2);
   padding: var(--erp-space-4);
 }
-.admission-facts {
+
+.applications-facts,
+.applications-timeline {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
-  padding: var(--erp-space-2) var(--erp-space-4) var(--erp-space-4);
 }
-.admission-facts div {
+
+.applications-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--erp-space-2) var(--erp-space-4);
+}
+
+.applications-facts > div,
+.applications-timeline > div {
   padding: var(--erp-space-3) 0;
   border-bottom: 1px solid var(--erp-border-subtle);
 }
-.admission-facts div:nth-child(odd) {
+
+.applications-facts > div:nth-last-child(-n + 2),
+.applications-timeline > div:last-child {
+  border-bottom: 0;
+}
+
+.applications-facts > div:nth-child(odd) {
   padding-right: var(--erp-space-4);
 }
-.admission-facts dt {
+
+.applications-facts dt,
+.applications-timeline dt {
   color: var(--erp-text-muted);
-  font-size: var(--erp-font-size-2xs);
+  font-size: var(--erp-font-size-xs);
 }
-.admission-facts dd {
+
+.applications-facts dd,
+.applications-timeline dd {
   margin: var(--erp-space-1) 0 0;
   color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.applications-timeline {
+  padding: 0 var(--erp-space-4);
+}
+
+.applications-timeline > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--erp-space-3);
+}
+
+.applications-fee-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-4);
+}
+
+.applications-fee-form label,
+.applications-credential-grid label {
+  display: grid;
+  gap: var(--erp-space-1);
+  color: var(--erp-text-muted);
   font-size: var(--erp-font-size-xs);
   font-weight: var(--erp-weight-semibold);
 }
-.admission-fee-settings {
-  padding: var(--erp-space-4);
+
+.applications-fee-form .erp-control,
+.applications-credential-grid .erp-control {
+  min-height: var(--erp-control-height-compact);
+  font-size: var(--erp-font-label);
 }
-.admission-section-actions {
+
+.applications-fee-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--erp-space-2);
   padding: 0 var(--erp-space-4) var(--erp-space-4);
 }
-.admission-application-layout {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  gap: var(--erp-space-4);
-  align-items: start;
-}
-.admission-application-layout > nav {
-  display: grid;
-  position: sticky;
-  top: 0;
-  gap: 2px;
-}
-.admission-application-layout > nav button {
-  padding: var(--erp-space-2) var(--erp-space-3);
-  text-align: left;
-  color: var(--erp-text-muted);
-  font-size: var(--erp-font-size-xs);
-  background: none;
-  border: 0;
-  border-radius: var(--erp-radius-control);
-  cursor: pointer;
-}
-.admission-application-layout > nav button:hover,
-.admission-application-layout > nav button.is-active {
-  color: var(--erp-blue-700);
-  background: var(--erp-blue-50);
-  font-weight: var(--erp-weight-bold);
+
+.applications-credential-dialog {
+  width: min(var(--erp-modal-width), 100%);
 }
 
-@media (max-width: 720px) {
-  .admission-table-toolbar {
+.applications-credential-body {
+  display: grid;
+  gap: var(--erp-space-4);
+}
+
+.applications-credential-body > p {
+  margin: 0;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.applications-credential-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-3);
+  color: var(--erp-text-heading);
+  background: var(--erp-blue-50);
+  border-radius: var(--erp-radius-control);
+  font-size: var(--erp-font-label);
+}
+
+.applications-credential-context span {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.applications-credential-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+}
+
+@media (max-width: 72rem) {
+  .applications-toolbar {
     align-items: stretch;
+    flex-direction: column;
   }
-  .admission-table-toolbar input {
-    min-width: 0;
-    flex: 1;
-  }
-  .admission-bulk-bar {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-  .admission-bulk-bar span {
-    flex-basis: 100%;
-    order: 3;
-  }
-  .student-detail--drawer {
+
+  .applications-toolbar__controls,
+  .applications-search {
     width: 100%;
-    border-radius: 0;
   }
-  .admission-drawer__statusbar {
+}
+
+@media (max-width: 48rem) {
+  .applications-toolbar__controls,
+  .applications-selection {
+    align-items: stretch;
     flex-wrap: wrap;
   }
-  .admission-facts {
+
+  .applications-search,
+  .applications-selection > span {
+    flex-basis: 100%;
+  }
+
+  .applications-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .applications-actions-grid,
+  .applications-facts,
+  .applications-fee-form,
+  .applications-credential-grid {
     grid-template-columns: 1fr;
   }
-  .admission-facts div:nth-child(odd) {
+
+  .applications-facts > div:nth-last-child(2) {
+    border-bottom: 1px solid var(--erp-border-subtle);
+  }
+
+  .applications-facts > div:nth-child(odd) {
     padding-right: 0;
-  }
-  .admission-application-layout {
-    grid-template-columns: 1fr;
-  }
-  .admission-application-layout > nav {
-    display: flex;
-    position: static;
-    overflow-x: auto;
-    white-space: nowrap;
   }
 }

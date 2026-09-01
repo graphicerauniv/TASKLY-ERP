@@ -1,98 +1,108 @@
-/* Taskly ERP design tokens.
+/* Taskly Admin UI design tokens.
  * Foundation only: no component selectors and no page styling.
- * Visual direction: supplied GEU admin ERP reference.
+ * Visual direction: quiet, neutral operational surfaces with a retained blue accent.
  */
 
 :root {
   color-scheme: light;
 
   /* Brand */
-  --erp-blue-50: #e3f2fd;
-  --erp-blue-100: #cfe8ff;
-  --erp-blue-200: #90caf9;
-  --erp-blue-500: #2196f3;
-  --erp-blue-600: #1976d2;
-  --erp-blue-700: #1565c0;
-  --erp-blue-800: #0b57a4;
-  --erp-blue-900: #073b7a;
-  --erp-sidebar-gradient-start: #0868cc;
-  --erp-sidebar-gradient-end: #0057b8;
+  --erp-blue-50: #f0f7ff;
+  --erp-blue-100: #d8eaff;
+  --erp-blue-200: #b6d8ff;
+  --erp-blue-500: #0b66c3;
+  --erp-blue-600: #0959ad;
+  --erp-blue-700: #084b91;
+  --erp-blue-800: #073f79;
+  --erp-blue-900: #052f5c;
+  --erp-sidebar-gradient-start: var(--erp-blue-600);
+  --erp-sidebar-gradient-end: var(--erp-blue-700);
 
   /* Surfaces */
-  --erp-canvas: #f6f8f2;
-  --erp-canvas-soft: #f1f7f3;
-  --erp-surface: #fbfcf6;
-  --erp-surface-raised: #fdfdf9;
+  --erp-canvas: #f6f8fa;
+  --erp-canvas-soft: #f3f4f6;
+  --erp-surface: #ffffff;
+  --erp-surface-raised: #ffffff;
   --erp-surface-overlay: #ffffff;
-  --erp-surface-page-panel: #fbfdff;
-  --erp-surface-detail: #f7fafc;
-  --erp-surface-detail-soft: #fafcfd;
-  --erp-surface-translucent: rgb(251 252 246 / 58%);
-  --erp-surface-selected: #e3f2fd;
-  --erp-surface-hover: #eef8fe;
-  --erp-surface-neutral: #eef2f5;
-  --erp-border-subtle: #e7f3fb;
-  --erp-border-default: #d8eaf7;
-  --erp-border-strong: #90caf9;
-  --erp-focus-ring: rgb(33 150 243 / 28%);
-  --erp-backdrop: rgb(16 42 67 / 34%);
+  --erp-surface-page-panel: #f6f8fa;
+  --erp-surface-detail: #f6f8fa;
+  --erp-surface-detail-soft: #fbfcfe;
+  --erp-surface-translucent: rgb(255 255 255 / 92%);
+  --erp-surface-selected: #eaf4ff;
+  --erp-surface-hover: #f3f4f6;
+  --erp-surface-neutral: #eff1f3;
+  --erp-border-subtle: #e5e7eb;
+  --erp-border-default: #d0d7de;
+  --erp-border-strong: #afb8c1;
+  --erp-focus-outline: #0969da;
+  --erp-focus-ring: rgb(9 105 218 / 30%);
+  --erp-focus-ring-width: 2px;
+  --erp-focus-ring-offset: 2px;
+  --erp-backdrop: rgb(31 35 40 / 42%);
 
   /* Text */
-  --erp-text-heading: #102a43;
-  --erp-text-strong: #243b53;
-  --erp-text-body: #486581;
-  --erp-text-muted: #627d98;
-  --erp-text-light: #829ab1;
-  --erp-text-disabled: #9fb3c8;
-  --erp-text-link: #1976d2;
+  --erp-text-heading: #1f2328;
+  --erp-text-strong: #24292f;
+  --erp-text-body: #3d444d;
+  --erp-text-muted: #59636e;
+  --erp-text-light: #6e7781;
+  --erp-text-disabled: #8c959f;
+  --erp-text-link: #0969da;
   --erp-text-on-primary: #ffffff;
   --erp-text-on-primary-muted: rgb(255 255 255 / 70%);
-  --erp-text-on-primary-soft: #bfe0ff;
+  --erp-text-on-primary-soft: #d8eaff;
   --erp-surface-on-primary-subtle: rgb(255 255 255 / 10%);
   --erp-border-on-primary-subtle: rgb(255 255 255 / 15%);
   --erp-text-on-sidebar: #ffffff;
   --erp-text-sidebar-muted: rgb(255 255 255 / 78%);
-  --erp-text-sidebar-active: #075fbf;
+  --erp-text-sidebar-active: var(--erp-blue-700);
 
   /* Semantic */
-  --erp-success: #1f9d63;
-  --erp-success-bg: #e9f9f0;
-  --erp-success-text: #137a49;
-  --erp-warning: #f59e0b;
-  --erp-warning-bg: #fff7df;
-  --erp-warning-text: #a55b00;
-  --erp-warning-border: #f6d7ae;
-  --erp-warning-icon-bg: #ffedd3;
-  --erp-warning-strong-text: #87440d;
-  --erp-warning-body-text: #9b641f;
-  --erp-danger: #e85d5d;
-  --erp-danger-bg: #fff0ee;
-  --erp-danger-text: #b9382e;
-  --erp-danger-border-soft: #f1bcbc;
-  --erp-info: #2196f3;
-  --erp-info-bg: #e3f2fd;
-  --erp-info-text: #1976d2;
+  --erp-success: #1a7f37;
+  --erp-success-bg: #dafbe1;
+  --erp-success-text: #116329;
+  --erp-success-border: #82d99a;
+  --erp-warning: #9a6700;
+  --erp-warning-bg: #fff8c5;
+  --erp-warning-text: #7d4e00;
+  --erp-warning-border: #d4a72c;
+  --erp-warning-icon-bg: #fff1a8;
+  --erp-warning-strong-text: #633c01;
+  --erp-warning-body-text: #7d4e00;
+  --erp-danger: #cf222e;
+  --erp-danger-bg: #ffebe9;
+  --erp-danger-text: #a40e26;
+  --erp-danger-border-soft: #ff8182;
+  --erp-danger-ring: rgb(207 34 46 / 18%);
+  --erp-info: #0969da;
+  --erp-info-bg: #ddf4ff;
+  --erp-info-text: #0550ae;
+  --erp-info-border: #80ccff;
 
-  /* Typography: Manrope throughout the ERP */
-  --erp-font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --erp-font-display: 28px;
-  --erp-font-page-title: 22px;
-  --erp-font-section-title: 18px;
-  --erp-font-body: 14px;
-  --erp-font-label: 13px;
-  --erp-font-caption: 12px;
-  --erp-font-size-2xs: 10px;
-  --erp-font-size-xs: 11px;
-  --erp-font-size-sm: 12px;
-  --erp-font-size-md: 14px;
-  --erp-font-size-lg: 18px;
-  --erp-font-size-xl: 22px;
-  --erp-line-display: 36px;
-  --erp-line-page-title: 30px;
-  --erp-line-section-title: 26px;
-  --erp-line-body: 22px;
-  --erp-line-label: 18px;
-  --erp-line-caption: 16px;
+  /* Typography: Inter when available, then a system-safe sans stack. */
+  --erp-font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --erp-font-mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --erp-font-display: 1.5rem;
+  --erp-font-page-title: 1.25rem;
+  --erp-font-section-title: 1rem;
+  --erp-font-panel-title: 0.875rem;
+  --erp-font-body: 0.875rem;
+  --erp-font-table: 0.8125rem;
+  --erp-font-label: 0.8125rem;
+  --erp-font-caption: 0.75rem;
+  --erp-font-size-2xs: 0.6875rem;
+  --erp-font-size-xs: 0.75rem;
+  --erp-font-size-sm: 0.8125rem;
+  --erp-font-size-md: 0.875rem;
+  --erp-font-size-lg: 1rem;
+  --erp-font-size-xl: 1.25rem;
+  --erp-line-display: 1.3333;
+  --erp-line-page-title: 1.4;
+  --erp-line-section-title: 1.5;
+  --erp-line-body: 1.4286;
+  --erp-line-table: 1.3846;
+  --erp-line-label: 1.3846;
+  --erp-line-caption: 1.3333;
   --erp-weight-regular: 400;
   --erp-weight-medium: 500;
   --erp-weight-semibold: 600;
@@ -101,7 +111,7 @@
   --erp-letter-normal: 0;
 
   /* Lucide icon system */
-  --erp-icon-stroke: 1.8px;
+  --erp-icon-stroke: 1.75px;
   --erp-icon-xs: 14px;
   --erp-icon-sm: 16px;
   --erp-icon-md: 20px;
@@ -147,21 +157,23 @@
     var(--erp-sidebar-gradient-start),
     var(--erp-sidebar-gradient-end)
   );
-  --erp-sidebar-layer: rgb(144 202 249 / 24%);
-  --erp-sidebar-pattern: rgb(144 202 249 / 42%);
-  --erp-sidebar-active-bg: rgb(255 255 255 / 88%);
-  --erp-sidebar-hover-bg: rgb(255 255 255 / 12%);
-  --erp-sidebar-active-edge: #56b5ff;
-  --erp-sidebar-divider: rgb(255 255 255 / 18%);
-  --erp-sidebar-surface: #e3f2fd;
-  --erp-sidebar-text: #486581;
-  --erp-sidebar-text-muted: #627d98;
-  --erp-sidebar-hover-light: rgb(144 202 249 / 26%);
-  --erp-sidebar-active-light: #2196f3;
+  --erp-sidebar-layer: var(--erp-surface-detail);
+  --erp-sidebar-pattern: rgb(11 102 195 / 6%);
+  --erp-sidebar-glow: rgb(122 190 255 / 22%);
+  --erp-sidebar-panel-surface: rgb(255 255 255 / 56%);
+  --erp-sidebar-active-bg: var(--erp-surface-raised);
+  --erp-sidebar-hover-bg: rgb(255 255 255 / 64%);
+  --erp-sidebar-active-edge: var(--erp-blue-500);
+  --erp-sidebar-divider: var(--erp-blue-100);
+  --erp-sidebar-surface: #f1f8ff;
+  --erp-sidebar-text: var(--erp-text-body);
+  --erp-sidebar-text-muted: var(--erp-text-muted);
+  --erp-sidebar-hover-light: var(--erp-surface-hover);
+  --erp-sidebar-active-light: var(--erp-blue-500);
   --erp-sidebar-panel-width: 360px;
   --erp-sidebar-mobile-width: 304px;
-  --erp-header-height: 64px;
-  --erp-header-bg: rgb(253 253 249 / 94%);
+  --erp-header-height: 56px;
+  --erp-header-bg: rgb(255 255 255 / 96%);
   --erp-header-border: var(--erp-border-default);
   --erp-header-padding-inline: 20px;
   --erp-header-search-width: 360px;
@@ -170,30 +182,30 @@
   --erp-admin-main-min-width: 0;
   --erp-admin-context-width: var(--erp-inspector-width);
   --erp-admin-workspace-gap: 20px;
-  --erp-admin-section-gap: 18px;
+  --erp-admin-section-gap: 24px;
   --erp-admin-page-header-gap: 16px;
   --erp-admin-sticky-top: calc(var(--erp-header-height) + 20px);
 
   /* Radius and elevation */
   --erp-radius-xs: 4px;
-  --erp-radius-control: 8px;
-  --erp-radius-compact: 10px;
+  --erp-radius-control: 6px;
+  --erp-radius-compact: 8px;
   --erp-radius-chip: 999px;
   --erp-radius-pill: 999px;
-  --erp-radius-card: 14px;
-  --erp-radius-overlay: 16px;
+  --erp-radius-card: 8px;
+  --erp-radius-overlay: 10px;
   --erp-radius-avatar: 999px;
-  --erp-shadow-card: 0 4px 14px rgb(33 150 243 / 8%);
-  --erp-shadow-enterprise-card: 0 4px 18px rgb(16 42 67 / 6%);
-  --erp-shadow-card-hover: 0 10px 24px rgb(33 150 243 / 13%);
+  --erp-shadow-card: 0 1px 2px rgb(31 35 40 / 4%);
+  --erp-shadow-enterprise-card: 0 1px 2px rgb(31 35 40 / 4%);
+  --erp-shadow-card-hover: 0 1px 2px rgb(31 35 40 / 6%);
   --erp-shadow-header: 0 1px 0 var(--erp-header-border);
-  --erp-shadow-sidebar: 8px 0 24px rgb(7 59 122 / 14%);
-  --erp-shadow-overlay: 0 20px 44px rgb(16 42 67 / 14%);
+  --erp-shadow-sidebar: 2px 0 8px rgb(31 35 40 / 8%);
+  --erp-shadow-overlay: 0 8px 24px rgb(31 35 40 / 18%);
 
   /* Cards and overlays */
-  --erp-card-padding: 20px;
-  --erp-card-padding-compact: 16px;
-  --erp-card-padding-dense: 14px;
+  --erp-card-padding: 16px;
+  --erp-card-padding-compact: 12px;
+  --erp-card-padding-dense: 12px;
   --erp-kpi-card-min-width: 260px;
   --erp-kpi-card-height: 126px;
   --erp-kpi-purple-text: #7652c7;
@@ -210,35 +222,53 @@
   --erp-workflow-mobile-sheet-height: 78dvh;
 
   /* Controls, tables and chips */
-  --erp-control-height: 40px;
-  --erp-control-height-large: 48px;
-  --erp-control-height-compact: 36px;
+  --erp-control-height: 36px;
+  --erp-control-height-large: 40px;
+  --erp-control-height-compact: 32px;
   --erp-control-height-mobile: 44px;
-  --erp-button-primary-bg: #2196f3;
-  --erp-button-primary-hover: #1976d2;
-  --erp-button-primary-pressed: #1565c0;
-  --erp-button-secondary-bg: #fbfcf6;
-  --erp-button-secondary-border: #90caf9;
-  --erp-input-bg: #fbfcf6;
-  --erp-input-border: #d8eaf7;
-  --erp-input-focus-border: #2196f3;
-  --erp-table-header-height: 44px;
-  --erp-table-row-height: 52px;
-  --erp-table-row-height-compact: 44px;
-  --erp-table-header-bg: #f1f8fd;
-  --erp-table-row-hover: #e3f2fd;
-  --erp-table-divider: #e7f3fb;
+  --erp-button-primary-bg: var(--erp-blue-500);
+  --erp-button-primary-hover: var(--erp-blue-600);
+  --erp-button-primary-pressed: var(--erp-blue-700);
+  --erp-button-secondary-bg: var(--erp-surface);
+  --erp-button-secondary-border: var(--erp-border-default);
+  --erp-input-bg: var(--erp-surface);
+  --erp-input-border: var(--erp-border-default);
+  --erp-input-focus-border: var(--erp-blue-500);
+  --erp-table-header-height: 40px;
+  --erp-table-row-height: 44px;
+  --erp-table-row-height-compact: 40px;
+  --erp-table-header-bg: var(--erp-surface-detail);
+  --erp-table-row-hover: var(--erp-surface-hover);
+  --erp-table-divider: var(--erp-border-subtle);
   --erp-table-wide-min-width: 1120px;
   --erp-fee-mapping-editor-min-width: 320px;
-  --erp-chip-height: 24px;
+  --erp-chip-height: 22px;
   --erp-chip-padding-inline: 8px;
 
+  /* Phase-one navigation, query and state primitives */
+  --erp-route-tabs-height: 36px;
+  --erp-route-tabs-gap: 20px;
+  --erp-route-tabs-indicator-height: 2px;
+  --erp-filter-toolbar-min-height: 52px;
+  --erp-filter-toolbar-gap: var(--erp-space-2);
+  --erp-filter-toolbar-padding: var(--erp-space-3);
+  --erp-status-badge-height: 22px;
+  --erp-status-badge-gap: 6px;
+  --erp-status-badge-dot-size: 6px;
+  --erp-table-state-min-height: 180px;
+  --erp-drawer-state-min-height: 240px;
+
+  /* Breakpoint values are also available to route/layout code. */
+  --erp-breakpoint-narrow: 48rem;
+  --erp-breakpoint-medium: 64rem;
+  --erp-breakpoint-expanded: 80rem;
+
   /* Charts */
-  --erp-chart-primary: #2196f3;
-  --erp-chart-secondary: #90caf9;
-  --erp-chart-area-fill: rgb(144 202 249 / 28%);
-  --erp-chart-grid: #d8eaf7;
-  --erp-chart-baseline: #829ab1;
+  --erp-chart-primary: var(--erp-blue-500);
+  --erp-chart-secondary: var(--erp-blue-200);
+  --erp-chart-area-fill: rgb(11 102 195 / 14%);
+  --erp-chart-grid: var(--erp-border-subtle);
+  --erp-chart-baseline: var(--erp-text-light);
 
   /* Layer order */
   --erp-z-content: 1;
@@ -250,7 +280,7 @@
   --erp-z-toast: 1000;
 
   /* Interaction contracts */
-  --erp-standard-transition: 180ms ease-out;
+  --erp-standard-transition: 160ms ease-out;
   --erp-overlay-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --erp-sidebar-expand-transition: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -291,7 +321,7 @@
   /* Controls and surfaces */
   --erp-control-transition: var(--erp-duration-fast) var(--erp-ease-standard);
   --erp-card-hover-duration: var(--erp-duration-standard);
-  --erp-card-hover-translate-y: -2px;
+  --erp-card-hover-translate-y: 0;
   --erp-press-scale: 0.98;
 
   /* Overlays */
@@ -342,9 +372,9 @@
 
 :root {
   /* Pagination */
-  --erp-pagination-height: 48px;
+  --erp-pagination-height: 44px;
   --erp-pagination-gap: var(--erp-space-2);
-  --erp-pagination-button-size: 36px;
+  --erp-pagination-button-size: 32px;
   --erp-pagination-button-radius: var(--erp-radius-control);
   --erp-pagination-bg: var(--erp-surface-raised);
   --erp-pagination-border: var(--erp-border-default);
@@ -354,21 +384,21 @@
   --erp-pagination-disabled-opacity: 0.46;
 
   /* Selection */
-  --erp-selection-bg: rgb(33 150 243 / 10%);
-  --erp-selection-hover-bg: rgb(33 150 243 / 15%);
+  --erp-selection-bg: rgb(11 102 195 / 9%);
+  --erp-selection-hover-bg: rgb(11 102 195 / 13%);
   --erp-selection-border: var(--erp-blue-500);
   --erp-selection-indicator-width: 3px;
-  --erp-selection-toolbar-height: 48px;
+  --erp-selection-toolbar-height: 44px;
   --erp-selection-toolbar-bg: var(--erp-blue-50);
 
   /* Loading and skeletons */
-  --erp-loading-overlay-bg: rgb(251 252 246 / 76%);
+  --erp-loading-overlay-bg: rgb(255 255 255 / 82%);
   --erp-loading-backdrop-blur: 2px;
   --erp-loading-spinner-size: 32px;
   --erp-loading-spinner-track: var(--erp-blue-100);
   --erp-loading-spinner-active: var(--erp-blue-600);
-  --erp-skeleton-base: #e8f0f5;
-  --erp-skeleton-highlight: #f7fbfd;
+  --erp-skeleton-base: #eaeef2;
+  --erp-skeleton-highlight: #f6f8fa;
   --erp-skeleton-radius: var(--erp-radius-control);
   --erp-skeleton-line-height: 14px;
   --erp-skeleton-shimmer-width: 45%;
@@ -382,17 +412,17 @@
   --erp-auth-bg-position: center;
 
   /* Empty, error and refresh states */
-  --erp-state-panel-min-height: 240px;
-  --erp-state-icon-size: 40px;
+  --erp-state-panel-min-height: 200px;
+  --erp-state-icon-size: 32px;
   --erp-state-content-width: 420px;
   --erp-stale-data-opacity: 0.7;
   --erp-refresh-indicator-size: 18px;
 
   /* Data density and rendering */
-  --erp-data-row-height-comfortable: 52px;
-  --erp-data-row-height-compact: 44px;
+  --erp-data-row-height-comfortable: 48px;
+  --erp-data-row-height-compact: 40px;
   --erp-data-row-height-dense: 36px;
   --erp-data-cell-padding-inline: 12px;
   --erp-virtual-scroll-buffer: 320px;
-  --erp-content-visibility-size: 52px;
+  --erp-content-visibility-size: 44px;
 }

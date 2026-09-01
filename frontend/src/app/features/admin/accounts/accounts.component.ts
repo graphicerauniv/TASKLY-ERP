@@ -4,10 +4,25 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { FeePayment, StudentDiscount } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import {
+  FilterPopoverComponent,
+  FilterPopoverOption,
+} from '../../../shared/ui/filter-popover/filter-popover.component';
+import {
+  CompactActionItem,
+  CompactActionMenuComponent,
+} from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
 @Component({
   selector: 'erp-accounts',
-  imports: [AdminPageComponent, FormsModule, CurrencyPipe, DatePipe],
+  imports: [
+    AdminPageComponent,
+    CompactActionMenuComponent,
+    FilterPopoverComponent,
+    FormsModule,
+    CurrencyPipe,
+    DatePipe,
+  ],
   templateUrl: './accounts.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -18,6 +33,16 @@ export class AccountsComponent {
   readonly summary = signal({ successfulPayments: 0, collectedAmount: 0, pendingPayments: 0 });
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly statusFilterOptions: readonly FilterPopoverOption[] = [
+    { label: 'All statuses', value: '' },
+    { label: 'Paid', value: 'paid' },
+    { label: 'Pending', value: 'created' },
+    { label: 'Failed', value: 'failed' },
+    { label: 'Refunded', value: 'refunded' },
+  ];
+  readonly paymentActions: readonly CompactActionItem[] = [
+    { id: 'receipt', label: 'Download receipt', icon: 'download' },
+  ];
   search = '';
   status = '';
 
@@ -45,6 +70,10 @@ export class AccountsComponent {
     this.api
       .downloadAdminReceipt(payment._id)
       .subscribe((blob) => downloadBlob(blob, `${payment.receiptNumber || 'fee-receipt'}.html`));
+  }
+
+  handlePaymentAction(action: string, payment: FeePayment): void {
+    if (action === 'receipt') this.receipt(payment);
   }
 }
 

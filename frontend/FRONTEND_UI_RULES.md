@@ -22,25 +22,22 @@ src/app/app.routes.ts                    root routes and auth entry points
 src/app/features/admin/admin.routes.ts   admin shell and admin child routes
 ```
 
-Lazy load only:
-
-1. Auth/Login features
-2. Dashboard
-
-Keep Admissions, Form Builder, Master Data, Delete Admissions, Student Admission,
-and future ERP modules as normal imported route components until this rule is deliberately changed.
+Lazy-load portal and admin domain boundaries. Large or infrequently used pages may
+also use `loadComponent` inside their domain. Permission-aware preloading may be
+added after authentication; do not return to one eager admin route graph.
 
 Required route behavior:
 
 ```text
 /login                    lazy Admin Login
 /student/login            lazy Student Login
-/admin/dashboard          lazy Dashboard inside AdminShell
-/admin/admissions         normal component inside AdminShell
-/admin/form-builder       normal component inside AdminShell
-/admin/master-data/:slug  normal component inside AdminShell
-/admin/admission/student  normal component inside AdminShell
-/admin/delete-admissions  normal component inside AdminShell
+/admin                    lazy AdminShell and admin routes
+/admin/dashboard          lazy page inside AdminShell
+/admin/admissions         lazy admissions domain/page inside AdminShell
+/admin/form-builder       lazy page inside AdminShell
+/admin/master-data/:slug  lazy page inside AdminShell
+/admin/admission/student  lazy page inside AdminShell
+/admin/delete-admissions  lazy governance page inside AdminShell
 ```
 
 Legacy route aliases may redirect through Angular Router. They must not reload the browser.
@@ -142,19 +139,14 @@ feature-name.component.scss  optional unique local layout only
 Component HTML is correct and required when the UI is not an intentionally tiny inline template.
 It is not a separate browser page.
 
-The Angular schematic uses `style: none` by default so a stylesheet is not generated for every page.
-Create local SCSS only when the component has a genuine unique layout that cannot be expressed with:
+The Angular schematic may keep `style: none` for components without layout needs.
+Create co-located component SCSS when the component owns geometry or responsive
+composition that cannot be expressed with:
 
 1. an existing shared UI component,
 2. an existing `erp-*` global UI contract,
-3. a reusable addition to `_system.scss`,
+3. a reusable shared pattern/component,
 4. a small Tailwind layout utility.
-
-Approved feature SCSS must begin with:
-
-```scss
-/* ERP-LOCAL-STYLE: explain why this layout cannot be shared */
-```
 
 Local SCSS must use global tokens and must never declare raw colours, spacing scales,
 buttons, cards, inputs, typography, shadows, or repeated responsive patterns.
@@ -165,7 +157,7 @@ The Admin Portal has one canonical global style system:
 
 ```text
 src/style/_tokens.scss  theme values
-src/style/_system.scss  reusable UI contracts
+src/style/_system.scss  foundations and approved global utilities only
 src/style/_index.scss   one style entry imported by src/styles.scss
 ```
 
@@ -180,9 +172,9 @@ Correct ownership:
 
 ```text
 Theme change      = mostly _tokens.scss
-UI pattern change = shared/ui component + _system.scss
+UI pattern change = shared/ui component with encapsulated styles
 Feature page      = page composition + business bindings
-Local SCSS        = documented unique layout exception only
+Local SCSS        = token-based component geometry and responsive composition
 ```
 
 If changing the theme requires editing many feature files, the implementation is wrong.
@@ -339,6 +331,16 @@ Header variants:
 - `minimal`: default for create/view/list/table-heavy pages where vertical
   working space matters.
 
+Page layouts:
+
+- `default`: editors, record pages, review tasks, and dashboards.
+- `collection`: high-volume directories and operational workbenches. It uses the
+  full content width, a compact title row, dense toolbars and rows, and sticky
+  table headers while retaining 44px mobile touch targets.
+
+Use `layout="collection"` only on the list/view side of a split create/view
+module. Do not use it to compress forms, review flows, dialogs, or record pages.
+
 Rules:
 
 - Do not show the same module eyebrow on every inner page.
@@ -402,8 +404,8 @@ npm run build
 - exactly one `src/index.html`,
 - all other HTML files are Angular `*.component.html` templates,
 - internal routes use `routerLink`,
-- lazy loading is limited to Auth/Login and Dashboard,
-- feature SCSS has a documented unique-layout exception,
+- admin portal/domain routes remain lazily bounded,
+- feature SCSS consumes shared tokens and does not declare raw colours,
 - raw colours are not added outside the theme system.
 
 Visual QA must cover desktop, laptop, tablet, mobile, keyboard focus,

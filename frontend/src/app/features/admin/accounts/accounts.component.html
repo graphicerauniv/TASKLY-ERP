@@ -3,25 +3,33 @@
   title="Student Payments"
   description="Review verified Razorpay payments, allocation details, balances and receipts."
   variant="minimal"
+  layout="collection"
 >
   @if (error()) {
     <p class="erp-notice erp-notice--error">{{ error() }}</p>
   }
-  <section class="erp-card erp-card--padded">
-    <div class="erp-form-grid">
+  <section class="erp-metric-strip erp-metric-strip--three" aria-label="Payments summary">
+    <article class="erp-metric-strip__item">
+      <span class="erp-metric-strip__icon erp-metric-strip__icon--image"
+        ><img src="assets/admin/finance-icons/accounts-payments.png" alt="" aria-hidden="true"
+      /></span>
       <div>
+        <small>Total collected</small>
         <strong>{{ summary().collectedAmount | currency: 'INR' }}</strong>
-        <p>Total collected</p>
       </div>
+    </article>
+    <article class="erp-metric-strip__item">
       <div>
+        <small>Successful payments</small>
         <strong>{{ summary().successfulPayments }}</strong>
-        <p>Successful payments</p>
       </div>
+    </article>
+    <article class="erp-metric-strip__item">
       <div>
+        <small>Pending orders</small>
         <strong>{{ summary().pendingPayments }}</strong>
-        <p>Pending orders</p>
       </div>
-    </div>
+    </article>
   </section>
   <section class="erp-card erp-table-shell">
     <div class="erp-table-toolbar">
@@ -38,13 +46,13 @@
           [(ngModel)]="search"
           placeholder="Search payments"
           (keyup.enter)="load()"
-        /><select class="erp-control" [(ngModel)]="status" (ngModelChange)="load()">
-          <option value="">All statuses</option>
-          <option value="paid">Paid</option>
-          <option value="created">Pending</option>
-          <option value="failed">Failed</option>
-          <option value="refunded">Refunded</option></select
-        ><button class="erp-button erp-button--secondary" type="button" (click)="load()">
+        /><erp-filter-popover
+          label="Status filters"
+          resetValue=""
+          [options]="statusFilterOptions"
+          [value]="status"
+          (valueChange)="status = $event; load()"
+        /><button class="erp-button erp-button--secondary" type="button" (click)="load()">
           Search
         </button>
       </div>
@@ -95,13 +103,10 @@
               </td>
               <td>
                 @if (payment.status === 'paid') {
-                  <button
-                    class="erp-button erp-button--secondary"
-                    type="button"
-                    (click)="receipt(payment)"
-                  >
-                    Download receipt
-                  </button>
+                  <erp-compact-action-menu
+                    [items]="paymentActions"
+                    (selected)="handlePaymentAction($event, payment)"
+                  />
                 }
               </td>
             </tr>
@@ -119,27 +124,53 @@
   <section class="erp-card erp-table-shell">
     <div class="erp-table-toolbar">
       <div>
-        <h2>One-time discount audit <small>{{ discounts().length }}</small></h2>
+        <h2>
+          One-time discount audit <small>{{ discounts().length }}</small>
+        </h2>
         <p>Internal remarks are restricted to administrators and Accounts.</p>
       </div>
     </div>
     <div class="erp-table-shell__scroll">
       <table>
-        <thead><tr><th>Student</th><th>Discount</th><th>Type</th><th>Value</th><th>Fee period</th><th>Internal remark</th><th>Date</th><th>Status</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Discount</th>
+            <th>Type</th>
+            <th>Value</th>
+            <th>Fee period</th>
+            <th>Internal remark</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
         <tbody>
           @for (discount of discounts(); track discount._id) {
             <tr>
-              <td><strong>{{ discount.studentName }}</strong><small>{{ discount.studentId }}</small></td>
+              <td>
+                <strong>{{ discount.studentName }}</strong
+                ><small>{{ discount.studentId }}</small>
+              </td>
               <td>{{ discount.name }}</td>
               <td>{{ discount.type === 'percentage' ? 'Percentage' : 'Fixed amount' }}</td>
-              <td>{{ discount.type === 'percentage' ? discount.value + '%' : (discount.value | currency:'INR') }}</td>
+              <td>
+                {{
+                  discount.type === 'percentage'
+                    ? discount.value + '%'
+                    : (discount.value | currency: 'INR')
+                }}
+              </td>
               <td>{{ discount.targetPeriodLabel }}</td>
               <td>{{ discount.internalRemark }}</td>
-              <td>{{ discount.createdAt | date:'medium' }}</td>
-              <td><span class="erp-status">{{ discount.status }}</span></td>
+              <td>{{ discount.createdAt | date: 'medium' }}</td>
+              <td>
+                <span class="erp-status">{{ discount.status }}</span>
+              </td>
             </tr>
           } @empty {
-            <tr><td colspan="8" class="erp-empty-state">No one-time discount records found.</td></tr>
+            <tr>
+              <td colspan="8" class="erp-empty-state">No one-time discount records found.</td>
+            </tr>
           }
         </tbody>
       </table>

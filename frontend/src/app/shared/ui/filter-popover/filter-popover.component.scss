@@ -1,0 +1,111 @@
+/* ERP-LOCAL-STYLE: Reusable compact filter trigger owns its anchored popover geometry and dismissal layer. */
+:host {
+  display: inline-block;
+}
+
+.filter-popover {
+  position: relative;
+}
+
+.filter-popover__trigger.is-active {
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border-color: var(--erp-blue-200);
+}
+
+.filter-popover__trigger small {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: var(--erp-radius-pill);
+  color: var(--erp-text-on-primary);
+  background: var(--erp-blue-600);
+  font-size: var(--erp-font-size-2xs);
+}
+
+.filter-popover__backdrop {
+  position: fixed;
+  z-index: var(--erp-z-dropdown);
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.filter-popover__panel {
+  position: absolute;
+  z-index: calc(var(--erp-z-dropdown) + 1);
+  top: calc(100% + var(--erp-space-2));
+  right: 0;
+  width: min(260px, calc(100vw - 24px));
+  overflow: hidden;
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-overlay);
+  background: var(--erp-surface-overlay);
+  box-shadow: var(--erp-shadow-overlay);
+}
+
+.filter-popover__panel header,
+.filter-popover__panel footer {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-2) var(--erp-space-3);
+}
+
+.filter-popover__panel header {
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.filter-popover__panel header strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+}
+
+.filter-popover__panel header button {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--erp-radius-control);
+  color: var(--erp-text-muted);
+  background: transparent;
+}
+
+.filter-popover__options {
+  display: grid;
+  gap: var(--erp-space-1);
+  padding: var(--erp-space-2);
+}
+
+.filter-popover__options button {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-space-2);
+  padding: 0 var(--erp-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--erp-radius-control);
+  color: var(--erp-text-body);
+  background: transparent;
+  font-size: var(--erp-font-size-xs);
+  text-align: left;
+}
+
+.filter-popover__options button:hover,
+.filter-popover__options button.is-active {
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border-color: var(--erp-blue-100);
+}
+
+.filter-popover__panel footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--erp-border-subtle);
+}

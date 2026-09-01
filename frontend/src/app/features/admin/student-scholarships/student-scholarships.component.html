@@ -1,13 +1,9 @@
-<erp-admin-page
-  eyebrow="Student profile"
-  [title]="student()?.studentName || 'Scholarships & discounts'"
-  description="Manage recurring scholarships, exceptional discounts, and their fee impact."
-  variant="minimal"
->
+<erp-admin-page title="Scholarship review" variant="minimal">
   <div page-actions>
-    <a class="erp-button erp-button--secondary" routerLink="/admin/admissions/approved"
-      >Back to students</a
-    >
+    <a class="erp-button erp-button--secondary" routerLink="/admin/admissions/approved">
+      <svg lucideArrowLeft size="16" aria-hidden="true"></svg>
+      Students
+    </a>
   </div>
 
   @if (message()) {
@@ -18,485 +14,204 @@
   }
 
   @if (loading()) {
-    <section class="erp-card erp-card--padded">Loading scholarship workspace…</section>
+    <section class="erp-card erp-card--padded">Loading scholarship record…</section>
   } @else if (student(); as item) {
-    <div class="scholarship-profile-layout">
-      <main class="scholarship-profile-main">
-        <nav class="scholarship-tabs" aria-label="Scholarship profile sections">
-          <button
-            type="button"
-            [class.is-active]="activeTab() === 'overview'"
-            (click)="activeTab.set('overview')"
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            [class.is-active]="activeTab() === 'scholarships'"
-            (click)="activeTab.set('scholarships')"
-          >
-            Recurring scholarships <small>{{ assignments().length }}</small>
-          </button>
-          <button
-            type="button"
-            [class.is-active]="activeTab() === 'discounts'"
-            (click)="activeTab.set('discounts')"
-          >
-            One-time discounts <small>{{ discounts().length }}</small>
-          </button>
-          <button
-            type="button"
-            [class.is-active]="activeTab() === 'impact'"
-            (click)="activeTab.set('impact')"
-          >
-            Fee impact <small>{{ ledgers().length }}</small>
-          </button>
-        </nav>
+    <section class="erp-card student-context" aria-label="Student context">
+      <div class="student-context__identity">
+        <span class="student-context__avatar"><svg lucideUserRound size="20" aria-hidden="true"></svg></span>
+        <div>
+          <div class="student-context__name-line">
+            <h2>{{ item.studentName || 'Student record' }}</h2>
+            <span class="erp-status">{{ item.status === 'approved' ? 'Active' : item.status }}</span>
+          </div>
+          <p>{{ item.studentId || 'ID pending' }} · {{ item.courseName || 'Programme not mapped' }}</p>
+        </div>
+      </div>
+      <dl class="student-context__facts">
+        <div><dt>Session</dt><dd>{{ item.academicSession || '—' }}</dd></div>
+        <div>
+          <dt>Current period</dt>
+          <dd>{{ item.feeFrequency === 'semester' ? 'Semester ' + item.currentSemester : 'Year ' + item.currentAcademicYear }}</dd>
+        </div>
+        <div><dt>Billing cycle</dt><dd>{{ item.feeFrequency === 'semester' ? 'Semester-wise' : 'Annual' }}</dd></div>
+        <div><dt>College</dt><dd>{{ item.collegeName || '—' }}</dd></div>
+      </dl>
+    </section>
 
-        @if (activeTab() === 'overview') {
-          <section class="erp-card erp-card--padded scholarship-overview">
-            <div class="erp-card__header">
-              <div>
-                <h2>Financial support overview</h2>
-                <p>Current assignments and fee periods affected for this student.</p>
-              </div>
-            </div>
-            <div class="scholarship-overview__metrics">
-              <button type="button" (click)="activeTab.set('scholarships')">
-                <small>Recurring scholarships</small><strong>{{ assignments().length }}</strong
-                ><span>{{ availableScholarships().length }} more available</span>
-              </button>
-              <button type="button" (click)="activeTab.set('discounts')">
-                <small>One-time discounts</small><strong>{{ discounts().length }}</strong
-                ><span>Applied to selected periods</span>
-              </button>
-              <button type="button" (click)="activeTab.set('impact')">
-                <small>Fee periods</small><strong>{{ ledgers().length }}</strong
-                ><span>With calculated impact</span>
-              </button>
-            </div>
-          </section>
+    <nav class="scholarship-tabs" aria-label="Scholarship review sections">
+      <button type="button" [class.is-active]="activeTab() === 'overview'" (click)="activeTab.set('overview')">
+        <svg lucideWalletCards size="16" aria-hidden="true"></svg> Overview
+      </button>
+      <button type="button" [class.is-active]="activeTab() === 'scholarships'" (click)="activeTab.set('scholarships')">
+        <svg lucideGraduationCap size="16" aria-hidden="true"></svg> Recurring <small>{{ assignments().length }}</small>
+      </button>
+      <button type="button" [class.is-active]="activeTab() === 'discounts'" (click)="activeTab.set('discounts')">
+        <svg lucideBadgePercent size="16" aria-hidden="true"></svg> One-time discounts <small>{{ discounts().length }}</small>
+      </button>
+      <button type="button" [class.is-active]="activeTab() === 'impact'" (click)="activeTab.set('impact')">
+        <svg lucideReceiptText size="16" aria-hidden="true"></svg> Fee impact <small>{{ ledgers().length }}</small>
+      </button>
+    </nav>
 
-          <section class="erp-card scholarship-activity-list">
-            <header>
-              <div>
-                <h2>Current support</h2>
-                <p>Recurring and exceptional concessions active on the student account.</p>
-              </div>
-            </header>
+    @if (activeTab() === 'overview') {
+      <section class="financial-summary" aria-label="Financial summary">
+        <button type="button" class="financial-summary__item" (click)="activeTab.set('impact')"><span>Gross fees</span><strong>{{ totalCharges() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong><small>{{ ledgers().length }} fee periods</small></button>
+        <button type="button" class="financial-summary__item financial-summary__item--discount" (click)="activeTab.set('impact')"><span>Total concessions</span><strong>− {{ totalDiscounts() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong><small>Scholarships and discounts</small></button>
+        <button type="button" class="financial-summary__item" (click)="activeTab.set('impact')"><span>Net payable</span><strong>{{ totalPayable() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong><small>After concessions</small></button>
+        <button type="button" class="financial-summary__item" (click)="activeTab.set('impact')"><span>Paid</span><strong>{{ totalPaid() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong><small>Posted payments</small></button>
+        <button type="button" class="financial-summary__item financial-summary__item--balance" (click)="activeTab.set('impact')"><span>Outstanding</span><strong>{{ totalBalance() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong><small>Current balance</small></button>
+      </section>
+
+      <section class="erp-card erp-table-shell overview-periods">
+        <div class="erp-table-toolbar">
+          <div><h2>Fee-period summary <small>{{ ledgers().length }}</small></h2></div>
+          <button class="erp-button erp-button--secondary" type="button" (click)="activeTab.set('impact')">Full fee breakdown</button>
+        </div>
+        <div class="erp-table-shell__scroll">
+          <table>
+            <thead><tr><th>Fee period</th><th>Gross fee</th><th>Concessions</th><th>Net payable</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+            <tbody>
+              @for (ledger of ledgers(); track ledger._id) {
+                <tr>
+                  <td><strong>{{ ledger.periodLabel }}</strong><small>{{ ledger.academicSession }} · {{ ledger.feeBookCode }}</small></td>
+                  <td>{{ ledger.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                  <td class="amount-discount">− {{ ledger.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                  <td><strong>{{ ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></td>
+                  <td>{{ ledger.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                  <td><strong>{{ ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></td>
+                  <td><span class="fee-status" [class.fee-status--paid]="ledger.paymentStatus === 'paid'" [class.fee-status--partial]="ledger.paymentStatus === 'partial'">{{ ledger.paymentStatus === 'partial' ? 'Part paid' : (ledger.paymentStatus | titlecase) }}</span></td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="erp-empty-state">No fee ledger has been generated for this student.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="support-grid">
+        <article class="erp-card support-panel">
+          <header><div><svg lucideGraduationCap size="18" aria-hidden="true"></svg><h2>Recurring scholarships</h2></div><button type="button" (click)="activeTab.set('scholarships')">Manage</button></header>
+          @for (assignment of assignments(); track assignment._id) {
+            <div class="support-record"><div><strong>{{ assignment.scholarshipName }}</strong><small>From {{ assignment.startSemester ? 'Semester ' + assignment.startSemester : 'Year ' + assignment.startAcademicYear }}</small></div><b>{{ assignmentValue(assignment) ?? (assignment.value | currency: 'INR' : 'symbol' : '1.0-2') }}</b></div>
+          } @empty {
+            <button class="support-empty" type="button" (click)="activeTab.set('scholarships')">Assign the first recurring scholarship</button>
+          }
+        </article>
+        <article class="erp-card support-panel">
+          <header><div><svg lucideBadgePercent size="18" aria-hidden="true"></svg><h2>One-time discounts</h2></div><button type="button" (click)="activeTab.set('discounts')">Manage</button></header>
+          @for (discount of discounts(); track discount._id) {
+            <div class="support-record"><div><strong>{{ discount.name }}</strong><small>{{ discount.targetPeriodLabel }} · {{ discount.academicSession }}</small></div><b>{{ discountValueLabel(discount) ?? (discount.value | currency: 'INR' : 'symbol' : '1.0-2') }}</b></div>
+          } @empty {
+            <button class="support-empty" type="button" (click)="activeTab.set('discounts')">Add a one-time discount</button>
+          }
+        </article>
+      </section>
+    }
+
+    @if (activeTab() === 'scholarships') {
+      <section class="erp-card action-workspace">
+        <div class="action-workspace__intro"><span class="section-icon"><svg lucideGraduationCap size="20" aria-hidden="true"></svg></span><div><h2>Assign recurring scholarship</h2><p>Applies from the current period to future eligible fee periods.</p></div></div>
+        <div class="action-workspace__controls">
+          <label><span>Scholarship scheme</span><select class="erp-control" [(ngModel)]="scholarshipId"><option value="">Select an active scheme</option>@for (scholarship of availableScholarships(); track scholarship._id) {<option [value]="scholarship._id">{{ scholarship.name }} · {{ scholarship.type === 'percentage' ? scholarship.value + '%' : (scholarship.value | currency: 'INR' : 'symbol' : '1.0-2') }}</option>}</select></label>
+          <button class="erp-button erp-button--primary" type="button" [disabled]="saving() || !scholarshipId" (click)="assign()">{{ saving() ? 'Applying…' : 'Assign scholarship' }}</button>
+        </div>
+      </section>
+
+      <section class="erp-card erp-table-shell">
+        <div class="erp-table-toolbar"><div><h2>Assigned recurring scholarships <small>{{ assignments().length }}</small></h2></div></div>
+        <div class="erp-table-shell__scroll"><table>
+          <thead><tr><th>Scholarship scheme</th><th>Method</th><th>Benefit</th><th>Effective from</th><th>Assigned on</th><th>Status</th><th class="erp-table-shell__actions">Actions</th></tr></thead>
+          <tbody>
             @for (assignment of assignments(); track assignment._id) {
-              <div class="scholarship-activity-row">
-                <span class="scholarship-activity-row__type">Recurring</span>
-                <div>
-                  <strong>{{ assignment.scholarshipName }}</strong
-                  ><small
-                    >Starts
-                    {{
-                      assignment.startSemester
-                        ? 'Semester ' + assignment.startSemester
-                        : 'Year ' + assignment.startAcademicYear
-                    }}</small
-                  >
-                </div>
-                <b>{{
-                  assignmentValue(assignment) ??
-                    (assignment.value | currency: 'INR' : 'symbol' : '1.0-2')
-                }}</b>
-              </div>
-            }
-            @for (discount of discounts(); track discount._id) {
-              <div class="scholarship-activity-row">
-                <span
-                  class="scholarship-activity-row__type scholarship-activity-row__type--one-time"
-                  >One-time</span
-                >
-                <div>
-                  <strong>{{ discount.name }}</strong
-                  ><small>{{ discount.targetPeriodLabel }} · {{ discount.academicSession }}</small>
-                </div>
-                <b>{{
-                  discountValueLabel(discount) ??
-                    (discount.value | currency: 'INR' : 'symbol' : '1.0-2')
-                }}</b>
-              </div>
-            }
-            @if (!assignments().length && !discounts().length) {
-              <div class="erp-empty-state">No scholarship or discount is currently assigned.</div>
-            }
-          </section>
-        }
-
-        @if (activeTab() === 'scholarships') {
-          <section class="erp-card erp-card--padded assign-card">
-            <div class="erp-card__header">
-              <div>
-                <h2>Assign recurring scholarship</h2>
-                <p>The scheme carries forward to future eligible academic fee periods.</p>
-              </div>
-            </div>
-            <div class="assign-card__controls">
-              <label
-                ><span>Scholarship *</span
-                ><select class="erp-control" [(ngModel)]="scholarshipId">
-                  <option value="">Select scholarship</option>
-                  @for (scholarship of availableScholarships(); track scholarship._id) {
-                    <option [value]="scholarship._id">
-                      {{ scholarship.name }} ·
-                      {{
-                        scholarship.type === 'percentage'
-                          ? scholarship.value + '%'
-                          : (scholarship.value | currency: 'INR' : 'symbol' : '1.0-2')
-                      }}
-                    </option>
-                  }
-                </select></label
-              >
-              <button
-                class="erp-button erp-button--primary"
-                type="button"
-                [disabled]="saving() || !scholarshipId"
-                (click)="assign()"
-              >
-                {{ saving() ? 'Applying…' : 'Assign scholarship' }}
-              </button>
-            </div>
-            @if (!availableScholarships().length) {
-              <p class="assign-card__hint">No additional active scholarship is available.</p>
-            }
-          </section>
-
-          <section class="erp-card erp-table-shell">
-            <div class="erp-table-toolbar">
-              <div>
-                <h2>
-                  Assigned scholarships <small>{{ assignments().length }}</small>
-                </h2>
-                <p>Recurring schemes currently attached to this student.</p>
-              </div>
-            </div>
-            <div class="erp-table-shell__scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Scholarship</th>
-                    <th>Calculation</th>
-                    <th>Value</th>
-                    <th>Starts from</th>
-                    <th>Assigned</th>
-                    <th class="erp-table-shell__actions">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (assignment of assignments(); track assignment._id) {
-                    <tr>
-                      <td>
-                        <strong>{{ assignment.scholarshipName }}</strong>
-                      </td>
-                      <td>
-                        {{
-                          assignment.type === 'percentage' ? 'Percentage' : 'Fixed annual amount'
-                        }}
-                      </td>
-                      <td>
-                        <strong>{{
-                          assignmentValue(assignment) ??
-                            (assignment.value | currency: 'INR' : 'symbol' : '1.0-2')
-                        }}</strong>
-                      </td>
-                      <td>
-                        {{
-                          assignment.startSemester
-                            ? 'Semester ' + assignment.startSemester
-                            : 'Year ' + assignment.startAcademicYear
-                        }}
-                      </td>
-                      <td>{{ assignment.assignedAt | date: 'dd MMM yyyy' }}</td>
-                      <td class="erp-table-shell__actions">
-                        <erp-compact-action-menu
-                          [items]="removeActions"
-                          (selected)="handleAssignmentAction($event, assignment)"
-                        />
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="6" class="erp-empty-state">
-                        No recurring scholarship is assigned.
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </section>
-        }
-
-        @if (activeTab() === 'discounts') {
-          <section class="erp-card erp-card--padded discount-form">
-            <div class="erp-card__header">
-              <div>
-                <h2>Add one-time discount</h2>
-                <p>Use for an approved exception that applies to one fee period only.</p>
-              </div>
-            </div>
-            <div class="discount-form__grid">
-              <label
-                ><span>Discount name *</span
-                ><input
-                  class="erp-control"
-                  maxlength="120"
-                  [(ngModel)]="discountName"
-                  placeholder="Special approval discount"
-              /></label>
-              <label
-                ><span>Fee period *</span
-                ><select class="erp-control" [(ngModel)]="discountLedgerId">
-                  <option value="">Select fee period</option>
-                  @for (ledger of ledgers(); track ledger._id) {
-                    <option [value]="ledger._id">
-                      {{ ledger.periodLabel }} · {{ ledger.academicSession }}
-                    </option>
-                  }
-                </select></label
-              >
-              <label
-                ><span>Calculation *</span
-                ><select class="erp-control" [(ngModel)]="discountType">
-                  <option value="fixed">Fixed amount</option>
-                  <option value="percentage">Percentage</option>
-                </select></label
-              >
-              <label
-                ><span>{{ discountType === 'percentage' ? 'Percentage *' : 'Amount *' }}</span
-                ><input
-                  class="erp-control"
-                  type="number"
-                  min="0.01"
-                  [max]="discountType === 'percentage' ? 100 : 1000000000"
-                  step="0.01"
-                  [(ngModel)]="discountValue"
-              /></label>
-              <label class="discount-form__remark"
-                ><span>Internal approval remark *</span
-                ><textarea
-                  class="erp-control"
-                  maxlength="1000"
-                  rows="3"
-                  [(ngModel)]="discountRemark"
-                  placeholder="Reason, approver, and reference number"
-                ></textarea
-                ><small
-                  >Private administrative information; never shown in the student portal.</small
-                ></label
-              >
-            </div>
-            <div class="discount-form__actions">
-              <button
-                class="erp-button erp-button--primary"
-                type="button"
-                [disabled]="saving() || !ledgers().length"
-                (click)="createDiscount()"
-              >
-                {{ saving() ? 'Applying…' : 'Apply one-time discount' }}
-              </button>
-            </div>
-          </section>
-
-          <section class="erp-card erp-table-shell">
-            <div class="erp-table-toolbar">
-              <div>
-                <h2>
-                  One-time discounts <small>{{ discounts().length }}</small>
-                </h2>
-                <p>Exceptional adjustments with private audit remarks.</p>
-              </div>
-            </div>
-            <div class="erp-table-shell__scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Discount</th>
-                    <th>Calculation</th>
-                    <th>Value</th>
-                    <th>Fee period</th>
-                    <th>Internal remark</th>
-                    <th class="erp-table-shell__actions">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (discount of discounts(); track discount._id) {
-                    <tr>
-                      <td>
-                        <strong>{{ discount.name }}</strong
-                        ><small>One-time adjustment</small>
-                      </td>
-                      <td>{{ discount.type === 'percentage' ? 'Percentage' : 'Fixed amount' }}</td>
-                      <td>
-                        <strong>{{
-                          discountValueLabel(discount) ??
-                            (discount.value | currency: 'INR' : 'symbol' : '1.0-2')
-                        }}</strong>
-                      </td>
-                      <td>
-                        {{ discount.targetPeriodLabel
-                        }}<small>{{ discount.academicSession }}</small>
-                      </td>
-                      <td>
-                        <span class="private-remark">{{ discount.internalRemark }}</span>
-                      </td>
-                      <td class="erp-table-shell__actions">
-                        <erp-compact-action-menu
-                          [items]="removeActions"
-                          (selected)="handleDiscountAction($event, discount)"
-                        />
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="6" class="erp-empty-state">
-                        No one-time discount has been applied.
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </section>
-        }
-
-        @if (activeTab() === 'impact') {
-          <section class="ledger-grid">
-            @for (ledger of ledgers(); track ledger._id) {
-              <article class="erp-card erp-card--padded ledger-card">
-                <header>
-                  <div>
-                    <small>{{ ledger.academicSession }}</small>
-                    <h2>{{ ledger.periodLabel }}</h2>
-                  </div>
-                  <strong
-                    >{{ ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2'
-                    }}<small>Balance</small></strong
-                  >
-                </header>
-                <div class="ledger-card__summary">
-                  <span
-                    >Tuition Fee<strong>{{
-                      tuitionAmount(ledger) | currency: 'INR' : 'symbol' : '1.0-2'
-                    }}</strong></span
-                  ><span
-                    >Scholarships<strong class="is-discount"
-                      >−
-                      {{ scholarshipAmount(ledger) | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
-                    ></span
-                  ><span
-                    >One-time discounts<strong class="is-discount"
-                      >−
-                      {{
-                        oneTimeDiscountAmount(ledger) | currency: 'INR' : 'symbol' : '1.0-2'
-                      }}</strong
-                    ></span
-                  ><span
-                    >Net fee<strong>{{
-                      ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2'
-                    }}</strong></span
-                  >
-                </div>
-                <div class="ledger-card__entries">
-                  @for (entry of ledger.entries; track entry.feeHeadId + entry.feeHeadName) {
-                    @if (entry.isScholarship || entry.isOneTimeDiscount) {
-                      <p>
-                        <span
-                          >{{ entry.feeHeadName }}
-                          <small>{{
-                            entry.isScholarship ? 'Recurring scholarship' : 'One-time discount'
-                          }}</small></span
-                        ><strong
-                          >− {{ entry.amount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
-                        >
-                      </p>
-                    }
-                  }
-                </div>
-              </article>
+              <tr><td><strong>{{ assignment.scholarshipName }}</strong><small>Recurring tuition concession</small></td><td>{{ assignment.type === 'percentage' ? 'Percentage' : 'Fixed annual amount' }}</td><td><strong class="amount-discount">{{ assignmentValue(assignment) ?? (assignment.value | currency: 'INR' : 'symbol' : '1.0-2') }}</strong></td><td>{{ assignment.startSemester ? 'Semester ' + assignment.startSemester : 'Year ' + assignment.startAcademicYear }}</td><td>{{ assignment.assignedAt | date: 'dd MMM yyyy' }}</td><td><span class="fee-status fee-status--paid">Active</span></td><td class="erp-table-shell__actions"><erp-compact-action-menu [items]="removeActions" (selected)="handleAssignmentAction($event, assignment)" /></td></tr>
             } @empty {
-              <article class="erp-card erp-card--padded">
-                No Academic Fee ledger exists. Assignments will be applied when the ledger is
-                created.
-              </article>
+              <tr><td colspan="7" class="erp-empty-state">No recurring scholarship is assigned.</td></tr>
             }
-          </section>
-        }
-      </main>
+          </tbody>
+        </table></div>
+      </section>
+    }
 
-      <aside class="erp-card student-profile-rail" aria-label="Student scholarship context">
-        <header>
-          <small>{{ item.studentId || 'ID pending' }}</small>
-          <h2>{{ item.studentName || 'Student record' }}</h2>
-          <span class="erp-status">{{
-            item.status === 'approved' ? 'Active student' : item.status
-          }}</span>
-        </header>
-        <dl>
-          <div>
-            <dt>Programme</dt>
-            <dd>{{ item.courseName || 'Not mapped' }}</dd>
-          </div>
-          <div>
-            <dt>Academic session</dt>
-            <dd>{{ item.academicSession || 'Not mapped' }}</dd>
-          </div>
-          <div>
-            <dt>Current fee period</dt>
-            <dd>
-              {{
-                item.feeFrequency === 'semester'
-                  ? 'Semester ' + item.currentSemester
-                  : 'Year ' + item.currentAcademicYear
-              }}
-            </dd>
-          </div>
-          <div>
-            <dt>Fee frequency</dt>
-            <dd>{{ item.feeFrequency === 'semester' ? 'Semester-wise' : 'Annual' }}</dd>
-          </div>
-        </dl>
-        <section>
-          <h3>Quick actions</h3>
-          <button type="button" (click)="activeTab.set('scholarships')">Assign scholarship</button
-          ><button type="button" (click)="activeTab.set('discounts')">Add one-time discount</button
-          ><button type="button" (click)="activeTab.set('impact')">Review fee impact</button
-          ><a routerLink="/admin/fees/scholarships/view">Manage scholarship master</a>
-        </section>
-      </aside>
-    </div>
+    @if (activeTab() === 'discounts') {
+      <section class="erp-card discount-workspace">
+        <header class="discount-workspace__header"><span class="section-icon"><svg lucideBadgePercent size="20" aria-hidden="true"></svg></span><div><h2>Add one-time discount</h2><p>Apply an approved exception to one fee period.</p></div></header>
+        <div class="discount-form__grid">
+          <label><span>Discount name</span><input class="erp-control" maxlength="120" [(ngModel)]="discountName" placeholder="e.g. Special approval discount" /></label>
+          <label><span>Fee period</span><select class="erp-control" [(ngModel)]="discountLedgerId"><option value="">Select fee period</option>@for (ledger of ledgers(); track ledger._id) {<option [value]="ledger._id">{{ ledger.periodLabel }} · {{ ledger.academicSession }}</option>}</select></label>
+          <label><span>Calculation method</span><select class="erp-control" [(ngModel)]="discountType"><option value="fixed">Fixed amount</option><option value="percentage">Percentage</option></select></label>
+          <label><span>{{ discountType === 'percentage' ? 'Percentage' : 'Discount amount' }}</span><input class="erp-control" type="number" min="0.01" [max]="discountType === 'percentage' ? 100 : 1000000000" step="0.01" [(ngModel)]="discountValue" /></label>
+          <label class="discount-form__remark"><span>Approval note</span><textarea class="erp-control" maxlength="1000" rows="3" [(ngModel)]="discountRemark" placeholder="Reason, approver and reference number"></textarea><small>Internal admin record only.</small></label>
+        </div>
+        <footer><button class="erp-button erp-button--primary" type="button" [disabled]="saving() || !ledgers().length" (click)="createDiscount()">{{ saving() ? 'Applying…' : 'Apply discount' }}</button></footer>
+      </section>
+
+      <section class="erp-card erp-table-shell">
+        <div class="erp-table-toolbar"><div><h2>Discount history <small>{{ discounts().length }}</small></h2></div></div>
+        <div class="erp-table-shell__scroll"><table>
+          <thead><tr><th>Discount</th><th>Method</th><th>Value</th><th>Fee period</th><th>Approval note</th><th>Status</th><th class="erp-table-shell__actions">Actions</th></tr></thead>
+          <tbody>
+            @for (discount of discounts(); track discount._id) {
+              <tr><td><strong>{{ discount.name }}</strong><small>Created {{ discount.createdAt | date: 'dd MMM yyyy' }}</small></td><td>{{ discount.type === 'percentage' ? 'Percentage' : 'Fixed amount' }}</td><td><strong class="amount-discount">{{ discountValueLabel(discount) ?? (discount.value | currency: 'INR' : 'symbol' : '1.0-2') }}</strong></td><td><strong>{{ discount.targetPeriodLabel }}</strong><small>{{ discount.academicSession }}</small></td><td><span class="private-remark">{{ discount.internalRemark }}</span></td><td><span class="fee-status fee-status--paid">Active</span></td><td class="erp-table-shell__actions"><erp-compact-action-menu [items]="removeActions" (selected)="handleDiscountAction($event, discount)" /></td></tr>
+            } @empty {
+              <tr><td colspan="7" class="erp-empty-state">No one-time discount has been applied.</td></tr>
+            }
+          </tbody>
+        </table></div>
+      </section>
+    }
+
+    @if (activeTab() === 'impact') {
+      <section class="impact-summary" aria-label="Combined fee impact">
+        <div><span>Gross charges</span><strong>{{ totalCharges() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></div>
+        <div class="impact-summary__discount"><span>Scholarship & discounts</span><strong>− {{ totalDiscounts() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></div>
+        <div><span>Net payable</span><strong>{{ totalPayable() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></div>
+        <div><span>Paid</span><strong>{{ totalPaid() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></div>
+        <div class="impact-summary__balance"><span>Outstanding</span><strong>{{ totalBalance() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></div>
+      </section>
+
+      <div class="fee-impact-list">
+        @for (ledger of ledgers(); track ledger._id) {
+          <section class="erp-card erp-table-shell fee-ledger">
+            <header class="fee-ledger__header">
+              <div class="fee-ledger__title"><span class="section-icon"><svg lucideReceiptText size="19" aria-hidden="true"></svg></span><div><h2>{{ ledger.periodLabel }}</h2><p>{{ ledger.academicSession }} · {{ ledger.feeBookCode }} · {{ ledger.name }}</p></div></div>
+              <div class="fee-ledger__totals"><span>Payable<strong>{{ ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></span><span>Outstanding<strong>{{ ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></span><span class="fee-status" [class.fee-status--paid]="ledger.paymentStatus === 'paid'" [class.fee-status--partial]="ledger.paymentStatus === 'partial'">{{ ledger.paymentStatus === 'partial' ? 'Part paid' : (ledger.paymentStatus | titlecase) }}</span></div>
+            </header>
+            <div class="erp-table-shell__scroll"><table class="fee-head-table">
+              <thead><tr><th>Fee head / adjustment</th><th>Type</th><th>Period</th><th>Gross charge</th><th>Concession</th><th>Net impact</th><th>Paid</th><th>Balance</th><th>Due date</th><th>Status</th></tr></thead>
+              <tbody>
+                @for (entry of ledger.entries; track entry.feeHeadId + entry.feeHeadName + entry.category) {
+                  <tr [class.fee-head-table__adjustment]="entry.isScholarship || entry.isOneTimeDiscount">
+                    <td><strong>{{ entry.feeHeadName }}</strong><small>Priority {{ entry.priority }}</small></td>
+                    <td><span class="entry-type" [class.entry-type--discount]="entry.isScholarship || entry.isOneTimeDiscount">{{ entryType(entry) }}</span></td>
+                    <td>{{ entry.periodLabel }}</td>
+                    <td>{{ entry.isScholarship || entry.isOneTimeDiscount ? '—' : (entry.amount | currency: 'INR' : 'symbol' : '1.0-2') }}</td>
+                    <td class="amount-discount">{{ entry.isScholarship || entry.isOneTimeDiscount ? '− ' + (entry.amount | currency: 'INR' : 'symbol' : '1.0-2') : (entry.discountAmount ? '− ' + (entry.discountAmount | currency: 'INR' : 'symbol' : '1.0-2') : '—') }}</td>
+                    <td><strong [class.amount-discount]="entryNetAmount(entry) < 0">{{ entryNetAmount(entry) | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></td>
+                    <td>{{ entry.isScholarship || entry.isOneTimeDiscount ? '—' : (entry.paidAmount | currency: 'INR' : 'symbol' : '1.0-2') }}</td>
+                    <td>{{ entry.isScholarship || entry.isOneTimeDiscount ? '—' : (entry.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2') }}</td>
+                    <td>{{ entry.dueDate ? (entry.dueDate | date: 'dd MMM yyyy') : '—' }}</td>
+                    <td><span class="fee-status" [class.fee-status--paid]="entry.status === 'paid'" [class.fee-status--partial]="entry.status === 'partial'">{{ statusLabel(entry.status) }}</span></td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="10" class="erp-empty-state">No fee-head entries exist for this period.</td></tr>
+                }
+              </tbody>
+              <tfoot><tr><th colspan="3">Period total</th><th>{{ ledger.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th><th class="amount-discount">− {{ ledger.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th><th>{{ ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th><th>{{ ledger.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th><th>{{ ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th><th colspan="2"></th></tr></tfoot>
+            </table></div>
+          </section>
+        } @empty {
+          <section class="erp-card erp-card--padded erp-empty-state">No academic fee ledger exists yet.</section>
+        }
+      </div>
+    }
   }
 </erp-admin-page>
 
 @if (removingAssignment(); as assignment) {
-  <erp-confirm-dialog
-    [open]="true"
-    eyebrow="Recurring scholarship"
-    title="Remove this scholarship?"
-    [message]="
-      assignment.scholarshipName +
-      ' will be removed from future and unpaid fee periods. Paid records will be preserved.'
-    "
-    confirmLabel="Remove scholarship"
-    [destructive]="true"
-    (cancelled)="cancelRemove()"
-    (confirmed)="remove(assignment)"
-  />
+  <erp-confirm-dialog [open]="true" eyebrow="Recurring scholarship" title="Remove this scholarship?" [message]="assignment.scholarshipName + ' will be removed from future and unpaid fee periods. Paid records will be preserved.'" confirmLabel="Remove scholarship" [destructive]="true" (cancelled)="cancelRemove()" (confirmed)="remove(assignment)" />
 }
 
 @if (removingDiscount(); as discount) {
-  <erp-confirm-dialog
-    [open]="true"
-    eyebrow="One-time discount"
-    title="Remove this discount?"
-    [message]="discount.name + ' will be removed from ' + discount.targetPeriodLabel + '.'"
-    confirmLabel="Remove discount"
-    [destructive]="true"
-    (cancelled)="cancelDiscountRemove()"
-    (confirmed)="removeDiscount(discount)"
-  />
+  <erp-confirm-dialog [open]="true" eyebrow="One-time discount" title="Remove this discount?" [message]="discount.name + ' will be removed from ' + discount.targetPeriodLabel + '.'" confirmLabel="Remove discount" [destructive]="true" (cancelled)="cancelDiscountRemove()" (confirmed)="removeDiscount(discount)" />
 }

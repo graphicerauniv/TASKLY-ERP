@@ -1,6 +1,5 @@
 @use './style/index';
 @use './app/features/student/styles/student-theme';
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
 
 *,
 *::before,
@@ -23,12 +22,19 @@ body {
   text-rendering: optimizeLegibility;
 }
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 :focus-visible {
-  outline: 3px solid var(--erp-focus-ring);
-  outline-offset: 2px;
+  outline: var(--erp-focus-ring-width) solid var(--erp-focus-outline);
+  outline-offset: var(--erp-focus-ring-offset);
+}
+
+::selection {
+  color: var(--erp-text-heading);
+  background: var(--erp-blue-100);
 }
 
 .modal-backdrop > .backdrop-close {

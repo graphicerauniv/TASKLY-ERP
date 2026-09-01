@@ -1,17 +1,26 @@
 <section class="form-builder-page">
   <erp-builder-page-header [saveState]="saveStateText()">
-    @if (form()) {
-      <div class="save-actions">
+    <div class="save-actions">
+      <a class="erp-button erp-button--secondary" routerLink="/admin/admissions/forms">
+        <svg lucideArrowLeft size="16" aria-hidden="true"></svg>
+        Forms library
+      </a>
+      @if (form()) {
         <button class="secondary" type="button" (click)="save()" [disabled]="saving()">
           <svg lucideSave size="16" aria-hidden="true"></svg>
           {{ form()?.status === 'published' ? 'Save live changes' : 'Save draft' }}
         </button>
-        <button class="primary" type="button" (click)="save(true)" [disabled]="saving()">
+        <button
+          class="primary"
+          type="button"
+          (click)="openPublishChecklist()"
+          [disabled]="saving()"
+        >
           <svg lucideSend size="16" aria-hidden="true"></svg>
           {{ form()?.status === 'published' ? 'Republish form' : 'Publish form' }}
         </button>
-      </div>
-    }
+      }
+    </div>
   </erp-builder-page-header>
 
   @if (message()) {
@@ -485,6 +494,122 @@
     </section>
   }
 </section>
+
+@if (publishDialog(); as open) {
+  <div class="dialog-layer form-publish-dialog-layer">
+    <button
+      class="dialog-backdrop"
+      type="button"
+      aria-label="Close publish checklist"
+      (click)="closePublishChecklist()"
+    ></button>
+    <section
+      class="dialog form-publish-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="publish-dialog-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="dialog__header form-publish-dialog__header">
+        <span class="form-publish-dialog__icon">
+          <svg lucideSend size="19" aria-hidden="true"></svg>
+        </span>
+        <div>
+          <small>Publishing controls</small>
+          <h2 id="publish-dialog-title">Review form readiness</h2>
+          <p>Check structure, dependencies, required content, and upload rules.</p>
+        </div>
+        <button
+          type="button"
+          aria-label="Close publish checklist"
+          (click)="closePublishChecklist()"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="dialog__body form-publish-dialog__body">
+        <div class="form-publish-dialog__summary">
+          <div [class.has-blockers]="publishBlockers().length">
+            @if (publishBlockers().length) {
+              <svg lucideTriangleAlert size="18" aria-hidden="true"></svg>
+            } @else {
+              <svg lucideCircleCheck size="18" aria-hidden="true"></svg>
+            }
+            <span>
+              <strong>{{ publishBlockers().length }}</strong>
+              <small>Blocking issues</small>
+            </span>
+          </div>
+          <div [class.has-warnings]="publishWarnings().length">
+            <svg lucideTriangleAlert size="18" aria-hidden="true"></svg>
+            <span>
+              <strong>{{ publishWarnings().length }}</strong>
+              <small>Advisory warnings</small>
+            </span>
+          </div>
+        </div>
+
+        @if (publishIssues().length) {
+          <div class="form-publish-dialog__issues" aria-label="Form readiness issues">
+            @for (issue of publishIssues(); track issue.id) {
+              <button
+                type="button"
+                [class.is-blocker]="issue.severity === 'blocker'"
+                [disabled]="!issue.sectionId"
+                (click)="focusPublishIssue(issue)"
+              >
+                <span>
+                  @if (issue.severity === 'blocker') {
+                    <svg lucideTriangleAlert size="17" aria-hidden="true"></svg>
+                  } @else {
+                    <svg lucideCircleAlert size="17" aria-hidden="true"></svg>
+                  }
+                </span>
+                <span>
+                  <strong>{{ issue.title }}</strong>
+                  <small>{{ issue.detail }}</small>
+                </span>
+                @if (issue.sectionId) {
+                  <span>Fix</span>
+                }
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="form-publish-dialog__ready">
+            <svg lucideCircleCheck size="22" aria-hidden="true"></svg>
+            <div>
+              <strong>Ready to publish</strong>
+              <p>No structural or content-quality issues were found.</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <footer class="dialog__footer form-publish-dialog__footer">
+        <p>
+          @if (publishBlockers().length) {
+            Resolve every blocker before the form can be published.
+          } @else {
+            Publishing makes this structure available to new application flows.
+          }
+        </p>
+        <button class="secondary" type="button" (click)="closePublishChecklist()">Cancel</button>
+        <button
+          class="primary"
+          type="button"
+          [disabled]="publishBlockers().length || saving()"
+          (click)="confirmPublish()"
+        >
+          <svg lucideSend size="16" aria-hidden="true"></svg>
+          {{ saving() ? 'Publishing…' : 'Publish form' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+}
 
 @if (createFormDialog()) {
   <div class="dialog-layer">

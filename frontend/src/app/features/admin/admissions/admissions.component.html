@@ -1,608 +1,701 @@
 <erp-admin-page
-  eyebrow="Admission"
-  [title]="title()"
-  [description]="description()"
-  variant="minimal"
+  eyebrow="Admissions"
+  title="Applications"
+  description="Review, locate, and progress student applications from one operational workbench."
+  variant="compact"
+  layout="collection"
 >
-  <div page-actions class="erp-table-toolbar__actions">
-    @if (status() === 'approved') {
-      <button
-        class="erp-button erp-button--secondary"
-        type="button"
-        [disabled]="!selectedStudentIds().size || feeSaving()"
-        (click)="createSelectedFees()"
-      >
-        {{ feeSaving() ? 'Creating…' : 'Generate fee accounts' }}
-      </button>
-    }
-    <a class="erp-button erp-button--primary" routerLink="/admin/admission/student"
-      >＋ New student admission</a
-    >
+  <div page-actions>
+    <a class="erp-button erp-button--primary" routerLink="/admin/admission/student">
+      <svg lucidePlus size="16" aria-hidden="true"></svg>
+      New application
+    </a>
   </div>
 
-  <erp-admission-workspace-nav />
-
-  @if (message()) {
-    <p class="erp-notice erp-notice--success">{{ message() }}</p>
-  }
-  @if (error()) {
-    <p class="erp-notice erp-notice--error">{{ error() }}</p>
-  }
-
-  <section class="erp-card erp-table-shell">
-    <div class="erp-table-toolbar admission-table-toolbar">
-      <div>
-        <h2>
-          {{
-            status() === 'approved'
-              ? 'Approved student directory'
-              : status() === 'draft'
-                ? 'Incomplete admissions'
-                : 'Approval queue'
-          }}
-          <small>{{ total() }}</small>
-        </h2>
-        <p>{{ searchHelp() }} Open a student to review details and take action.</p>
-      </div>
-      <div class="erp-table-toolbar__actions">
-        <input
-          class="erp-control"
-          type="search"
-          [(ngModel)]="search"
-          placeholder="Search students"
-          (keyup.enter)="searchRecords()"
-        />
-        <button class="erp-button erp-button--secondary" type="button" (click)="searchRecords()">
-          Search
-        </button>
-        @if (search) {
-          <button
-            class="erp-button erp-button--ghost"
-            type="button"
-            (click)="search = ''; searchRecords()"
-          >
-            Clear
-          </button>
-        }
-      </div>
-    </div>
-    @if (status() === 'approved' && selectedStudentIds().size) {
-      <div class="admission-bulk-bar" role="status">
-        <strong>{{ selectedStudentIds().size }} selected</strong>
-        <span>Apply fee setup to the selected records from the page toolbar.</span>
-        <button class="erp-button erp-button--ghost" type="button" (click)="clearSelection()">
-          Clear selection
+  <div class="applications-feedback" aria-live="polite">
+    @if (message()) {
+      <div class="erp-notice erp-notice--success">
+        <span>{{ message() }}</span>
+        <button type="button" aria-label="Dismiss message" (click)="message.set('')">
+          <svg lucideX size="14" aria-hidden="true"></svg>
         </button>
       </div>
     }
+    @if (actionError()) {
+      <div class="erp-notice erp-notice--error" role="alert">
+        <span>{{ actionError() }}</span>
+        <button type="button" aria-label="Dismiss error" (click)="actionError.set('')">
+          <svg lucideX size="14" aria-hidden="true"></svg>
+        </button>
+      </div>
+    }
+  </div>
+
+  <section
+    class="erp-card erp-table-shell applications-directory"
+    aria-labelledby="applications-list-title"
+  >
+    <header class="erp-table-toolbar applications-toolbar">
+      <div>
+        <h2 id="applications-list-title">
+          {{ activeView().label }}
+          <small>{{ total() }}</small>
+        </h2>
+        <p>
+          {{ activeView().description }}. Selection is limited to approved records on this page.
+        </p>
+      </div>
+      <div class="applications-toolbar__controls">
+        <label class="applications-search">
+          <span class="erp-sr-only">Search applications</span>
+          <svg lucideSearch size="16" aria-hidden="true"></svg>
+          <input
+            type="search"
+            [(ngModel)]="search"
+            placeholder="Name, student ID, programme, session"
+            (keyup.enter)="searchRecords()"
+          />
+          @if (search) {
+            <button type="button" aria-label="Clear application search" (click)="clearSearch()">
+              <svg lucideX size="14" aria-hidden="true"></svg>
+            </button>
+          }
+        </label>
+        <button
+          class="erp-button erp-button--secondary erp-button--compact"
+          type="button"
+          (click)="searchRecords()"
+        >
+          Search
+        </button>
+        <erp-filter-popover
+          label="Rows"
+          [options]="pageSizeFilterOptions"
+          [value]="pageSize.toString()"
+          [resetValue]="pageSizeOptions[1].toString()"
+          (valueChange)="changePageSizeFromFilter($any($event))"
+        />
+        <button
+          class="erp-button erp-button--ghost erp-button--compact"
+          type="button"
+          (click)="resetFilters()"
+        >
+          Reset
+        </button>
+      </div>
+    </header>
+
+    @if (selectedStudentIds().size) {
+      <div class="erp-selection-toolbar applications-selection" aria-live="polite">
+        <strong>{{ selectedStudentIds().size }} selected on this page</strong>
+        <span>Only approved applications are eligible for fee-account generation.</span>
+        <button
+          class="erp-button erp-button--secondary erp-button--compact"
+          type="button"
+          (click)="clearSelection()"
+        >
+          Clear
+        </button>
+        <button
+          class="erp-button erp-button--primary erp-button--compact"
+          type="button"
+          [disabled]="feeSaving()"
+          (click)="requestSelectedFeeGeneration()"
+        >
+          Generate fee accounts
+        </button>
+      </div>
+    }
+
     <div class="erp-table-shell__scroll">
-      <table>
+      <table [attr.aria-busy]="loading()">
+        <caption class="erp-sr-only">
+          {{
+            activeView().label
+          }}
+          application records
+        </caption>
         <thead>
           <tr>
-            @if (status() === 'approved') {
-              <th>
-                <input
-                  type="checkbox"
-                  aria-label="Select all students on this page"
-                  [checked]="items().length > 0 && selectedStudentIds().size === items().length"
-                  (change)="togglePage($any($event.target).checked)"
-                />
-              </th>
-            }
-            <th>Student</th>
-            <th>Programme</th>
-            <th>Intake</th>
-            @if (status() === 'approved') {
-              <th>Academic position</th>
-              <th>Fee account</th>
-            }
-            <th>Last updated</th>
-            <th>Status</th>
-            <th class="erp-table-shell__actions">Actions</th>
+            <th class="applications-select-column" scope="col">
+              <input
+                type="checkbox"
+                [checked]="allEligibleSelected()"
+                [indeterminate]="someEligibleSelected()"
+                [disabled]="!eligibleOnPage().length || loading()"
+                aria-label="Select all approved applications on this page"
+                (change)="togglePage($any($event.target).checked)"
+              />
+            </th>
+            <th scope="col">Application</th>
+            <th scope="col">Applicant</th>
+            <th scope="col">Programme and intake</th>
+            <th scope="col">Stage</th>
+            <th scope="col">Last activity</th>
+            <th class="erp-table-shell__actions" scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
-          @for (item of items(); track item._id) {
+          @if (loading()) {
+            @for (row of [1, 2, 3, 4, 5, 6]; track row) {
+              <tr aria-hidden="true">
+                <td><span class="erp-skeleton applications-skeleton--check"></span></td>
+                <td><span class="erp-skeleton applications-skeleton--reference"></span></td>
+                <td><span class="erp-skeleton applications-skeleton--person"></span></td>
+                <td><span class="erp-skeleton applications-skeleton--programme"></span></td>
+                <td><span class="erp-skeleton applications-skeleton--status"></span></td>
+                <td><span class="erp-skeleton applications-skeleton--date"></span></td>
+                <td><span class="erp-skeleton applications-skeleton--action"></span></td>
+              </tr>
+            }
+          } @else if (listError()) {
             <tr>
-              @if (status() === 'approved') {
-                <td>
+              <td colspan="7">
+                <div class="applications-state" role="alert">
+                  <span class="erp-empty-panel__icon"
+                    ><svg lucideCircleAlert size="20" aria-hidden="true"></svg
+                  ></span>
+                  <h3>Applications could not be loaded</h3>
+                  <p>{{ listError() }}</p>
+                  <button
+                    class="erp-button erp-button--secondary erp-button--compact"
+                    type="button"
+                    (click)="load()"
+                  >
+                    <svg lucideRefreshCw size="15" aria-hidden="true"></svg>
+                    Try again
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (item of items(); track item._id) {
+              <tr [class.erp-is-selected]="isSelected(item)">
+                <td class="applications-select-column">
                   <input
                     type="checkbox"
-                    [attr.aria-label]="'Select ' + (item.studentName || item.studentId)"
                     [checked]="isSelected(item)"
+                    [disabled]="!bulkEligible(item)"
+                    [attr.aria-label]="
+                      bulkEligible(item)
+                        ? 'Select ' + (item.studentName || reference(item))
+                        : 'Bulk actions are unavailable for ' +
+                          (item.studentName || reference(item))
+                    "
                     (change)="toggleStudent(item, $any($event.target).checked)"
                   />
                 </td>
-              }
-              <td class="admission-student-cell">
-                <button type="button" (click)="view(item)">
-                  <strong>{{ item.studentName || 'Name not entered' }}</strong>
-                  <small>{{ item.studentId || 'ID pending' }}</small>
-                </button>
-              </td>
-              <td>
-                <strong>{{ item.courseName || 'Programme not selected' }}</strong
-                ><small>{{ item.studentTypeName || 'Student type pending' }}</small>
-              </td>
-              <td>{{ item.academicSession || 'Not selected' }}</td>
-              @if (status() === 'approved') {
-                <td>
-                  <strong>Year {{ item.currentAcademicYear || 1 }}</strong>
+                <td class="applications-reference">
+                  <strong>{{ reference(item) }}</strong>
                   <small>{{
-                    item.feeFrequency === 'semester'
-                      ? 'Semester ' + (item.currentSemester || 1)
-                      : 'Annual cycle'
+                    item.studentId ? 'Student ID assigned' : 'Application reference'
                   }}</small>
+                </td>
+                <td>
+                  <button
+                    class="applications-applicant"
+                    type="button"
+                    (click)="openPreview(item, $event)"
+                  >
+                    <span class="applications-avatar">{{ initials(item) }}</span>
+                    <span>
+                      <strong>{{ item.studentName || 'Unnamed application' }}</strong>
+                      <small>{{
+                        item.studentTypeName || item.countryName || 'Applicant details pending'
+                      }}</small>
+                    </span>
+                  </button>
+                </td>
+                <td>
+                  <strong>{{ item.courseName || 'Programme not selected' }}</strong>
+                  <small>{{ item.academicSession || 'Academic session pending' }}</small>
                 </td>
                 <td>
                   <span
                     class="erp-status"
-                    [class.erp-status--warning]="!item.feeLedgerKinds?.length"
-                    >{{ feeStatus(item) }}</span
+                    [class.erp-status--draft]="item.status === 'draft'"
+                    [class.erp-status--warning]="
+                      item.status === 'pending_approval' || item.status === 'submitted'
+                    "
+                    >{{ statusLabel(item) }}</span
                   >
                 </td>
-              }
-              <td>{{ createdLabel(item) }}</td>
-              <td>
-                <span class="erp-status" [class.erp-status--warning]="item.status !== 'approved'">{{
-                  displayStatusLabel(item)
-                }}</span>
-              </td>
-              <td class="erp-table-shell__actions">
-                <erp-compact-action-menu
-                  [items]="actionsFor(item)"
-                  (selected)="handleRowAction($event, item)"
-                />
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td [attr.colspan]="status() === 'approved' ? 8 : 6" class="erp-empty-state">
-                {{ loading() ? 'Loading…' : 'No matching student records found.' }}
-              </td>
-            </tr>
+                <td class="applications-activity">
+                  <strong>{{ activityLabel(item) }}</strong>
+                  <small>{{
+                    item.approvedAt ? 'Approved' : item.submittedAt ? 'Submitted' : 'Created'
+                  }}</small>
+                </td>
+                <td class="erp-table-shell__actions">
+                  <erp-compact-action-menu
+                    [items]="rowActions(item)"
+                    (selected)="handleRowAction($event, item)"
+                  />
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">
+                  <div class="applications-state">
+                    <span class="erp-empty-panel__icon"
+                      ><svg lucideInbox size="20" aria-hidden="true"></svg
+                    ></span>
+                    <h3>{{ emptyTitle() }}</h3>
+                    <p>{{ emptyDescription() }}</p>
+                    @if (appliedSearch() || view() !== 'all') {
+                      <button
+                        class="erp-button erp-button--secondary erp-button--compact"
+                        type="button"
+                        (click)="resetFilters()"
+                      >
+                        Show all applications
+                      </button>
+                    } @else {
+                      <a
+                        class="erp-button erp-button--primary erp-button--compact"
+                        routerLink="/admin/admission/student"
+                      >
+                        <svg lucidePlus size="15" aria-hidden="true"></svg>
+                        New application
+                      </a>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>
     </div>
-    <div class="erp-pagination">
-      <span
-        >Showing {{ items().length }} of {{ total() }} students · Page {{ page }} of
-        {{ pages() }}</span
-      >
+
+    <footer class="erp-pagination applications-pagination">
+      <span>Showing {{ firstResult() }}–{{ lastResult() }} of {{ total() }}</span>
       <div class="erp-pagination__pages">
-        <select
-          class="erp-control erp-pagination__size"
-          aria-label="Rows per page"
-          [(ngModel)]="pageSize"
-          (ngModelChange)="changePageSize()"
-        >
-          @for (size of pageSizeOptions; track size) {
-            <option [ngValue]="size">{{ size }} / page</option>
-          }
-        </select>
+        <label>
+          <span class="erp-sr-only">Rows per page</span>
+          <select
+            class="erp-control erp-pagination__size"
+            [ngModel]="pageSize"
+            (ngModelChange)="changePageSize($event)"
+          >
+            @for (option of pageSizeOptions; track option) {
+              <option [ngValue]="option">{{ option }} / page</option>
+            }
+          </select>
+        </label>
         <button
           class="erp-pagination__button"
           type="button"
           aria-label="Previous page"
-          [disabled]="page <= 1"
+          [disabled]="page <= 1 || loading()"
           (click)="changePage(page - 1)"
         >
-          ‹
+          <svg lucideChevronLeft size="16" aria-hidden="true"></svg>
         </button>
-        <button
-          class="erp-pagination__button erp-pagination__button--active"
-          type="button"
-          aria-current="page"
-        >
-          {{ page }}
-        </button>
+        <span class="applications-page-number">Page {{ page }} of {{ pages() }}</span>
         <button
           class="erp-pagination__button"
           type="button"
           aria-label="Next page"
-          [disabled]="page >= pages()"
+          [disabled]="page >= pages() || loading()"
           (click)="changePage(page + 1)"
         >
-          ›
+          <svg lucideChevronRight size="16" aria-hidden="true"></svg>
         </button>
       </div>
-    </div>
+    </footer>
   </section>
 </erp-admin-page>
 
-@if (feeDeleteStudent(); as student) {
-  <erp-confirm-dialog
-    [open]="true"
-    eyebrow="Student fees"
-    title="Delete Ledger & Due Card?"
-    [message]="
-      'Academic Fee and Hostel Fee will disappear from ' +
-      (student.studentName || student.studentId || 'this student') +
-      '\u0027s portal. They can be created again later.'
-    "
-    confirmLabel="Delete fees"
-    [destructive]="true"
-    (cancelled)="feeDeleteStudent.set(null)"
-    (confirmed)="confirmFeeDeletion()"
-  />
-}
-
-@if (credentialStudent(); as student) {
-  <div class="modal-backdrop">
+@if (previewOpen()) {
+  <div class="erp-drawer-layer">
     <button
-      class="backdrop-close"
+      class="erp-drawer-backdrop"
       type="button"
-      aria-label="Cancel student account setup"
-      (click)="closeCredentials()"
+      aria-label="Close application preview"
+      (click)="closePreview()"
     ></button>
-    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="credential-title">
-      <header>
+    <section
+      class="erp-drawer applications-preview"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="application-preview-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="erp-drawer__header">
+        <span class="erp-drawer__icon"
+          ><svg lucideUserRound size="20" aria-hidden="true"></svg
+        ></span>
         <div>
-          <small>Student account</small>
-          <h2 id="credential-title">
-            {{
-              credentialAction() === 'approve' ? 'Approve and activate student' : 'Reset password'
-            }}
-          </h2>
-          <p>{{ student.studentName }} · {{ student.studentId }}</p>
+          <small>Quick preview</small>
+          <h2 id="application-preview-title">{{ preview()?.studentName || 'Application' }}</h2>
+          <p>{{ preview() ? reference(preview()!) : 'Loading the application record…' }}</p>
         </div>
-        <button type="button" aria-label="Close" (click)="closeCredentials()">×</button>
+        <button
+          class="applications-icon-button"
+          type="button"
+          aria-label="Close application preview"
+          (click)="closePreview()"
+        >
+          <svg lucideX size="17" aria-hidden="true"></svg>
+        </button>
       </header>
-      <div class="detail-body">
-        <section class="erp-card erp-card--padded">
-          <p>
-            The student must replace this temporary password after their first successful login.
-          </p>
-          <div class="erp-form-grid">
-            @if (credentialAction() === 'approve') {
-              <label>
-                <span>Fee calculation mode *</span>
-                <select class="erp-control" [(ngModel)]="approvalFeeFrequency">
-                  <option value="year">Full-year fee</option>
-                  <option value="semester">Semester-wise fee</option>
-                </select>
-              </label>
-              <label>
-                <span>Current academic year *</span>
-                <select class="erp-control" [(ngModel)]="currentAcademicYear" required>
-                  @for (year of academicYearOptions; track year) {
-                    <option [ngValue]="year">Year {{ year }}</option>
-                  }
-                </select>
-              </label>
-              @if (approvalFeeFrequency === 'semester') {
+
+      <div class="erp-drawer__body">
+        @if (previewLoading()) {
+          <div class="applications-preview-loading" aria-label="Loading application preview">
+            <span class="erp-skeleton applications-skeleton--title"></span>
+            <span class="erp-skeleton applications-skeleton--block"></span>
+            <span class="erp-skeleton applications-skeleton--block"></span>
+          </div>
+        } @else if (previewError()) {
+          <div class="applications-state" role="alert">
+            <span class="erp-empty-panel__icon"
+              ><svg lucideCircleAlert size="20" aria-hidden="true"></svg
+            ></span>
+            <h3>Preview unavailable</h3>
+            <p>{{ previewError() }}</p>
+            <button
+              class="erp-button erp-button--secondary erp-button--compact"
+              type="button"
+              (click)="closePreview()"
+            >
+              Close
+            </button>
+          </div>
+        } @else if (preview(); as item) {
+          <div class="applications-preview-summary">
+            <span
+              class="erp-status"
+              [class.erp-status--draft]="item.status === 'draft'"
+              [class.erp-status--warning]="
+                item.status === 'pending_approval' || item.status === 'submitted'
+              "
+              >{{ statusLabel(item) }}</span
+            >
+            <span>{{ captureLabel(item) }}</span>
+          </div>
+
+          @if (actionError()) {
+            <p class="erp-notice erp-notice--error" role="alert">{{ actionError() }}</p>
+          }
+
+          <section class="applications-preview-section">
+            <header>
+              <div>
+                <h3>Record actions</h3>
+                <p>Actions are shown here only when they apply to this record.</p>
+              </div>
+            </header>
+            <div class="applications-actions-grid">
+              <a
+                class="erp-button erp-button--secondary erp-button--compact"
+                [routerLink]="['/admin/admissions/applications', item._id]"
+              >
+                Open full record
+              </a>
+              <a
+                class="erp-button erp-button--secondary erp-button--compact"
+                [routerLink]="['/admin/admissions', item._id, 'edit']"
+              >
+                Edit application
+              </a>
+              @if (item.status === 'pending_approval' || item.status === 'submitted') {
+                <a
+                  class="erp-button erp-button--primary erp-button--compact"
+                  [routerLink]="['/admin/admissions/applications', item._id, 'review']"
+                >
+                  Review application
+                </a>
+              }
+              @if (item.status === 'approved') {
+                <a
+                  class="erp-button erp-button--secondary erp-button--compact"
+                  [routerLink]="['/admin/admissions', item._id, 'scholarships']"
+                >
+                  Scholarships
+                </a>
+                <button
+                  class="erp-button erp-button--secondary erp-button--compact"
+                  type="button"
+                  (click)="openCredentials(item)"
+                >
+                  Reset password
+                </button>
+                <button
+                  class="erp-button erp-button--secondary erp-button--compact"
+                  type="button"
+                  [disabled]="feeSaving()"
+                  (click)="requestFeeGeneration(item)"
+                >
+                  Generate fee account
+                </button>
+              }
+            </div>
+          </section>
+
+          <section class="applications-preview-section">
+            <header>
+              <div>
+                <h3>Application overview</h3>
+                <p>Core identity and academic context.</p>
+              </div>
+            </header>
+            <dl class="applications-facts">
+              <div>
+                <dt>Student ID</dt>
+                <dd>{{ item.studentId || 'Not generated' }}</dd>
+              </div>
+              <div>
+                <dt>Programme</dt>
+                <dd>{{ item.courseName || 'Not selected' }}</dd>
+              </div>
+              <div>
+                <dt>Academic session</dt>
+                <dd>{{ item.academicSession || 'Not selected' }}</dd>
+              </div>
+              <div>
+                <dt>College</dt>
+                <dd>{{ item.collegeName || 'Not selected' }}</dd>
+              </div>
+              <div>
+                <dt>Department</dt>
+                <dd>{{ item.departmentName || 'Not selected' }}</dd>
+              </div>
+              <div>
+                <dt>Student type</dt>
+                <dd>{{ item.studentTypeName || 'Not selected' }}</dd>
+              </div>
+              <div>
+                <dt>Domicile</dt>
+                <dd>{{ item.domicileName || 'Not selected' }}</dd>
+              </div>
+              <div>
+                <dt>Form version</dt>
+                <dd>{{ item.formVersion || 'Not recorded' }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="applications-preview-section">
+            <header>
+              <div>
+                <h3>Lifecycle</h3>
+                <p>Read-only audit dates available on this application.</p>
+              </div>
+            </header>
+            <dl class="applications-timeline">
+              <div>
+                <dt>Created</dt>
+                <dd>{{ createdLabel(item) }}</dd>
+              </div>
+              <div>
+                <dt>Submitted</dt>
+                <dd>{{ submittedLabel(item) }}</dd>
+              </div>
+              <div>
+                <dt>Approved</dt>
+                <dd>{{ approvedLabel(item) }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          @if (item.status === 'approved') {
+            <section class="applications-preview-section">
+              <header>
+                <div>
+                  <h3>Fee period</h3>
+                  <p>Saved settings used by fee-ledger generation.</p>
+                </div>
+                <span
+                  class="erp-status"
+                  [class.erp-status--warning]="!item.feeLedgerKinds?.length"
+                  >{{ feeStatus(item) }}</span
+                >
+              </header>
+              <div class="applications-fee-form">
                 <label>
-                  <span>Current semester *</span>
-                  <select class="erp-control" [(ngModel)]="currentSemester">
-                    @for (semester of semesterOptions; track semester) {
-                      <option [ngValue]="semester">Semester {{ semester }}</option>
+                  <span>Calculation mode</span>
+                  <select
+                    class="erp-control"
+                    [ngModel]="feePeriodDraft(item).feeFrequency"
+                    (ngModelChange)="updateFeePeriodDraft(item, { feeFrequency: $event })"
+                  >
+                    <option value="year">Full year</option>
+                    <option value="semester">Semester-wise</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Academic year</span>
+                  <select
+                    class="erp-control"
+                    [ngModel]="feePeriodDraft(item).currentAcademicYear"
+                    (ngModelChange)="updateFeePeriodDraft(item, { currentAcademicYear: +$event })"
+                  >
+                    @for (year of academicYearOptions; track year) {
+                      <option [ngValue]="year">Year {{ year }}</option>
                     }
                   </select>
                 </label>
-              }
-            }
-            <label>
-              <span>Temporary password option</span>
-              <select class="erp-control" [(ngModel)]="passwordMode">
-                <option value="student-id">Same as Student ID</option>
-                <option value="manual">Enter password manually</option>
-              </select>
-            </label>
-            @if (passwordMode === 'manual') {
-              <label>
-                <span>Temporary password *</span>
-                <input
-                  class="erp-control"
-                  type="password"
-                  [(ngModel)]="manualPassword"
-                  minlength="8"
-                />
-              </label>
-              <label>
-                <span>Confirm temporary password *</span>
-                <input
-                  class="erp-control"
-                  type="password"
-                  [(ngModel)]="confirmPassword"
-                  minlength="8"
-                />
-              </label>
-            }
-          </div>
-          @if (error()) {
-            <p class="erp-notice erp-notice--error">{{ error() }}</p>
+                @if (feePeriodDraft(item).feeFrequency === 'semester') {
+                  <label>
+                    <span>Current semester</span>
+                    <select
+                      class="erp-control"
+                      [ngModel]="feePeriodDraft(item).currentSemester"
+                      (ngModelChange)="updateFeePeriodDraft(item, { currentSemester: +$event })"
+                    >
+                      @for (semester of semesterOptions; track semester) {
+                        <option [ngValue]="semester">Semester {{ semester }}</option>
+                      }
+                    </select>
+                  </label>
+                }
+              </div>
+              <div class="applications-fee-actions">
+                <button
+                  class="erp-button erp-button--secondary erp-button--compact"
+                  type="button"
+                  [disabled]="feeSaving() || !feePeriodDirty(item)"
+                  (click)="saveFeePeriod(item)"
+                >
+                  Save period
+                </button>
+                <button
+                  class="erp-button erp-button--primary erp-button--compact"
+                  type="button"
+                  [disabled]="feeSaving() || feePeriodDirty(item)"
+                  (click)="applyFeePeriod(item)"
+                >
+                  Apply to ledger
+                </button>
+                @if (item.feeLedgerKinds?.length) {
+                  <button
+                    class="erp-button erp-button--danger erp-button--compact"
+                    type="button"
+                    [disabled]="feeSaving()"
+                    (click)="requestFeeDeletion(item)"
+                  >
+                    Delete fee account
+                  </button>
+                }
+              </div>
+            </section>
           }
-          <div class="erp-dialog-actions">
-            <button
-              class="erp-button erp-button--secondary"
-              type="button"
-              (click)="closeCredentials()"
-              [disabled]="credentialSaving()"
-            >
-              Cancel
-            </button>
-            <button
-              class="erp-button erp-button--primary"
-              type="button"
-              (click)="saveCredentials()"
-              [disabled]="credentialSaving()"
-            >
-              {{
-                credentialSaving()
-                  ? 'Saving…'
-                  : credentialAction() === 'approve'
-                    ? 'Approve and activate'
-                    : 'Reset password'
-              }}
-            </button>
-          </div>
-        </section>
+        }
       </div>
     </section>
   </div>
 }
 
-@if (selected(); as admission) {
-  <div class="modal-backdrop admission-drawer-backdrop">
+<erp-confirm-dialog
+  [open]="feeGenerationIds().length > 0"
+  eyebrow="Fee account"
+  title="Generate fee accounts?"
+  [message]="feeGenerationMessage()"
+  confirmLabel="Generate accounts"
+  (confirmed)="confirmFeeGeneration()"
+  (cancelled)="feeGenerationIds.set([])"
+/>
+
+<erp-confirm-dialog
+  [open]="!!feeDeleteStudent()"
+  eyebrow="Fee account"
+  title="Delete this fee account?"
+  [message]="
+    'This removes every fee ledger for ' +
+    (feeDeleteStudent()?.studentName || feeDeleteStudent()?.studentId || 'this student') +
+    '. This action cannot be undone.'
+  "
+  confirmLabel="Delete fee account"
+  [destructive]="true"
+  (confirmed)="confirmFeeDeletion()"
+  (cancelled)="feeDeleteStudent.set(null)"
+/>
+
+@if (credentialStudent(); as item) {
+  <div class="dialog-layer">
     <button
-      class="backdrop-close"
+      class="dialog-backdrop"
       type="button"
-      aria-label="Close student details"
-      (click)="close()"
+      aria-label="Close account setup"
+      (click)="closeCredentials()"
     ></button>
     <section
-      class="modal student-detail student-detail--drawer"
+      class="dialog applications-credential-dialog"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="student-detail-title"
+      aria-labelledby="credential-dialog-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
     >
-      <header>
+      <header class="dialog__header">
         <div>
-          <small>{{ admission.studentId || 'Student ID pending' }}</small>
-          <h2 id="student-detail-title">
-            {{ admission.studentName || 'Draft admission' }}
-          </h2>
-          <p>
-            {{ admission.courseName || 'Programme not selected' }} ·
-            {{ admission.academicSession || 'Intake pending' }}
-          </p>
+          <small>Account security</small>
+          <h2 id="credential-dialog-title">Reset temporary password</h2>
         </div>
-        <button type="button" aria-label="Close student details" (click)="close()">×</button>
+        <button type="button" aria-label="Close account setup" (click)="closeCredentials()">
+          <svg lucideX size="16" aria-hidden="true"></svg>
+        </button>
       </header>
-      <div class="admission-drawer__statusbar">
-        <span class="erp-status" [class.erp-status--warning]="admission.status !== 'approved'">{{
-          displayStatusLabel(admission)
-        }}</span>
-        <span>{{ admission.domicileName || 'Domicile pending' }}</span>
-        <span>{{ admission.studentTypeName || 'Student type pending' }}</span>
-      </div>
-      <nav class="admission-drawer__tabs" aria-label="Student detail sections">
-        <button
-          type="button"
-          [class.is-active]="detailTab() === 'overview'"
-          (click)="detailTab.set('overview')"
-        >
-          Overview
-        </button>
-        <button
-          type="button"
-          [class.is-active]="detailTab() === 'application'"
-          (click)="detailTab.set('application')"
-        >
-          Application data
-        </button>
-      </nav>
-      <div class="detail-body admission-drawer__body">
-        @if (detailTab() === 'overview') {
-          <div class="admission-object-page">
-            <section class="admission-object-section">
-              <header>
-                <div>
-                  <h3>Administrative actions</h3>
-                  <p>Common tasks for this student record.</p>
-                </div>
-              </header>
-              <div class="admission-quick-actions">
-                @if (admission.status === 'pending_approval' || admission.status === 'submitted') {
-                  <button
-                    class="erp-button erp-button--primary"
-                    type="button"
-                    (click)="approve(admission)"
-                  >
-                    Approve student
-                  </button>
-                }
-                <a
-                  class="erp-button erp-button--secondary"
-                  [routerLink]="['/admin/admissions', admission._id, 'edit']"
-                  >Edit application</a
-                >
-                @if (admission.status === 'approved') {
-                  <a
-                    class="erp-button erp-button--secondary"
-                    [routerLink]="['/admin/admissions', admission._id, 'scholarships']"
-                    >Scholarships & discounts</a
-                  >
-                  <button
-                    class="erp-button erp-button--secondary"
-                    type="button"
-                    (click)="openCredentials(admission, 'reset')"
-                  >
-                    Reset password
-                  </button>
-                }
-              </div>
-            </section>
-
-            <section class="admission-object-section">
-              <header>
-                <div>
-                  <h3>Student overview</h3>
-                  <p>High-value information used during review.</p>
-                </div>
-              </header>
-              <dl class="admission-facts">
-                <div>
-                  <dt>Student ID</dt>
-                  <dd>{{ admission.studentId || 'Not generated' }}</dd>
-                </div>
-                <div>
-                  <dt>Programme</dt>
-                  <dd>{{ admission.courseName || 'Not selected' }}</dd>
-                </div>
-                <div>
-                  <dt>Academic session</dt>
-                  <dd>{{ admission.academicSession || 'Not selected' }}</dd>
-                </div>
-                <div>
-                  <dt>Student type</dt>
-                  <dd>{{ admission.studentTypeName || 'Not selected' }}</dd>
-                </div>
-                <div>
-                  <dt>Domicile</dt>
-                  <dd>{{ admission.domicileName || 'Not selected' }}</dd>
-                </div>
-                <div>
-                  <dt>Record created</dt>
-                  <dd>{{ createdLabel(admission) }}</dd>
-                </div>
-              </dl>
-            </section>
-
-            @if (admission.status === 'approved') {
-              <section class="admission-object-section">
-                <header>
-                  <div>
-                    <h3>Fee period</h3>
-                    <p>Controls which academic fee structure is applied.</p>
-                  </div>
-                  <span class="erp-status">{{ feeStatus(admission) }}</span>
-                </header>
-                <div class="erp-form-grid admission-fee-settings">
-                  <label
-                    ><span>Calculation mode</span
-                    ><select
-                      class="erp-control"
-                      [ngModel]="feePeriodDraft(admission).feeFrequency"
-                      (ngModelChange)="updateFeePeriodDraft(admission, { feeFrequency: $event })"
-                    >
-                      <option value="year">Full year</option>
-                      <option value="semester">Semester-wise</option>
-                    </select></label
-                  >
-                  <label
-                    ><span>Academic year</span
-                    ><select
-                      class="erp-control"
-                      [ngModel]="feePeriodDraft(admission).currentAcademicYear"
-                      (ngModelChange)="
-                        updateFeePeriodDraft(admission, { currentAcademicYear: +$event })
-                      "
-                    >
-                      @for (year of academicYearOptions; track year) {
-                        <option [ngValue]="year">Year {{ year }}</option>
-                      }
-                    </select></label
-                  >
-                  @if (feePeriodDraft(admission).feeFrequency === 'semester') {
-                    <label
-                      ><span>Current semester</span
-                      ><select
-                        class="erp-control"
-                        [ngModel]="feePeriodDraft(admission).currentSemester"
-                        (ngModelChange)="
-                          updateFeePeriodDraft(admission, { currentSemester: +$event })
-                        "
-                      >
-                        @for (semester of semesterOptions; track semester) {
-                          <option [ngValue]="semester">Semester {{ semester }}</option>
-                        }
-                      </select></label
-                    >
-                  }
-                </div>
-                <div class="admission-section-actions">
-                  <button
-                    class="erp-button erp-button--secondary"
-                    type="button"
-                    [disabled]="feeSaving() || !feePeriodDirty(admission)"
-                    (click)="saveFeePeriod(admission)"
-                  >
-                    Save period
-                  </button>
-                  <button
-                    class="erp-button erp-button--primary"
-                    type="button"
-                    [disabled]="feeSaving() || feePeriodDirty(admission)"
-                    (click)="applyFeePeriod(admission)"
-                  >
-                    Create / refresh ledger
-                  </button>
-                </div>
-              </section>
-            }
-          </div>
-        } @else {
-          <div class="admission-application-layout">
-            <nav aria-label="Application sections">
-              @for (section of admission.formSnapshot.sections; track section.id) {
-                <button
-                  type="button"
-                  [class.is-active]="activeDetailSectionId() === section.id"
-                  (click)="activeDetailSectionId.set(section.id)"
-                >
-                  {{ section.name }}
-                </button>
-              }
-            </nav>
-            <div>
-              @for (section of admission.formSnapshot.sections; track section.id) {
-                @if (activeDetailSectionId() === section.id) {
-                  <section class="detail-section">
-                    <h3>{{ section.name }}</h3>
-                    @for (subsection of section.subsections; track subsection.id) {
-                      <div class="detail-subsection">
-                        <h4>{{ subsection.name }}</h4>
-                        @if (subsection.isRepeatable) {
-                          @for (
-                            entry of entries(admission, subsection);
-                            track $index;
-                            let entryIndex = $index
-                          ) {
-                            <article class="repeat-entry">
-                              <strong>{{ subsection.name }} {{ entryIndex + 1 }}</strong>
-                              <dl>
-                                @for (field of subsection.fields; track field.id) {
-                                  <div>
-                                    <dt>{{ field.name }}</dt>
-                                    <dd>{{ value(field, entry) }}</dd>
-                                  </div>
-                                }
-                              </dl>
-                            </article>
-                          } @empty {
-                            <p class="no-data">No entries saved.</p>
-                          }
-                        } @else {
-                          <dl>
-                            @for (field of subsection.fields; track field.id) {
-                              <div>
-                                <dt>{{ field.name }}</dt>
-                                <dd>{{ value(field, admission.responses) }}</dd>
-                              </div>
-                            }
-                          </dl>
-                        }
-                      </div>
-                    }
-                  </section>
-                }
-              }
-            </div>
-          </div>
+      <div class="dialog__body applications-credential-body">
+        <div class="applications-credential-context">
+          <strong>{{ item.studentName || 'Unnamed application' }}</strong>
+          <span>{{ reference(item) }}</span>
+        </div>
+        <p>The student must change this temporary password after signing in.</p>
+        <div class="applications-credential-grid">
+          <label
+            ><span>Temporary password</span
+            ><select class="erp-control" [(ngModel)]="passwordMode">
+              <option value="student-id">Use Student ID</option>
+              <option value="manual">Enter manually</option>
+            </select></label
+          >
+          @if (passwordMode === 'manual') {
+            <label
+              ><span>New password</span
+              ><input
+                class="erp-control"
+                type="password"
+                [(ngModel)]="manualPassword"
+                minlength="8"
+                autocomplete="new-password"
+            /></label>
+            <label
+              ><span>Confirm password</span
+              ><input
+                class="erp-control"
+                type="password"
+                [(ngModel)]="confirmPassword"
+                minlength="8"
+                autocomplete="new-password"
+            /></label>
+          }
+        </div>
+        @if (credentialError()) {
+          <p class="erp-notice erp-notice--error" role="alert">{{ credentialError() }}</p>
         }
       </div>
+      <footer class="dialog__footer">
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          [disabled]="credentialSaving()"
+          (click)="closeCredentials()"
+        >
+          Cancel
+        </button>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="credentialSaving()"
+          (click)="saveCredentials()"
+        >
+          {{ credentialSaving() ? 'Saving…' : 'Reset password' }}
+        </button>
+      </footer>
     </section>
   </div>
 }

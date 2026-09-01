@@ -1,0 +1,650 @@
+:host {
+  display: block;
+}
+
+.application-review__page-actions,
+.application-review__result,
+.application-review__identity,
+.application-review__section > header,
+.application-review__decision > header,
+.application-review__dialog-header,
+.application-review__dialog-footer {
+  display: flex;
+  align-items: center;
+}
+
+.application-review__page-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--erp-space-2);
+}
+
+.application-review__loading {
+  display: grid;
+  min-height: var(--erp-state-panel-min-height);
+  align-content: start;
+  gap: var(--erp-space-5);
+  padding: var(--erp-space-6);
+}
+
+.application-review__skeleton-title {
+  width: min(22rem, 65%);
+  height: var(--erp-control-height);
+}
+
+.application-review__skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-4);
+}
+
+.application-review__skeleton-grid > span {
+  min-height: 7rem;
+}
+
+.application-review__result {
+  gap: var(--erp-space-3);
+  margin-bottom: var(--erp-space-4);
+}
+
+.application-review__result > div {
+  display: grid;
+  gap: var(--erp-space-1);
+}
+
+.application-review__result strong,
+.application-review__result span {
+  display: block;
+}
+
+.application-review__identity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--erp-space-3);
+  margin-bottom: var(--erp-space-4);
+  padding: var(--erp-space-4) var(--erp-space-5);
+}
+
+.application-review__identity-icon,
+.application-review__section-icon,
+.application-review__document-icon,
+.application-review__dialog-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-review__identity-icon {
+  width: var(--erp-control-height-large);
+  height: var(--erp-control-height-large);
+}
+
+.application-review__identity > div {
+  min-width: 0;
+}
+
+.application-review__identity span,
+.application-review__identity h2,
+.application-review__identity p {
+  margin: 0;
+}
+
+.application-review__identity > div > span {
+  color: var(--erp-text-muted);
+  font-family: var(--erp-font-mono);
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__identity h2 {
+  overflow: hidden;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-section-title);
+  font-weight: var(--erp-weight-semibold);
+  line-height: var(--erp-line-section-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application-review__identity p {
+  overflow: hidden;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application-review__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+  align-items: start;
+  gap: var(--erp-space-4);
+}
+
+.application-review__main,
+.application-review__aside {
+  display: grid;
+  min-width: 0;
+  gap: var(--erp-space-4);
+}
+
+.application-review__aside {
+  position: sticky;
+  top: var(--erp-admin-sticky-top);
+}
+
+.application-review__section,
+.application-review__decision,
+.application-review__meta {
+  overflow: hidden;
+}
+
+.application-review__section > header,
+.application-review__decision > header {
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-review__section > header > div,
+.application-review__decision > header > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.application-review__section-icon,
+.application-review__dialog-icon {
+  width: var(--erp-control-height);
+  height: var(--erp-control-height);
+}
+
+.application-review__section-icon--warning {
+  color: var(--erp-warning-text);
+  background: var(--erp-warning-bg);
+}
+
+.application-review__section h2,
+.application-review__section p,
+.application-review__decision h2,
+.application-review__decision p,
+.application-review__meta h2 {
+  margin: 0;
+}
+
+.application-review__section h2,
+.application-review__decision h2,
+.application-review__meta h2 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-panel-title);
+  font-weight: var(--erp-weight-semibold);
+  line-height: var(--erp-line-body);
+}
+
+.application-review__section header p,
+.application-review__decision header p {
+  margin-top: var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__checks,
+.application-review__documents,
+.application-review__missing-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.application-review__checks > li,
+.application-review__documents > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-3) var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-review__checks > li:last-child,
+.application-review__documents > li:last-child {
+  border-bottom: 0;
+}
+
+.application-review__check-icon,
+.application-review__document-icon {
+  width: var(--erp-control-height-compact);
+  height: var(--erp-control-height-compact);
+}
+
+.application-review__checks li[data-state='pass'] .application-review__check-icon {
+  color: var(--erp-success-text);
+  background: var(--erp-success-bg);
+}
+
+.application-review__checks li[data-state='attention'] .application-review__check-icon {
+  color: var(--erp-warning-text);
+  background: var(--erp-warning-bg);
+}
+
+.application-review__checks li[data-state='blocker'] .application-review__check-icon {
+  color: var(--erp-danger-text);
+  background: var(--erp-danger-bg);
+}
+
+.application-review__checks strong,
+.application-review__documents strong {
+  display: block;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.application-review__checks p,
+.application-review__documents span {
+  margin: var(--erp-space-1) 0 0;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__check-state {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.application-review__missing-list {
+  display: grid;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-4);
+}
+
+.application-review__missing-list li {
+  position: relative;
+  padding-left: var(--erp-space-4);
+  color: var(--erp-danger-text);
+  font-size: var(--erp-font-label);
+}
+
+.application-review__missing-list li::before {
+  position: absolute;
+  top: 0.55em;
+  left: var(--erp-space-1);
+  width: var(--erp-space-1);
+  height: var(--erp-space-1);
+  border-radius: var(--erp-radius-pill);
+  background: var(--erp-danger);
+  content: '';
+}
+
+.application-review__empty-evidence {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-4);
+  color: var(--erp-text-muted);
+}
+
+.application-review__empty-evidence p {
+  margin: 0;
+  font-size: var(--erp-font-label);
+}
+
+.application-review__decision-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-4);
+}
+
+.application-review__decision-summary > div {
+  display: grid;
+  gap: var(--erp-space-1);
+  padding: var(--erp-space-3);
+  background: var(--erp-surface-detail);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-review__decision-summary span,
+.application-review__decision-help,
+.application-review__decision-state span {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__decision-summary strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-section-title);
+}
+
+.application-review__activate {
+  width: calc(100% - (var(--erp-space-4) * 2));
+  justify-content: center;
+  margin: 0 var(--erp-space-4);
+}
+
+.application-review__decision > .erp-notice,
+.application-review__decision > .application-review__evidence-link {
+  margin: var(--erp-space-3) var(--erp-space-4) 0;
+}
+
+.application-review__decision > .application-review__evidence-link {
+  display: block;
+  text-align: center;
+}
+
+.application-review__decision-help {
+  margin: var(--erp-space-2) var(--erp-space-4) var(--erp-space-4);
+  text-align: center;
+}
+
+.application-review__decision-state {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--erp-space-3);
+  margin: var(--erp-space-4);
+  padding: var(--erp-space-3);
+  color: var(--erp-warning-text);
+  background: var(--erp-warning-bg);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-review__decision-state--complete {
+  color: var(--erp-success-text);
+  background: var(--erp-success-bg);
+}
+
+.application-review__decision-state strong,
+.application-review__decision-state span {
+  display: block;
+}
+
+.application-review__decision-state strong {
+  font-size: var(--erp-font-label);
+}
+
+.application-review__meta {
+  padding: var(--erp-space-4);
+}
+
+.application-review__meta dl {
+  display: grid;
+  gap: var(--erp-space-3);
+  margin: var(--erp-space-4) 0;
+}
+
+.application-review__meta dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+}
+
+.application-review__meta dt,
+.application-review__meta dd {
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__meta dt {
+  color: var(--erp-text-muted);
+}
+
+.application-review__meta dd {
+  margin: 0;
+  color: var(--erp-text-heading);
+  font-weight: var(--erp-weight-semibold);
+  text-align: right;
+}
+
+.application-review__evidence-link {
+  color: var(--erp-text-link);
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+  text-decoration: none;
+}
+
+.application-review__evidence-link:hover {
+  text-decoration: underline;
+}
+
+.application-review__dialog-layer {
+  padding: var(--erp-space-4);
+}
+
+.application-review__dialog {
+  display: grid;
+  width: min(42rem, 100%);
+  max-height: min(48rem, calc(100dvh - (var(--erp-space-4) * 2)));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.application-review__dialog-header {
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-review__dialog-header > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.application-review__dialog-header small,
+.application-review__dialog-header h2,
+.application-review__dialog-header p {
+  margin: 0;
+}
+
+.application-review__dialog-header small {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__dialog-header h2 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-section-title);
+  line-height: var(--erp-line-section-title);
+}
+
+.application-review__dialog-header p {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-label);
+}
+
+.application-review__dialog-header > button {
+  display: inline-grid;
+  width: var(--erp-control-height-compact);
+  height: var(--erp-control-height-compact);
+  place-items: center;
+  padding: 0;
+  color: var(--erp-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--erp-radius-control);
+}
+
+.application-review__dialog-body {
+  display: grid;
+  gap: var(--erp-space-4);
+  overflow-y: auto;
+  padding: var(--erp-space-4);
+}
+
+.application-review__dialog-body > section {
+  display: grid;
+  gap: var(--erp-space-3);
+  padding-bottom: var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-review__dialog-body > section > header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--erp-space-3);
+}
+
+.application-review__dialog-body > section > header > span {
+  display: inline-grid;
+  width: var(--erp-control-height-compact);
+  height: var(--erp-control-height-compact);
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border-radius: var(--erp-radius-pill);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.application-review__dialog-body h3,
+.application-review__dialog-body p {
+  margin: 0;
+}
+
+.application-review__dialog-body h3 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-panel-title);
+}
+
+.application-review__dialog-body header p {
+  margin-top: var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+}
+
+.application-review__form-grid label {
+  display: grid;
+  gap: var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.application-review__credential-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-2);
+}
+
+.application-review__credential-options label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-3);
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-review__credential-options input {
+  margin-top: var(--erp-space-1);
+}
+
+.application-review__credential-options strong,
+.application-review__credential-options small {
+  display: block;
+}
+
+.application-review__credential-options strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+}
+
+.application-review__credential-options small {
+  margin-top: var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__activation-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-3);
+  color: var(--erp-info-text);
+  background: var(--erp-info-bg);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-review__activation-note p {
+  font-size: var(--erp-font-caption);
+}
+
+.application-review__dialog-footer {
+  justify-content: flex-end;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-3) var(--erp-space-4);
+  border-top: 1px solid var(--erp-border-subtle);
+}
+
+@media (max-width: 64rem) {
+  .application-review__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .application-review__aside {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 48rem) {
+  .application-review__page-actions,
+  .application-review__page-actions .erp-button {
+    width: 100%;
+  }
+
+  .application-review__page-actions .erp-button {
+    justify-content: center;
+  }
+
+  .application-review__identity {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .application-review__identity > .erp-status {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .application-review__checks > li,
+  .application-review__documents > li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .application-review__check-state,
+  .application-review__documents > li > .erp-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .application-review__aside,
+  .application-review__form-grid,
+  .application-review__credential-options,
+  .application-review__skeleton-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .application-review__dialog-layer {
+    padding: 0;
+  }
+
+  .application-review__dialog {
+    width: 100%;
+    max-width: none;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .application-review__dialog-footer .erp-button {
+    flex: 1;
+  }
+}

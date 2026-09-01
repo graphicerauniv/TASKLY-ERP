@@ -1,0 +1,765 @@
+/* ERP-LOCAL-STYLE: URL-addressable admin application editing workspace. */
+:host {
+  display: block;
+}
+
+.application-editor__page-actions,
+.application-editor__context,
+.application-editor__context-meta,
+.application-editor__progress,
+.application-editor__section-header,
+.application-editor__subsection > header,
+.application-editor__repeat-entry > header,
+.application-editor__actions,
+.application-editor__actions > div,
+.application-editor__save-card,
+.application-editor__validation > header,
+.application-editor__leave-dialog > header,
+.application-editor__leave-dialog > footer {
+  display: flex;
+  align-items: center;
+}
+
+.application-editor__page-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--erp-space-2);
+}
+
+.application-editor__loading {
+  display: grid;
+  min-height: var(--erp-state-panel-min-height);
+  gap: var(--erp-space-4);
+  padding: var(--erp-space-6);
+}
+
+.application-editor__skeleton-title {
+  width: min(28rem, 70%);
+  height: var(--erp-control-height);
+}
+
+.application-editor__loading > div {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr) 18rem;
+  gap: var(--erp-space-4);
+}
+
+.application-editor__loading > div > span {
+  min-height: 22rem;
+}
+
+.application-editor__context {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto minmax(10rem, 14rem);
+  gap: var(--erp-space-4);
+  margin-bottom: var(--erp-space-4);
+  padding: var(--erp-space-3) var(--erp-space-4);
+}
+
+.application-editor__reference {
+  min-width: 0;
+}
+
+.application-editor__reference span,
+.application-editor__reference strong {
+  display: block;
+}
+
+.application-editor__reference span {
+  color: var(--erp-text-muted);
+  font-family: var(--erp-font-mono);
+  font-size: var(--erp-font-caption);
+}
+
+.application-editor__reference strong {
+  overflow: hidden;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application-editor__context-meta {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--erp-space-3);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-editor__context-meta > span:not(.erp-status) + span {
+  padding-left: var(--erp-space-3);
+  border-left: 1px solid var(--erp-border-subtle);
+}
+
+.application-editor__progress {
+  gap: var(--erp-space-2);
+}
+
+.application-editor__progress > div {
+  overflow: hidden;
+  width: 100%;
+  height: 0.375rem;
+  background: var(--erp-surface-detail);
+  border-radius: var(--erp-radius-pill);
+}
+
+.application-editor__progress > div > span {
+  display: block;
+  height: 100%;
+  background: var(--erp-blue-600);
+  border-radius: inherit;
+  transition: width 180ms ease;
+}
+
+.application-editor__progress strong {
+  min-width: 2.5rem;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-caption);
+  text-align: right;
+}
+
+.application-editor__workspace {
+  display: grid;
+  grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr) minmax(16rem, 18rem);
+  align-items: start;
+  gap: var(--erp-space-4);
+}
+
+.application-editor__outline,
+.application-editor__aside {
+  position: sticky;
+  top: var(--erp-admin-sticky-top);
+}
+
+.application-editor__outline {
+  overflow: hidden;
+}
+
+.application-editor__outline > header {
+  display: grid;
+  gap: var(--erp-space-1);
+  padding: var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-editor__outline > header span {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-editor__outline > header strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-panel-title);
+}
+
+.application-editor__outline ol,
+.application-editor__validation ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.application-editor__outline ol {
+  display: grid;
+  gap: 1px;
+  padding: var(--erp-space-2);
+}
+
+.application-editor__outline button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-2) var(--erp-space-3);
+  color: var(--erp-text-body);
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--erp-radius-control);
+}
+
+.application-editor__outline button:hover,
+.application-editor__outline button:focus-visible {
+  background: var(--erp-surface-detail-soft);
+}
+
+.application-editor__outline button.is-current {
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border-color: var(--erp-border-default);
+}
+
+.application-editor__step-number {
+  display: inline-grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+  background: var(--erp-surface-detail);
+  border-radius: var(--erp-radius-pill);
+}
+
+.application-editor__outline button.is-current .application-editor__step-number {
+  color: var(--erp-surface-raised);
+  background: var(--erp-blue-600);
+}
+
+.application-editor__outline button.is-complete .application-editor__step-number {
+  color: var(--erp-success-text);
+  background: var(--erp-success-bg);
+}
+
+.application-editor__outline
+  button.has-attention:not(.is-current)
+  .application-editor__step-number {
+  color: var(--erp-warning-text);
+  background: var(--erp-warning-bg);
+}
+
+.application-editor__outline button > span:last-child {
+  min-width: 0;
+}
+
+.application-editor__outline button strong,
+.application-editor__outline button small {
+  display: block;
+}
+
+.application-editor__outline button strong {
+  overflow: hidden;
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application-editor__outline button small {
+  margin-top: 0.125rem;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+}
+
+.application-editor__main {
+  display: grid;
+  min-width: 0;
+  gap: var(--erp-space-3);
+}
+
+.application-editor__section {
+  overflow: visible;
+}
+
+.application-editor__section-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-5);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-editor__section-icon,
+.application-editor__save-icon,
+.application-editor__validation-icon,
+.application-editor__leave-dialog > header > span {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-editor__section-icon {
+  width: var(--erp-control-height-large);
+  height: var(--erp-control-height-large);
+}
+
+.application-editor__section-header small,
+.application-editor__section-header h2,
+.application-editor__section-header p,
+.application-editor__subsection h3,
+.application-editor__subsection p,
+.application-editor__save-card h2,
+.application-editor__save-card p,
+.application-editor__validation h2,
+.application-editor__validation p,
+.application-editor__leave-dialog h2,
+.application-editor__leave-dialog p {
+  margin: 0;
+}
+
+.application-editor__section-header small {
+  display: block;
+  margin-bottom: var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-editor__section-header h2 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-section-title);
+  line-height: var(--erp-line-section-title);
+}
+
+.application-editor__section-header p,
+.application-editor__subsection p,
+.application-editor__save-card p,
+.application-editor__validation p {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+  line-height: var(--erp-line-body);
+}
+
+.application-editor__section-count {
+  padding: 0.25rem 0.55rem;
+  color: var(--erp-success-text);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+  white-space: nowrap;
+  background: var(--erp-success-bg);
+  border-radius: var(--erp-radius-pill);
+}
+
+.application-editor__section-count.has-attention {
+  color: var(--erp-warning-text);
+  background: var(--erp-warning-bg);
+}
+
+.application-editor__section-body {
+  padding: 0 var(--erp-space-5);
+}
+
+.application-editor__subsection {
+  padding: var(--erp-space-5) 0;
+}
+
+.application-editor__subsection + .application-editor__subsection {
+  border-top: 1px solid var(--erp-border-subtle);
+}
+
+.application-editor__subsection > header {
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+  margin-bottom: var(--erp-space-4);
+}
+
+.application-editor__subsection h3 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-panel-title);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.application-editor__subsection > header > span {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-editor__field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-4);
+}
+
+.application-editor__repeat-list {
+  display: grid;
+  gap: var(--erp-space-3);
+}
+
+.application-editor__repeat-entry {
+  overflow: hidden;
+  background: var(--erp-surface-detail-soft);
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-editor__repeat-entry > header {
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-3) var(--erp-space-4);
+  background: var(--erp-surface-page-panel);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-editor__repeat-entry > header strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+}
+
+.application-editor__repeat-entry > .application-editor__field-grid {
+  padding: var(--erp-space-4);
+}
+
+.application-editor__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--erp-space-1);
+  min-height: var(--erp-control-height-compact);
+  padding: 0 var(--erp-space-2);
+  color: var(--erp-danger-text);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--erp-radius-control);
+}
+
+.application-editor__remove:hover,
+.application-editor__remove:focus-visible {
+  background: var(--erp-danger-bg);
+  border-color: var(--erp-danger);
+}
+
+.application-editor__empty-repeat,
+.application-editor__empty-section {
+  padding: var(--erp-space-5);
+  color: var(--erp-text-muted);
+  text-align: center;
+  background: var(--erp-surface-detail-soft);
+  border: 1px dashed var(--erp-border-default);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-editor__empty-repeat p {
+  margin: 0;
+}
+
+.application-editor__empty-section {
+  margin: var(--erp-space-5) 0;
+}
+
+.application-editor__empty-section strong,
+.application-editor__empty-section p {
+  display: block;
+  margin: 0;
+}
+
+.application-editor__empty-section strong {
+  color: var(--erp-text-heading);
+}
+
+.application-editor__add-entry {
+  margin-top: var(--erp-space-3);
+}
+
+.application-editor__actions {
+  position: sticky;
+  z-index: 3;
+  bottom: 0;
+  justify-content: space-between;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-3) var(--erp-space-5);
+  background: var(--erp-surface-raised);
+  border-top: 1px solid var(--erp-border-subtle);
+  border-radius: 0 0 var(--erp-radius-control) var(--erp-radius-control);
+  box-shadow: var(--erp-shadow-card);
+}
+
+.application-editor__actions > div {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--erp-space-2);
+}
+
+.application-editor__actions > div > span {
+  margin-right: var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-editor__aside {
+  display: grid;
+  gap: var(--erp-space-3);
+}
+
+.application-editor__save-card {
+  align-items: flex-start;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-4);
+}
+
+.application-editor__save-icon,
+.application-editor__validation-icon {
+  width: var(--erp-control-height);
+  height: var(--erp-control-height);
+  color: var(--erp-success-text);
+  background: var(--erp-success-bg);
+}
+
+.application-editor__save-icon.is-dirty {
+  color: var(--erp-warning-text);
+  background: var(--erp-warning-bg);
+}
+
+.application-editor__save-icon.has-error {
+  color: var(--erp-danger-text);
+  background: var(--erp-danger-bg);
+}
+
+.application-editor__save-card h2,
+.application-editor__validation h2 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-panel-title);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.application-editor__validation {
+  overflow: hidden;
+}
+
+.application-editor__validation > header {
+  align-items: flex-start;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-editor__validation-icon {
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+}
+
+.application-editor__validation ul {
+  padding: var(--erp-space-2);
+}
+
+.application-editor__validation li + li {
+  border-top: 1px solid var(--erp-border-subtle);
+}
+
+.application-editor__validation li button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-3) var(--erp-space-2);
+  color: var(--erp-warning-text);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--erp-radius-control);
+}
+
+.application-editor__validation li button:hover,
+.application-editor__validation li button:focus-visible {
+  background: var(--erp-warning-bg);
+}
+
+.application-editor__validation li strong,
+.application-editor__validation li small {
+  display: block;
+}
+
+.application-editor__validation li strong {
+  overflow: hidden;
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application-editor__validation li small {
+  margin-top: 0.125rem;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+  line-height: var(--erp-line-body);
+}
+
+.application-editor__more-issues {
+  padding: 0 var(--erp-space-4) var(--erp-space-3);
+}
+
+.application-editor__ready {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--erp-space-2);
+  margin: var(--erp-space-3);
+  padding: var(--erp-space-3);
+  color: var(--erp-success-text);
+  background: var(--erp-success-bg);
+  border-radius: var(--erp-radius-control);
+}
+
+.application-editor__review-action {
+  width: calc(100% - var(--erp-space-6));
+  margin: 0 var(--erp-space-3) var(--erp-space-3);
+}
+
+.application-editor__dialog-layer {
+  z-index: 1200;
+}
+
+.application-editor__leave-dialog {
+  width: min(31rem, calc(100vw - var(--erp-space-6)));
+}
+
+.application-editor__leave-dialog > header {
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-4);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.application-editor__leave-dialog > header > span {
+  width: var(--erp-control-height-large);
+  height: var(--erp-control-height-large);
+  color: var(--erp-warning-text);
+  background: var(--erp-warning-bg);
+}
+
+.application-editor__leave-dialog > header > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.application-editor__leave-dialog > header small {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.application-editor__leave-dialog h2 {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-section-title);
+}
+
+.application-editor__leave-dialog > header > button {
+  display: inline-grid;
+  width: var(--erp-control-height);
+  height: var(--erp-control-height);
+  place-items: center;
+  color: var(--erp-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--erp-radius-control);
+}
+
+.application-editor__leave-dialog > header > button:hover {
+  background: var(--erp-surface-detail);
+}
+
+.application-editor__leave-body {
+  padding: var(--erp-space-5);
+}
+
+.application-editor__leave-dialog > footer {
+  justify-content: flex-end;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-3) var(--erp-space-4);
+  background: var(--erp-surface-detail-soft);
+  border-top: 1px solid var(--erp-border-subtle);
+}
+
+@media (max-width: 78rem) {
+  .application-editor__workspace {
+    grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr);
+  }
+
+  .application-editor__aside {
+    position: static;
+    grid-column: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 58rem) {
+  .application-editor__context {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .application-editor__progress {
+    grid-column: 1 / -1;
+  }
+
+  .application-editor__workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .application-editor__outline,
+  .application-editor__aside {
+    position: static;
+    grid-column: auto;
+  }
+
+  .application-editor__outline ol {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+
+  .application-editor__outline li {
+    min-width: 12rem;
+    scroll-snap-align: start;
+  }
+
+  .application-editor__aside {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 42rem) {
+  .application-editor__page-actions,
+  .application-editor__page-actions .erp-button {
+    width: 100%;
+  }
+
+  .application-editor__context {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .application-editor__context-meta {
+    justify-content: flex-start;
+  }
+
+  .application-editor__section-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: var(--erp-space-4);
+  }
+
+  .application-editor__section-count {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .application-editor__section-body {
+    padding: 0 var(--erp-space-4);
+  }
+
+  .application-editor__field-grid,
+  .application-editor__aside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .application-editor__actions {
+    align-items: stretch;
+    flex-direction: column;
+    padding: var(--erp-space-3) var(--erp-space-4);
+  }
+
+  .application-editor__actions > div,
+  .application-editor__actions .erp-button {
+    width: 100%;
+  }
+
+  .application-editor__actions > div > span {
+    width: 100%;
+    margin: 0;
+    text-align: center;
+  }
+
+  .application-editor__leave-dialog > footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .application-editor__progress > div > span {
+    transition: none;
+  }
+}

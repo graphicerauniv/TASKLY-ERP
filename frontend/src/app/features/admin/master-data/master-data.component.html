@@ -4,6 +4,7 @@
     [title]="pageTitle()"
     description="Create reusable data sources for dynamic dropdowns."
     variant="minimal"
+    [layout]="isViewPage() ? 'collection' : 'default'"
   >
     <div page-actions class="master-page-actions">
       @if (isViewPage()) {
@@ -103,6 +104,7 @@
     [title]="pageTitle()"
     description="Add, edit, activate, import, and organize database values."
     variant="minimal"
+    [layout]="isViewPage() ? 'collection' : 'default'"
   >
     <div page-actions class="master-page-actions">
       @if (isViewPage()) {

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 export type AdminPageHeaderVariant = 'module' | 'compact' | 'minimal';
+export type AdminPageLayout = 'default' | 'collection';
 
 /**
  * Global route-page frame for the admin application.
@@ -14,6 +15,7 @@ export type AdminPageHeaderVariant = 'module' | 'compact' | 'minimal';
       [class.erp-page--module]="variant() === 'module'"
       [class.erp-page--compact]="variant() === 'compact'"
       [class.erp-page--minimal]="variant() === 'minimal'"
+      [class.erp-page--collection]="layout() === 'collection'"
     >
       <header
         class="erp-page-header"
@@ -48,4 +50,5 @@ export class AdminPageComponent {
   readonly title = input.required<string>();
   readonly description = input('');
   readonly variant = input<AdminPageHeaderVariant>('minimal');
+  readonly layout = input<AdminPageLayout>('default');
 }

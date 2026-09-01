@@ -1,0 +1,403 @@
+<erp-admin-page
+  eyebrow="Admissions / Application editor"
+  [title]="item()?.studentName || (loading() ? 'Edit application' : 'Application unavailable')"
+  description="Update the saved application one section at a time. Changes autosave while you work."
+  variant="compact"
+>
+  <div page-actions class="application-editor__page-actions">
+    <a
+      class="erp-button erp-button--secondary"
+      [routerLink]="['/admin/admissions/applications', admissionId()]"
+    >
+      <svg lucideArrowLeft size="16" aria-hidden="true"></svg>
+      Application record
+    </a>
+    @if (item()) {
+      <button
+        class="erp-button erp-button--primary"
+        type="button"
+        [disabled]="saving()"
+        (click)="openReview()"
+      >
+        <svg lucideClipboardCheck size="16" aria-hidden="true"></svg>
+        Review application
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <section class="erp-card application-editor__loading" aria-label="Loading application editor">
+      <span class="erp-skeleton application-editor__skeleton-title"></span>
+      <div>
+        <span class="erp-skeleton"></span>
+        <span class="erp-skeleton"></span>
+        <span class="erp-skeleton"></span>
+      </div>
+    </section>
+  } @else if (loadError()) {
+    <section class="erp-card erp-empty-panel" role="alert">
+      <span class="erp-empty-panel__icon">
+        <svg lucideCircleAlert size="21" aria-hidden="true"></svg>
+      </span>
+      <h2>Application editor unavailable</h2>
+      <p>{{ loadError() }}</p>
+      <button class="erp-button erp-button--secondary" type="button" (click)="load()">
+        <svg lucideRefreshCw size="15" aria-hidden="true"></svg>
+        Try again
+      </button>
+    </section>
+  } @else if (item(); as application) {
+    <section class="erp-card application-editor__context" aria-label="Application context">
+      <div class="application-editor__reference">
+        <span>{{ reference(application) }}</span>
+        <strong>{{ application.formSnapshot.name }}</strong>
+      </div>
+      <div class="application-editor__context-meta">
+        <span
+          class="erp-status"
+          [class.erp-status--draft]="application.status === 'draft'"
+          [class.erp-status--warning]="
+            application.status === 'pending_approval' || application.status === 'submitted'
+          "
+        >
+          {{ statusLabel(application) }}
+        </span>
+        <span>Form v{{ application.formVersion || application.formSnapshot.version || 1 }}</span>
+        <span>{{ completedSections() }} of {{ sections().length }} sections ready</span>
+      </div>
+      <div class="application-editor__progress" aria-label="Application completion">
+        <div><span [style.width.%]="progress()"></span></div>
+        <strong>{{ progress() }}%</strong>
+      </div>
+    </section>
+
+    <div class="application-editor__workspace">
+      <nav class="erp-card application-editor__outline" aria-label="Application sections">
+        <header>
+          <span>Application outline</span>
+          <strong>{{ sections().length }} sections</strong>
+        </header>
+        <ol>
+          @for (section of sections(); track section.id; let index = $index) {
+            <li>
+              <button
+                type="button"
+                [class.is-current]="sectionState(section, index) === 'current'"
+                [class.is-complete]="sectionState(section, index) === 'complete'"
+                [class.has-attention]="sectionState(section, index) === 'attention'"
+                [attr.aria-current]="index === activeIndex() ? 'step' : null"
+                (click)="goToSection(index)"
+              >
+                <span class="application-editor__step-number">
+                  @if (sectionState(section, index) === 'complete') {
+                    <svg lucideCheck size="14" aria-hidden="true"></svg>
+                  } @else {
+                    {{ index + 1 }}
+                  }
+                </span>
+                <span>
+                  <strong>{{ section.name }}</strong>
+                  <small>
+                    @if (sectionIssues(section).length) {
+                      {{ sectionIssues(section).length }} required remaining
+                    } @else {
+                      Ready
+                    }
+                  </small>
+                </span>
+              </button>
+            </li>
+          }
+        </ol>
+      </nav>
+
+      <main class="application-editor__main">
+        @if (notice()) {
+          <p class="erp-notice erp-notice--success" role="status">{{ notice() }}</p>
+        }
+        @if (saveError()) {
+          <p class="erp-notice erp-notice--error" role="alert">{{ saveError() }}</p>
+        }
+
+        @if (activeSection(); as section) {
+          <section class="erp-card application-editor__section" [attr.aria-labelledby]="section.id">
+            <header class="application-editor__section-header">
+              <span class="application-editor__section-icon">
+                <svg lucideFileText size="20" aria-hidden="true"></svg>
+              </span>
+              <div>
+                <small>Section {{ activeIndex() + 1 }} of {{ sections().length }}</small>
+                <h2 [id]="section.id">{{ section.name }}</h2>
+                <p>
+                  {{
+                    section.description ||
+                      'Review and update the information configured for this section.'
+                  }}
+                </p>
+              </div>
+              <span
+                class="application-editor__section-count"
+                [class.has-attention]="activeIssues().length"
+              >
+                {{ activeIssues().length ? activeIssues().length + ' required' : 'Section ready' }}
+              </span>
+            </header>
+
+            <div class="application-editor__section-body">
+              @for (subsection of visibleSubsections(); track subsection.id) {
+                <section
+                  class="application-editor__subsection"
+                  [attr.aria-labelledby]="subsection.id + '-title'"
+                >
+                  <header>
+                    <div>
+                      <h3 [id]="subsection.id + '-title'">{{ subsection.name }}</h3>
+                      @if (subsection.description) {
+                        <p>{{ subsection.description }}</p>
+                      }
+                    </div>
+                    @if (subsection.isRepeatable) {
+                      <span>
+                        {{ entries(subsection).length }}
+                        {{ entries(subsection).length === 1 ? 'entry' : 'entries' }}
+                      </span>
+                    }
+                  </header>
+
+                  @if (subsection.isRepeatable) {
+                    <div class="application-editor__repeat-list">
+                      @for (entry of entries(subsection); track $index; let entryIndex = $index) {
+                        <article class="application-editor__repeat-entry">
+                          <header>
+                            <strong>{{ subsection.name }} {{ entryIndex + 1 }}</strong>
+                            <button
+                              class="application-editor__remove"
+                              type="button"
+                              [attr.aria-label]="
+                                'Remove ' + subsection.name + ' ' + (entryIndex + 1)
+                              "
+                              (click)="removeEntry(subsection, entryIndex)"
+                            >
+                              <svg lucideTrash2 size="15" aria-hidden="true"></svg>
+                              Remove
+                            </button>
+                          </header>
+                          <div class="application-editor__field-grid">
+                            @for (field of subsection.fields; track field.id) {
+                              @if (visible(field, entry)) {
+                                <erp-dynamic-field-renderer
+                                  [field]="field"
+                                  [modelValue]="value(field, entry)"
+                                  [options]="fieldOptions(field, entryIndex)"
+                                  [entryKey]="subsection.id + '-' + entryIndex"
+                                  (modelChanged)="setValue(field, $event, entry, entryIndex)"
+                                  (optionSearch)="searchOptions(field, $event, entry, entryIndex)"
+                                  (fileSelected)="upload(field, $event, entry, entryIndex)"
+                                  (uploadRemoved)="setValue(field, '', entry, entryIndex)"
+                                />
+                              }
+                            }
+                          </div>
+                        </article>
+                      } @empty {
+                        <div class="application-editor__empty-repeat">
+                          <p>No {{ subsection.name.toLowerCase() }} entries have been added.</p>
+                        </div>
+                      }
+                    </div>
+                    <button
+                      class="erp-button erp-button--secondary application-editor__add-entry"
+                      type="button"
+                      [disabled]="
+                        !!subsection.maxEntries &&
+                        entries(subsection).length >= subsection.maxEntries
+                      "
+                      (click)="addEntry(subsection)"
+                    >
+                      Add {{ subsection.name }}
+                    </button>
+                  } @else {
+                    <div class="application-editor__field-grid">
+                      @for (field of subsection.fields; track field.id) {
+                        @if (visible(field)) {
+                          <erp-dynamic-field-renderer
+                            [field]="field"
+                            [modelValue]="value(field)"
+                            [options]="fieldOptions(field)"
+                            [entryKey]="subsection.id"
+                            (modelChanged)="setValue(field, $event)"
+                            (optionSearch)="searchOptions(field, $event)"
+                            (fileSelected)="upload(field, $event)"
+                            (uploadRemoved)="setValue(field, '')"
+                          />
+                        }
+                      }
+                    </div>
+                  }
+                </section>
+              } @empty {
+                <div class="application-editor__empty-section">
+                  <strong>No visible fields</strong>
+                  <p>This section does not currently contain any fields an admin can edit.</p>
+                </div>
+              }
+            </div>
+
+            <footer class="application-editor__actions">
+              <button
+                class="erp-button erp-button--secondary"
+                type="button"
+                [disabled]="activeIndex() === 0"
+                (click)="goToSection(activeIndex() - 1)"
+              >
+                <svg lucideArrowLeft size="15" aria-hidden="true"></svg>
+                Previous
+              </button>
+              <div>
+                <span>{{ saveState() }}</span>
+                <button
+                  class="erp-button erp-button--secondary"
+                  type="button"
+                  [disabled]="saving() || !dirty()"
+                  (click)="saveManually()"
+                >
+                  <svg lucideSave size="15" aria-hidden="true"></svg>
+                  Save
+                </button>
+                <button
+                  class="erp-button erp-button--primary"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="saveAndContinue()"
+                >
+                  {{ activeIndex() === sections().length - 1 ? 'Review application' : 'Continue' }}
+                  <svg lucideArrowRight size="15" aria-hidden="true"></svg>
+                </button>
+              </div>
+            </footer>
+          </section>
+        }
+      </main>
+
+      <aside class="application-editor__aside">
+        <section class="erp-card application-editor__save-card" aria-labelledby="save-state-title">
+          <span
+            class="application-editor__save-icon"
+            [class.is-dirty]="dirty()"
+            [class.has-error]="saveError()"
+          >
+            @if (saveError()) {
+              <svg lucideCircleAlert size="18" aria-hidden="true"></svg>
+            } @else if (dirty() || saving()) {
+              <svg lucideClock3 size="18" aria-hidden="true"></svg>
+            } @else {
+              <svg lucideCheck size="18" aria-hidden="true"></svg>
+            }
+          </span>
+          <div>
+            <h2 id="save-state-title">{{ saveState() }}</h2>
+            <p>Autosave runs after you stop editing.</p>
+          </div>
+        </section>
+
+        <section
+          class="erp-card application-editor__validation"
+          aria-labelledby="validation-summary-title"
+        >
+          <header>
+            <span class="application-editor__validation-icon">
+              <svg lucideShieldCheck size="18" aria-hidden="true"></svg>
+            </span>
+            <div>
+              <h2 id="validation-summary-title">Application readiness</h2>
+              <p>{{ validationIssues().length }} blockers across all sections</p>
+            </div>
+          </header>
+
+          @if (validationIssues().length) {
+            <ul>
+              @for (issue of validationIssues().slice(0, 5); track issue.id) {
+                <li>
+                  <button type="button" (click)="focusIssue(issue)">
+                    <svg lucideCircleAlert size="15" aria-hidden="true"></svg>
+                    <span>
+                      <strong>{{ issue.fieldName || issue.subsectionName }}</strong>
+                      <small>{{ issue.sectionName }} / {{ issue.subsectionName }}</small>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+            @if (validationIssues().length > 5) {
+              <p class="application-editor__more-issues">
+                +{{ validationIssues().length - 5 }} more required items
+              </p>
+            }
+          } @else {
+            <div class="application-editor__ready">
+              <svg lucideCheck size="18" aria-hidden="true"></svg>
+              <p>All required application information is ready for review.</p>
+            </div>
+          }
+
+          <button
+            class="erp-button erp-button--primary application-editor__review-action"
+            type="button"
+            [disabled]="saving()"
+            (click)="openReview()"
+          >
+            <svg lucideClipboardCheck size="16" aria-hidden="true"></svg>
+            Open review
+          </button>
+        </section>
+      </aside>
+    </div>
+  }
+</erp-admin-page>
+
+@if (leaveDialogOpen()) {
+  <div class="modal-backdrop application-editor__dialog-layer">
+    <button
+      class="backdrop-close"
+      type="button"
+      tabindex="-1"
+      aria-label="Stay on application editor"
+      (click)="resolveLeave(false)"
+    ></button>
+    <section
+      class="modal application-editor__leave-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="leave-dialog-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header>
+        <span><svg lucideCircleAlert size="20" aria-hidden="true"></svg></span>
+        <div>
+          <small>Unsaved application</small>
+          <h2 id="leave-dialog-title">Leave without saving?</h2>
+          <p>Your latest edits have not reached the server.</p>
+        </div>
+        <button type="button" aria-label="Stay on page" (click)="resolveLeave(false)">
+          <svg lucideX size="17" aria-hidden="true"></svg>
+        </button>
+      </header>
+      <div class="application-editor__leave-body">
+        <p>Stay on this page and wait for autosave, or discard the unsaved changes.</p>
+      </div>
+      <footer>
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="resolveLeave(false)"
+        >
+          Stay on page
+        </button>
+        <button class="erp-button erp-button--danger" type="button" (click)="resolveLeave(true)">
+          Leave without saving
+        </button>
+      </footer>
+    </section>
+  </div>
+}

@@ -1,0 +1,275 @@
+<erp-admin-page
+  eyebrow="Admissions / Configuration"
+  title="Admission forms"
+  description="Manage form drafts and published application structures from one library."
+  variant="compact"
+  layout="collection"
+>
+  <div page-actions>
+    <button class="erp-button erp-button--primary" type="button" (click)="openCreate()">
+      <svg lucidePlus size="16" aria-hidden="true"></svg>
+      New form
+    </button>
+  </div>
+
+  <section class="forms-library__summary" aria-label="Admission form summary">
+    <article class="erp-card">
+      <span>Total forms</span>
+      <strong>{{ items().length }}</strong>
+      <small>All configured forms</small>
+    </article>
+    <article class="erp-card">
+      <span>Published</span>
+      <strong>{{ publishedCount() }}</strong>
+      <small>Available to application flows</small>
+    </article>
+    <article class="erp-card">
+      <span>Drafts</span>
+      <strong>{{ draftCount() }}</strong>
+      <small>Still being configured</small>
+    </article>
+  </section>
+
+  <section
+    class="erp-card erp-table-shell forms-library__directory"
+    aria-labelledby="forms-library-title"
+  >
+    <header class="erp-table-toolbar forms-library__toolbar">
+      <div>
+        <h2 id="forms-library-title">Forms library</h2>
+        <p>Open a form in the builder to manage its structure and publishing state.</p>
+      </div>
+      <label class="forms-library__search">
+        <span class="erp-sr-only">Search admission forms</span>
+        <svg lucideSearch size="16" aria-hidden="true"></svg>
+        <input
+          type="search"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          placeholder="Search forms"
+        />
+        @if (search()) {
+          <button type="button" aria-label="Clear form search" (click)="search.set('')">
+            <svg lucideX size="14" aria-hidden="true"></svg>
+          </button>
+        }
+      </label>
+    </header>
+
+    <div class="erp-table-shell__scroll">
+      <table [attr.aria-busy]="loading()">
+        <caption class="erp-sr-only">
+          Admission form configurations
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Form</th>
+            <th scope="col">Structure</th>
+            <th scope="col">Version</th>
+            <th scope="col">Status</th>
+            <th scope="col">Availability</th>
+            <th class="erp-table-shell__actions" scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            @for (row of [1, 2, 3, 4]; track row) {
+              <tr aria-hidden="true">
+                <td><span class="erp-skeleton forms-library__skeleton-name"></span></td>
+                <td><span class="erp-skeleton forms-library__skeleton-meta"></span></td>
+                <td><span class="erp-skeleton forms-library__skeleton-short"></span></td>
+                <td><span class="erp-skeleton forms-library__skeleton-status"></span></td>
+                <td><span class="erp-skeleton forms-library__skeleton-short"></span></td>
+                <td><span class="erp-skeleton forms-library__skeleton-action"></span></td>
+              </tr>
+            }
+          } @else if (error()) {
+            <tr>
+              <td colspan="6">
+                <div class="forms-library__state" role="alert">
+                  <span class="erp-empty-panel__icon">
+                    <svg lucideCircleAlert size="20" aria-hidden="true"></svg>
+                  </span>
+                  <h3>Forms could not be loaded</h3>
+                  <p>{{ error() }}</p>
+                  <button
+                    class="erp-button erp-button--secondary erp-button--compact"
+                    type="button"
+                    (click)="load()"
+                  >
+                    <svg lucideRefreshCw size="15" aria-hidden="true"></svg>
+                    Try again
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (form of filteredItems(); track form._id || form.name) {
+              <tr>
+                <td>
+                  <button
+                    class="forms-library__form-link"
+                    type="button"
+                    (click)="openBuilder(form)"
+                  >
+                    <span class="forms-library__form-icon">
+                      <svg lucideLayoutTemplate size="17" aria-hidden="true"></svg>
+                    </span>
+                    <span>
+                      <strong>{{ form.name }}</strong>
+                      <small>{{ form.description || form.slug || 'No description added' }}</small>
+                    </span>
+                  </button>
+                </td>
+                <td>
+                  <strong
+                    >{{ sectionCount(form) }} section{{
+                      sectionCount(form) === 1 ? '' : 's'
+                    }}</strong
+                  >
+                  <small
+                    >{{ fieldCount(form) }} active field{{
+                      fieldCount(form) === 1 ? '' : 's'
+                    }}</small
+                  >
+                </td>
+                <td>
+                  <span class="forms-library__version">v{{ form.version || 1 }}</span>
+                </td>
+                <td>
+                  <span
+                    class="erp-status"
+                    [class.erp-status--draft]="form.status === 'draft'"
+                    [class.erp-status--warning]="form.status === 'archived'"
+                  >
+                    {{ statusLabel(form) }}
+                  </span>
+                </td>
+                <td>
+                  <span [class.forms-library__inactive]="!form.isActive">
+                    {{ form.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="erp-table-shell__actions">
+                  <erp-compact-action-menu
+                    [items]="rowActions"
+                    (selected)="handleRowAction($event, form)"
+                  />
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6">
+                  <div class="forms-library__state">
+                    <span class="erp-empty-panel__icon">
+                      @if (search()) {
+                        <svg lucideInbox size="20" aria-hidden="true"></svg>
+                      } @else {
+                        <svg lucideFilePlus2 size="20" aria-hidden="true"></svg>
+                      }
+                    </span>
+                    <h3>{{ search() ? 'No matching forms' : 'No admission forms yet' }}</h3>
+                    <p>
+                      {{
+                        search()
+                          ? 'Try a broader form name or status.'
+                          : 'Create the first form before configuring application fields.'
+                      }}
+                    </p>
+                    @if (search()) {
+                      <button
+                        class="erp-button erp-button--secondary erp-button--compact"
+                        type="button"
+                        (click)="search.set('')"
+                      >
+                        Clear search
+                      </button>
+                    } @else {
+                      <button
+                        class="erp-button erp-button--primary erp-button--compact"
+                        type="button"
+                        (click)="openCreate()"
+                      >
+                        <svg lucidePlus size="15" aria-hidden="true"></svg>
+                        New form
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</erp-admin-page>
+
+@if (createOpen()) {
+  <div class="modal-backdrop forms-library__dialog-layer">
+    <button
+      class="backdrop-close"
+      type="button"
+      tabindex="-1"
+      aria-label="Close new form dialog"
+      (click)="closeCreate()"
+    ></button>
+    <section
+      class="modal forms-library__dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="new-form-dialog-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="forms-library__dialog-header">
+        <span class="forms-library__dialog-icon">
+          <svg lucideFilePlus2 size="19" aria-hidden="true"></svg>
+        </span>
+        <div>
+          <small>Admission configuration</small>
+          <h2 id="new-form-dialog-title">Create admission form</h2>
+          <p>Start with an empty draft and continue in the builder.</p>
+        </div>
+        <button type="button" aria-label="Close new form dialog" (click)="closeCreate()">
+          <svg lucideX size="16" aria-hidden="true"></svg>
+        </button>
+      </header>
+      <div class="forms-library__dialog-body">
+        <label>
+          <span>Form name</span>
+          <input
+            class="erp-control"
+            type="text"
+            [(ngModel)]="newFormName"
+            maxlength="120"
+            autocomplete="off"
+            placeholder="Example: Undergraduate admission 2026"
+            (keyup.enter)="createForm()"
+          />
+        </label>
+        @if (createError()) {
+          <p class="erp-notice erp-notice--error" role="alert">{{ createError() }}</p>
+        }
+      </div>
+      <footer class="forms-library__dialog-footer">
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          [disabled]="creating()"
+          (click)="closeCreate()"
+        >
+          Cancel
+        </button>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="creating() || !newFormName.trim()"
+          (click)="createForm()"
+        >
+          {{ creating() ? 'Creating…' : 'Create and open builder' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+}

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { inject } from '@angular/core';
 import { ApiService } from '../../../../../core/api.service';
 import { AuthService } from '../../../../../core/auth.service';
@@ -30,9 +30,14 @@ export class AdminLoginComponent {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly showPassword = signal(false);
   readonly loading = signal(false);
-  readonly error = signal('');
+  readonly error = signal(
+    this.route.snapshot.queryParamMap.get('reason') === 'session-expired'
+      ? 'Your admin session expired. Sign in again to continue.'
+      : '',
+  );
 
   readonly form = new FormGroup({
     email: new FormControl('', {

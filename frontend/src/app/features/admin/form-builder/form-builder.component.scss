@@ -1,0 +1,230 @@
+/* ERP-LOCAL-STYLE: Form publishing readiness and dependency-validation dialog. */
+:host {
+  display: contents;
+}
+
+.form-publish-dialog-layer {
+  z-index: 1200;
+}
+
+.form-publish-dialog {
+  display: grid;
+  width: min(44rem, calc(100vw - var(--erp-space-6)));
+  max-height: min(48rem, calc(100dvh - var(--erp-space-6)));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.form-publish-dialog__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--erp-space-3);
+}
+
+.form-publish-dialog__header > div {
+  min-width: 0;
+}
+
+.form-publish-dialog__header h2,
+.form-publish-dialog__header p,
+.form-publish-dialog__ready p,
+.form-publish-dialog__footer p {
+  margin: 0;
+}
+
+.form-publish-dialog__header p {
+  margin-top: var(--erp-space-1);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.form-publish-dialog__icon {
+  display: inline-grid;
+  width: var(--erp-control-height-large);
+  height: var(--erp-control-height-large);
+  place-items: center;
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border-radius: var(--erp-radius-control);
+}
+
+.form-publish-dialog__body {
+  display: grid;
+  align-content: start;
+  gap: var(--erp-space-4);
+  overflow-y: auto;
+}
+
+.form-publish-dialog__summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+}
+
+.form-publish-dialog__summary > div {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-3);
+  color: var(--erp-success-text);
+  background: var(--erp-success-bg);
+  border: 1px solid transparent;
+  border-radius: var(--erp-radius-control);
+}
+
+.form-publish-dialog__summary > div.has-blockers {
+  color: var(--erp-danger-text);
+  background: var(--erp-danger-bg);
+  border-color: var(--erp-danger);
+}
+
+.form-publish-dialog__summary > div.has-warnings {
+  color: var(--erp-warning-text);
+  background: var(--erp-warning-bg);
+}
+
+.form-publish-dialog__summary strong,
+.form-publish-dialog__summary small {
+  display: block;
+}
+
+.form-publish-dialog__summary strong {
+  color: currentColor;
+  font-size: var(--erp-font-section-title);
+}
+
+.form-publish-dialog__summary small {
+  font-size: var(--erp-font-caption);
+}
+
+.form-publish-dialog__issues {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: var(--erp-radius-control);
+}
+
+.form-publish-dialog__issues > button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-3) var(--erp-space-4);
+  color: var(--erp-warning-text);
+  text-align: left;
+  background: var(--erp-surface-raised);
+  border: 0;
+}
+
+.form-publish-dialog__issues > button + button {
+  border-top: 1px solid var(--erp-border-subtle);
+}
+
+.form-publish-dialog__issues > button.is-blocker {
+  color: var(--erp-danger-text);
+}
+
+.form-publish-dialog__issues > button:not(:disabled):hover,
+.form-publish-dialog__issues > button:not(:disabled):focus-visible {
+  background: var(--erp-surface-detail-soft);
+}
+
+.form-publish-dialog__issues > button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.form-publish-dialog__issues > button > span:first-child {
+  display: inline-grid;
+  width: var(--erp-control-height-compact);
+  height: var(--erp-control-height-compact);
+  place-items: center;
+  background: var(--erp-warning-bg);
+  border-radius: var(--erp-radius-pill);
+}
+
+.form-publish-dialog__issues > button.is-blocker > span:first-child {
+  background: var(--erp-danger-bg);
+}
+
+.form-publish-dialog__issues strong,
+.form-publish-dialog__issues small {
+  display: block;
+}
+
+.form-publish-dialog__issues strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.form-publish-dialog__issues small {
+  margin-top: 0.125rem;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+  line-height: var(--erp-line-body);
+}
+
+.form-publish-dialog__issues > button > span:last-child:not(:nth-child(2)) {
+  align-self: center;
+  color: var(--erp-text-link);
+  font-size: var(--erp-font-caption);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.form-publish-dialog__ready {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-4);
+  color: var(--erp-success-text);
+  background: var(--erp-success-bg);
+  border-radius: var(--erp-radius-control);
+}
+
+.form-publish-dialog__ready strong {
+  display: block;
+  color: currentColor;
+  font-size: var(--erp-font-panel-title);
+}
+
+.form-publish-dialog__ready p {
+  margin-top: var(--erp-space-1);
+  color: var(--erp-text-body);
+  font-size: var(--erp-font-caption);
+}
+
+.form-publish-dialog__footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--erp-space-2);
+}
+
+.form-publish-dialog__footer p {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+  line-height: var(--erp-line-body);
+}
+
+@media (max-width: 40rem) {
+  .form-publish-dialog {
+    width: calc(100vw - var(--erp-space-4));
+    max-height: calc(100dvh - var(--erp-space-4));
+  }
+
+  .form-publish-dialog__summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-publish-dialog__footer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-publish-dialog__footer .primary,
+  .form-publish-dialog__footer .secondary {
+    width: 100%;
+  }
+}

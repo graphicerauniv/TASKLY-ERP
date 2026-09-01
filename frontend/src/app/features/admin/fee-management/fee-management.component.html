@@ -1,4 +1,5 @@
 <erp-admin-page
+  [layout]="isViewPage() || isDraftPage() ? 'collection' : 'default'"
   eyebrow="Fee Management"
   [title]="pageTitle()"
   [description]="pageDescription()"
@@ -56,22 +57,31 @@
   }
 
   @if (section() !== 'books' && !isDraftPage() && !courseFeeDraftResumePending()) {
-    <section class="erp-card erp-card--padded erp-context-card">
-      <div>
-        <span class="erp-page-header__eyebrow">Working context</span>
-        <h2>{{ currentBook() ? currentBook()!.code : 'Select a fee book' }}</h2>
+    @if (currentBook()) {
+      <section class="fee-working-context">
+        <img src="assets/admin/finance-icons/fee-books.png" alt="" aria-hidden="true" />
+        <div>
+          <span>Working fee book</span>
+          <h2>{{ currentBook()!.code }}</h2>
+          <p>{{ currentBook()!.collegeName }} · {{ currentBook()!.academicSession }}</p>
+        </div>
+        <button class="erp-button erp-button--secondary" type="button" (click)="openBookSelector()">
+          Change book
+        </button>
+      </section>
+    } @else {
+      <section class="fee-context-gate">
+        <img src="assets/admin/finance-icons/fee-books.png" alt="" aria-hidden="true" />
+        <span>Fee book required</span>
+        <h2>Select a fee book to continue</h2>
         <p>
-          {{
-            currentBook()
-              ? currentBook()!.collegeName + ' · ' + currentBook()!.academicSession
-              : 'Choose the fee book before configuring this record.'
-          }}
+          Choose the college and academic session first. Relevant records will appear afterward.
         </p>
-      </div>
-      <button class="erp-button erp-button--secondary" type="button" (click)="openBookSelector()">
-        {{ currentBook() ? 'Change book' : 'Select fee book' }}
-      </button>
-    </section>
+        <button class="erp-button erp-button--primary" type="button" (click)="openBookSelector()">
+          Select fee book
+        </button>
+      </section>
+    }
   }
 
   @if (section() === 'books' && isCreatePage()) {
@@ -162,16 +172,12 @@
               [value]="listSearch()"
               (input)="updateListSearch($any($event.target).value)"
           /></label>
-          <select
-            class="erp-control"
-            aria-label="Filter by status"
-            [ngModel]="listStatus()"
-            (ngModelChange)="updateListStatus($event)"
-          >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
-          </select>
+          <erp-filter-popover
+            label="Status filters"
+            [options]="statusFilterOptions"
+            [value]="listStatus()"
+            (valueChange)="updateListStatus($any($event))"
+          />
         </div>
       </div>
       <div class="erp-table-shell__scroll">
@@ -323,7 +329,7 @@
     </section>
   }
 
-  @if (section() === 'heads' && isViewPage()) {
+  @if (section() === 'heads' && isViewPage() && selectedBookId) {
     <section class="erp-card erp-table-shell fee-section-gap">
       <div class="erp-table-toolbar">
         <div>
@@ -340,16 +346,12 @@
               placeholder="Search head name or category"
               [value]="listSearch()"
               (input)="updateListSearch($any($event.target).value)" /></label
-          ><select
-            class="erp-control"
-            aria-label="Filter by status"
-            [ngModel]="listStatus()"
-            (ngModelChange)="updateListStatus($event)"
-          >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
-          </select>
+          ><erp-filter-popover
+            label="Status filters"
+            [options]="statusFilterOptions"
+            [value]="listStatus()"
+            (valueChange)="updateListStatus($any($event))"
+          />
         </div>
       </div>
       <div class="erp-table-shell__scroll">
@@ -520,7 +522,7 @@
     </section>
   }
 
-  @if (section() === 'hostel-fees' && isViewPage()) {
+  @if (section() === 'hostel-fees' && isViewPage() && selectedBookId) {
     <section class="erp-card erp-table-shell fee-section-gap">
       <div class="erp-table-toolbar">
         <div>
@@ -537,18 +539,12 @@
               placeholder="Search hostel, room or head"
               [value]="listSearch()"
               (input)="updateListSearch($any($event.target).value)" /></label
-          ><select
-            class="erp-control"
-            aria-label="Filter by frequency"
-            [ngModel]="hostelFrequencyFilter()"
-            (ngModelChange)="updateHostelFrequency($event)"
-          >
-            <option value="all">All frequencies</option>
-            <option value="one-time">One-time</option>
-            <option value="semester">Semester wise</option>
-            <option value="half-yearly">Half-yearly</option>
-            <option value="yearly">Yearly</option>
-          </select>
+          ><erp-filter-popover
+            label="Frequency filters"
+            [options]="frequencyFilterOptions"
+            [value]="hostelFrequencyFilter()"
+            (valueChange)="updateHostelFrequency($any($event))"
+          />
         </div>
       </div>
       <div class="erp-table-shell__scroll">
@@ -1332,138 +1328,188 @@
 
   @if (section() === 'course-fee-view') {
     @if (selectedBookId) {
-      <section class="erp-card erp-card--padded">
-        <div class="erp-card__header">
-          <div>
-            <h2>Select course</h2>
-            <p>Choose the complete academic path to view the approved fee structure.</p>
-          </div>
+      <section class="fee-course-explorer">
+        <img src="assets/admin/finance-icons/course-fees.png" alt="" aria-hidden="true" />
+        <div>
+          <h2>Course fee explorer</h2>
+          <p>Keep the result visible and open criteria only when you need to change it.</p>
         </div>
-        <div class="fee-view-filter-grid">
-          <label class="erp-field-stack"
-            ><span>Fee book *</span
-            ><button
-              class="erp-control fee-picker-control"
-              type="button"
-              (click)="openBookSelector()"
-            >
-              <span>{{ currentBook()?.code || 'Select fee book' }}</span
-              ><small>{{
-                currentBook()
-                  ? currentBook()!.collegeName + ' · ' + currentBook()!.academicSession
-                  : 'Choose university, college and session'
-              }}</small>
-            </button></label
-          >
-          <label class="erp-field-stack"
-            ><span>College *</span
-            ><select
-              class="erp-control"
-              [(ngModel)]="viewCollegeId"
-              (ngModelChange)="viewCollegeChanged()"
-            >
-              <option value="">Select college</option>
-              @for (college of viewCollegeOptions(); track college._id) {
-                <option [value]="college._id">{{ college.name }}</option>
-              }
-            </select></label
-          >
-          <label class="erp-field-stack"
-            ><span>Department *</span
-            ><select
-              class="erp-control"
-              [(ngModel)]="viewDepartmentId"
-              (ngModelChange)="viewDepartmentChanged()"
-            >
-              <option value="">Select department</option>
-              @for (department of viewDepartmentOptions(); track department._id) {
-                <option [value]="department._id">{{ department.name }}</option>
-              }
-            </select></label
-          >
-          <label class="erp-field-stack"
-            ><span>Level *</span
-            ><select
-              class="erp-control"
-              [(ngModel)]="viewLevelId"
-              (ngModelChange)="viewLevelChanged()"
-            >
-              <option value="">Select level</option>
-              @for (level of viewLevelOptions(); track level._id) {
-                <option [value]="level._id">{{ level.name }}</option>
-              }
-            </select></label
-          >
-          <label class="erp-field-stack"
-            ><span>Course *</span
-            ><select
-              class="erp-control"
-              [(ngModel)]="viewCourseId"
-              (ngModelChange)="courseFeeViewRecords.set([])"
-            >
-              <option value="">Select course</option>
-              @for (course of viewCourseOptions(); track course._id) {
-                <option [value]="course._id">{{ course.name }}</option>
-              }
-            </select></label
-          >
-          <label class="erp-field-stack"
-            ><span>Domicile *</span
-            ><select
-              class="erp-control"
-              [(ngModel)]="viewDomicileId"
-              (ngModelChange)="viewDomicileChanged()"
-            >
-              <option value="">Select domicile</option>
-              @for (domicile of domiciles(); track domicile._id) {
-                <option [value]="domicile._id">{{ domicile.name }}</option>
-              }
-            </select></label
-          >
-          <label class="erp-field-stack"
-            ><span>Student type *</span
-            ><select
-              class="erp-control"
-              [(ngModel)]="viewStudentTypeId"
-              (ngModelChange)="viewStudentTypeChanged()"
-            >
-              <option value="">Select student type</option>
-              @for (studentType of studentTypes(); track studentType._id) {
-                <option [value]="studentType._id">{{ studentType.name }}</option>
-              }
-            </select></label
-          >
-          @if (viewRequiresCountry()) {
-            <label class="erp-field-stack"
-              ><span>Country *</span
-              ><select
-                class="erp-control"
-                [(ngModel)]="viewCountryId"
-                (ngModelChange)="viewCountryChanged()"
-              >
-                <option value="">Select country</option>
-                @for (country of countries(); track country._id) {
-                  <option [value]="country._id">{{ country.name }}</option>
-                }
-              </select></label
-            >
-          }
-        </div>
-        <div class="fee-form-actions">
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="courseViewFiltersOpen.set(true)"
+        >
+          <svg lucideFilter size="16" aria-hidden="true"></svg>
+          {{ courseFeeViewRecords().length ? 'Change criteria' : 'Choose criteria' }}
+        </button>
+      </section>
+
+      @if (courseViewFiltersOpen()) {
+        <div class="erp-drawer-layer">
           <button
-            class="erp-button erp-button--primary"
+            class="erp-drawer-backdrop"
             type="button"
-            [disabled]="loading()"
-            (click)="loadCourseFeeView()"
+            aria-label="Close course fee filters"
+            (click)="courseViewFiltersOpen.set(false)"
+          ></button>
+          <section
+            class="erp-drawer fee-view-filter-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="course-fee-filter-title"
+            cdkTrapFocus
+            [cdkTrapFocusAutoCapture]="true"
           >
-            View fee structure
-          </button>
+            <header class="erp-drawer__header">
+              <span class="erp-drawer__icon fee-view-filter-drawer__icon">
+                <img src="assets/admin/finance-icons/course-fees.png" alt="" aria-hidden="true" />
+              </span>
+              <div>
+                <small>Course fee explorer</small>
+                <h2 id="course-fee-filter-title">Filter fee structure</h2>
+                <p>Select the academic and student context for one precise result.</p>
+              </div>
+              <button
+                class="erp-icon-button"
+                type="button"
+                aria-label="Close course fee filters"
+                (click)="courseViewFiltersOpen.set(false)"
+              >
+                <svg lucideX size="17" aria-hidden="true"></svg>
+              </button>
+            </header>
+            <div class="erp-drawer__body">
+              <div class="fee-view-filter-grid">
+                <label class="erp-field-stack"
+                  ><span>Fee book *</span
+                  ><button
+                    class="erp-control fee-picker-control"
+                    type="button"
+                    (click)="openBookSelector()"
+                  >
+                    <span>{{ currentBook()?.code || 'Select fee book' }}</span
+                    ><small>{{
+                      currentBook()
+                        ? currentBook()!.collegeName + ' · ' + currentBook()!.academicSession
+                        : 'Choose university, college and session'
+                    }}</small>
+                  </button></label
+                >
+                <label class="erp-field-stack"
+                  ><span>College *</span
+                  ><select
+                    class="erp-control"
+                    [(ngModel)]="viewCollegeId"
+                    (ngModelChange)="viewCollegeChanged()"
+                  >
+                    <option value="">Select college</option>
+                    @for (college of viewCollegeOptions(); track college._id) {
+                      <option [value]="college._id">{{ college.name }}</option>
+                    }
+                  </select></label
+                >
+                <label class="erp-field-stack"
+                  ><span>Department *</span
+                  ><select
+                    class="erp-control"
+                    [(ngModel)]="viewDepartmentId"
+                    (ngModelChange)="viewDepartmentChanged()"
+                  >
+                    <option value="">Select department</option>
+                    @for (department of viewDepartmentOptions(); track department._id) {
+                      <option [value]="department._id">{{ department.name }}</option>
+                    }
+                  </select></label
+                >
+                <label class="erp-field-stack"
+                  ><span>Level *</span
+                  ><select
+                    class="erp-control"
+                    [(ngModel)]="viewLevelId"
+                    (ngModelChange)="viewLevelChanged()"
+                  >
+                    <option value="">Select level</option>
+                    @for (level of viewLevelOptions(); track level._id) {
+                      <option [value]="level._id">{{ level.name }}</option>
+                    }
+                  </select></label
+                >
+                <label class="erp-field-stack"
+                  ><span>Course *</span
+                  ><select
+                    class="erp-control"
+                    [(ngModel)]="viewCourseId"
+                    (ngModelChange)="courseFeeViewRecords.set([])"
+                  >
+                    <option value="">Select course</option>
+                    @for (course of viewCourseOptions(); track course._id) {
+                      <option [value]="course._id">{{ course.name }}</option>
+                    }
+                  </select></label
+                >
+                <label class="erp-field-stack"
+                  ><span>Domicile *</span
+                  ><select
+                    class="erp-control"
+                    [(ngModel)]="viewDomicileId"
+                    (ngModelChange)="viewDomicileChanged()"
+                  >
+                    <option value="">Select domicile</option>
+                    @for (domicile of domiciles(); track domicile._id) {
+                      <option [value]="domicile._id">{{ domicile.name }}</option>
+                    }
+                  </select></label
+                >
+                <label class="erp-field-stack"
+                  ><span>Student type *</span
+                  ><select
+                    class="erp-control"
+                    [(ngModel)]="viewStudentTypeId"
+                    (ngModelChange)="viewStudentTypeChanged()"
+                  >
+                    <option value="">Select student type</option>
+                    @for (studentType of studentTypes(); track studentType._id) {
+                      <option [value]="studentType._id">{{ studentType.name }}</option>
+                    }
+                  </select></label
+                >
+                @if (viewRequiresCountry()) {
+                  <label class="erp-field-stack"
+                    ><span>Country *</span
+                    ><select
+                      class="erp-control"
+                      [(ngModel)]="viewCountryId"
+                      (ngModelChange)="viewCountryChanged()"
+                    >
+                      <option value="">Select country</option>
+                      @for (country of countries(); track country._id) {
+                        <option [value]="country._id">{{ country.name }}</option>
+                      }
+                    </select></label
+                  >
+                }
+              </div>
+              <footer class="erp-drawer__footer">
+                <button
+                  class="erp-button erp-button--secondary"
+                  type="button"
+                  (click)="courseViewFiltersOpen.set(false)"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="erp-button erp-button--primary"
+                  type="button"
+                  [disabled]="loading()"
+                  (click)="loadCourseFeeView()"
+                >
+                  View fee structure
+                </button>
+              </footer>
+            </div>
+          </section>
         </div>
-      </section>
-    } @else {
-      <section class="erp-card erp-card--padded erp-empty-state fee-section-gap">
-        Select a fee book first to view configured course-fee records.
-      </section>
+      }
     }
 
     @if (courseFeeViewRecords().length) {
