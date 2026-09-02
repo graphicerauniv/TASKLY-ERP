@@ -19,8 +19,43 @@ export async function ensureStudentScheduledFees(database, admission, now = new 
       schedule.createdBy,
     );
     if (result.published) results.push(result);
+    if (now >= new Date(schedule.publishAt)) await completeScheduleIfPublished(database, schedule);
   }
   return results;
+}
+
+async function completeScheduleIfPublished(database, schedule) {
+  const students = await database
+    .collection('admissions')
+    .find({
+      collegeId: schedule.collegeId,
+      academicSession: schedule.academicSession,
+      status: 'approved',
+      isActive: true,
+    })
+    .toArray();
+  const eligible = students
+    .map((student) => ({ student, target: targetForSchedule(schedule, student) }))
+    .filter((item) => item.target);
+  if (!eligible.length) return;
+  const pending = [];
+  for (const { student, target } of eligible) {
+    const ledger = await database.collection('studentFeeLedgers').findOne({
+      studentAdmissionId: student._id,
+      kind: 'academic',
+      periodKey: target.periodKey,
+      status: 'active',
+      visibilityStatus: 'hidden',
+    });
+    if (ledger) pending.push(ledger);
+  }
+  if (!pending.length)
+    await database
+      .collection('feeSchedules')
+      .updateOne(
+        { _id: schedule._id, isActive: true },
+        { $set: { isActive: false, completedAt: new Date(), updatedAt: new Date() } },
+      );
 }
 
 export async function publishFeeSchedule(database, schedule, actorId) {

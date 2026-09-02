@@ -343,7 +343,9 @@ feesRouter.post(
         .status(409)
         .json({ message: 'This college fee transition is already configured.' });
     const result = await db().collection('feeSchedules').insertOne(document);
-    response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
+    const saved = { ...document, _id: result.insertedId };
+    const publication = await publishFeeSchedule(db(), saved, id(request.admin._id));
+    response.status(201).json({ item: serialize(saved), publication: publication.map(serialize) });
   }),
 );
 
@@ -393,12 +395,27 @@ feesRouter.post(
       .findOne({ _id: id(request.params.scheduleId, 'scheduleId'), isActive: true });
     if (!schedule)
       return response.status(404).json({ message: 'Active fee schedule was not found.' });
-    const results = await publishFeeSchedule(db(), schedule, id(request.admin._id));
+    const force = request.body?.force === true;
+    const results = await publishFeeSchedule(
+      db(),
+      force ? { ...schedule, publishAt: new Date() } : schedule,
+      id(request.admin._id),
+    );
+    const completed =
+      results.length > 0 && results.every((item) => item.published || item.alreadyPublished);
+    if (completed && (force || new Date(schedule.publishAt) <= new Date()))
+      await db()
+        .collection('feeSchedules')
+        .updateOne(
+          { _id: schedule._id },
+          { $set: { isActive: false, completedAt: new Date(), updatedAt: new Date() } },
+        );
     response.json({
       studentsProcessed: results.length,
       published: results.filter((item) => item.published && !item.alreadyPublished).length,
       alreadyPublished: results.filter((item) => item.published && item.alreadyPublished).length,
       scheduled: results.filter((item) => item.scheduled).length,
+      completed,
       results: results.map(serialize),
     });
   }),

@@ -633,13 +633,14 @@ export class ApiService {
   deleteFeeSchedule(id: string) {
     return this.http.delete<{ deleted: boolean }>(`${API_BASE_URL}/fees/fee-schedules/${id}`);
   }
-  publishFeeSchedule(id: string) {
+  publishFeeSchedule(id: string, force = false) {
     return this.http.post<{
       studentsProcessed: number;
       published: number;
       alreadyPublished: number;
       scheduled: number;
-    }>(`${API_BASE_URL}/fees/fee-schedules/${id}/publish`, {});
+      completed: boolean;
+    }>(`${API_BASE_URL}/fees/fee-schedules/${id}/publish`, { force });
   }
   createScholarship(body: Pick<Scholarship, 'name' | 'valueMode' | 'type' | 'value' | 'isActive'>) {
     return this.http.post<{ item: Scholarship }>(`${API_BASE_URL}/fees/scholarships`, body);

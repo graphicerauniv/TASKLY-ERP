@@ -167,6 +167,16 @@
                 >
                   Delete schedule
                 </button>
+                @if (item.mode === 'year' && item.isActive) {
+                  <button
+                    class="erp-button erp-button--primary"
+                    type="button"
+                    [disabled]="publishingId()"
+                    (click)="publish(item, true)"
+                  >
+                    Show next year fee
+                  </button>
+                }
               </td>
             </tr>
           } @empty {

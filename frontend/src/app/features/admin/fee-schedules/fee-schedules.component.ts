@@ -137,14 +137,16 @@ export class FeeSchedulesComponent {
     this.maxFineAmount = null;
   }
 
-  publish(item: FeeSchedule) {
+  publish(item: FeeSchedule, force = false) {
     if (this.publishingId()) return;
     this.publishingId.set(item._id);
     this.error.set('');
-    this.api.publishFeeSchedule(item._id).subscribe({
+    this.api.publishFeeSchedule(item._id, force).subscribe({
       next: ({ studentsProcessed, published, alreadyPublished, scheduled }) => {
         this.message.set(
-          `${published} fee ledger(s) newly visible; ${scheduled} scheduled for the configured visibility time; ${alreadyPublished} were already visible (${studentsProcessed} students checked). Academic semesters and years were not changed.`,
+          force
+            ? `${published} next-year fee ledger(s) are now visible; ${studentsProcessed} students checked.`
+            : `${published} fee ledger(s) newly visible; ${scheduled} scheduled for the configured visibility time; ${alreadyPublished} were already visible (${studentsProcessed} students checked). Academic semesters and years were not changed.`,
         );
         this.publishingId.set(null);
       },
