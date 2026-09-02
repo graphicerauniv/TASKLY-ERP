@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { ObjectId } from 'bson';
 import { normalizeForm, activeForm } from '../src/services/form-definition.js';
-import { validateSubmission } from '../src/services/admission-validation.js';
+import { conditionMatches, validateSubmission } from '../src/services/admission-validation.js';
 
 test('normalizes ordered form configuration with stable identifiers', () => {
   const form = normalizeForm({
@@ -91,6 +92,66 @@ test('validates required and repeatable admission responses', () => {
   assert.equal(
     validateSubmission(form, {}, { [subsection.id]: [{ [subsection.fields[0].id]: 'CBSE' }] })
       .length,
+    0,
+  );
+});
+
+test('matches master-backed visibility conditions by their displayed label', () => {
+  const foreignId = new ObjectId().toString();
+  assert.equal(
+    conditionMatches(
+      { fieldId: 'studentType', operator: 'equals', value: 'Foreign' },
+      { studentType: foreignId },
+      { [foreignId]: ['Foreign'] },
+    ),
+    true,
+  );
+});
+
+test('requires a configured country field for a foreign student selection', () => {
+  const foreignId = new ObjectId().toString();
+  const form = normalizeForm({
+    name: 'Admission',
+    sections: [
+      {
+        name: 'Personal',
+        subsections: [
+          {
+            name: 'Details',
+            fields: [
+              {
+                name: 'Student Type',
+                type: 'dropdown',
+                dataSource: { kind: 'master', masterTypeSlug: 'student-type' },
+              },
+              {
+                name: 'Country',
+                type: 'dropdown',
+                isRequired: true,
+                dataSource: { kind: 'master', masterTypeSlug: 'country' },
+                visibilityCondition: {
+                  fieldId: 'student-type-field',
+                  operator: 'equals',
+                  value: 'Foreign',
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  const [studentType, country] = form.sections[0].subsections[0].fields;
+  country.visibilityCondition.fieldId = studentType.id;
+  const aliases = { [foreignId]: ['Foreign'] };
+  assert.equal(validateSubmission(form, { [studentType.id]: foreignId }, {}, aliases).length, 1);
+  assert.equal(
+    validateSubmission(
+      form,
+      { [studentType.id]: foreignId, [country.id]: new ObjectId().toString() },
+      {},
+      aliases,
+    ).length,
     0,
   );
 });

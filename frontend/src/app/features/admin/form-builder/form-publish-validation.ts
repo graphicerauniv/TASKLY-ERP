@@ -16,9 +16,6 @@ const UPLOAD_TYPES = new Set(['file', 'image', 'signature']);
 export function validateFormForPublish(form: AdmissionForm): FormPublishIssue[] {
   const issues: FormPublishIssue[] = [];
   const activeSections = form.sections.filter((section) => section.isActive);
-  const allFields = form.sections.flatMap((section) =>
-    section.subsections.flatMap((subsection) => subsection.fields),
-  );
   const activeFields = activeSections.flatMap((section) =>
     section.subsections
       .filter((subsection) => subsection.isActive)
@@ -138,6 +135,32 @@ export function validateFormForPublish(form: AdmissionForm): FormPublishIssue[] 
       ),
     );
   }
+  const feeTypeField = activeFields.find(
+    (field) => field.dataSource?.masterTypeSlug === 'fee-type',
+  );
+  if (!feeTypeField) {
+    issues.push(
+      issue(
+        'fee-type-field',
+        'blocker',
+        'Fee Type field is required',
+        'Add a dropdown connected to Fee Type master data so the applicant can select Yearly or Semester billing.',
+      ),
+    );
+  } else if (!feeTypeField.isRequired) {
+    const location = locateField(form, feeTypeField.id);
+    issues.push(
+      issue(
+        'fee-type-required',
+        'blocker',
+        'Fee Type must be required',
+        'Mark the Fee Type master-data field as required before publishing.',
+        location?.sectionId,
+        location?.subsectionId,
+        feeTypeField.id,
+      ),
+    );
+  }
   if (activeFields.length && documentFieldCount === 0) {
     issues.push(
       issue(
@@ -150,6 +173,14 @@ export function validateFormForPublish(form: AdmissionForm): FormPublishIssue[] 
   }
 
   return issues;
+}
+
+function locateField(form: AdmissionForm, fieldId: string) {
+  for (const section of form.sections)
+    for (const subsection of section.subsections)
+      if (subsection.fields.some((field) => field.id === fieldId))
+        return { sectionId: section.id, subsectionId: subsection.id };
+  return null;
 }
 
 function validateField(

@@ -6,7 +6,7 @@ import { db, id, serialize } from '../db.js';
 import { accessKey, hashKey } from '../lib/ids.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { activeForm } from '../services/form-definition.js';
-import { validateSubmission } from '../services/admission-validation.js';
+import { masterValueAliases, validateSubmission } from '../services/admission-validation.js';
 import { storeObject } from '../services/object-storage.js';
 import { allowedMimeTypes, extensionForMimeType } from '../services/upload-rules.js';
 import { syncAdmissionIdentity } from '../services/admission-identity.js';
@@ -183,19 +183,30 @@ publicRouter.post(
   asyncHandler(async (request, response) => {
     if (request.admission.status === 'pending_approval' || request.admission.status === 'approved')
       return response.json({ item: admissionForStudent(request.admission) });
+    const aliases = await masterValueAliases(
+      db(),
+      request.admission.responses || {},
+      request.admission.repeatableResponses || {},
+    );
     const errors = validateSubmission(
       request.admission.formSnapshot,
       request.admission.responses || {},
       request.admission.repeatableResponses || {},
+      aliases,
     );
     if (errors.length)
       return response
         .status(422)
         .json({ message: 'Complete all required fields before submitting.', errors });
-    if (!['year', 'semester'].includes(request.admission.feeFrequencyChoice))
+    const mappedIdentity = await syncAdmissionIdentity(
+      db(),
+      request.admission,
+      request.admission.responses || {},
+    );
+    if (!['year', 'semester'].includes(mappedIdentity.feeFrequencyChoice))
       return response
         .status(422)
-        .json({ message: 'Choose yearly or semester-wise fees before submitting.' });
+        .json({ message: 'Select Yearly or Semester from the Fee Type field.' });
     const identity = await syncAdmissionIdentity(
       db(),
       request.admission,

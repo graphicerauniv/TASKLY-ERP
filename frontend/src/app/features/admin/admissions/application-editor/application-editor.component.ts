@@ -188,14 +188,20 @@ export class ApplicationEditorComponent implements UnsavedChangesAware {
     return (this.activeSection()?.subsections || []).filter(
       (subsection) =>
         subsection.isActive &&
-        matchesAdmissionVisibility(subsection.visibilityCondition, responses),
+        (this.matchesVisibility(subsection.visibilityCondition, responses) ||
+          (this.foreignSelected(responses) &&
+            subsection.fields.some(
+              (field) => field.isActive && field.dataSource?.masterTypeSlug === 'country',
+            ))),
     );
   }
 
   visible(field: FormField, entry?: Record<string, unknown>) {
+    const values = entry || this.item()?.responses || {};
     return (
       field.isActive &&
-      matchesAdmissionVisibility(field.visibilityCondition, entry || this.item()?.responses || {})
+      (this.matchesVisibility(field.visibilityCondition, values) ||
+        (field.dataSource?.masterTypeSlug === 'country' && this.foreignSelected(values)))
     );
   }
 
@@ -215,6 +221,9 @@ export class ApplicationEditorComponent implements UnsavedChangesAware {
     this.markDirty();
     if (field.dataSource?.masterTypeSlug === 'course') {
       this.applyCourseAcademicYear(String(normalizedValue || ''));
+    }
+    if (field.dataSource?.masterTypeSlug === 'fee-type') {
+      this.applyFeeTypeChoice(field, String(normalizedValue || ''), false);
     }
     this.reloadDependents(field.id, entry, entryIndex);
   }
@@ -440,7 +449,7 @@ export class ApplicationEditorComponent implements UnsavedChangesAware {
   }
 
   private loadSectionOptions() {
-    for (const subsection of this.visibleSubsections()) {
+    for (const subsection of this.activeSection()?.subsections || []) {
       if (subsection.isRepeatable) {
         this.entries(subsection).forEach((entry, index) =>
           this.loadSubsectionOptions(subsection, index, entry),
@@ -487,6 +496,10 @@ export class ApplicationEditorComponent implements UnsavedChangesAware {
         if (field.dataSource?.masterTypeSlug === 'course') {
           const selected = values[field.id];
           if (selected) this.applyCourseAcademicYear(String(selected), false);
+        }
+        if (field.dataSource?.masterTypeSlug === 'fee-type') {
+          const selected = values[field.id];
+          if (selected) this.applyFeeTypeChoice(field, String(selected), false);
         }
       });
   }
@@ -553,6 +566,82 @@ export class ApplicationEditorComponent implements UnsavedChangesAware {
     item.responses[yearField.id] = String(selectedYear);
     item.currentAcademicYear = selectedYear;
     this.item.set(structuredClone(item));
+  }
+
+  private applyFeeTypeChoice(field: FormField, feeTypeId: string, markDirty = true) {
+    const feeType = Object.entries(this.optionsState())
+      .filter(([key]) => key.startsWith(`${field.id}:`))
+      .flatMap(([, options]) => options)
+      .find((option) => option._id === feeTypeId);
+    const item = this.item();
+    if (!feeType || !item) return;
+    const configured = feeType.metadata?.['periodType'];
+    const mode =
+      configured === 'year' || configured === 'semester'
+        ? configured
+        : /semester|sem/i.test(feeType.name)
+          ? 'semester'
+          : /year|annual/i.test(feeType.name)
+            ? 'year'
+            : null;
+    if (!mode) return;
+    item.feeFrequencyChoice = mode;
+    item.feeFrequency = mode;
+    item.feeTypeId = feeType._id;
+    item.feeTypeName = feeType.name;
+    this.item.set(structuredClone(item));
+    if (markDirty) this.markDirty();
+  }
+
+  private matchesVisibility(
+    condition: Parameters<typeof matchesAdmissionVisibility>[0],
+    values: Record<string, unknown>,
+  ) {
+    if (!condition) return true;
+    const current = values[condition.fieldId];
+    const candidates = this.valuesWithMasterLabels(condition.fieldId, current);
+    const expected = this.normalizedConditionValue(condition.value);
+    if (condition.operator === 'not-equals')
+      return !candidates.some((value) => this.normalizedConditionValue(value) === expected);
+    if (condition.operator === 'contains')
+      return candidates.some((value) => this.normalizedConditionValue(value).includes(expected));
+    if (condition.operator === 'is-empty')
+      return current == null || current === '' || (Array.isArray(current) && !current.length);
+    if (condition.operator === 'is-not-empty')
+      return current != null && current !== '' && (!Array.isArray(current) || current.length > 0);
+    return candidates.some((value) => this.normalizedConditionValue(value) === expected);
+  }
+
+  private foreignSelected(values: Record<string, unknown>) {
+    const fields = this.item()
+      ?.formSnapshot.sections.flatMap((section) => section.subsections)
+      .flatMap((subsection) => subsection.fields);
+    return (fields || [])
+      .filter((field) =>
+        ['domicile', 'student-type'].includes(field.dataSource?.masterTypeSlug || ''),
+      )
+      .some((field) =>
+        this.valuesWithMasterLabels(field.id, values[field.id]).some((value) =>
+          /foreign|international|nri/i.test(String(value || '')),
+        ),
+      );
+  }
+
+  private valuesWithMasterLabels(fieldId: string, value: unknown) {
+    const values = Array.isArray(value) ? value : [value];
+    const options = Object.entries(this.optionsState())
+      .filter(([key]) => key.startsWith(`${fieldId}:`))
+      .flatMap(([, items]) => items);
+    return values.flatMap((item) => {
+      const option = options.find((candidate) => candidate._id === String(item ?? ''));
+      return option ? [item, option.name, option.label, option.metadata?.['code']] : [item];
+    });
+  }
+
+  private normalizedConditionValue(value: unknown) {
+    return String(value ?? '')
+      .trim()
+      .toLocaleLowerCase();
   }
 
   private allowedUploadMimeTypes(field: FormField) {

@@ -178,7 +178,11 @@ const scholarshipAssignmentSchema = z
         message: 'Percentage scholarship cannot exceed 100%.',
       });
     if (!data.recurring && !data.targetLedgerId)
-      context.addIssue({ code: 'custom', path: ['targetLedgerId'], message: 'Select the one-time scholarship fee period.' });
+      context.addIssue({
+        code: 'custom',
+        path: ['targetLedgerId'],
+        message: 'Select the one-time scholarship fee period.',
+      });
   });
 const studentDiscountSchema = z
   .object({
@@ -249,11 +253,13 @@ async function feeHead(value, bookId) {
 }
 
 async function approvedStudent(value) {
-  const student = await db().collection('admissions').findOne({
-    _id: id(value, 'studentAdmissionId'),
-    status: 'approved',
-    isActive: true,
-  });
+  const student = await db()
+    .collection('admissions')
+    .findOne({
+      _id: id(value, 'studentAdmissionId'),
+      status: 'approved',
+      isActive: true,
+    });
   if (!student) {
     const error = new Error('Approved active student was not found.');
     error.status = 404;
@@ -280,7 +286,8 @@ feesRouter.get(
   asyncHandler(async (request, response) => {
     const filter = {};
     if (request.query.collegeId) filter.collegeId = id(request.query.collegeId, 'collegeId');
-    if (request.query.academicSession) filter.academicSession = String(request.query.academicSession);
+    if (request.query.academicSession)
+      filter.academicSession = String(request.query.academicSession);
     const items = await db()
       .collection('feeSchedules')
       .find(filter)
@@ -321,7 +328,9 @@ feesRouter.post(
       targetNumber: data.targetNumber,
     });
     if (duplicate)
-      return response.status(409).json({ message: 'This college fee transition is already configured.' });
+      return response
+        .status(409)
+        .json({ message: 'This college fee transition is already configured.' });
     const result = await db().collection('feeSchedules').insertOne(document);
     response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
   }),
@@ -367,7 +376,8 @@ feesRouter.post(
     const schedule = await db()
       .collection('feeSchedules')
       .findOne({ _id: id(request.params.scheduleId, 'scheduleId'), isActive: true });
-    if (!schedule) return response.status(404).json({ message: 'Active fee schedule was not found.' });
+    if (!schedule)
+      return response.status(404).json({ message: 'Active fee schedule was not found.' });
     const results = await publishFeeSchedule(db(), schedule, id(request.admin._id));
     response.json({
       studentsProcessed: results.length,
@@ -417,12 +427,16 @@ feesRouter.patch(
     };
     if (data.name) {
       update.normalizedName = normalizeFeeName(data.name);
-      const duplicate = await db().collection('scholarships').findOne({
-        normalizedName: update.normalizedName,
-        _id: { $ne: scholarshipId },
-      });
+      const duplicate = await db()
+        .collection('scholarships')
+        .findOne({
+          normalizedName: update.normalizedName,
+          _id: { $ne: scholarshipId },
+        });
       if (duplicate)
-        return response.status(409).json({ message: 'A scholarship with this name already exists.' });
+        return response
+          .status(409)
+          .json({ message: 'A scholarship with this name already exists.' });
     }
     await db().collection('scholarships').updateOne({ _id: scholarshipId }, { $set: update });
     const item = await db().collection('scholarships').findOne({ _id: scholarshipId });
@@ -434,9 +448,7 @@ feesRouter.delete(
   '/scholarships/:scholarshipId',
   asyncHandler(async (request, response) => {
     const scholarshipId = id(request.params.scholarshipId, 'scholarshipId');
-    const assigned = await db()
-      .collection('studentScholarships')
-      .countDocuments({ scholarshipId });
+    const assigned = await db().collection('studentScholarships').countDocuments({ scholarshipId });
     if (assigned)
       return response.status(409).json({
         message: 'This scholarship has student history. Disable it instead of deleting it.',
@@ -485,10 +497,12 @@ feesRouter.post(
   asyncHandler(async (request, response) => {
     const data = scholarshipAssignmentSchema.parse(request.body);
     const student = await approvedStudent(request.params.studentAdmissionId);
-    const scholarship = await db().collection('scholarships').findOne({
-      _id: id(data.scholarshipId, 'scholarshipId'),
-      isActive: true,
-    });
+    const scholarship = await db()
+      .collection('scholarships')
+      .findOne({
+        _id: id(data.scholarshipId, 'scholarshipId'),
+        isActive: true,
+      });
     if (!scholarship)
       return response.status(404).json({ message: 'Active scholarship was not found.' });
     const customValue = scholarship.valueMode === 'custom';
@@ -509,12 +523,14 @@ feesRouter.post(
       return response.status(409).json({ message: 'This scholarship is already assigned.' });
     const targetLedger = data.recurring
       ? null
-      : await db().collection('studentFeeLedgers').findOne({
-          _id: id(data.targetLedgerId, 'targetLedgerId'),
-          studentAdmissionId: student._id,
-          kind: 'academic',
-          status: 'active',
-        });
+      : await db()
+          .collection('studentFeeLedgers')
+          .findOne({
+            _id: id(data.targetLedgerId, 'targetLedgerId'),
+            studentAdmissionId: student._id,
+            kind: 'academic',
+            status: 'active',
+          });
     if (!data.recurring && !targetLedger)
       return response.status(404).json({ message: 'Selected Academic Fee period was not found.' });
     const document = scholarshipAssignmentDocument(
@@ -544,12 +560,14 @@ feesRouter.post(
   asyncHandler(async (request, response) => {
     const data = studentDiscountSchema.parse(request.body);
     const student = await approvedStudent(request.params.studentAdmissionId);
-    const ledger = await db().collection('studentFeeLedgers').findOne({
-      _id: id(data.targetLedgerId, 'targetLedgerId'),
-      studentAdmissionId: student._id,
-      kind: 'academic',
-      status: 'active',
-    });
+    const ledger = await db()
+      .collection('studentFeeLedgers')
+      .findOne({
+        _id: id(data.targetLedgerId, 'targetLedgerId'),
+        studentAdmissionId: student._id,
+        kind: 'academic',
+        status: 'active',
+      });
     if (!ledger)
       return response.status(404).json({ message: 'Selected Academic Fee period was not found.' });
     const hasTuitionFee = (ledger.entries || []).some(
@@ -591,31 +609,36 @@ feesRouter.delete(
     });
     if (Number(ledger?.paidAmount || 0) > 0)
       return response.status(409).json({
-        message: 'This fee period already has a payment. The discount must be reversed by Accounts.',
+        message:
+          'This fee period already has a payment. The discount must be reversed by Accounts.',
       });
     const removedAt = new Date();
-    await db().collection('studentDiscounts').updateOne(
-      { _id: discountId },
-      {
-        $set: {
-          status: 'removed',
-          removedAt,
-          removedBy: id(request.admin._id),
-          updatedAt: removedAt,
+    await db()
+      .collection('studentDiscounts')
+      .updateOne(
+        { _id: discountId },
+        {
+          $set: {
+            status: 'removed',
+            removedAt,
+            removedBy: id(request.admin._id),
+            updatedAt: removedAt,
+          },
         },
-      },
-    );
+      );
     try {
       const ledgers = await refreshStudentScholarshipLedgers(db(), student);
       response.json({ removed: true, ledgers: ledgers.map(serialize) });
     } catch (error) {
-      await db().collection('studentDiscounts').updateOne(
-        { _id: discountId },
-        {
-          $set: { status: 'active', updatedAt: new Date() },
-          $unset: { removedAt: '', removedBy: '' },
-        },
-      );
+      await db()
+        .collection('studentDiscounts')
+        .updateOne(
+          { _id: discountId },
+          {
+            $set: { status: 'active', updatedAt: new Date() },
+            $unset: { removedAt: '', removedBy: '' },
+          },
+        );
       throw error;
     }
   }),
@@ -634,27 +657,34 @@ feesRouter.delete(
     if (!assignment)
       return response.status(404).json({ message: 'Student scholarship was not found.' });
     const removedAt = new Date();
-    await db().collection('studentScholarships').updateOne(
-      { _id: assignmentId },
-      {
-        $set: {
-          status: 'removed',
-          removedAt,
-          removedBy: id(request.admin._id),
-          updatedAt: removedAt,
+    await db()
+      .collection('studentScholarships')
+      .updateOne(
+        { _id: assignmentId },
+        {
+          $set: {
+            status: 'removed',
+            removedAt,
+            removedBy: id(request.admin._id),
+            updatedAt: removedAt,
+          },
         },
-      },
-    );
+      );
     try {
       const ledgers = await refreshStudentScholarshipLedgers(db(), student, {
         preservePaidScholarships: true,
       });
       response.json({ removed: true, ledgers: ledgers.map(serialize) });
     } catch (error) {
-      await db().collection('studentScholarships').updateOne(
-        { _id: assignmentId },
-        { $set: { status: 'active', updatedAt: new Date() }, $unset: { removedAt: '', removedBy: '' } },
-      );
+      await db()
+        .collection('studentScholarships')
+        .updateOne(
+          { _id: assignmentId },
+          {
+            $set: { status: 'active', updatedAt: new Date() },
+            $unset: { removedAt: '', removedBy: '' },
+          },
+        );
       throw error;
     }
   }),
@@ -778,8 +808,7 @@ feesRouter.get(
   '/student-promotions',
   asyncHandler(async (request, response) => {
     const filter = {};
-    if (request.query.mode)
-      filter.mode = z.enum(['semester', 'year']).parse(request.query.mode);
+    if (request.query.mode) filter.mode = z.enum(['semester', 'year']).parse(request.query.mode);
     if (request.query.status && request.query.status !== 'all')
       filter.status = z
         .enum(['pending', 'promoting', 'promoted', 'cancelled'])
@@ -788,13 +817,19 @@ feesRouter.get(
       filter.academicSession = String(request.query.academicSession);
     if (request.query.courseId) filter.courseId = id(request.query.courseId, 'courseId');
     if (request.query.currentAcademicYear)
-      filter.fromAcademicYear = z.coerce.number().int().min(1).max(10).parse(
-        request.query.currentAcademicYear,
-      );
+      filter.fromAcademicYear = z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(10)
+        .parse(request.query.currentAcademicYear);
     if (request.query.currentSemester)
-      filter.fromSemester = z.coerce.number().int().min(1).max(20).parse(
-        request.query.currentSemester,
-      );
+      filter.fromSemester = z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(20)
+        .parse(request.query.currentSemester);
     if (request.query.search) {
       const match = { $regex: escapeRegex(request.query.search), $options: 'i' };
       filter.$or = [
@@ -824,11 +859,7 @@ feesRouter.post(
     const results = [];
     for (const progressionId of progressionIds) {
       try {
-        const item = await promoteStudentProgression(
-          db(),
-          progressionId,
-          id(request.admin._id),
-        );
+        const item = await promoteStudentProgression(db(), progressionId, id(request.admin._id));
         results.push({ progressionId, success: true, item });
       } catch (error) {
         results.push({ progressionId, success: false, reason: error.message });
@@ -858,9 +889,7 @@ feesRouter.post(
     for (const admissionId of admissionIds) {
       const admission = admissionMap.get(String(admissionId));
       if (!admission) continue;
-      results.push(
-        await recalculateStudentAcademicLedger(db(), admission, id(request.admin._id)),
-      );
+      results.push(await recalculateStudentAcademicLedger(db(), admission, id(request.admin._id)));
     }
     response.json({
       created: results.reduce((total, result) => total + result.createdKinds.length, 0),
@@ -970,8 +999,8 @@ async function nextFeeHeadPriority(bookId) {
   return Number(last?.priority || 0) + 1;
 }
 
-function requiresCountryForStudentType(studentType) {
-  return /foreign|international|nri/i.test(studentType?.name || '');
+function requiresCountry(studentType, domicile) {
+  return /foreign|international|nri/i.test(`${studentType?.name || ''} ${domicile?.name || ''}`);
 }
 
 function feeTypePeriod(feeType) {
@@ -1205,10 +1234,10 @@ feesRouter.post(
     const studentType = await masterValue(data.studentTypeId, 'student-type', 'studentTypeId');
     const feeType = await masterValue(data.feeTypeId, 'fee-type', 'feeTypeId');
     const periodType = feeTypePeriod(feeType);
-    if (requiresCountryForStudentType(studentType) && !data.countryId) {
+    if (requiresCountry(studentType, domicile) && !data.countryId) {
       return response
         .status(400)
-        .json({ message: 'Country is required for foreign student type fees.' });
+        .json({ message: 'Country is required for a foreign domicile or student type.' });
     }
     const country = data.countryId
       ? await masterValue(data.countryId, 'country', 'countryId')
@@ -1354,10 +1383,10 @@ feesRouter.post(
     const studentType = await masterValue(data.studentTypeId, 'student-type', 'studentTypeId');
     const feeType = await masterValue(data.feeTypeId, 'fee-type', 'feeTypeId');
     const periodType = feeTypePeriod(feeType);
-    if (requiresCountryForStudentType(studentType) && !data.countryId) {
+    if (requiresCountry(studentType, domicile) && !data.countryId) {
       return response
         .status(400)
-        .json({ message: 'Country is required for foreign student type fees.' });
+        .json({ message: 'Country is required for a foreign domicile or student type.' });
     }
     const country = data.countryId
       ? await masterValue(data.countryId, 'country', 'countryId')
@@ -1375,11 +1404,9 @@ feesRouter.post(
       if (!head) continue;
       for (const cell of row.amounts) {
         if (cell.periodType !== periodType) {
-          return response
-            .status(400)
-            .json({
-              message: `Fee matrix periods must match the selected ${feeType.name} fee type.`,
-            });
+          return response.status(400).json({
+            message: `Fee matrix periods must match the selected ${feeType.name} fee type.`,
+          });
         }
         documents.push({
           bookId: book._id,
@@ -1460,10 +1487,10 @@ feesRouter.post(
       'student-type',
       'studentTypeId',
     );
-    if (requiresCountryForStudentType(studentType) && !request.body.countryId) {
+    if (requiresCountry(studentType, domicile) && !request.body.countryId) {
       return response
         .status(400)
-        .json({ message: 'Country is required for foreign student type imports.' });
+        .json({ message: 'Country is required for a foreign domicile or student type.' });
     }
     const country = request.body.countryId
       ? await masterValue(request.body.countryId, 'country', 'countryId')

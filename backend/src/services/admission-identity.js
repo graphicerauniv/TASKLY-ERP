@@ -16,6 +16,7 @@ export function admissionContext(form, responses = {}) {
     domicileValueId: valueId('domicile'),
     studentTypeValueId: valueId('student-type'),
     countryValueId: valueId('country'),
+    feeTypeValueId: valueId('fee-type'),
     studentName: studentName(fields, responses),
     currentAcademicYear: academicYear(fields, responses),
   };
@@ -37,6 +38,7 @@ export async function syncAdmissionIdentity(
     context.domicileValueId,
     context.studentTypeValueId,
     context.countryValueId,
+    context.feeTypeValueId,
   ].filter(Boolean);
   const masterValues = values.length
     ? await database
@@ -59,6 +61,8 @@ export async function syncAdmissionIdentity(
   const domicile = master('domicile', context.domicileValueId);
   const studentType = master('student-type', context.studentTypeValueId);
   const country = master('country', context.countryValueId);
+  const feeType = master('fee-type', context.feeTypeValueId);
+  const feeFrequencyChoice = feeFrequencyForMasterValue(feeType);
   const identity = {
     studentName: context.studentName || '',
     academicSessionId: session?._id || null,
@@ -77,6 +81,8 @@ export async function syncAdmissionIdentity(
     studentTypeName: studentType?.name || '',
     countryId: country?._id || null,
     countryName: country?.name || '',
+    feeTypeId: feeType?._id || null,
+    feeTypeName: feeType?.name || '',
     currentAcademicYear: Number(
       context.currentAcademicYear ||
         admission.currentAcademicYear ||
@@ -90,7 +96,13 @@ export async function syncAdmissionIdentity(
   identity.currentSemester = Number(
     admission.currentSemester || Math.max(1, identity.currentAcademicYear * 2 - 1),
   );
-  identity.feeFrequency = admission.feeFrequency === 'semester' ? 'semester' : 'year';
+  identity.feeFrequencyChoice =
+    feeFrequencyChoice ||
+    (['year', 'semester'].includes(admission.feeFrequencyChoice)
+      ? admission.feeFrequencyChoice
+      : null);
+  identity.feeFrequency =
+    identity.feeFrequencyChoice || (admission.feeFrequency === 'semester' ? 'semester' : 'year');
   await database.collection('admissions').updateOne({ _id: admission._id }, { $set: identity });
 
   if (admission.studentId || !generateStudentId || !session || !course)
@@ -120,6 +132,14 @@ export async function syncAdmissionIdentity(
   throw Object.assign(new Error('Could not generate a unique Student ID. Please save again.'), {
     status: 503,
   });
+}
+
+export function feeFrequencyForMasterValue(value) {
+  const configured = value?.metadata?.periodType;
+  if (configured === 'year' || configured === 'semester') return configured;
+  if (/semester|sem/i.test(value?.name || '')) return 'semester';
+  if (/year|annual/i.test(value?.name || '')) return 'year';
+  return null;
 }
 
 export function sessionYearCode(value) {

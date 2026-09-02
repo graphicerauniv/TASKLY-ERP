@@ -119,7 +119,6 @@ export class ApiService {
       currentAcademicYear: admission.currentAcademicYear,
       currentSemester: admission.currentSemester,
       feeFrequency: admission.feeFrequency,
-      feeFrequencyChoice: admission.feeFrequencyChoice,
       responses: admission.responses,
       repeatableResponses: admission.repeatableResponses,
     });
@@ -392,7 +391,6 @@ export class ApiService {
         currentSectionId: admission.currentSectionId,
         responses: admission.responses,
         repeatableResponses: admission.repeatableResponses,
-        feeFrequencyChoice: admission.feeFrequencyChoice,
       },
       { headers: { 'x-admission-key': key } },
     );

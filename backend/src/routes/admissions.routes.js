@@ -9,7 +9,7 @@ import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { pageResult, pagination } from '../lib/pagination.js';
 import { syncAdmissionIdentity } from '../services/admission-identity.js';
-import { validateSubmission } from '../services/admission-validation.js';
+import { masterValueAliases, validateSubmission } from '../services/admission-validation.js';
 import { storeObject } from '../services/object-storage.js';
 import { allowedMimeTypes, extensionForMimeType } from '../services/upload-rules.js';
 import { generateStudentFeeLedgers } from '../services/student-fee-ledger.js';
@@ -214,19 +214,26 @@ admissionsRouter.post(
     const admission = await db().collection('admissions').findOne({ _id: admissionId });
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
     if (admission.status !== 'draft') return response.json({ item: serialize(admission) });
+    const aliases = await masterValueAliases(
+      db(),
+      admission.responses || {},
+      admission.repeatableResponses || {},
+    );
     const errors = validateSubmission(
       admission.formSnapshot,
       admission.responses || {},
       admission.repeatableResponses || {},
+      aliases,
     );
     if (errors.length)
       return response
         .status(422)
         .json({ message: 'Complete all required fields before submitting.', errors });
-    if (!['year', 'semester'].includes(admission.feeFrequencyChoice))
+    const mappedIdentity = await syncAdmissionIdentity(db(), admission, admission.responses || {});
+    if (!['year', 'semester'].includes(mappedIdentity.feeFrequencyChoice))
       return response
         .status(422)
-        .json({ message: 'Choose yearly or semester-wise fees before submitting.' });
+        .json({ message: 'Select Yearly or Semester from the Fee Type field.' });
     const identity = await syncAdmissionIdentity(db(), admission, admission.responses || {}, {
       generateStudentId: true,
     });
@@ -259,10 +266,16 @@ admissionsRouter.post(
     if (admission.status === 'approved') return response.json({ item: safeAdmission(admission) });
     if (admission.status !== 'pending_approval')
       return response.status(409).json({ message: 'Submit the admission before approving it.' });
+    const aliases = await masterValueAliases(
+      db(),
+      admission.responses || {},
+      admission.repeatableResponses || {},
+    );
     const errors = validateSubmission(
       admission.formSnapshot,
       admission.responses || {},
       admission.repeatableResponses || {},
+      aliases,
     );
     if (errors.length)
       return response

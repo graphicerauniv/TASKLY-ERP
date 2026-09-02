@@ -446,15 +446,24 @@ export class FeeManagementComponent implements OnDestroy {
     this.courses().find((course) => course._id === this.viewCourseId);
   readonly selectedCourseStudentType = () =>
     this.studentTypes().find((studentType) => studentType._id === this.courseStudentTypeId);
+  readonly selectedCourseDomicile = () =>
+    this.domiciles().find((domicile) => domicile._id === this.courseDomicileId);
   readonly selectedCourseFeeType = () =>
     this.feeTypes().find((feeType) => feeType._id === this.courseFeeTypeId);
   readonly selectedImportStudentType = () =>
     this.studentTypes().find((studentType) => studentType._id === this.importStudentTypeId);
+  readonly selectedImportDomicile = () =>
+    this.domiciles().find((domicile) => domicile._id === this.importDomicileId);
   readonly selectedViewStudentType = () =>
     this.studentTypes().find((studentType) => studentType._id === this.viewStudentTypeId);
-  readonly courseRequiresCountry = () => this.requiresCountry(this.selectedCourseStudentType());
-  readonly importRequiresCountry = () => this.requiresCountry(this.selectedImportStudentType());
-  readonly viewRequiresCountry = () => this.requiresCountry(this.selectedViewStudentType());
+  readonly selectedViewDomicile = () =>
+    this.domiciles().find((domicile) => domicile._id === this.viewDomicileId);
+  readonly courseRequiresCountry = () =>
+    this.requiresCountry(this.selectedCourseStudentType(), this.selectedCourseDomicile());
+  readonly importRequiresCountry = () =>
+    this.requiresCountry(this.selectedImportStudentType(), this.selectedImportDomicile());
+  readonly viewRequiresCountry = () =>
+    this.requiresCountry(this.selectedViewStudentType(), this.selectedViewDomicile());
   readonly selectedCourseFeeHeads = computed(() => {
     const selectedIds = new Set(this.selectedCourseFeeHeadIds());
     return this.orderedBookHeads().filter((head) => selectedIds.has(head._id));
@@ -1806,8 +1815,8 @@ export class FeeManagementComponent implements OnDestroy {
     this.error.set('');
   }
 
-  private requiresCountry(studentType?: MasterValue) {
-    return /foreign|international|nri/i.test(studentType?.name || '');
+  private requiresCountry(studentType?: MasterValue, domicile?: MasterValue) {
+    return /foreign|international|nri/i.test(`${studentType?.name || ''} ${domicile?.name || ''}`);
   }
 
   private clearCourseFeeMatrix() {

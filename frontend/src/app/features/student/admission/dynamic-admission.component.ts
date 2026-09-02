@@ -109,9 +109,7 @@ export class DynamicAdmissionComponent implements OnInit {
     return this.form()?.sections[this.activeIndex()];
   }
   visibleSubsections() {
-    return (this.section()?.subsections || []).filter((sub) =>
-      this.matches(sub.visibilityCondition, this.admission()?.responses || {}),
-    );
+    return (this.section()?.subsections || []).filter((sub) => this.subsectionVisible(sub));
   }
   progressPercent() {
     const sections = this.form()?.sections || [];
@@ -135,7 +133,7 @@ export class DynamicAdmissionComponent implements OnInit {
     if (!section) return 0;
     let completed = 0;
     for (const sub of section.subsections) {
-      if (!this.matches(sub.visibilityCondition, this.admission()?.responses || {})) continue;
+      if (!this.subsectionVisible(sub)) continue;
       if (sub.isRepeatable) {
         const entries = this.entries(sub);
         for (const entry of entries) {
@@ -164,9 +162,7 @@ export class DynamicAdmissionComponent implements OnInit {
     return section.subsections.reduce(
       (count, sub) =>
         count +
-        (this.matches(sub.visibilityCondition, this.admission()?.responses || {})
-          ? sub.fields.filter((field) => field.isActive).length
-          : 0),
+        (this.subsectionVisible(sub) ? sub.fields.filter((field) => field.isActive).length : 0),
       0,
     );
   }
@@ -174,7 +170,7 @@ export class DynamicAdmissionComponent implements OnInit {
     if (!section) return 0;
     let missing = 0;
     for (const sub of section.subsections) {
-      if (!this.matches(sub.visibilityCondition, this.admission()?.responses || {})) continue;
+      if (!this.subsectionVisible(sub)) continue;
       const entries = sub.isRepeatable ? this.entries(sub) : [this.admission()?.responses || {}];
       for (const entry of entries.length ? entries : [{}]) {
         for (const field of sub.fields) {
@@ -195,7 +191,7 @@ export class DynamicAdmissionComponent implements OnInit {
     if (!section) return 0;
     let total = 0;
     for (const sub of section.subsections) {
-      if (!this.matches(sub.visibilityCondition, this.admission()?.responses || {})) continue;
+      if (!this.subsectionVisible(sub)) continue;
       const multiplier = sub.isRepeatable ? Math.max(1, this.entries(sub).length) : 1;
       total += sub.fields.filter((field) => field.isActive && field.isRequired).length * multiplier;
     }
@@ -290,20 +286,10 @@ export class DynamicAdmissionComponent implements OnInit {
     else this.save(true);
   }
   applicationMissingRequired() {
-    const formMissing = (this.form()?.sections || []).reduce(
+    return (this.form()?.sections || []).reduce(
       (total, section) => total + this.requiredMissingFields(section),
       0,
     );
-    return formMissing + (this.admission()?.feeFrequencyChoice ? 0 : 1);
-  }
-  chooseFeeFrequency(value: 'year' | 'semester') {
-    const admission = this.admission();
-    if (!admission) return;
-    admission.feeFrequencyChoice = value;
-    admission.feeFrequency = value;
-    this.admission.set(structuredClone(admission));
-    this.dirty.set(true);
-    this.error.set('');
   }
   backAction() {
     if (this.reviewMode()) {
@@ -328,6 +314,8 @@ export class DynamicAdmissionComponent implements OnInit {
     this.message.set('');
     if (field.dataSource?.masterTypeSlug === 'course')
       this.applyCourseAcademicYear(String(normalizedValue || ''));
+    if (field.dataSource?.masterTypeSlug === 'fee-type')
+      this.applyFeeTypeChoice(field, String(normalizedValue || ''));
     this.reloadDependents(field.id, entry, entryIndex);
   }
   entries(sub: FormSubsection) {
@@ -358,22 +346,34 @@ export class DynamicAdmissionComponent implements OnInit {
   matches(condition: VisibilityCondition | null, values: Record<string, unknown>) {
     if (!condition) return true;
     const current = values[condition.fieldId];
+    const candidates = this.valuesWithMasterLabels(condition.fieldId, current);
+    const expected = this.normalizedConditionValue(condition.value);
     if (condition.operator === 'not-equals')
-      return String(current ?? '') !== String(condition.value ?? '');
+      return !candidates.some((value) => this.normalizedConditionValue(value) === expected);
     if (condition.operator === 'contains')
-      return Array.isArray(current)
-        ? current.includes(condition.value)
-        : String(current ?? '').includes(String(condition.value));
+      return candidates.some((value) => this.normalizedConditionValue(value).includes(expected));
     if (condition.operator === 'is-empty')
       return current == null || current === '' || (Array.isArray(current) && !current.length);
     if (condition.operator === 'is-not-empty')
       return current != null && current !== '' && (!Array.isArray(current) || current.length > 0);
-    return String(current ?? '') === String(condition.value ?? '');
+    return candidates.some((value) => this.normalizedConditionValue(value) === expected);
   }
   visible(field: FormField, entry?: Record<string, unknown>) {
+    const values = entry || this.admission()?.responses || {};
     return (
       field.isActive &&
-      this.matches(field.visibilityCondition, entry || this.admission()?.responses || {})
+      (this.matches(field.visibilityCondition, values) ||
+        (field.dataSource?.masterTypeSlug === 'country' && this.foreignSelected(values)))
+    );
+  }
+  private subsectionVisible(subsection: FormSubsection) {
+    const values = this.admission()?.responses || {};
+    return (
+      this.matches(subsection.visibilityCondition, values) ||
+      (this.foreignSelected(values) &&
+        subsection.fields.some(
+          (field) => field.isActive && field.dataSource?.masterTypeSlug === 'country',
+        ))
     );
   }
   fieldOptions(field: FormField, index?: number) {
@@ -395,6 +395,10 @@ export class DynamicAdmissionComponent implements OnInit {
         if (field.dataSource?.masterTypeSlug === 'course') {
           const selected = (entry || this.admission()?.responses || {})[field.id];
           if (selected) this.applyCourseAcademicYear(String(selected), false);
+        }
+        if (field.dataSource?.masterTypeSlug === 'fee-type') {
+          const selected = (entry || this.admission()?.responses || {})[field.id];
+          if (selected) this.applyFeeTypeChoice(field, String(selected), false);
         }
       });
   }
@@ -515,11 +519,22 @@ export class DynamicAdmissionComponent implements OnInit {
     location.reload();
   }
   loadSectionOptions() {
-    for (const sub of this.section()?.subsections || []) {
+    const section = this.section();
+    for (const sub of section?.subsections || []) {
       if (sub.isRepeatable)
         this.entries(sub).forEach((entry, index) => this.loadSubsectionOptions(sub, index, entry));
       else this.loadSubsectionOptions(sub, undefined, undefined);
     }
+    const controllingIds = new Set(
+      (section?.subsections || [])
+        .flatMap((subsection) => [
+          subsection.visibilityCondition?.fieldId,
+          ...subsection.fields.map((field) => field.visibilityCondition?.fieldId),
+        ])
+        .filter((fieldId): fieldId is string => Boolean(fieldId)),
+    );
+    for (const field of this.allFormFields())
+      if (controllingIds.has(field.id) && field.dataSource) this.loadOptions(field);
   }
   goToStep(index: number) {
     if (index === this.activeIndex()) return;
@@ -640,6 +655,61 @@ export class DynamicAdmissionComponent implements OnInit {
     admission.currentAcademicYear = selectedYear;
     this.form.update((form) => (form ? structuredClone(form) : form));
     this.admission.set(structuredClone(admission));
+  }
+  private applyFeeTypeChoice(field: FormField, feeTypeId: string, markDirty = true) {
+    const feeType = Object.entries(this.optionsState())
+      .filter(([key]) => key.startsWith(`${field.id}:`))
+      .flatMap(([, options]) => options)
+      .find((option) => option._id === feeTypeId);
+    if (!feeType) return;
+    const configured = feeType.metadata?.['periodType'];
+    const mode =
+      configured === 'year' || configured === 'semester'
+        ? configured
+        : /semester|sem/i.test(feeType.name)
+          ? 'semester'
+          : /year|annual/i.test(feeType.name)
+            ? 'year'
+            : null;
+    const admission = this.admission();
+    if (!mode || !admission) return;
+    admission.feeFrequencyChoice = mode;
+    admission.feeFrequency = mode;
+    admission.feeTypeId = feeType._id;
+    admission.feeTypeName = feeType.name;
+    this.admission.set(structuredClone(admission));
+    if (markDirty) this.dirty.set(true);
+  }
+  private foreignSelected(values: Record<string, unknown>) {
+    return this.allFormFields()
+      .filter((field) =>
+        ['domicile', 'student-type'].includes(field.dataSource?.masterTypeSlug || ''),
+      )
+      .some((field) =>
+        this.valuesWithMasterLabels(field.id, values[field.id]).some((value) =>
+          /foreign|international|nri/i.test(String(value || '')),
+        ),
+      );
+  }
+  private valuesWithMasterLabels(fieldId: string, value: unknown) {
+    const values = Array.isArray(value) ? value : [value];
+    const options = Object.entries(this.optionsState())
+      .filter(([key]) => key.startsWith(`${fieldId}:`))
+      .flatMap(([, items]) => items);
+    return values.flatMap((item) => {
+      const option = options.find((candidate) => candidate._id === String(item ?? ''));
+      return option ? [item, option.name, option.label, option.metadata?.['code']] : [item];
+    });
+  }
+  private normalizedConditionValue(value: unknown) {
+    return String(value ?? '')
+      .trim()
+      .toLocaleLowerCase();
+  }
+  private allFormFields() {
+    return (this.form()?.sections || [])
+      .flatMap((section) => section.subsections)
+      .flatMap((subsection) => subsection.fields);
   }
   private allowedUploadMimeTypes(field: FormField) {
     return this.acceptFor(field).split(',');

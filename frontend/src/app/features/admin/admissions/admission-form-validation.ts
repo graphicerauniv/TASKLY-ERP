@@ -22,16 +22,17 @@ export function hasAdmissionValue(value: unknown): boolean {
 export function matchesAdmissionVisibility(
   condition: VisibilityCondition | null,
   values: Record<string, unknown>,
+  masterAliases: Record<string, string[]> = {},
 ): boolean {
   if (!condition) return true;
   const current = values[condition.fieldId];
+  const candidates = valuesWithAliases(current, masterAliases);
+  const expected = normalized(condition.value);
   if (condition.operator === 'not-equals') {
-    return String(current ?? '') !== String(condition.value ?? '');
+    return !candidates.some((value) => normalized(value) === expected);
   }
   if (condition.operator === 'contains') {
-    return Array.isArray(current)
-      ? current.includes(condition.value)
-      : String(current ?? '').includes(String(condition.value));
+    return candidates.some((value) => normalized(value).includes(expected));
   }
   if (condition.operator === 'is-empty') {
     return current == null || current === '' || (Array.isArray(current) && !current.length);
@@ -39,7 +40,7 @@ export function matchesAdmissionVisibility(
   if (condition.operator === 'is-not-empty') {
     return current != null && current !== '' && (!Array.isArray(current) || current.length > 0);
   }
-  return String(current ?? '') === String(condition.value ?? '');
+  return candidates.some((value) => normalized(value) === expected);
 }
 
 export function admissionValidationIssues(item: Admission | null): AdmissionValidationIssue[] {
@@ -61,10 +62,19 @@ export function admissionSectionIssues(
 function sectionIssues(item: Admission, section: FormSection): AdmissionValidationIssue[] {
   const issues: AdmissionValidationIssue[] = [];
   const globalValues = item.responses || {};
+  const aliases = admissionMasterAliases(item);
+  const foreignSelected = /foreign|international|nri/i.test(
+    `${item.studentTypeName || ''} ${item.domicileName || ''}`,
+  );
 
   for (const subsection of section.subsections.filter(
     (entry) =>
-      entry.isActive && matchesAdmissionVisibility(entry.visibilityCondition, globalValues),
+      entry.isActive &&
+      (matchesAdmissionVisibility(entry.visibilityCondition, globalValues, aliases) ||
+        (foreignSelected &&
+          entry.fields.some(
+            (field) => field.isActive && field.dataSource?.masterTypeSlug === 'country',
+          ))),
   )) {
     const fields = subsection.fields.filter((field) => field.isActive && field.isRequired);
     if (subsection.isRepeatable) {
@@ -83,7 +93,11 @@ function sectionIssues(item: Admission, section: FormSection): AdmissionValidati
       }
       entries.forEach((entry, entryIndex) => {
         fields
-          .filter((field) => matchesAdmissionVisibility(field.visibilityCondition, entry))
+          .filter(
+            (field) =>
+              matchesAdmissionVisibility(field.visibilityCondition, entry, aliases) ||
+              (foreignSelected && field.dataSource?.masterTypeSlug === 'country'),
+          )
           .forEach((field) => {
             if (hasAdmissionValue(entry[field.id])) return;
             issues.push({
@@ -104,7 +118,11 @@ function sectionIssues(item: Admission, section: FormSection): AdmissionValidati
     }
 
     fields
-      .filter((field) => matchesAdmissionVisibility(field.visibilityCondition, globalValues))
+      .filter(
+        (field) =>
+          matchesAdmissionVisibility(field.visibilityCondition, globalValues, aliases) ||
+          (foreignSelected && field.dataSource?.masterTypeSlug === 'country'),
+      )
       .forEach((field) => {
         if (hasAdmissionValue(globalValues[field.id])) return;
         issues.push({
@@ -122,4 +140,29 @@ function sectionIssues(item: Admission, section: FormSection): AdmissionValidati
   }
 
   return issues;
+}
+
+function admissionMasterAliases(item: Admission) {
+  const pairs = [
+    [item.domicileId, item.domicileName],
+    [item.studentTypeId, item.studentTypeName],
+    [item.countryId, item.countryName],
+    [item.feeTypeId, item.feeTypeName],
+  ];
+  return Object.fromEntries(
+    pairs
+      .filter((pair): pair is [string, string] => Boolean(pair[0] && pair[1]))
+      .map(([value, label]) => [value, [label]]),
+  );
+}
+
+function valuesWithAliases(value: unknown, masterAliases: Record<string, string[]>) {
+  const values = Array.isArray(value) ? value : [value];
+  return values.flatMap((item) => [item, ...(masterAliases[String(item)] || [])]);
+}
+
+function normalized(value: unknown) {
+  return String(value ?? '')
+    .trim()
+    .toLocaleLowerCase();
 }

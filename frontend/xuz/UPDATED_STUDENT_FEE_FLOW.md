@@ -45,12 +45,12 @@ Student ID: 26CSE4821
 
 The published admission form contains all required personal, academic, course, session, domicile, student-type, and document fields.
 
-The form must also contain a required **Fee payment mode** field with two options:
+The form must also contain a required **Fee Type** master-data dropdown with two mapped options:
 
 1. Yearly fee
 2. Semester-wise fee
 
-This choice is made while filling the admission form and is saved as part of the student's admission record.
+This custom-form field is the single source of truth for the student's payment choice. The Yearly master value maps to `feeFrequencyChoice = year`, and Semester maps to `feeFrequencyChoice = semester`. No separate hardcoded fee-mode card is displayed.
 
 The course and session fields continue to use configured master data. The current academic year should come from the form/course configuration and be saved with the admission.
 

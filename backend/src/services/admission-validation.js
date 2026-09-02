@@ -1,9 +1,19 @@
-export function validateSubmission(form, responses, repeatableResponses) {
+import { ObjectId } from 'bson';
+
+export function validateSubmission(form, responses, repeatableResponses, masterAliases = {}) {
   const errors = [];
   const allValues = { ...responses };
+  const foreignSelected = hasForeignSelection(form, allValues, masterAliases);
   for (const section of form.sections)
     for (const subsection of section.subsections) {
-      if (!subsection.isActive || !conditionMatches(subsection.visibilityCondition, allValues))
+      const containsCountry = subsection.fields.some(
+        (field) => field.isActive && field.dataSource?.masterTypeSlug === 'country',
+      );
+      if (
+        !subsection.isActive ||
+        (!conditionMatches(subsection.visibilityCondition, allValues, masterAliases) &&
+          !(foreignSelected && containsCountry))
+      )
         continue;
       if (subsection.isRepeatable) {
         const entries = repeatableResponses[subsection.id] || [];
@@ -12,34 +22,67 @@ export function validateSubmission(form, responses, repeatableResponses) {
             fieldId: subsection.id,
             message: `Add at least ${subsection.minEntries} ${subsection.name} record(s).`,
           });
-        entries.forEach((entry, index) => validateFields(subsection.fields, entry, errors, index));
-      } else validateFields(subsection.fields, responses, errors);
+        entries.forEach((entry, index) =>
+          validateFields(subsection.fields, entry, errors, index, masterAliases, foreignSelected),
+        );
+      } else
+        validateFields(subsection.fields, responses, errors, null, masterAliases, foreignSelected);
     }
   return errors;
 }
 
-export function conditionMatches(condition, values) {
+export function conditionMatches(condition, values, masterAliases = {}) {
   if (!condition) return true;
   const current = values[condition.fieldId];
+  const candidates = valuesWithAliases(current, masterAliases);
+  const expected = normalized(condition.value);
   switch (condition.operator) {
     case 'not-equals':
-      return current !== condition.value;
+      return !candidates.some((value) => normalized(value) === expected);
     case 'contains':
-      return Array.isArray(current)
-        ? current.includes(condition.value)
-        : String(current ?? '').includes(String(condition.value));
+      return candidates.some((value) => normalized(value).includes(expected));
     case 'is-empty':
       return current == null || current === '' || (Array.isArray(current) && !current.length);
     case 'is-not-empty':
       return current != null && current !== '' && (!Array.isArray(current) || current.length > 0);
     default:
-      return String(current ?? '') === String(condition.value ?? '');
+      return candidates.some((value) => normalized(value) === expected);
   }
 }
 
-function validateFields(fields, values, errors, entryIndex = null) {
+export async function masterValueAliases(database, responses, repeatableResponses = {}) {
+  const ids = new Map();
+  collectObjectIds(responses, ids);
+  collectObjectIds(repeatableResponses, ids);
+  if (!ids.size) return {};
+  const values = await database
+    .collection('masterValues')
+    .find({ _id: { $in: [...ids.values()] } })
+    .project({ name: 1, metadata: 1 })
+    .toArray();
+  return Object.fromEntries(
+    values.map((value) => [
+      String(value._id),
+      [value.name, value.metadata?.code, value.metadata?.periodType].filter(Boolean),
+    ]),
+  );
+}
+
+function validateFields(
+  fields,
+  values,
+  errors,
+  entryIndex = null,
+  masterAliases = {},
+  foreignSelected = false,
+) {
   for (const field of fields) {
-    if (!field.isActive || !conditionMatches(field.visibilityCondition, values)) continue;
+    const countryRequired = foreignSelected && field.dataSource?.masterTypeSlug === 'country';
+    if (
+      !field.isActive ||
+      (!conditionMatches(field.visibilityCondition, values, masterAliases) && !countryRequired)
+    )
+      continue;
     const value = values[field.id];
     const empty = value == null || value === '' || (Array.isArray(value) && !value.length);
     if (field.isRequired && empty)
@@ -71,4 +114,39 @@ function validateFields(fields, values, errors, entryIndex = null) {
       }
     }
   }
+}
+
+function hasForeignSelection(form, values, masterAliases) {
+  return form.sections
+    .flatMap((section) => section.subsections || [])
+    .flatMap((subsection) => subsection.fields || [])
+    .filter((field) => ['domicile', 'student-type'].includes(field.dataSource?.masterTypeSlug))
+    .some((field) =>
+      valuesWithAliases(values[field.id], masterAliases).some((value) =>
+        /foreign|international|nri/i.test(String(value || '')),
+      ),
+    );
+}
+
+function valuesWithAliases(value, masterAliases) {
+  const values = Array.isArray(value) ? value : [value];
+  return values.flatMap((item) => [item, ...(masterAliases[String(item)] || [])]);
+}
+
+function normalized(value) {
+  return String(value ?? '')
+    .trim()
+    .toLocaleLowerCase();
+}
+
+function collectObjectIds(value, output) {
+  if (Array.isArray(value)) {
+    for (const item of value) collectObjectIds(item, output);
+    return;
+  }
+  if (value && typeof value === 'object') {
+    for (const item of Object.values(value)) collectObjectIds(item, output);
+    return;
+  }
+  if (typeof value === 'string' && ObjectId.isValid(value)) output.set(value, new ObjectId(value));
 }
