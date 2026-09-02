@@ -401,6 +401,20 @@ feesRouter.post(
       force ? { ...schedule, publishAt: new Date() } : schedule,
       id(request.admin._id),
     );
+    let promoted = 0;
+    if (force && schedule.mode === 'year') {
+      for (const result of results) {
+        if (!result.published) continue;
+        const progression = await db().collection('studentProgressions').findOne({
+          studentAdmissionId: result.studentAdmissionId,
+          status: 'pending',
+        });
+        if (progression) {
+          await promoteStudentProgression(db(), progression._id, id(request.admin._id));
+          promoted += 1;
+        }
+      }
+    }
     const completed =
       results.length > 0 && results.every((item) => item.published || item.alreadyPublished);
     if (completed && (force || new Date(schedule.publishAt) <= new Date()))
@@ -416,6 +430,7 @@ feesRouter.post(
       alreadyPublished: results.filter((item) => item.published && item.alreadyPublished).length,
       scheduled: results.filter((item) => item.scheduled).length,
       completed,
+      promoted,
       results: results.map(serialize),
     });
   }),

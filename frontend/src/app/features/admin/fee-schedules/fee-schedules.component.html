@@ -140,18 +140,7 @@
                 <span class="erp-status">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
               </td>
               <td>
-                <button
-                  class="erp-button erp-button--primary"
-                  type="button"
-                  [disabled]="publishingId() || !item.isActive"
-                  (click)="publish(item)"
-                >
-                  {{ publishingId() === item._id ? 'Preparing…' : 'Prepare fee' }}</button
-                ><button
-                  class="erp-button erp-button--secondary"
-                  type="button"
-                  (click)="edit(item)"
-                >
+                <button class="erp-button erp-button--secondary" type="button" (click)="edit(item)">
                   Edit</button
                 ><button
                   class="erp-button erp-button--secondary"
@@ -174,7 +163,7 @@
                     [disabled]="publishingId()"
                     (click)="publish(item, true)"
                   >
-                    Show next year fee
+                    Change year & show fee
                   </button>
                 }
               </td>
