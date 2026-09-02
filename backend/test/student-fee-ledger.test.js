@@ -2,10 +2,25 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ObjectId } from 'bson';
 import {
+  feesForMode,
   feesForAcademicYear,
   selectMatchingCourseFees,
   totalsForEntries,
 } from '../src/services/student-fee-ledger.js';
+
+test('uses the yearly fee matrix as the source when a semester student has no separate semester rows', () => {
+  const yearly = { periodType: 'year', amount: 100_000 };
+  const unrelated = { periodType: 'hostel', amount: 20_000 };
+
+  assert.deepEqual(feesForMode([yearly, unrelated], 'semester'), [yearly]);
+});
+
+test('prefers explicitly configured semester rows over the yearly fee matrix', () => {
+  const yearly = { periodType: 'year', amount: 100_000 };
+  const semester = { periodType: 'semester', amount: 50_000 };
+
+  assert.deepEqual(feesForMode([yearly, semester], 'semester'), [semester]);
+});
 
 test('calculates Academic and Hostel Fee ledger totals from mapped fee heads', () => {
   assert.deepEqual(

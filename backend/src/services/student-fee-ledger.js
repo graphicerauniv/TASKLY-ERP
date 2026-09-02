@@ -293,9 +293,15 @@ export async function previewStudentFeeModes(database, admission) {
   };
 }
 
-function feesForMode(fees, feeFrequency) {
+export function feesForMode(fees, feeFrequency) {
   const exact = fees.filter((fee) => fee.periodType === feeFrequency);
-  return exact.length ? exact : fees.filter((fee) => !fee.periodType);
+  if (exact.length) return exact;
+  const legacy = fees.filter((fee) => !fee.periodType);
+  if (legacy.length) return legacy;
+  // The yearly course-fee matrix is also the source for semester billing.
+  // semesterFeeDecision() then includes one-time heads in the first semester
+  // and halves only heads explicitly marked as divisible semester-wise.
+  return feeFrequency === 'semester' ? fees.filter((fee) => fee.periodType === 'year') : [];
 }
 
 export function selectMatchingCourseFees(fees, context) {

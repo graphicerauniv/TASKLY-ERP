@@ -55,6 +55,15 @@
         </div>
       </div>
     }
+    @if (feeGenerationWarning()) {
+      <div class="erp-notice erp-notice--warning application-review__result" role="alert">
+        <svg lucideCircleAlert size="18" aria-hidden="true"></svg>
+        <div>
+          <strong>Fee ledger pending</strong>
+          <span>{{ feeGenerationWarning() }}</span>
+        </div>
+      </div>
+    }
 
     <header class="erp-card application-review__identity">
       <span class="application-review__identity-icon">

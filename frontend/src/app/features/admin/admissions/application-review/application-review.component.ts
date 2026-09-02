@@ -89,6 +89,7 @@ export class ApplicationReviewComponent {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly resultMessage = signal('');
+  readonly feeGenerationWarning = signal('');
   readonly activationOpen = signal(false);
   readonly activationSaving = signal(false);
   readonly activationError = signal('');
@@ -269,12 +270,24 @@ export class ApplicationReviewComponent {
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ item: updated }) => {
+        next: ({ item: updated, feeGeneration }) => {
           this.item.set({ ...item, ...updated });
           this.activationSaving.set(false);
           this.activationOpen.set(false);
+          const student = item.studentName || admissionReference(item);
+          const academicCreated = feeGeneration?.createdKinds?.includes('academic');
+          const academicFailure = feeGeneration?.skippedKinds?.find(
+            (entry) => entry.kind === 'academic',
+          )?.reason;
           this.resultMessage.set(
-            `${item.studentName || admissionReference(item)} was approved and activated successfully.`,
+            academicCreated
+              ? `${student} was approved and activated, and the Academic Fee ledger was created successfully.`
+              : `${student} was approved and activated successfully.`,
+          );
+          this.feeGenerationWarning.set(
+            academicCreated
+              ? ''
+              : `The Academic Fee ledger was not created: ${feeGeneration?.reason || academicFailure || 'no matching fee configuration was available'}. Configure the fee and use Create Ledger from Approved Students; re-approval is not required.`,
           );
         },
         error: (error) => {

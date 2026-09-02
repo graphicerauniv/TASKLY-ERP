@@ -136,7 +136,16 @@ export class ApiService {
       feeFrequency?: 'year' | 'semester';
     },
   ) {
-    return this.http.post<{ item: Admission }>(`${API_BASE_URL}/admissions/${id}/approve`, body);
+    return this.http.post<{
+      item: Admission;
+      feeGeneration: {
+        success: boolean;
+        createdKinds: Array<'academic' | 'hostel'>;
+        skippedKinds: Array<{ kind: 'academic' | 'hostel'; reason: string }>;
+        reason?: string;
+        preparedNextPeriod?: string | null;
+      };
+    }>(`${API_BASE_URL}/admissions/${id}/approve`, body);
   }
   setAdmissionFeePeriod(
     id: string,

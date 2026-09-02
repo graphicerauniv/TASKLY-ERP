@@ -15,7 +15,7 @@
     [ngModel]="modelValue()"
     (ngModelChange)="modelChanged.emit($event)"
   ></textarea>
-} @else if (['dropdown', 'multi-select'].includes(field().type)) {
+} @else if (field().type === 'dropdown') {
   @if (field().searchable) {
     <input
       class="erp-dynamic-field__option-search"
@@ -28,11 +28,37 @@
   <select
     [id]="controlId()"
     [attr.aria-label]="field().name"
-    [multiple]="field().type === 'multi-select'"
     [ngModel]="modelValue()"
     (ngModelChange)="modelChanged.emit($event)"
   >
-    <option [ngValue]="field().type === 'multi-select' ? [] : ''">Select {{ field().name }}</option>
+    <option value="">Select {{ field().name }}</option>
+    @if (field().dataSource) {
+      @for (option of options(); track option._id) {
+        <option [value]="option._id">{{ option.label || option.name }}</option>
+      }
+    } @else {
+      @for (option of field().options; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    }
+  </select>
+} @else if (field().type === 'multi-select') {
+  @if (field().searchable) {
+    <input
+      class="erp-dynamic-field__option-search"
+      type="search"
+      placeholder="Search options..."
+      aria-label="Search options"
+      (input)="requestSearch($event)"
+    />
+  }
+  <select
+    multiple
+    [id]="controlId()"
+    [attr.aria-label]="field().name"
+    [ngModel]="modelValue()"
+    (ngModelChange)="modelChanged.emit($event)"
+  >
     @if (field().dataSource) {
       @for (option of options(); track option._id) {
         <option [value]="option._id">{{ option.label || option.name }}</option>
