@@ -160,6 +160,13 @@
                 >
                   {{ item.isActive ? 'Disable' : 'Enable' }}
                 </button>
+                <button
+                  class="erp-button erp-button--danger"
+                  type="button"
+                  (click)="requestDelete(item)"
+                >
+                  Delete schedule
+                </button>
               </td>
             </tr>
           } @empty {
@@ -172,3 +179,14 @@
     </div>
   </section>
 </erp-admin-page>
+
+<erp-confirm-dialog
+  [open]="!!deleteTarget()"
+  eyebrow="Fee publication"
+  title="Delete this publication schedule?"
+  [message]="'This removes the schedule rule. Existing ledgers, payments and receipts will be preserved.'"
+  confirmLabel="Delete schedule"
+  [destructive]="true"
+  (confirmed)="deleteSchedule()"
+  (cancelled)="deleteTarget.set(null)"
+/>

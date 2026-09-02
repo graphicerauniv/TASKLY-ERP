@@ -49,7 +49,7 @@ export async function generateStudentFeeLedgers(database, admission, createdBy, 
   let preparedNextPeriod = null;
   if (
     !options.academicOnly &&
-    options.prepareSemesterPair !== false &&
+    options.prepareSemesterPair === true &&
     admission.feeFrequency === 'semester'
   ) {
     const prepared = await progressStudentFee(database, admission, 'semester', createdBy, {

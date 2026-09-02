@@ -385,7 +385,7 @@ Students see the resulting amounts but do not see internal priority numbers.
 
 ## 19. Future semester fee publication
 
-For a semester-wise student, the next semester ledger was already prepared when the fee account was created.
+For a semester-wise student, the next semester ledger is prepared only after an administrator creates a Fee Change & Publication schedule.
 
 The administrator configures the publication schedule using:
 

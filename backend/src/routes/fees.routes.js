@@ -404,6 +404,23 @@ feesRouter.post(
   }),
 );
 
+feesRouter.delete(
+  '/fee-schedules/:scheduleId',
+  asyncHandler(async (request, response) => {
+    const scheduleId = id(request.params.scheduleId, 'scheduleId');
+    const schedule = await db().collection('feeSchedules').findOne({ _id: scheduleId });
+    if (!schedule) return response.status(404).json({ message: 'Fee schedule was not found.' });
+    await db().collection('feeSchedules').deleteOne({ _id: scheduleId });
+    await db()
+      .collection('studentFeeLedgers')
+      .updateMany(
+        { feeScheduleId: scheduleId },
+        { $unset: { feeScheduleId: '' }, $set: { updatedAt: new Date() } },
+      );
+    response.json({ deleted: true });
+  }),
+);
+
 feesRouter.post(
   '/scholarships',
   asyncHandler(async (request, response) => {

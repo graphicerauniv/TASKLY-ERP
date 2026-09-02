@@ -630,6 +630,9 @@ export class ApiService {
   updateFeeSchedule(id: string, body: Partial<FeeSchedule>) {
     return this.http.patch<{ item: FeeSchedule }>(`${API_BASE_URL}/fees/fee-schedules/${id}`, body);
   }
+  deleteFeeSchedule(id: string) {
+    return this.http.delete<{ deleted: boolean }>(`${API_BASE_URL}/fees/fee-schedules/${id}`);
+  }
   publishFeeSchedule(id: string) {
     return this.http.post<{
       studentsProcessed: number;

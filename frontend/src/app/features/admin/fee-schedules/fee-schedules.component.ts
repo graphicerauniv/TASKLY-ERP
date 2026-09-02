@@ -5,10 +5,11 @@ import { forkJoin } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
 import { FeeSchedule, MasterValue } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'erp-fee-schedules',
-  imports: [AdminPageComponent, CurrencyPipe, DatePipe, FormsModule],
+  imports: [AdminPageComponent, ConfirmDialogComponent, CurrencyPipe, DatePipe, FormsModule],
   templateUrl: './fee-schedules.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -23,6 +24,7 @@ export class FeeSchedulesComponent {
   readonly editingId = signal<string | null>(null);
   readonly error = signal('');
   readonly message = signal('');
+  readonly deleteTarget = signal<FeeSchedule | null>(null);
   universityId = '';
   collegeId = '';
   academicSession = '';
@@ -157,6 +159,30 @@ export class FeeSchedulesComponent {
     this.api.updateFeeSchedule(item._id, { isActive: !item.isActive }).subscribe({
       next: () => this.load(),
       error: (error) => this.error.set(error.error?.message || 'Could not update fee schedule.'),
+    });
+  }
+
+  requestDelete(item: FeeSchedule) {
+    this.deleteTarget.set(item);
+  }
+
+  deleteSchedule() {
+    const item = this.deleteTarget();
+    if (!item || this.saving()) return;
+    this.deleteTarget.set(null);
+    this.saving.set(true);
+    this.api.deleteFeeSchedule(item._id).subscribe({
+      next: () => {
+        this.message.set(
+          'Publication schedule deleted. Existing ledgers and payments were preserved.',
+        );
+        this.saving.set(false);
+        this.load();
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Could not delete publication schedule.');
+        this.saving.set(false);
+      },
     });
   }
 
