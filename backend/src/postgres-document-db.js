@@ -76,6 +76,7 @@ const DOMAIN_TABLES = Object.freeze({
       'mode',
       'targetNumber',
       'publishAt',
+      'nextPeriodDeadline',
       'previousPeriodDeadline',
       'dailyFineAmount',
       'maxFineAmount',

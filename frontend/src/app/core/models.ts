@@ -339,9 +339,9 @@ export interface FeeSchedule {
   collegeName: string;
   academicSession: string;
   mode: 'semester' | 'year';
-  targetNumber: number;
+  targetNumber?: number | null;
   publishAt: string;
-  previousPeriodDeadline: string;
+  nextPeriodDeadline: string;
   dailyFineAmount: number;
   maxFineAmount: number;
   isActive: boolean;

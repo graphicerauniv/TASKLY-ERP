@@ -65,15 +65,17 @@ export async function publishScheduleForStudent(database, schedule, admission, a
       reason: `Could not create ${target.periodLabel}.`,
     };
 
+  const visibleFrom = new Date(schedule.publishAt);
+  const shouldPublish = visibleFrom <= new Date();
   const wasPublished = ledger.visibilityStatus !== 'hidden';
-  if (!wasPublished) {
+  if (!wasPublished && shouldPublish) {
     const publishedAt = new Date();
     await database.collection('studentFeeLedgers').updateOne(
       { _id: ledger._id },
       {
         $set: {
           visibilityStatus: 'published',
-          visibleFrom: schedule.publishAt,
+          visibleFrom,
           publishedAt,
           feeScheduleId: schedule._id,
           updatedAt: publishedAt,
@@ -81,35 +83,30 @@ export async function publishScheduleForStudent(database, schedule, admission, a
       },
     );
   }
-  const previous = await database.collection('studentFeeLedgers').findOne({
-    studentAdmissionId: admission._id,
-    kind: 'academic',
-    periodKey: target.previousPeriodKey,
-    status: 'active',
-  });
-  if (previous && schedule.previousPeriodDeadline) {
+  const nextPeriodDeadline = schedule.nextPeriodDeadline || schedule.previousPeriodDeadline;
+  if (nextPeriodDeadline) {
     const enabled =
       Number(schedule.dailyFineAmount || 0) > 0 && Number(schedule.maxFineAmount || 0) > 0;
     const penalty = enabled
       ? {
           enabled: true,
-          dueDate: String(schedule.previousPeriodDeadline).slice(0, 10),
+          dueDate: String(nextPeriodDeadline).slice(0, 10),
           dailyAmount: Number(schedule.dailyFineAmount),
           maxAmount: Number(schedule.maxFineAmount),
         }
       : { enabled: false };
     await database.collection('studentFeeLedgers').updateOne(
-      { _id: previous._id },
+      { _id: ledger._id },
       {
         $set: {
           penalty,
           fineScheduleId: schedule._id,
-          previousPeriodDeadline: schedule.previousPeriodDeadline,
+          nextPeriodDeadline,
           updatedAt: new Date(),
         },
       },
     );
-    await refreshLedgerPenalty(database, { ...previous, penalty });
+    await refreshLedgerPenalty(database, { ...ledger, penalty });
   }
   await applyAvailableStudentCredit(database, admission._id, 'academic');
   return {
@@ -118,7 +115,8 @@ export async function publishScheduleForStudent(database, schedule, admission, a
     studentName: admission.studentName,
     ledgerId: ledger._id,
     periodLabel: target.periodLabel,
-    published: true,
+    published: shouldPublish,
+    scheduled: !shouldPublish,
     alreadyPublished: wasPublished,
   };
 }
@@ -126,11 +124,9 @@ export async function publishScheduleForStudent(database, schedule, admission, a
 export function targetForSchedule(schedule, admission) {
   const currentYear = Number(admission.currentAcademicYear || 1);
   const currentSemester = Number(admission.currentSemester || currentYear * 2 - 1);
-  const targetNumber = Number(schedule.targetNumber);
   if (schedule.mode === 'semester') {
     if (admission.feeFrequency !== 'semester') return null;
     const nextSemester = currentSemester + 1;
-    if (nextSemester !== targetNumber) return null;
     return {
       progressionMode: 'semester',
       periodKey: `semester:${nextSemester}`,
@@ -141,7 +137,7 @@ export function targetForSchedule(schedule, admission) {
   if (admission.feeFrequency === 'semester') {
     const nextSemester = currentSemester + 1;
     const nextYear = Math.ceil(nextSemester / 2);
-    if (nextSemester % 2 !== 1 || nextYear !== targetNumber) return null;
+    if (nextSemester % 2 !== 1) return null;
     return {
       progressionMode: 'semester',
       periodKey: `semester:${nextSemester}`,
@@ -150,7 +146,6 @@ export function targetForSchedule(schedule, admission) {
     };
   }
   const nextYear = currentYear + 1;
-  if (nextYear !== targetNumber) return null;
   return {
     progressionMode: 'year',
     periodKey: `year:${nextYear}`,

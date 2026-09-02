@@ -27,13 +27,14 @@ export class FeeSchedulesComponent {
   collegeId = '';
   academicSession = '';
   mode: 'semester' | 'year' = 'semester';
-  targetNumber = 2;
   publishAt = '';
-  previousPeriodDeadline = '';
+  nextPeriodDeadline = '';
   dailyFineAmount: number | null = null;
   maxFineAmount: number | null = null;
 
-  constructor() { this.load(); }
+  constructor() {
+    this.load();
+  }
 
   readonly collegeOptions = () =>
     this.universityId
@@ -64,8 +65,16 @@ export class FeeSchedulesComponent {
 
   save() {
     if (this.saving()) return;
-    if (!this.universityId || !this.collegeId || !this.academicSession.trim() || !this.publishAt || !this.previousPeriodDeadline) {
-      this.error.set('University, college, session, publication time and previous-period deadline are required.');
+    if (
+      !this.universityId ||
+      !this.collegeId ||
+      !this.academicSession.trim() ||
+      !this.publishAt ||
+      !this.nextPeriodDeadline
+    ) {
+      this.error.set(
+        'University, college, session, visibility time and next-fee deadline are required.',
+      );
       return;
     }
     this.saving.set(true);
@@ -75,9 +84,8 @@ export class FeeSchedulesComponent {
       collegeId: this.collegeId,
       academicSession: this.academicSession.trim(),
       mode: this.mode,
-      targetNumber: Number(this.targetNumber),
       publishAt: new Date(this.publishAt).toISOString(),
-      previousPeriodDeadline: new Date(this.previousPeriodDeadline).toISOString(),
+      nextPeriodDeadline: new Date(this.nextPeriodDeadline).toISOString(),
       dailyFineAmount: Number(this.dailyFineAmount || 0),
       maxFineAmount: Number(this.maxFineAmount || 0),
       isActive: true,
@@ -87,12 +95,19 @@ export class FeeSchedulesComponent {
       : this.api.createFeeSchedule(body);
     request.subscribe({
       next: () => {
-        this.message.set(this.editingId() ? 'Fee publication schedule updated.' : 'Fee publication schedule created.');
+        this.message.set(
+          this.editingId()
+            ? 'Fee publication schedule updated.'
+            : 'Fee publication schedule created.',
+        );
         this.saving.set(false);
         this.resetForm();
         this.load();
       },
-      error: (error) => { this.error.set(error.error?.message || 'Could not create fee schedule.'); this.saving.set(false); },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Could not create fee schedule.');
+        this.saving.set(false);
+      },
     });
   }
 
@@ -102,9 +117,8 @@ export class FeeSchedulesComponent {
     this.collegeId = item.collegeId;
     this.academicSession = item.academicSession;
     this.mode = item.mode;
-    this.targetNumber = item.targetNumber;
     this.publishAt = this.localDateTime(item.publishAt);
-    this.previousPeriodDeadline = this.localDateTime(item.previousPeriodDeadline);
+    this.nextPeriodDeadline = this.localDateTime(item.nextPeriodDeadline);
     this.dailyFineAmount = item.dailyFineAmount;
     this.maxFineAmount = item.maxFineAmount;
     this.error.set('');
@@ -115,9 +129,8 @@ export class FeeSchedulesComponent {
     this.editingId.set(null);
     this.academicSession = '';
     this.mode = 'semester';
-    this.targetNumber = 2;
     this.publishAt = '';
-    this.previousPeriodDeadline = '';
+    this.nextPeriodDeadline = '';
     this.dailyFineAmount = null;
     this.maxFineAmount = null;
   }
@@ -127,11 +140,16 @@ export class FeeSchedulesComponent {
     this.publishingId.set(item._id);
     this.error.set('');
     this.api.publishFeeSchedule(item._id).subscribe({
-      next: ({ studentsProcessed, published, alreadyPublished }) => {
-        this.message.set(`${published} fee ledger(s) newly published; ${alreadyPublished} were already visible (${studentsProcessed} students checked). Academic semesters and years were not changed.`);
+      next: ({ studentsProcessed, published, alreadyPublished, scheduled }) => {
+        this.message.set(
+          `${published} fee ledger(s) newly visible; ${scheduled} scheduled for the configured visibility time; ${alreadyPublished} were already visible (${studentsProcessed} students checked). Academic semesters and years were not changed.`,
+        );
         this.publishingId.set(null);
       },
-      error: (error) => { this.error.set(error.error?.message || 'Could not publish scheduled fees.'); this.publishingId.set(null); },
+      error: (error) => {
+        this.error.set(error.error?.message || 'Could not publish scheduled fees.');
+        this.publishingId.set(null);
+      },
     });
   }
 

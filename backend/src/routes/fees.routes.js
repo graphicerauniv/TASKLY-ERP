@@ -205,9 +205,10 @@ const feeScheduleSchema = z.object({
   collegeId: z.string().min(1),
   academicSession: z.string().trim().min(4).max(30),
   mode: z.enum(['semester', 'year']),
-  targetNumber: z.coerce.number().int().min(2).max(20),
+  targetNumber: z.coerce.number().int().min(2).max(20).nullable().optional(),
   publishAt: z.coerce.date(),
-  previousPeriodDeadline: z.coerce.date(),
+  nextPeriodDeadline: z.coerce.date().optional(),
+  previousPeriodDeadline: z.coerce.date().optional(),
   dailyFineAmount: amount.optional().default(0),
   maxFineAmount: amount.optional().default(0),
   isActive: z.boolean().optional().default(true),
@@ -293,7 +294,14 @@ feesRouter.get(
       .find(filter)
       .sort({ academicSession: -1, mode: 1, targetNumber: 1 })
       .toArray();
-    response.json({ items: items.map(serialize) });
+    response.json({
+      items: items.map((item) =>
+        serialize({
+          ...item,
+          nextPeriodDeadline: item.nextPeriodDeadline || item.previousPeriodDeadline,
+        }),
+      ),
+    });
   }),
 );
 
@@ -301,6 +309,9 @@ feesRouter.post(
   '/fee-schedules',
   asyncHandler(async (request, response) => {
     const data = feeScheduleSchema.parse(request.body);
+    data.nextPeriodDeadline ||= data.previousPeriodDeadline;
+    if (!data.nextPeriodDeadline)
+      return response.status(422).json({ message: 'The upcoming fee deadline is required.' });
     const [university, college] = await Promise.all([
       masterValue(data.universityId, 'university', 'universityId'),
       masterValue(data.collegeId, 'college', 'collegeId'),
@@ -325,7 +336,7 @@ feesRouter.post(
       collegeId: college._id,
       academicSession: data.academicSession,
       mode: data.mode,
-      targetNumber: data.targetNumber,
+      targetNumber: null,
     });
     if (duplicate)
       return response
@@ -346,8 +357,12 @@ feesRouter.patch(
       ...current,
       universityId: String(current.universityId),
       collegeId: String(current.collegeId),
+      nextPeriodDeadline: current.nextPeriodDeadline || current.previousPeriodDeadline,
       ...request.body,
     });
+    parsed.nextPeriodDeadline ||= parsed.previousPeriodDeadline;
+    if (!parsed.nextPeriodDeadline)
+      return response.status(422).json({ message: 'The upcoming fee deadline is required.' });
     const [university, college] = await Promise.all([
       masterValue(String(parsed.universityId), 'university', 'universityId'),
       masterValue(String(parsed.collegeId), 'college', 'collegeId'),
@@ -383,6 +398,7 @@ feesRouter.post(
       studentsProcessed: results.length,
       published: results.filter((item) => item.published && !item.alreadyPublished).length,
       alreadyPublished: results.filter((item) => item.published && item.alreadyPublished).length,
+      scheduled: results.filter((item) => item.scheduled).length,
       results: results.map(serialize),
     });
   }),

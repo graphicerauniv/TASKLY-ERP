@@ -635,6 +635,7 @@ export class ApiService {
       studentsProcessed: number;
       published: number;
       alreadyPublished: number;
+      scheduled: number;
     }>(`${API_BASE_URL}/fees/fee-schedules/${id}/publish`, {});
   }
   createScholarship(body: Pick<Scholarship, 'name' | 'valueMode' | 'type' | 'value' | 'isActive'>) {

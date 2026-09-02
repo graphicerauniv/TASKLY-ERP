@@ -391,19 +391,20 @@ The administrator configures the publication schedule using:
 
 - University/college
 - Academic session
-- Target semester
+- Transition type (next semester or next academic year)
 - Publication date and time
-- Previous-semester payment deadline
+- Upcoming-fee deadline
 - Daily penalty
 - Maximum penalty
 
-At publication time:
+When the schedule is prepared:
 
-- The prepared next-semester ledger becomes visible and payable.
+- The next-period ledger is created or located but remains hidden until the publication date/time.
+- At the publication date/time, it becomes visible and payable.
 - The student remains academically in the current semester.
 - Existing excess credit is automatically applied.
-- Unpaid previous-semester dues remain visible.
-- Penalty begins on previous-semester dues after their configured deadline.
+- The configured deadline belongs to this upcoming fee.
+- Penalty begins on this upcoming fee after its deadline.
 
 Example:
 
@@ -429,9 +430,9 @@ For a semester-wise student moving from Semester 2 to Semester 3, the next fee r
 
 ## 21. Penalty flow
 
-When a next semester/year fee is published, the previous period can receive a payment deadline.
+When a next semester/year fee is scheduled, that upcoming period receives its own payment deadline.
 
-If an old balance remains after that deadline:
+If the upcoming period remains unpaid after that deadline:
 
 ```text
 Penalty = overdue days × daily penalty amount
@@ -440,7 +441,7 @@ Penalty = overdue days × daily penalty amount
 The penalty:
 
 - Stops at the configured maximum
-- Stops increasing when the relevant old balance is fully paid
+- Stops increasing when the relevant upcoming balance is fully paid
 - Appears with the combined outstanding dues
 - Is paid before ordinary fee heads
 
