@@ -74,9 +74,9 @@ export class StudentScholarshipsComponent {
         !assigned.has(item._id),
     );
   });
-  readonly selectedScholarship = computed(() =>
-    this.availableScholarships().find((item) => item._id === this.scholarshipId),
-  );
+  selectedScholarship() {
+    return this.availableScholarships().find((item) => item._id === this.scholarshipId);
+  }
   readonly removingAssignment = computed(() =>
     this.assignments().find((item) => item._id === this.removingId()),
   );
@@ -157,27 +157,29 @@ export class StudentScholarshipsComponent {
     this.saving.set(true);
     this.error.set('');
     this.message.set('');
-    this.api.assignStudentScholarship(this.studentAdmissionId, {
-      scholarshipId: this.scholarshipId,
-      type: customValue ? this.customScholarshipType : undefined,
-      value: customValue ? value : undefined,
-      recurring: this.scholarshipRecurring,
-      targetLedgerId: this.scholarshipRecurring ? undefined : this.scholarshipLedgerId,
-    }).subscribe({
-      next: () => {
-        this.message.set('Scholarship assigned and Tuition Fee updated.');
-        this.scholarshipId = '';
-        this.customScholarshipType = 'percentage';
-        this.customScholarshipValue = null;
-        this.scholarshipRecurring = true;
-        this.saving.set(false);
-        this.load();
-      },
-      error: (error) => {
-        this.error.set(error.error?.message || 'Could not assign the scholarship.');
-        this.saving.set(false);
-      },
-    });
+    this.api
+      .assignStudentScholarship(this.studentAdmissionId, {
+        scholarshipId: this.scholarshipId,
+        type: customValue ? this.customScholarshipType : undefined,
+        value: customValue ? value : undefined,
+        recurring: this.scholarshipRecurring,
+        targetLedgerId: this.scholarshipRecurring ? undefined : this.scholarshipLedgerId,
+      })
+      .subscribe({
+        next: () => {
+          this.message.set('Scholarship assigned and Tuition Fee updated.');
+          this.scholarshipId = '';
+          this.customScholarshipType = 'percentage';
+          this.customScholarshipValue = null;
+          this.scholarshipRecurring = true;
+          this.saving.set(false);
+          this.load();
+        },
+        error: (error) => {
+          this.error.set(error.error?.message || 'Could not assign the scholarship.');
+          this.saving.set(false);
+        },
+      });
   }
 
   remove(item: StudentScholarship) {
