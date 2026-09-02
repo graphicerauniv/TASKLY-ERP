@@ -577,7 +577,7 @@
                     [disabled]="feeSaving()"
                     (click)="requestFeeDeletion(item)"
                   >
-                    Delete fee account
+                    Delete due
                   </button>
                 }
               </div>
@@ -602,13 +602,13 @@
 <erp-confirm-dialog
   [open]="!!feeDeleteStudent()"
   eyebrow="Fee account"
-  title="Delete this fee account?"
+  title="Delete this due?"
   [message]="
-    'This removes every fee ledger for ' +
+    'This removes every active fee due for ' +
     (feeDeleteStudent()?.studentName || feeDeleteStudent()?.studentId || 'this student') +
     '. This action cannot be undone.'
   "
-  confirmLabel="Delete fee account"
+  confirmLabel="Delete due"
   [destructive]="true"
   (confirmed)="confirmFeeDeletion()"
   (cancelled)="feeDeleteStudent.set(null)"

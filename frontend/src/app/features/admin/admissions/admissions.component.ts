@@ -268,6 +268,14 @@ export class AdmissionsComponent {
         label: 'Make offline payment',
         icon: 'fees',
       });
+      if (item.feeLedgerKinds?.length) {
+        actions.push({
+          id: 'delete-due',
+          label: 'Delete due',
+          icon: 'delete',
+          destructive: true,
+        });
+      }
       actions.push({
         id: 'scholarships',
         label: 'Scholarships & discounts',
@@ -289,6 +297,7 @@ export class AdmissionsComponent {
     if (action === 'offline-payment') {
       void this.router.navigate(['/admin/admissions', item._id, 'offline-payment']);
     }
+    if (action === 'delete-due') this.requestFeeDeletion(item);
   }
 
   openPreview(item: Admission, event?: Event) {
