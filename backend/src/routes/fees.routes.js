@@ -137,6 +137,7 @@ const progressionSchema = z.object({
 });
 const scholarshipBaseSchema = z.object({
   name: z.string().trim().min(2).max(120),
+  priority: z.coerce.number().int().min(1).max(9999).optional().default(9999),
   valueMode: z.enum(['preconfigured', 'custom']).optional().default('preconfigured'),
   type: z.enum(['percentage', 'fixed']).nullish(),
   value: z.coerce.number().positive().max(1_000_000_000).nullish(),
@@ -323,6 +324,7 @@ feesRouter.post(
     const now = new Date();
     const document = {
       ...data,
+      priority: Number(data.priority || 9999),
       universityId: university._id,
       universityName: university.name,
       collegeId: college._id,

@@ -79,6 +79,7 @@
               <th>Value source</th>
               <th>Calculation</th>
               <th>Value</th>
+              <th>Priority</th>
               <th>Applied to</th>
               <th>Availability</th>
               <th class="erp-table-shell__actions">Actions</th>
@@ -117,6 +118,7 @@
                   </strong>
                 </td>
                 <td>Tuition Fee</td>
+                <td>{{ item.priority || 9999 }}</td>
                 <td>
                   <span class="scholarship-status" [class.is-inactive]="!item.isActive">{{
                     item.isActive ? 'Available' : 'Inactive'
@@ -131,7 +133,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="7" class="erp-empty-state">
+                <td colspan="8" class="erp-empty-state">
                   {{
                     loading()
                       ? 'Loading scholarships…'
@@ -164,6 +166,11 @@
               maxlength="120"
               placeholder="Merit Scholarship"
           /></label>
+          <label
+            ><span>Priority *</span
+            ><input class="erp-control" type="number" min="1" step="1" [(ngModel)]="priority" />
+            <small>Lower numbers are applied first (admin only).</small></label
+          >
           <label
             ><span>Value configuration *</span
             ><select class="erp-control" [(ngModel)]="valueMode">

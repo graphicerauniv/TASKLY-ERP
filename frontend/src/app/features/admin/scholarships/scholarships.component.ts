@@ -48,6 +48,7 @@ export class ScholarshipsComponent {
   search = '';
 
   name = '';
+  priority = 9999;
   valueMode: 'preconfigured' | 'custom' = 'preconfigured';
   type: 'percentage' | 'fixed' = 'percentage';
   value: number | null = null;
@@ -134,6 +135,7 @@ export class ScholarshipsComponent {
     this.message.set('');
     const body = {
       name,
+      priority: Number(this.priority || 9999),
       valueMode: this.valueMode,
       type: this.valueMode === 'preconfigured' ? this.type : null,
       value: this.valueMode === 'preconfigured' ? value : null,
@@ -163,6 +165,7 @@ export class ScholarshipsComponent {
   private populateForm(item: Scholarship) {
     this.editingId.set(item._id);
     this.name = item.name;
+    this.priority = Number(item.priority || 9999);
     this.valueMode = item.valueMode || 'preconfigured';
     this.type = item.type || 'percentage';
     this.value = Number(item.value || 0) || null;
@@ -188,6 +191,7 @@ export class ScholarshipsComponent {
   private resetForm() {
     this.editingId.set(null);
     this.name = '';
+    this.priority = 9999;
     this.valueMode = 'preconfigured';
     this.type = 'percentage';
     this.value = null;

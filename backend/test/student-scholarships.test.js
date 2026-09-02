@@ -91,13 +91,13 @@ test('applies multiple scholarships only against Tuition Fee and caps their tota
   const discounts = entries.filter((entry) => entry.isScholarship);
   assert.deepEqual(
     discounts.map((entry) => entry.amount),
-    [25_000, 75_000],
+    [25_000, 25_000],
   );
   assert.equal(
     discounts.reduce((sum, entry) => sum + entry.amount, 0),
-    100_000,
+    50_000,
   );
-  assert.equal(entries.find((entry) => entry.feeHeadName === 'Tuition Fee').balanceAmount, 0);
+  assert.equal(entries.find((entry) => entry.feeHeadName === 'Tuition Fee').balanceAmount, 50_000);
   assert.equal(
     entries.find((entry) => entry.feeHeadName === 'Admission Fee').balanceAmount,
     15_000,

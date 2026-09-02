@@ -43,7 +43,9 @@ export async function scholarshipEntriesForPeriod(database, admission, context, 
 
 export function applyScholarshipsToEntries(sourceEntries, assignments, context) {
   let entries = sourceEntries.filter((entry) => !entry.isScholarship && !entry.isOneTimeDiscount);
-  const eligible = assignments.filter((assignment) => assignmentApplies(assignment, context));
+  const eligible = assignments
+    .filter((assignment) => assignmentApplies(assignment, context))
+    .sort((left, right) => Number(left.priority || 9999) - Number(right.priority || 9999));
   const tuitionEntries = entries.filter(
     (entry) => entry.category === 'fee' && TUITION_PATTERN.test(entry.feeHeadName || ''),
   );
@@ -52,6 +54,9 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
   );
   if (!tuitionAmount) return entries.filter((entry) => entry.category !== 'discount');
   let availableTuition = tuitionAmount;
+  // Scholarships are limited to half of the original tuition fee. Discounts and
+  // the separate yearly-payment discount are not part of this scholarship cap.
+  let availableScholarship = roundMoney(tuitionAmount * 0.5);
   entries = entries
     .map((entry) => {
       if (entry.category !== 'discount') return entry;
@@ -77,7 +82,7 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
   const adjustmentEntries = [];
 
   for (const assignment of eligible) {
-    if (availableTuition <= 0) break;
+    if (availableTuition <= 0 || availableScholarship <= 0) break;
     const isAnnualDiscount = assignment.isSystemAnnualDiscount === true;
     const isOneTimeDiscount = assignment.adjustmentKind === 'discount';
     const isOneTimeScholarship = !isOneTimeDiscount && assignment.recurring === false;
@@ -88,7 +93,10 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
           (!isOneTimeDiscount && !isOneTimeScholarship && context.feeFrequency === 'semester'
             ? 2
             : 1);
-    const appliedAmount = roundMoney(Math.min(availableTuition, configuredAmount));
+    const scholarshipCapped = !isOneTimeDiscount && !isAnnualDiscount;
+    const appliedAmount = roundMoney(
+      Math.min(availableTuition, scholarshipCapped ? availableScholarship : configuredAmount, configuredAmount),
+    );
     if (appliedAmount <= 0) continue;
     adjustmentEntries.push({
       feeHeadId: isAnnualDiscount
@@ -137,6 +145,7 @@ export function applyScholarshipsToEntries(sourceEntries, assignments, context) 
         isOneTimeDiscount || isAnnualDiscount ? undefined : Number(assignment.value || 0),
     });
     availableTuition = roundMoney(availableTuition - appliedAmount);
+    if (scholarshipCapped) availableScholarship = roundMoney(availableScholarship - appliedAmount);
   }
   return allocateDiscountsToTuition([...entries, ...adjustmentEntries]).sort(compareLedgerEntries);
 }
@@ -280,6 +289,7 @@ export function scholarshipAssignmentDocument(
     studentName: admission.studentName,
     scholarshipId: scholarship._id,
     scholarshipName: scholarship.name,
+    priority: Number(scholarship.priority || 9999),
     type: usesCustomValue ? assignment.type : scholarship.type,
     value: Number(usesCustomValue ? assignment.value : scholarship.value),
     startAcademicYear: Number(admission.currentAcademicYear || 1),

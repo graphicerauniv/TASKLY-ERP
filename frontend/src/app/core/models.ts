@@ -352,6 +352,7 @@ export interface FeeSchedule {
 export interface Scholarship {
   _id: string;
   name: string;
+  priority: number;
   valueMode: 'preconfigured' | 'custom';
   type?: 'percentage' | 'fixed' | null;
   value?: number | null;
