@@ -32,6 +32,18 @@ import {
   StudentDiscount,
   FeeSchedule,
   OfflinePaymentStudent,
+  AcademicGroup,
+  AcademicSection,
+  AcademicSet,
+  AcademicSubject,
+  AcademicFaculty,
+  AcademicRoom,
+  AcademicTimetableEntry,
+  AcademicAllocationInput,
+  AcademicGroupSubject,
+  TimetableMaster,
+  TimetableStructure,
+  TimetablePeriod,
 } from './models';
 import type { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
@@ -46,6 +58,83 @@ export class ApiService {
   }
   summary() {
     return this.http.get<Record<string, number>>(`${API_BASE_URL}/dashboard/summary`);
+  }
+  academicBootstrap() {
+    return this.http.get<{
+      masters: Array<MasterValue & { typeSlug: string }>;
+      students: Admission[];
+      groups: AcademicGroup[];
+      sections: AcademicSection[];
+      sets: AcademicSet[];
+      subjects: AcademicSubject[];
+      faculties: AcademicFaculty[];
+      rooms: AcademicRoom[];
+      groupSubjects: AcademicGroupSubject[];
+      timetableMasters: TimetableMaster[];
+      timetableStructures: TimetableStructure[];
+      timetablePeriods: TimetablePeriod[];
+    }>(`${API_BASE_URL}/academics/bootstrap`);
+  }
+  academicRecords<T>(resource: string, options: Record<string, string | number | boolean> = {}) {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(options))
+      if (value !== '') params = params.set(key, String(value));
+    return this.http.get<{ items: T[] }>(`${API_BASE_URL}/academics/${resource}`, { params });
+  }
+  createAcademicRecord<T>(resource: string, body: unknown) {
+    return this.http.post<{ item: T }>(`${API_BASE_URL}/academics/${resource}`, body);
+  }
+  updateAcademicRecord<T>(resource: string, itemId: string, body: unknown) {
+    return this.http.patch<{ item: T }>(`${API_BASE_URL}/academics/${resource}/${itemId}`, body);
+  }
+  deleteAcademicRecord(resource: string, itemId: string) {
+    return this.http.delete<{ deleted: boolean }>(
+      `${API_BASE_URL}/academics/${resource}/${itemId}`,
+    );
+  }
+  timetableAction<T>(
+    entryId: string,
+    action: 'update' | 'merge' | 'split' | 'remove-assignment',
+    body: unknown = {},
+  ) {
+    return this.http.post<{ item: T }>(
+      `${API_BASE_URL}/academics/timetables/${entryId}/${action}`,
+      body,
+    );
+  }
+  publishTimetable(body: unknown) {
+    return this.http.post<{ published: number; publishedAt: string }>(
+      `${API_BASE_URL}/academics/timetables/publish`,
+      body,
+    );
+  }
+  previewAcademicAllocations(rows: AcademicAllocationInput[]) {
+    return this.http.post<{
+      rows: Array<{ row: number; data: AcademicAllocationInput; error: string | null }>;
+      valid: number;
+      invalid: number;
+    }>(`${API_BASE_URL}/academics/allocations/preview`, { rows });
+  }
+  bulkAcademicAllocations(rows: unknown[]) {
+    return this.http.post<{ assigned: number; errors: Array<{ row: number; message: string }> }>(
+      `${API_BASE_URL}/academics/allocations/bulk`,
+      { rows },
+    );
+  }
+  bulkAssignSubjects(body: unknown) {
+    return this.http.post<{ assigned: number }>(
+      `${API_BASE_URL}/academics/group-subjects/bulk`,
+      body,
+    );
+  }
+  studentTimetable() {
+    return this.http.get<{
+      assignment: unknown;
+      subjects?: AcademicSubject[];
+      structure?: TimetableStructure | null;
+      periods?: TimetablePeriod[];
+      items: AcademicTimetableEntry[];
+    }>(`${API_BASE_URL}/student-academics/timetable`);
   }
   masterTypes() {
     return this.http.get<{ items: MasterType[] }>(`${API_BASE_URL}/master-data/types`);

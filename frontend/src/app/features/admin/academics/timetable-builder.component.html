@@ -1,0 +1,279 @@
+<erp-admin-page title="Create timetable" variant="minimal">
+  @if (error()) {
+    <div class="erp-alert erp-alert--error" role="alert">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success">{{ message() }}</div>
+  }
+
+  <section class="erp-card erp-card--padded">
+    <div class="erp-card__header">
+      <div>
+        <h2>Open timetable workspace</h2>
+        <p>Select the academic scope and configured timetable structure.</p>
+      </div>
+    </div>
+    <div class="erp-form-grid">
+      <label
+        ><span>Academic session *</span
+        ><select class="erp-control" [(ngModel)]="session" (ngModelChange)="resetAfter('session')">
+          <option value="">Select session</option>
+          @for (item of master('academic'); track item._id) {
+            <option [value]="item.name">{{ item.name }}</option>
+          }
+        </select></label
+      >
+      <label
+        ><span>Semester *</span
+        ><select
+          class="erp-control"
+          [(ngModel)]="semester"
+          (ngModelChange)="resetAfter('semester')"
+        >
+          @for (item of semesterOptions; track item) {
+            <option [ngValue]="item">Semester {{ item }}</option>
+          }
+        </select></label
+      >
+      <label
+        ><span>Group *</span
+        ><select class="erp-control" [(ngModel)]="groupId" (ngModelChange)="resetAfter('group')">
+          <option value="">Select group</option>
+          @for (item of availableGroups(); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select></label
+      >
+      <label
+        ><span>Section *</span
+        ><select
+          class="erp-control"
+          [(ngModel)]="sectionId"
+          (ngModelChange)="resetAfter('section')"
+        >
+          <option value="">Select section</option>
+          @for (item of availableSections(); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select></label
+      >
+      <label
+        ><span>Timetable *</span
+        ><select
+          class="erp-control"
+          [(ngModel)]="timetableMasterId"
+          (ngModelChange)="resetAfter('master')"
+        >
+          <option value="">Select timetable</option>
+          @for (item of availableTimetables(); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select></label
+      >
+      <label
+        ><span>Structure *</span
+        ><select
+          class="erp-control"
+          [(ngModel)]="timetableStructureId"
+          (ngModelChange)="gridOpen.set(false)"
+        >
+          <option value="">Select structure</option>
+          @for (item of availableStructures(); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select></label
+      >
+    </div>
+    <button
+      class="erp-button erp-button--primary"
+      type="button"
+      [disabled]="loading()"
+      (click)="openTimetable()"
+    >
+      {{ loading() ? 'Loading…' : 'Open timetable' }}
+    </button>
+  </section>
+
+  @if (gridOpen()) {
+    <section class="erp-card timetable-card">
+      <div class="timetable-card__header">
+        <div>
+          <h2>{{ selectedStructure()?.name }}</h2>
+          <p>Right-click any lecture slot to assign or change its timetable details.</p>
+        </div>
+        <div class="timetable-card__actions">
+          <span>
+            {{ entries().length }} assigned slot(s) ·
+            {{ hasDraftChanges() ? 'Draft changes' : 'Published' }}
+          </span>
+          <button
+            class="erp-button erp-button--primary"
+            type="button"
+            [disabled]="saving() || !entries().length"
+            (click)="publish()"
+          >
+            {{ saving() ? 'Publishing…' : 'Publish timetable' }}
+          </button>
+        </div>
+      </div>
+      <div class="timetable-scroll">
+        <table class="timetable-grid">
+          <thead>
+            <tr>
+              <th>Day</th>
+              @for (period of periods(); track period._id) {
+                <th>
+                  <strong>Period {{ period.periodNumber }}</strong>
+                  <small>{{ period.startTime }}–{{ period.endTime }}</small>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (day of workingDays(); track day) {
+              <tr>
+                <th>{{ day }}</th>
+                @for (period of periods(); track period._id) {
+                  @if (!covered(day, period)) {
+                    @let entry = entryFor(day, period);
+                    <td
+                      [attr.colspan]="span(entry)"
+                      [class.timetable-grid__break]="period.periodType === 'break'"
+                      [class.timetable-grid__assigned]="entry"
+                      (contextmenu)="showContext($event, day, period)"
+                    >
+                      @if (period.periodType === 'break') {
+                        <strong>Break</strong>
+                      } @else if (entry) {
+                        <strong>{{ entry.subjectName }}</strong>
+                        <small>{{ entry.facultyName }}</small>
+                        <small>{{ entry.roomName }} · {{ entry.classType }}</small>
+                      } @else {
+                        <span>Right-click to assign</span>
+                      }
+                    </td>
+                  }
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (context(); as menu) {
+    <div
+      class="slot-context-menu"
+      role="menu"
+      [style.left.px]="menu.x"
+      [style.top.px]="menu.y"
+      (click)="$event.stopPropagation()"
+    >
+      <button type="button" role="menuitem" (click)="editSlot()">Assign subject</button>
+      <button type="button" role="menuitem" (click)="editSlot()">Assign teacher</button>
+      <button type="button" role="menuitem" (click)="editSlot()">Assign room</button>
+      <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="mergeSlot()">
+        Merge column
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        [disabled]="!menu.entry || span(menu.entry) === 1"
+        (click)="splitSlot()"
+      >
+        Split column
+      </button>
+      <button
+        class="slot-context-menu__danger"
+        type="button"
+        role="menuitem"
+        [disabled]="!menu.entry"
+        (click)="removeAssignment()"
+      >
+        Remove subject and faculty
+      </button>
+      <button
+        class="slot-context-menu__danger"
+        type="button"
+        role="menuitem"
+        [disabled]="!menu.entry"
+        (click)="clearSlot()"
+      >
+        Clear complete slot
+      </button>
+    </div>
+  }
+
+  @if (editorOpen()) {
+    <div class="dialog-layer">
+      <button
+        class="dialog-backdrop"
+        type="button"
+        aria-label="Close"
+        (click)="closeEditor()"
+      ></button>
+      <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="slot-editor-title">
+        <header class="dialog__header">
+          <div>
+            <small>{{ activeDay() }} · Period {{ activePeriod()?.periodNumber }}</small>
+            <h2 id="slot-editor-title">
+              {{ editingEntry() ? 'Edit timetable slot' : 'Assign timetable slot' }}
+            </h2>
+          </div>
+          <button type="button" aria-label="Close" (click)="closeEditor()">×</button>
+        </header>
+        <div class="dialog__body dialog-form">
+          <label
+            ><span>Subject *</span
+            ><select class="erp-control" [(ngModel)]="subjectId" (ngModelChange)="subjectChanged()">
+              <option value="">Select assigned subject</option>
+              @for (item of availableSubjects(); track item._id) {
+                <option [value]="item._id">{{ item.code }} · {{ item.name }}</option>
+              }
+            </select></label
+          >
+          <label
+            ><span>Teacher *</span
+            ><select class="erp-control" [(ngModel)]="facultyId">
+              <option value="">Select teacher</option>
+              @for (item of availableFaculty(); track item._id) {
+                <option [value]="item._id">{{ item.name }}</option>
+              }
+            </select></label
+          >
+          <label
+            ><span>Room/lab *</span
+            ><select class="erp-control" [(ngModel)]="roomId">
+              <option value="">Select room</option>
+              @for (item of availableRooms(); track item._id) {
+                <option [value]="item._id">{{ item.name }} · capacity {{ item.capacity }}</option>
+              }
+            </select></label
+          >
+          <label
+            ><span>Class type *</span
+            ><select class="erp-control" [(ngModel)]="classType">
+              <option value="lecture">Lecture</option>
+              <option value="tutorial">Tutorial</option>
+              <option value="lab">Lab</option>
+            </select></label
+          >
+        </div>
+        <footer class="dialog__footer">
+          <button class="erp-button erp-button--secondary" type="button" (click)="closeEditor()">
+            Cancel
+          </button>
+          <button
+            class="erp-button erp-button--primary"
+            type="button"
+            [disabled]="saving()"
+            (click)="saveSlot()"
+          >
+            {{ saving() ? 'Saving…' : 'Save assignment' }}
+          </button>
+        </footer>
+      </section>
+    </div>
+  }
+</erp-admin-page>

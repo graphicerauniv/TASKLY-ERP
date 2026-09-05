@@ -1,0 +1,105 @@
+<div class="student-fees-page" aria-label="Student timetable">
+  <header class="student-fees-heading">
+    <div class="student-fees-heading__copy">
+      <nav aria-label="Breadcrumb"><span>Academics</span><b>/</b><strong>Timetable</strong></nav>
+      <h1>My Timetable</h1>
+      <p>Your timetable is based on your current group, section, set and semester.</p>
+    </div>
+  </header>
+  @if (loading()) {
+    <section class="student-fees-message"><strong>Loading timetable…</strong></section>
+  } @else if (error()) {
+    <section class="student-fees-message" role="alert">
+      <strong>{{ error() }}</strong>
+    </section>
+  } @else if (!items().length && !subjects().length) {
+    <section class="student-fees-message">
+      <strong>No timetable has been published for your current allocation.</strong>
+    </section>
+  } @else {
+    @if (subjects().length) {
+      <section class="student-fee-ledger">
+        <header>
+          <div><h2>My Subjects</h2></div>
+        </header>
+        <div class="student-fee-ledger__table">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Subject</th>
+                <th>Type</th>
+                <th>Credits</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (subject of subjects(); track subject._id) {
+                <tr>
+                  <td>{{ subject.code }}</td>
+                  <td>{{ subject.name }}</td>
+                  <td>{{ subject.subjectType }}</td>
+                  <td>{{ subject.credits }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+    @if (!items().length) {
+      <section class="student-fees-message">
+        <strong>No timetable has been published yet.</strong>
+      </section>
+    }
+    @if (items().length && periods().length) {
+      <section class="student-fee-ledger student-timetable-card">
+        <header>
+          <div>
+            <h2>{{ structure()?.name || 'Weekly timetable' }}</h2>
+          </div>
+        </header>
+        <div class="student-timetable-scroll">
+          <table class="student-timetable-grid">
+            <thead>
+              <tr>
+                <th>Day</th>
+                @for (period of periods(); track period._id) {
+                  <th>
+                    <strong>Period {{ period.periodNumber }}</strong>
+                    <small>{{ period.startTime }}–{{ period.endTime }}</small>
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (day of workingDays(); track day) {
+                <tr>
+                  <th>{{ day }}</th>
+                  @for (period of periods(); track period._id) {
+                    @if (!covered(day, period)) {
+                      @let entry = entryFor(day, period);
+                      <td
+                        [attr.colspan]="span(entry)"
+                        [class.student-timetable-grid__break]="period.periodType === 'break'"
+                      >
+                        @if (period.periodType === 'break') {
+                          <strong>Break</strong>
+                        } @else if (entry) {
+                          <strong>{{ entry.subjectName }}</strong>
+                          <small>{{ entry.facultyName }}</small>
+                          <small>{{ entry.roomName }} · {{ entry.classType }}</small>
+                        } @else {
+                          <span>—</span>
+                        }
+                      </td>
+                    }
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</div>

@@ -45,7 +45,7 @@ export const STUDENT_NAVIGATION: readonly StudentNavigationItem[] = [
     icon: 'graduation-cap',
     route: '/student/academics',
     ariaLabel: 'Open academics',
-    enabled: false,
+    enabled: true,
     order: 2,
   },
   {

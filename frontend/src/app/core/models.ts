@@ -125,6 +125,160 @@ export interface Admission {
   mustChangePassword?: boolean;
 }
 
+export interface AcademicGroup {
+  _id: string;
+  name: string;
+  code?: string;
+  academicSession: string;
+  universityId: string;
+  universityName: string;
+  collegeId: string;
+  collegeName: string;
+  semester: number;
+  levelId?: string | null;
+  levelName?: string;
+  departmentIds: string[];
+  departmentNames: string[];
+  courseIds: string[];
+  courseNames: string[];
+  branchIds: string[];
+  branchNames: string[];
+  isActive: boolean;
+}
+export interface AcademicSection {
+  _id: string;
+  name: string;
+  code?: string;
+  academicSession: string;
+  semester: number;
+  groupIds: string[];
+  isActive: boolean;
+}
+export interface AcademicSet {
+  _id: string;
+  name: string;
+  code?: string;
+  academicSession: string;
+  semester: number;
+  groupId: string;
+  sectionId: string;
+  isActive: boolean;
+}
+export interface AcademicSubject {
+  _id: string;
+  name: string;
+  hindiName?: string;
+  code: string;
+  academicSession: string;
+  semester: number;
+  subjectType: string;
+  subjectOption: string;
+  evaluationType: string;
+  credits: number;
+  departmentIds: string[];
+  departmentNames: string[];
+  courseIds: string[];
+  courseNames: string[];
+  isActive: boolean;
+}
+export interface AcademicFaculty {
+  _id: string;
+  name: string;
+  code: string;
+  email: string;
+  departmentIds: string[];
+  subjectIds: string[];
+  weeklyLimit: number;
+  availableDays: string[];
+  isActive: boolean;
+}
+export interface AcademicRoom {
+  _id: string;
+  name: string;
+  code: string;
+  building: string;
+  floor: string;
+  roomType: string;
+  capacity: number;
+  subjectIds: string[];
+  isActive: boolean;
+}
+export interface TimetableMaster {
+  _id: string;
+  name: string;
+  code?: string;
+  academicSession: string;
+  universityId: string;
+  universityName: string;
+  collegeId: string;
+  collegeName: string;
+  isActive: boolean;
+}
+export interface TimetableStructure {
+  _id: string;
+  timetableMasterId: string;
+  name: string;
+  code?: string;
+  academicSession: string;
+  periodCount: number;
+  workingDays: string[];
+  isActive: boolean;
+}
+export interface TimetablePeriod {
+  _id: string;
+  timetableMasterId: string;
+  timetableStructureId: string;
+  periodNumber: number;
+  periodType: 'lecture' | 'break' | null;
+  startTime: string | null;
+  endTime: string | null;
+  durationMinutes: number | null;
+  isConfigured: boolean;
+}
+export interface AcademicTimetableEntry {
+  _id: string;
+  academicSession: string;
+  semester: number;
+  timetableMasterId: string;
+  timetableStructureId: string;
+  timetablePeriodId: string;
+  timetablePeriodIds?: string[];
+  groupId: string;
+  groupName: string;
+  sectionId: string;
+  sectionName: string;
+  setIds: string[];
+  subjectId: string;
+  subjectName: string;
+  facultyId: string;
+  facultyName: string;
+  roomId: string;
+  roomName: string;
+  day: string;
+  startTime: string;
+  endTime: string;
+  classType: string;
+  status?: 'draft' | 'published';
+  isActive: boolean;
+}
+export interface AcademicAllocationInput {
+  studentAdmissionId: string;
+  groupId: string;
+  sectionId: string;
+  setId: string;
+  academicSession: string;
+  semester: number;
+}
+export interface AcademicGroupSubject {
+  _id: string;
+  groupId: string;
+  subjectId: string;
+  academicSession: string;
+  semester: number;
+  requirement: 'required' | 'elective';
+  status: string;
+}
+
 export interface StudentSession {
   id: string;
   studentId: string;

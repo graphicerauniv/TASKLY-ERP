@@ -31,6 +31,14 @@ export const STUDENT_ROUTES: Routes = [
         component: StudentProfileComponent,
       },
       {
+        path: 'academics',
+        title: 'My Timetable | GEU ERP',
+        loadComponent: () =>
+          import('./academics/student-timetable.component').then(
+            (component) => component.StudentTimetableComponent,
+          ),
+      },
+      {
         path: 'fees/pay',
         title: 'Pay Fees | GEU ERP',
         component: PayFeesComponent,

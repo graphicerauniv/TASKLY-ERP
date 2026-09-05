@@ -1,0 +1,764 @@
+<erp-admin-page [title]="title()" variant="minimal" layout="collection">
+  @if (error()) {
+    <div class="erp-alert erp-alert--error" role="alert">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success">{{ message() }}</div>
+  }
+
+  <section class="erp-card erp-card--padded">
+    <div class="erp-card__header">
+      <div>
+        <h2>
+          {{
+            section() === 'subject-assignments'
+              ? 'Assign subjects to a group'
+              : section() === 'allocations'
+                ? 'Assign students'
+                : 'Create ' + title()
+          }}
+        </h2>
+        <p>Fields use current academic master data and enforce session/semester compatibility.</p>
+      </div>
+    </div>
+    <div class="erp-form-grid">
+      @if (
+        !['faculties', 'rooms', 'timetable-structures', 'timetable-periods'].includes(section())
+      ) {
+        <label
+          ><span>Academic session *</span
+          ><select class="erp-control" [(ngModel)]="session">
+            <option value="">Select session</option>
+            @for (item of master('academic'); track item._id) {
+              <option [value]="item.name">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        @if (section() !== 'timetable-masters') {
+          <label
+            ><span>Semester *</span
+            ><select class="erp-control" [(ngModel)]="semester">
+              @for (item of periodCountOptions; track item) {
+                <option [ngValue]="item">Semester {{ item }}</option>
+              }
+            </select></label
+          >
+        }
+      }
+      @if (['groups', 'subjects', 'faculties', 'rooms', 'timetable-masters'].includes(section())) {
+        <label
+          ><span>University *</span
+          ><select class="erp-control" [(ngModel)]="universityId">
+            <option value="">Select university</option>
+            @for (item of master('university'); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>College *</span
+          ><select class="erp-control" [(ngModel)]="collegeId">
+            <option value="">Select college</option>
+            @for (
+              item of scopedMaster('college', universityId ? [universityId] : []);
+              track item._id
+            ) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+      }
+      @if (
+        [
+          'groups',
+          'sections',
+          'sets',
+          'subjects',
+          'faculties',
+          'rooms',
+          'timetable-masters',
+          'timetable-structures',
+        ].includes(section())
+      ) {
+        <label><span>Name *</span><input class="erp-control" [(ngModel)]="name" /></label>
+        @if (sectionUsesCode()) {
+          <label><span>Code *</span><input class="erp-control" [(ngModel)]="code" /></label>
+        }
+      }
+      @if (section() === 'timetable-structures') {
+        <label
+          ><span>Timetable *</span
+          ><select class="erp-control" [(ngModel)]="timetableMasterId">
+            <option value="">Select timetable</option>
+            @for (item of timetableMasters(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Number of periods *</span
+          ><select class="erp-control" [(ngModel)]="periodCount">
+            @for (item of periodCountOptions; track item) {
+              <option [ngValue]="item">{{ item }} periods</option>
+            }
+          </select></label
+        >
+        <div class="erp-field-stack">
+          <span>Working days *</span
+          ><erp-multi-select-dropdown
+            [options]="dayOptions"
+            [value]="workingDays"
+            placeholder="Select working days"
+            (valueChange)="workingDays = $event"
+          />
+        </div>
+      }
+      @if (section() === 'timetable-periods') {
+        <label
+          ><span>Timetable *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="timetableMasterId"
+            (ngModelChange)="timetableStructureId = ''; timetablePeriodId = ''"
+          >
+            <option value="">Select timetable</option>
+            @for (item of timetableMasters(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Structure *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="timetableStructureId"
+            (ngModelChange)="timetablePeriodId = ''"
+          >
+            <option value="">Select structure</option>
+            @for (item of structuresForMaster(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Period *</span
+          ><select
+            class="erp-control"
+            [ngModel]="timetablePeriodId"
+            (ngModelChange)="selectPeriod($event)"
+          >
+            <option value="">Select period</option>
+            @for (item of periodsForStructure(); track item._id) {
+              <option [value]="item._id">
+                Period {{ item.periodNumber }}{{ item.isConfigured ? ' · configured' : '' }}
+              </option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Period type *</span
+          ><select class="erp-control" [(ngModel)]="periodType">
+            <option value="lecture">Lecture</option>
+            <option value="break">Break</option>
+          </select></label
+        >
+        <label
+          ><span>From time *</span><input class="erp-control" type="time" [(ngModel)]="startTime"
+        /></label>
+        <label
+          ><span>Duration *</span
+          ><select class="erp-control" [(ngModel)]="durationMinutes">
+            @for (item of durationOptions; track item) {
+              <option [ngValue]="item">{{ item }} minutes</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>To time</span><input class="erp-control" [value]="calculatedEndTime()" readonly
+        /></label>
+      }
+      @if (section() === 'groups' || section() === 'subjects' || section() === 'faculties') {
+        <div class="erp-field-stack">
+          <span>Departments *</span
+          ><erp-multi-select-dropdown
+            [options]="options(scopedMaster('department', collegeId ? [collegeId] : []))"
+            [value]="departmentIds"
+            placeholder="Select departments"
+            (valueChange)="departmentIds = $event"
+          />
+        </div>
+      }
+      @if (section() === 'groups' || section() === 'subjects') {
+        <div class="erp-field-stack">
+          <span>Courses</span
+          ><erp-multi-select-dropdown
+            [options]="options(scopedMaster('course', levelId ? [levelId] : []))"
+            [value]="courseIds"
+            placeholder="Select courses"
+            (valueChange)="courseIds = $event"
+          />
+        </div>
+        <div class="erp-field-stack">
+          <span>Branches</span
+          ><erp-multi-select-dropdown
+            [options]="options(master('branch'))"
+            [value]="branchIds"
+            placeholder="Select branches"
+            (valueChange)="branchIds = $event"
+          />
+        </div>
+      }
+      @if (section() === 'groups') {
+        <label
+          ><span>Level/course type</span
+          ><select class="erp-control" [(ngModel)]="levelId">
+            <option value="">Select level</option>
+            @for (item of scopedMaster('level', departmentIds); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+      }
+      @if (section() === 'sections') {
+        <div class="erp-field-stack">
+          <span>Groups *</span
+          ><erp-multi-select-dropdown
+            [options]="options(groupsForPeriod(), false)"
+            [value]="groupIds"
+            placeholder="Select groups"
+            (valueChange)="groupIds = $event"
+          /><small>A section may be mapped to multiple groups.</small>
+        </div>
+      }
+      @if (
+        section() === 'sets' ||
+        section() === 'allocations' ||
+        section() === 'subject-assignments' ||
+        section() === 'timetables'
+      ) {
+        <label
+          ><span>Group *</span
+          ><select class="erp-control" [(ngModel)]="groupId">
+            <option value="">Select group</option>
+            @for (item of groups(); track item._id) {
+              @if (item.academicSession === session && item.semester === semester) {
+                <option [value]="item._id">{{ item.name }}</option>
+              }
+            }
+          </select></label
+        >
+      }
+      @if (section() === 'sets' || section() === 'allocations' || section() === 'timetables') {
+        <label
+          ><span>Section *</span
+          ><select class="erp-control" [(ngModel)]="sectionId">
+            <option value="">Select section</option>
+            @for (item of availableSections(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+      }
+      @if (section() === 'allocations') {
+        <label
+          ><span>Set *</span
+          ><select class="erp-control" [(ngModel)]="setId">
+            <option value="">Select set</option>
+            @for (item of availableSets(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Approved student *</span
+          ><select class="erp-control" [(ngModel)]="studentAdmissionId">
+            <option value="">Select student</option>
+            @for (item of students(); track item._id) {
+              <option [value]="item._id">{{ item.studentName }} · {{ item.studentId }}</option>
+            }
+          </select></label
+        >
+      }
+      @if (section() === 'subjects') {
+        <label
+          ><span>Subject name in Hindi</span><input class="erp-control" [(ngModel)]="hindiName"
+        /></label>
+        <label
+          ><span>Subject type *</span
+          ><select class="erp-control" [(ngModel)]="subjectType">
+            <option value="theory">Theory</option>
+            <option value="practical">Practical</option>
+            <option value="tutorial">Tutorial</option>
+            <option value="project">Project</option>
+          </select></label
+        >
+        <label
+          ><span>Subject option</span
+          ><select class="erp-control" [(ngModel)]="subjectOption">
+            <option value="required">Required</option>
+            <option value="elective">Elective</option>
+          </select></label
+        >
+        <label
+          ><span>Evaluation</span
+          ><select class="erp-control" [(ngModel)]="evaluationType">
+            <option value="marks">Marks</option>
+            <option value="grade">Grade</option>
+          </select></label
+        >
+        <label
+          ><span>Credits</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="credits" /></label
+        ><label
+          ><span>Subject counter</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="subjectCounter"
+        /></label>
+        <label
+          ><span>Lecture hours</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="lectureHours" /></label
+        ><label
+          ><span>Tutorial hours</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="tutorialHours"
+        /></label>
+        <label
+          ><span>Lab hours</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="labHours" /></label
+        ><label
+          ><span>Maximum marks</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="maxMarks" /></label
+        ><label
+          ><span>Pass marks</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="passMarks"
+        /></label>
+        <label
+          ><span>Internal marks</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="internalMarks"
+        /></label>
+        <label
+          ><span>External marks</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="externalMarks"
+        /></label>
+        <label
+          ><span>Mid-term marks</span
+          ><input class="erp-control" type="number" min="0" [(ngModel)]="midTermMarks"
+        /></label>
+        <label
+          ><span><input type="checkbox" [(ngModel)]="isPaper" /> Paper exists</span></label
+        ><label
+          ><span><input type="checkbox" [(ngModel)]="isOpenElective" /> Open elective</span></label
+        ><label
+          ><span><input type="checkbox" [(ngModel)]="isFoundation" /> Foundation</span></label
+        ><label
+          ><span><input type="checkbox" [(ngModel)]="isGroupSubject" /> Group subject</span></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="allowMidMarksEntry" /> Faculty may enter mid-term
+            marks</span
+          ></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="allowExternalMarksEntry" /> Faculty may enter
+            external marks</span
+          ></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="showAlternativeGrade" /> Show alternative
+            grade</span
+          ></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="showAlternativeGradePoint" /> Show alternative
+            grade point</span
+          ></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="showAlternativeSubjectCredit" /> Show alternative
+            subject credit</span
+          ></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="hideInternalMarks" /> Hide internal marks from
+            student</span
+          ></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="hideExternalMarks" /> Hide external marks from
+            student</span
+          ></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="hideMidTermMarks" /> Hide mid-term marks from
+            student</span
+          ></label
+        >
+        <label
+          ><span
+            ><input type="checkbox" [(ngModel)]="hideTotalMarks" /> Hide total marks from
+            student</span
+          ></label
+        >
+      }
+      @if (section() === 'faculties') {
+        <label
+          ><span>Email *</span><input class="erp-control" type="email" [(ngModel)]="email" /></label
+        ><label
+          ><span>Weekly workload limit</span
+          ><input class="erp-control" type="number" min="1" [(ngModel)]="weeklyLimit"
+        /></label>
+        <div class="erp-field-stack">
+          <span>Subjects</span
+          ><erp-multi-select-dropdown
+            [options]="options(subjects())"
+            [value]="subjectIds"
+            placeholder="Select subjects"
+            (valueChange)="subjectIds = $event"
+          />
+        </div>
+        <div class="erp-field-stack">
+          <span>Available days</span
+          ><erp-multi-select-dropdown
+            [options]="dayOptions"
+            [value]="availableDays"
+            placeholder="Select available days"
+            (valueChange)="availableDays = $event"
+          />
+        </div>
+      }
+      @if (section() === 'rooms') {
+        <label><span>Building</span><input class="erp-control" [(ngModel)]="building" /></label
+        ><label><span>Floor</span><input class="erp-control" [(ngModel)]="floor" /></label
+        ><label
+          ><span>Room type</span
+          ><select class="erp-control" [(ngModel)]="roomType">
+            <option value="classroom">Classroom</option>
+            <option value="lab">Lab</option>
+            <option value="auditorium">Auditorium</option>
+          </select></label
+        ><label
+          ><span>Capacity *</span
+          ><input class="erp-control" type="number" min="1" [(ngModel)]="capacity"
+        /></label>
+        <div class="erp-field-stack">
+          <span>Supported subjects (optional)</span
+          ><erp-multi-select-dropdown
+            [options]="options(subjects())"
+            [value]="subjectIds"
+            placeholder="Select supported subjects"
+            (valueChange)="subjectIds = $event"
+          />
+        </div>
+      }
+      @if (section() === 'subject-assignments') {
+        <div class="erp-field-stack">
+          <span>Subjects *</span
+          ><erp-multi-select-dropdown
+            [options]="options(availableSubjects())"
+            [value]="subjectIds"
+            placeholder="Select subjects"
+            (valueChange)="subjectIds = $event"
+          />
+        </div>
+        <label
+          ><span>Requirement</span
+          ><select class="erp-control" [(ngModel)]="requirement">
+            <option value="required">Required</option>
+            <option value="elective">Elective</option>
+          </select></label
+        >
+      }
+      @if (section() === 'timetables') {
+        <label
+          ><span>Timetable *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="timetableMasterId"
+            (ngModelChange)="timetableStructureId = ''; timetablePeriodId = ''"
+          >
+            <option value="">Select timetable</option>
+            @for (item of timetableMasters(); track item._id) {
+              @if (item.academicSession === session) {
+                <option [value]="item._id">{{ item.name }}</option>
+              }
+            }
+          </select></label
+        >
+        <label
+          ><span>Structure *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="timetableStructureId"
+            (ngModelChange)="timetablePeriodId = ''"
+          >
+            <option value="">Select structure</option>
+            @for (item of structuresForMaster(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Lecture period *</span
+          ><select class="erp-control" [(ngModel)]="timetablePeriodId">
+            <option value="">Select configured lecture period</option>
+            @for (item of configuredLecturePeriods(); track item._id) {
+              <option [value]="item._id">
+                Period {{ item.periodNumber }} · {{ item.startTime }}–{{ item.endTime }}
+              </option>
+            }
+          </select></label
+        >
+        <div class="erp-field-stack">
+          <span>Sets (optional)</span
+          ><erp-multi-select-dropdown
+            [options]="options(availableSets())"
+            [value]="setIds"
+            placeholder="Entire section or select sets"
+            (valueChange)="setIds = $event"
+          />
+        </div>
+        <label
+          ><span>Subject *</span
+          ><select class="erp-control" [(ngModel)]="subjectIds[0]">
+            <option value="">Select subject</option>
+            @for (item of availableSubjects(); track item._id) {
+              <option [value]="item._id">{{ item.code }} · {{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Faculty *</span
+          ><select class="erp-control" [(ngModel)]="facultyId">
+            <option value="">Select faculty</option>
+            @for (item of faculties(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Room/lab *</span
+          ><select class="erp-control" [(ngModel)]="roomId">
+            <option value="">Select room</option>
+            @for (item of rooms(); track item._id) {
+              <option [value]="item._id">{{ item.name }} · capacity {{ item.capacity }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Day *</span
+          ><select class="erp-control" [(ngModel)]="day">
+            @for (
+              item of [
+                'Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday',
+                'Sunday',
+              ];
+              track item
+            ) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Class type</span
+          ><select class="erp-control" [(ngModel)]="classType">
+            <option value="lecture">Lecture</option>
+            <option value="tutorial">Tutorial</option>
+            <option value="lab">Lab</option>
+          </select></label
+        >
+        <label
+          ><span>Effective from</span
+          ><input class="erp-control" type="date" [(ngModel)]="effectiveFrom"
+        /></label>
+        <label
+          ><span>Effective to</span
+          ><input class="erp-control" type="date" [(ngModel)]="effectiveTo"
+        /></label>
+      }
+    </div>
+    <button
+      class="erp-button erp-button--primary"
+      type="button"
+      [disabled]="saving()"
+      (click)="save()"
+    >
+      {{
+        saving()
+          ? 'Saving…'
+          : section() === 'timetable-periods'
+            ? 'Save period configuration'
+            : section() === 'subject-assignments'
+              ? 'Assign selected subjects'
+              : section() === 'allocations'
+                ? 'Assign student'
+                : editingId()
+                  ? 'Save changes'
+                  : 'Save record'
+      }}
+    </button>
+    @if (editingId()) {
+      <button class="erp-button erp-button--secondary" type="button" (click)="reset()">
+        Cancel edit
+      </button>
+    }
+  </section>
+
+  @if (section() === 'allocations') {
+    <section class="erp-card erp-card--padded">
+      <div class="erp-card__header">
+        <div>
+          <h2>Bulk CSV allocation</h2>
+          <p>
+            Download the template, enter Student IDs and mapping codes, then preview before
+            importing.
+          </p>
+        </div>
+        <button class="erp-button erp-button--secondary" type="button" (click)="downloadTemplate()">
+          Download template
+        </button>
+      </div>
+      <input class="erp-control" type="file" accept=".csv,text/csv" (change)="readCsv($event)" />
+      @if (previewRows().length) {
+        <div class="erp-table-shell__scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Row</th>
+                <th>Student</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of previewRows(); track row.row) {
+                <tr>
+                  <td>{{ row.row }}</td>
+                  <td>{{ row.data.studentAdmissionId || 'Not resolved' }}</td>
+                  <td>{{ row.error || 'Ready' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <button class="erp-button erp-button--primary" type="button" (click)="importPreview()">
+          Import valid rows
+        </button>
+      }
+    </section>
+  }
+
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>
+          Existing records <small>{{ filteredRecords().length }}</small>
+        </h2>
+      </div>
+      <input class="erp-control" type="search" [(ngModel)]="search" placeholder="Search records" />
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ sectionUsesCode() ? 'Name/code' : 'Name' }}</th>
+            <th>Session</th>
+            <th>Semester</th>
+            <th>Details</th>
+            <th class="erp-table-shell__actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of pagedRecords(); track item._id) {
+            <tr>
+              <td>
+                <strong>{{
+                  item.name ||
+                    (item.periodNumber
+                      ? (item.structureName ? item.structureName + ' · ' : '') +
+                        'Period ' +
+                        item.periodNumber
+                      : '') ||
+                    item.subjectName ||
+                    item.studentName ||
+                    item.groupName ||
+                    item.code ||
+                    'Record'
+                }}</strong>
+                @if (sectionUsesCode()) {
+                  <small>{{ item.code || item.subjectCode }}</small>
+                } @else if (item.studentId) {
+                  <small>{{ item.studentId }}</small>
+                }
+              </td>
+              <td>{{ item.academicSession || '—' }}</td>
+              <td>{{ item.semester || '—' }}</td>
+              <td>
+                {{
+                  item.day
+                    ? item.day + ' · ' + item.startTime + '–' + item.endTime
+                    : item.periodNumber
+                      ? item.isConfigured
+                        ? (item.periodType === 'break' ? 'Break' : 'Lecture') +
+                          ' · ' +
+                          item.startTime +
+                          '–' +
+                          item.endTime +
+                          ' · ' +
+                          item.durationMinutes +
+                          ' min'
+                        : 'Not configured'
+                      : item.departmentNames?.join(', ') ||
+                        item.requirement ||
+                        item.status ||
+                        'Active'
+                }}
+              </td>
+              <td class="erp-table-shell__actions">
+                <erp-compact-action-menu
+                  [items]="actionsFor()"
+                  (selected)="handleAction($event, item)"
+                />
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="erp-empty-state">
+                {{ loading() ? 'Loading records…' : 'No records have been created.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="erp-table-pagination">
+      <span>Page {{ page() }} of {{ totalPages() }}</span>
+      <div>
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          [disabled]="page() <= 1"
+          (click)="page.set(page() - 1)"
+        >
+          Previous</button
+        ><button
+          class="erp-button erp-button--secondary"
+          type="button"
+          [disabled]="page() >= totalPages()"
+          (click)="page.set(page() + 1)"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </section>
+</erp-admin-page>

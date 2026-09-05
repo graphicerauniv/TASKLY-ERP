@@ -25,6 +25,34 @@ export const ADMIN_ROUTES: Routes = [
             (component) => component.DashboardComponent,
           ),
       },
+      ...[
+        ['groups', 'groups'],
+        ['sections', 'sections'],
+        ['sets', 'sets'],
+        ['subjects', 'subjects'],
+        ['faculties', 'faculties'],
+        ['rooms', 'rooms'],
+        ['student-allocation', 'allocations'],
+        ['subject-assignment', 'subject-assignments'],
+        ['timetable-masters', 'timetable-masters'],
+        ['timetable-structures', 'timetable-structures'],
+        ['timetable-periods', 'timetable-periods'],
+      ].map(([path, section]) => ({
+        path: `academics/${path}`,
+        loadComponent: () =>
+          import('./academics/academic-workspace.component').then(
+            (component) => component.AcademicWorkspaceComponent,
+          ),
+        data: { section },
+      })),
+      {
+        path: 'academics/timetables',
+        loadComponent: () =>
+          import('./academics/timetable-builder.component').then(
+            (component) => component.TimetableBuilderComponent,
+          ),
+      },
+      { path: 'academics', pathMatch: 'full', redirectTo: 'academics/groups' },
       {
         path: 'master-data',
         pathMatch: 'full',

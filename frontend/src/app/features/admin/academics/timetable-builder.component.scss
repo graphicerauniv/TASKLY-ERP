@@ -1,0 +1,143 @@
+/* ERP-LOCAL-STYLE: unique weekly timetable grid, merged-cell geometry, and native context menu. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.timetable-card {
+  overflow: hidden;
+}
+
+.timetable-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--erp-space-4);
+  padding: var(--erp-card-padding);
+  border-bottom: 1px solid var(--erp-border-subtle);
+}
+
+.timetable-card__header h2,
+.timetable-card__header p {
+  margin: 0;
+}
+
+.timetable-card__header p,
+.timetable-card__header span {
+  color: var(--erp-text-muted);
+}
+
+.timetable-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--erp-space-3);
+}
+
+.timetable-scroll {
+  overflow: auto;
+}
+
+.timetable-grid {
+  width: 100%;
+  min-width: 960px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.timetable-grid th,
+.timetable-grid td {
+  min-width: 140px;
+  padding: var(--erp-space-3);
+  border: 1px solid var(--erp-border-subtle);
+  vertical-align: top;
+}
+
+.timetable-grid thead th,
+.timetable-grid tbody th {
+  background: var(--erp-canvas-soft);
+  color: var(--erp-text-heading);
+}
+
+.timetable-grid thead th:first-child,
+.timetable-grid tbody th {
+  width: 120px;
+  min-width: 120px;
+}
+
+.timetable-grid th strong,
+.timetable-grid th small,
+.timetable-grid td strong,
+.timetable-grid td small {
+  display: block;
+}
+
+.timetable-grid th small,
+.timetable-grid td small,
+.timetable-grid td span {
+  margin-top: var(--erp-space-1);
+  color: var(--erp-text-muted);
+}
+
+.timetable-grid td {
+  height: 104px;
+  cursor: context-menu;
+  background: var(--erp-surface);
+}
+
+.timetable-grid__break {
+  text-align: center;
+  vertical-align: middle !important;
+  cursor: default !important;
+  background: var(--erp-blue-50) !important;
+  color: var(--erp-blue-700);
+}
+
+.timetable-grid__assigned {
+  border-color: var(--erp-blue-200) !important;
+}
+
+.slot-context-menu {
+  position: fixed;
+  z-index: var(--erp-z-popover);
+  display: grid;
+  width: 224px;
+  padding: var(--erp-space-1);
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-md);
+  background: var(--erp-surface-overlay);
+  box-shadow: var(--erp-shadow-overlay);
+}
+
+.slot-context-menu button {
+  min-height: 40px;
+  padding: 0 var(--erp-space-3);
+  border: 0;
+  border-radius: var(--erp-radius-sm);
+  text-align: left;
+  color: var(--erp-text-body);
+  background: transparent;
+}
+
+.slot-context-menu button:hover:not(:disabled) {
+  background: var(--erp-canvas-soft);
+}
+
+.slot-context-menu button:disabled {
+  opacity: 0.5;
+}
+
+.slot-context-menu__danger {
+  color: var(--erp-danger-text) !important;
+}
+
+@media (max-width: 760px) {
+  .timetable-card__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .timetable-card__actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,62 @@
+/* ERP-LOCAL-STYLE: student-scoped weekly timetable grid and merged-period geometry. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.student-timetable-card {
+  overflow: hidden;
+}
+
+.student-timetable-scroll {
+  overflow: auto;
+}
+
+.student-timetable-grid {
+  width: 100%;
+  min-width: 960px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.student-timetable-grid th,
+.student-timetable-grid td {
+  min-width: 140px;
+  padding: var(--student-space-3);
+  border: 1px solid var(--student-color-divider);
+  vertical-align: top;
+}
+
+.student-timetable-grid thead th,
+.student-timetable-grid tbody th {
+  background: var(--student-color-surface-soft);
+  color: var(--student-color-text);
+}
+
+.student-timetable-grid thead th:first-child,
+.student-timetable-grid tbody th {
+  width: 112px;
+  min-width: 112px;
+}
+
+.student-timetable-grid strong,
+.student-timetable-grid small {
+  display: block;
+}
+
+.student-timetable-grid small,
+.student-timetable-grid span {
+  margin-top: var(--student-space-1);
+  color: var(--student-color-text-muted);
+}
+
+.student-timetable-grid td {
+  height: 96px;
+  background: var(--student-color-surface);
+}
+
+.student-timetable-grid__break {
+  text-align: center;
+  vertical-align: middle !important;
+  background: var(--student-color-primary-soft) !important;
+}

@@ -98,7 +98,7 @@ export interface AdminPageContext {
   readonly breadcrumbs: readonly string[];
 }
 
-const exact = (path: string) => new RegExp(`^${escapeRegExp(path)}\/?$`);
+const exact = (path: string) => new RegExp(`^${escapeRegExp(path)}/?$`);
 const branch = (path: string) => new RegExp(`^${escapeRegExp(path)}(?:/|$)`);
 
 export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
@@ -196,6 +196,98 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
         route: '/admin/delete-admissions',
         icon: 'delete',
         activeWhen: [exact('/admin/delete-admissions')],
+      },
+    ],
+  },
+  {
+    id: 'academics',
+    label: 'Academics',
+    icon: 'academic',
+    activeWhen: [branch('/admin/academics')],
+    children: [
+      {
+        id: 'academic-groups',
+        label: 'Groups',
+        route: '/admin/academics/groups',
+        icon: 'students',
+        activeWhen: [exact('/admin/academics/groups')],
+      },
+      {
+        id: 'academic-sections',
+        label: 'Sections',
+        route: '/admin/academics/sections',
+        icon: 'structure',
+        activeWhen: [exact('/admin/academics/sections')],
+      },
+      {
+        id: 'academic-sets',
+        label: 'Sets',
+        route: '/admin/academics/sets',
+        icon: 'tags',
+        activeWhen: [exact('/admin/academics/sets')],
+      },
+      {
+        id: 'academic-subjects',
+        label: 'Subjects',
+        route: '/admin/academics/subjects',
+        icon: 'book',
+        activeWhen: [exact('/admin/academics/subjects')],
+      },
+      {
+        id: 'academic-faculty',
+        label: 'Faculty',
+        route: '/admin/academics/faculties',
+        icon: 'students',
+        activeWhen: [exact('/admin/academics/faculties')],
+      },
+      {
+        id: 'academic-rooms',
+        label: 'Rooms and labs',
+        route: '/admin/academics/rooms',
+        icon: 'room',
+        activeWhen: [exact('/admin/academics/rooms')],
+      },
+      {
+        id: 'student-allocation',
+        label: 'Student allocation',
+        route: '/admin/academics/student-allocation',
+        icon: 'approval',
+        activeWhen: [exact('/admin/academics/student-allocation')],
+      },
+      {
+        id: 'subject-assignment',
+        label: 'Subject assignment',
+        route: '/admin/academics/subject-assignment',
+        icon: 'records',
+        activeWhen: [exact('/admin/academics/subject-assignment')],
+      },
+      {
+        id: 'timetable-masters',
+        label: 'Timetable masters',
+        route: '/admin/academics/timetable-masters',
+        icon: 'calendar',
+        activeWhen: [exact('/admin/academics/timetable-masters')],
+      },
+      {
+        id: 'timetable-structures',
+        label: 'Timetable structures',
+        route: '/admin/academics/timetable-structures',
+        icon: 'structure',
+        activeWhen: [exact('/admin/academics/timetable-structures')],
+      },
+      {
+        id: 'timetable-periods',
+        label: 'Configure periods',
+        route: '/admin/academics/timetable-periods',
+        icon: 'calendar',
+        activeWhen: [exact('/admin/academics/timetable-periods')],
+      },
+      {
+        id: 'timetables',
+        label: 'Create timetable',
+        route: '/admin/academics/timetables',
+        icon: 'calendar',
+        activeWhen: [exact('/admin/academics/timetables')],
       },
     ],
   },

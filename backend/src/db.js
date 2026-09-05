@@ -4,8 +4,8 @@ import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-02-v13';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-02-v13';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-05-v17';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-05-v17';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -232,6 +232,72 @@ async function ensureIndexes(databaseInstance) {
       databaseInstance
         .collection('studentProgressions')
         .createIndex({ mode: 1, status: 1, academicSession: 1, toAcademicYear: 1, toSemester: 1 }),
+    () =>
+      databaseInstance
+        .collection('academicGroups')
+        .createIndex({ name: 1, academicSession: 1, collegeId: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('academicSections')
+        .createIndex({ name: 1, academicSession: 1, semester: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('academicSets')
+        .createIndex(
+          { name: 1, academicSession: 1, semester: 1, groupId: 1, sectionId: 1 },
+          { unique: true },
+        ),
+    () =>
+      databaseInstance
+        .collection('subjects')
+        .createIndex({ code: 1, academicSession: 1, collegeId: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('faculties')
+        .createIndex({ code: 1, collegeId: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('academicRooms')
+        .createIndex({ code: 1, collegeId: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('studentAcademicAssignments')
+        .createIndex({ studentAdmissionId: 1, academicSession: 1, semester: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('groupSubjectAssignments')
+        .createIndex(
+          { groupId: 1, subjectId: 1, academicSession: 1, semester: 1 },
+          { unique: true },
+        ),
+    () =>
+      databaseInstance
+        .collection('timetableEntries')
+        .createIndex({ academicSession: 1, semester: 1, day: 1, startTime: 1 }),
+    () =>
+      databaseInstance
+        .collection('timetableMasters')
+        .createIndex({ name: 1, academicSession: 1, collegeId: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('timetableStructures')
+        .createIndex({ timetableMasterId: 1, name: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('timetablePeriods')
+        .createIndex({ timetableStructureId: 1, periodNumber: 1 }, { unique: true }),
+    () =>
+      databaseInstance.collection('timetablePublications').createIndex(
+        {
+          academicSession: 1,
+          semester: 1,
+          groupId: 1,
+          sectionId: 1,
+          timetableMasterId: 1,
+          timetableStructureId: 1,
+        },
+        { unique: true },
+      ),
   ];
   for (const operation of indexOperations) await operation();
 }

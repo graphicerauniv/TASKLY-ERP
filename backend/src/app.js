@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { config } from './config.js';
-import { requireAdmin } from './middleware/auth.js';
+import { requireAdmin, requireStudent } from './middleware/auth.js';
 import { errorHandler, notFound } from './middleware/errors.js';
 import { authRouter } from './routes/auth.routes.js';
 import { dashboardRouter } from './routes/dashboard.routes.js';
@@ -14,6 +14,7 @@ import { admissionsRouter } from './routes/admissions.routes.js';
 import { hostelsRouter } from './routes/hostels.routes.js';
 import { feesRouter } from './routes/fees.routes.js';
 import { paymentsRouter } from './routes/payments.routes.js';
+import { academicsRouter, studentAcademicsRouter } from './routes/academics.routes.js';
 
 export function createApp() {
   const app = express();
@@ -54,6 +55,8 @@ export function createApp() {
   app.use(`${config.apiPrefix}/admissions`, requireAdmin, admissionsRouter);
   app.use(`${config.apiPrefix}/hostels`, requireAdmin, hostelsRouter);
   app.use(`${config.apiPrefix}/fees`, requireAdmin, feesRouter);
+  app.use(`${config.apiPrefix}/academics`, requireAdmin, academicsRouter);
+  app.use(`${config.apiPrefix}/student-academics`, requireStudent, studentAcademicsRouter);
   app.use(`${config.apiPrefix}/payments`, paymentsRouter);
   app.use(notFound);
   app.use(errorHandler);
