@@ -21,6 +21,25 @@ The application remains one Angular SPA with a single `src/index.html`.
 All other HTML files are Angular component templates. Admin screens share one
 AdminShell router outlet, and internal navigation uses Angular Router.
 
+## Mandatory Admin Illustration System
+
+Every existing or new Admin Portal page must use the supplied global illustration
+library for relevant empty, filtered-empty, unavailable, pending, upload,
+configuration, history, scheduling, finance, scholarship and student-assignment
+states. Feature pages must select a semantic `kind` through
+`erp-admin-illustration`; they must not hard-code paths, copy source images into
+feature folders or use checkerboard preview files.
+
+```text
+public/assets/images/admin-illustrations/  = optimized transparent WebP assets
+shared/ui/admin-illustration/              = typed registry and global renderer
+```
+
+Illustrations communicate page state and always appear with useful text and,
+where applicable, a next action. Lucide remains the functional icon system for
+buttons, navigation and controls. The complete mandatory contract and semantic
+mapping are defined in `FRONTEND_UI_RULES.md`.
+
 Only Auth/Login and Dashboard are lazy loaded. Other admin routes are declared
 as normal imported components in `src/app/features/admin/admin.routes.ts`.
 

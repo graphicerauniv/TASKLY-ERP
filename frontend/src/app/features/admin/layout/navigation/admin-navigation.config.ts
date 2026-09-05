@@ -71,6 +71,8 @@ export interface AdminNavigationLink {
 export interface AdminNavigationEntry {
   readonly id: string;
   readonly label: string;
+  readonly description?: string;
+  readonly group?: string;
   readonly icon: AdminNavigationIcon;
   readonly route?: string;
   readonly activeWhen?: readonly RegExp[];
@@ -81,6 +83,7 @@ export interface AdminNavigationSection {
   readonly id: string;
   readonly label: string;
   readonly pageTitle?: string;
+  readonly description?: string;
   readonly icon: AdminNavigationIcon;
   readonly route?: string;
   readonly activeWhen: readonly RegExp[];
@@ -202,12 +205,15 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
   {
     id: 'academics',
     label: 'Academics',
+    description: 'Build structures, assign learners and manage timetables.',
     icon: 'academic',
     activeWhen: [branch('/admin/academics')],
     children: [
       {
         id: 'academic-groups',
         label: 'Groups',
+        description: 'Create programme cohorts',
+        group: 'Academic structure',
         route: '/admin/academics/groups',
         icon: 'students',
         activeWhen: [exact('/admin/academics/groups')],
@@ -215,6 +221,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'academic-sections',
         label: 'Sections',
+        description: 'Map teachable sections',
+        group: 'Academic structure',
         route: '/admin/academics/sections',
         icon: 'structure',
         activeWhen: [exact('/admin/academics/sections')],
@@ -222,6 +230,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'academic-sets',
         label: 'Sets',
+        description: 'Build smaller learning sets',
+        group: 'Academic structure',
         route: '/admin/academics/sets',
         icon: 'tags',
         activeWhen: [exact('/admin/academics/sets')],
@@ -229,6 +239,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'academic-subjects',
         label: 'Subjects',
+        description: 'Configure curriculum and marks',
+        group: 'Academic structure',
         route: '/admin/academics/subjects',
         icon: 'book',
         activeWhen: [exact('/admin/academics/subjects')],
@@ -236,6 +248,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'academic-faculty',
         label: 'Faculty',
+        description: 'Manage teaching scope',
+        group: 'Academic structure',
         route: '/admin/academics/faculties',
         icon: 'students',
         activeWhen: [exact('/admin/academics/faculties')],
@@ -243,6 +257,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'academic-rooms',
         label: 'Rooms and labs',
+        description: 'Manage spaces and capacity',
+        group: 'Academic structure',
         route: '/admin/academics/rooms',
         icon: 'room',
         activeWhen: [exact('/admin/academics/rooms')],
@@ -250,6 +266,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'student-allocation',
         label: 'Student allocation',
+        description: 'Assign students to groups',
+        group: 'Assignments',
         route: '/admin/academics/student-allocation',
         icon: 'approval',
         activeWhen: [exact('/admin/academics/student-allocation')],
@@ -257,6 +275,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'subject-assignment',
         label: 'Subject assignment',
+        description: 'Map subjects to cohorts',
+        group: 'Assignments',
         route: '/admin/academics/subject-assignment',
         icon: 'records',
         activeWhen: [exact('/admin/academics/subject-assignment')],
@@ -264,6 +284,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'timetable-masters',
         label: 'Timetable masters',
+        description: 'Create schedule containers',
+        group: 'Timetable',
         route: '/admin/academics/timetable-masters',
         icon: 'calendar',
         activeWhen: [exact('/admin/academics/timetable-masters')],
@@ -271,6 +293,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'timetable-structures',
         label: 'Timetable structures',
+        description: 'Set days and period capacity',
+        group: 'Timetable',
         route: '/admin/academics/timetable-structures',
         icon: 'structure',
         activeWhen: [exact('/admin/academics/timetable-structures')],
@@ -278,6 +302,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'timetable-periods',
         label: 'Configure periods',
+        description: 'Define lectures and breaks',
+        group: 'Timetable',
         route: '/admin/academics/timetable-periods',
         icon: 'calendar',
         activeWhen: [exact('/admin/academics/timetable-periods')],
@@ -285,6 +311,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'timetables',
         label: 'Create timetable',
+        description: 'Build the weekly schedule',
+        group: 'Timetable',
         route: '/admin/academics/timetables',
         icon: 'calendar',
         activeWhen: [exact('/admin/academics/timetables')],

@@ -22,6 +22,7 @@ export const config = Object.freeze({
   },
   jwtSecret: process.env.JWT_ACCESS_SECRET || '',
   jwtTtl: process.env.JWT_ACCESS_TTL || '8h',
+  jwtRefreshTtl: process.env.JWT_REFRESH_TTL || '365d',
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:4200')
     .split(',')
     .map((v) => v.trim())

@@ -52,10 +52,11 @@ import type { StudentProfile } from '../features/student/profile/models/student-
 export class ApiService {
   private readonly http = inject(HttpClient);
   login(email: string, password: string) {
-    return this.http.post<{ token: string; admin: { name: string; email: string } }>(
-      `${API_BASE_URL}/auth/login`,
-      { email, password },
-    );
+    return this.http.post<{
+      token: string;
+      refreshToken: string;
+      admin: { name: string; email: string };
+    }>(`${API_BASE_URL}/auth/login`, { email, password });
   }
   summary() {
     return this.http.get<Record<string, number>>(`${API_BASE_URL}/dashboard/summary`);

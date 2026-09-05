@@ -220,7 +220,81 @@ Normal admin pages should compose the existing `erp-admin-page` and global syste
 </erp-admin-page>
 ```
 
-## 8. Row Action Rule
+## 8. Mandatory Admin Illustration Rule
+
+The supplied admin illustration library is part of the global design system and
+must be considered on every existing or new Admin Portal page. All admin pages
+must use the most relevant library illustration for empty, filtered-empty,
+no-results, unavailable, pending, upload, configuration, history, scheduling,
+finance, scholarship, student-assignment, or guidance states that they expose.
+
+Canonical implementation:
+
+```text
+public/assets/images/admin-illustrations/                  optimized WebP assets
+src/app/shared/ui/admin-illustration/
+  admin-illustration.registry.ts                           semantic asset registry
+  admin-illustration.component.ts                          accessible renderer
+```
+
+Feature pages must render illustrations through the shared component:
+
+```html
+<erp-admin-illustration kind="noResults" />
+```
+
+Do not hard-code illustration file paths in feature templates or component
+logic. Do not copy an illustration into a feature folder. Do not use the source
+PNG uploads or checkerboard preview images. The shared registry is the only
+approved asset lookup.
+
+Select illustrations by meaning:
+
+| Semantic kind       | Required context                                           |
+| ------------------- | ---------------------------------------------------------- |
+| `applicationForm`   | Empty forms, applications, documents or record directories |
+| `taskSchedule`      | Deadlines, schedules, periods and pending timed work       |
+| `analyticsSearch`   | Reports, analytics, audits and inspection states           |
+| `activityHistory`   | History, previous operations and processing timelines      |
+| `roomUnavailable`   | Room, hostel, lab or location unavailable states           |
+| `documentUpload`    | Import, upload, document intake and file-drop guidance     |
+| `dataConfiguration` | Master data, integration or setup-required states          |
+| `feeConfiguration`  | Fee setup, fee books and finance configuration             |
+| `feeWallet`         | Payments, balances, concessions and account summaries      |
+| `campusUnavailable` | Campus, institution or academic-ledger unavailable states  |
+| `noResults`         | Search or filters return zero matching results             |
+| `pendingReview`     | Review, verification or approval pending states            |
+| `scholarshipEmpty`  | No scholarship or recurring concession assigned            |
+| `addStudent`        | Student creation, allocation, assignment or onboarding     |
+| `discountTicket`    | Discounts, coupons and one-time concessions                |
+
+Rules:
+
+- Every page must design its loading, no-data, filtered-empty, error and success
+  states. Use a library illustration whenever one of the semantic contexts above
+  applies.
+- Use only one primary illustration in a state or guidance panel. Do not scatter
+  large decorative artwork across dense tables, forms or every populated card.
+- Illustrations support a heading, explanation and next action; they never replace
+  those elements.
+- Use `compact` for small cards, `default` for table/card empty states and `hero`
+  only for a true full-page setup state.
+- Keep illustrations transparent, responsive, lazy-loaded and in WebP format.
+- Decorative artwork uses an empty alternative text value. Meaningful content
+  must have concise alternative text without repeating the adjacent heading.
+- Lucide remains the functional icon system for buttons, navigation, status and
+  controls. The WebP library is for illustration and state communication; do not
+  replace functional icons with large artwork.
+- If no supplied illustration fits, first use the closest semantic library asset.
+  Add a new illustration only when the product meaning is genuinely different,
+  and register it in the same global folder and typed registry.
+- New page reviews and redesign acceptance checks must explicitly confirm the
+  illustration kind used for each applicable state.
+
+An admin page is not UI-complete if it introduces a relevant empty or guidance
+state without using this shared illustration system.
+
+## 9. Row Action Rule
 
 Table and list row actions must use the shared compact action pattern.
 
@@ -244,7 +318,7 @@ Every new row action menu must:
 - keep business behavior in the feature component,
 - avoid custom per-page action button CSS.
 
-## 9. Navigation Flyout Rule
+## 10. Navigation Flyout Rule
 
 Sidebar flyouts with more than one category must use the shared accordion
 navigation pattern. Groups are closed by default and expand only on user action
@@ -261,7 +335,7 @@ Do not render long flat lists in flyout panels. Parent groups must show a clear
 icon, compact label, count/context text, chevron rotation, active parent state,
 and nested child links with a subtle blue hierarchy line.
 
-## 10. Long Workflow and Dynamic Form Rule
+## 11. Long Workflow and Dynamic Form Rule
 
 Any workflow with more than five top-level sections must use the shared schema-driven pattern:
 
@@ -310,7 +384,7 @@ Field rules:
 Use this pattern for Admission, Hostel, Scholarship, Document Verification,
 Fee Concession, Employee Onboarding, and every future long workflow.
 
-## 11. Page Header Rule
+## 12. Page Header Rule
 
 All admin pages must use the shared page header system. Do not create custom
 large headings, repeated module labels, or page intro blocks inside feature
@@ -350,7 +424,7 @@ Rules:
 - Feature pages must place actions in the shared `[page-actions]` slot.
 - Do not hand-code page header spacing, typography, or margins in feature SCSS.
 
-## 12. Data Directory and Pagination Rule
+## 13. Data Directory and Pagination Rule
 
 Record directories must reuse the global data-view contracts and tokens:
 
@@ -374,7 +448,7 @@ Client-side pagination is allowed only while the API returns a deliberately boun
 Large production datasets require server-side `page`, `pageSize`, `search`, filter, sort,
 and pagination metadata support. Do not fake server pagination by downloading every record.
 
-## 13. Tailwind Rule
+## 14. Tailwind Rule
 
 Tailwind is allowed for small, readable layout helpers only.
 
@@ -390,7 +464,7 @@ Not allowed:
 - utility duplication of the ERP card/button/input/table system,
 - large unreadable utility strings replacing shared components.
 
-## 14. Final Verification
+## 15. Final Verification
 
 Before handoff run:
 

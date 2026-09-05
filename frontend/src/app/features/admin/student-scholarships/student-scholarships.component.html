@@ -264,7 +264,7 @@
               </div>
             } @empty {
               <div class="support-empty support-empty--illustrated">
-                <img [src]="assets.emptyScholarships" alt="" loading="lazy" /><strong
+                <erp-admin-illustration kind="scholarshipEmpty" size="compact" /><strong
                   >No scholarships applied</strong
                 ><small>Assign an approved scholarship scheme.</small
                 ><button
@@ -297,7 +297,7 @@
               </div>
             } @empty {
               <div class="support-empty support-empty--illustrated">
-                <img [src]="assets.discountTicket" alt="" loading="lazy" /><strong
+                <erp-admin-illustration kind="discountTicket" size="compact" /><strong
                   >No one-time discounts applied</strong
                 ><small>Add an approved exception for a specific fee period.</small
                 ><button
@@ -422,10 +422,8 @@
                 <tr>
                   <td colspan="7">
                     <div class="table-empty">
-                      <img
-                        [src]="scholarshipSearch() ? assets.noResults : assets.addStudent"
-                        alt=""
-                        loading="lazy"
+                      <erp-admin-illustration
+                        [kind]="scholarshipSearch() ? 'noResults' : 'addStudent'"
                       /><strong>{{
                         scholarshipSearch()
                           ? 'No scholarships match your search'
@@ -541,7 +539,7 @@
         </section>
       } @else {
         <section class="erp-card action-cta">
-          <img [src]="assets.feeWallet" alt="" loading="lazy" />
+          <erp-admin-illustration kind="feeWallet" size="compact" />
           <div>
             <strong>Need to apply another scholarship?</strong>
             <p>
@@ -706,10 +704,8 @@
                 <tr>
                   <td colspan="8">
                     <div class="table-empty">
-                      <img
-                        [src]="discountSearch() ? assets.noResults : assets.discountTicket"
-                        alt=""
-                        loading="lazy"
+                      <erp-admin-illustration
+                        [kind]="discountSearch() ? 'noResults' : 'discountTicket'"
                       /><strong>{{
                         discountSearch()
                           ? 'No discounts match your search'
@@ -814,7 +810,7 @@
         </section>
       } @else {
         <section class="erp-card action-cta action-cta--dashed">
-          <img [src]="assets.discountTicket" alt="" loading="lazy" />
+          <erp-admin-illustration kind="discountTicket" size="compact" />
           <div>
             <strong>Need to add a new one-time discount?</strong>
             <p>Apply an approved discount to a specific fee period.</p>
@@ -1115,7 +1111,7 @@
               </div>
             } @else {
               <div class="illustration-empty-state">
-                <img [src]="assets.campusUnavailable" alt="" loading="lazy" /><strong
+                <erp-admin-illustration kind="campusUnavailable" /><strong
                   >No academic fee ledger yet</strong
                 ><span>Fee impact will appear when the student's fee period is generated.</span>
               </div>
@@ -1159,9 +1155,7 @@
                 <strong>Most impact</strong
                 ><small
                   >Tuition Fee ·
-                  {{
-                    mostImpactfulLedger()?.discountAmount | currency: 'INR' : 'symbol' : '1.0-2'
-                  }}
+                  {{ mostImpactfulLedger()?.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}
                   total concession</small
                 >
               </div>

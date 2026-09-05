@@ -28,6 +28,7 @@ import {
   StudentScholarship,
 } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import {
   CompactActionItem,
   CompactActionMenuComponent,
@@ -37,6 +38,7 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
 @Component({
   selector: 'erp-student-scholarships',
   imports: [
+    AdminIllustrationComponent,
     AdminPageComponent,
     CompactActionMenuComponent,
     ConfirmDialogComponent,
@@ -95,15 +97,6 @@ export class StudentScholarshipsComponent {
       return 'Manage approved one-time discounts and review their impact on the student fee account.';
     return 'Manage tuition concessions and review their impact on the student fee account.';
   });
-  readonly assets = {
-    feeWallet: '/assets/images/scholarships/illustration-fee-wallet.png',
-    campusUnavailable: '/assets/images/scholarships/illustration-campus-unavailable.png',
-    noResults: '/assets/images/scholarships/illustration-no-results.png',
-    pendingReview: '/assets/images/scholarships/illustration-pending-review.png',
-    emptyScholarships: '/assets/images/scholarships/illustration-empty-scholarships.png',
-    addStudent: '/assets/images/scholarships/illustration-add-student.png',
-    discountTicket: '/assets/images/scholarships/illustration-discount-ticket.png',
-  } as const;
   readonly removeActions: CompactActionItem[] = [
     { id: 'remove', label: 'Remove assignment', icon: 'delete', destructive: true },
   ];

@@ -3,7 +3,7 @@ import argon2 from 'argon2';
 import { SignJWT } from 'jose';
 import { z } from 'zod';
 import { config } from '../config.js';
-import { db, serialize } from '../db.js';
+import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { requireAdmin, requireStudent } from '../middleware/auth.js';
 import { refreshStudentPenalties, studentCreditBalance } from '../services/fee-payments.js';
@@ -33,6 +33,28 @@ const studentPasswordSchema = z.object({
       'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, and one symbol.',
     ),
 });
+const refreshSchema = z.object({ refreshToken: z.string().min(1) });
+
+function adminAccessToken(admin) {
+  return new SignJWT({ role: admin.role, email: admin.email, tokenUse: 'access' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(admin._id.toString())
+    .setIssuer('taskly-erp')
+    .setIssuedAt()
+    .setExpirationTime(config.jwtTtl)
+    .sign(new TextEncoder().encode(config.jwtSecret));
+}
+
+function adminRefreshToken(admin) {
+  return new SignJWT({ role: admin.role, tokenUse: 'refresh' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(admin._id.toString())
+    .setIssuer('taskly-erp')
+    .setAudience('taskly-erp-refresh')
+    .setIssuedAt()
+    .setExpirationTime(config.jwtRefreshTtl)
+    .sign(new TextEncoder().encode(config.jwtSecret));
+}
 
 authRouter.post(
   '/login',
@@ -46,17 +68,42 @@ authRouter.post(
     if (!admin || !(await argon2.verify(admin.passwordHash, parsed.data.password))) {
       return response.status(401).json({ message: 'The email or password is incorrect.' });
     }
-    const token = await new SignJWT({ role: admin.role, email: admin.email })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setSubject(admin._id.toString())
-      .setIssuer('taskly-erp')
-      .setIssuedAt()
-      .setExpirationTime(config.jwtTtl)
-      .sign(new TextEncoder().encode(config.jwtSecret));
+    const [token, refreshToken] = await Promise.all([
+      adminAccessToken(admin),
+      adminRefreshToken(admin),
+    ]);
     await db()
       .collection('admins')
       .updateOne({ _id: admin._id }, { $set: { lastLoginAt: new Date() } });
-    response.json({ token, admin: publicAdmin(admin) });
+    response.json({ token, refreshToken, admin: publicAdmin(admin) });
+  }),
+);
+
+authRouter.post(
+  '/refresh',
+  asyncHandler(async (request, response) => {
+    const parsed = refreshSchema.safeParse(request.body);
+    if (!parsed.success)
+      return response.status(401).json({ message: 'A renewable session is required.' });
+    try {
+      const { payload } = await jwtVerify(
+        parsed.data.refreshToken,
+        new TextEncoder().encode(config.jwtSecret),
+        { issuer: 'taskly-erp', audience: 'taskly-erp-refresh' },
+      );
+      if (payload.tokenUse !== 'refresh') throw new Error('Invalid token use');
+      const admin = await db()
+        .collection('admins')
+        .findOne({ _id: id(payload.sub), isActive: true });
+      if (!admin) return response.status(401).json({ message: 'Account is unavailable.' });
+      const [token, refreshToken] = await Promise.all([
+        adminAccessToken(admin),
+        adminRefreshToken(admin),
+      ]);
+      return response.json({ token, refreshToken, admin: publicAdmin(admin) });
+    } catch {
+      return response.status(401).json({ message: 'Your renewable session is invalid.' });
+    }
   }),
 );
 

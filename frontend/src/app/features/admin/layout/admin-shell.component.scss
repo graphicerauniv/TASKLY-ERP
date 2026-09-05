@@ -676,6 +676,269 @@ a {
   animation: admin-backdrop-enter var(--erp-drawer-enter-duration) var(--erp-ease-standard);
 }
 
+.admin-module-backdrop {
+  position: fixed;
+  z-index: calc(var(--erp-z-sidebar) - 1);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--erp-backdrop);
+  cursor: default;
+  animation: admin-backdrop-enter var(--erp-overlay-transition);
+}
+
+.admin-sidebar--desktop .admin-navigation__children--module {
+  top: 0;
+  bottom: 0;
+  left: var(--erp-sidebar-width);
+  display: flex;
+  width: min(var(--erp-sidebar-module-panel-width), calc(100vw - var(--erp-sidebar-width)));
+  height: 100dvh;
+  max-height: none;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 var(--erp-space-3) var(--erp-space-2);
+  border-block: 0;
+  border-left: 2px solid var(--erp-blue-500);
+  border-radius: 0;
+  background: var(--erp-surface-overlay);
+  background-image: none;
+  box-shadow: var(--erp-shadow-sidebar-flyout);
+  animation: admin-module-enter var(--erp-overlay-transition);
+}
+
+.admin-sidebar--desktop .admin-navigation__children--module .admin-navigation__flyout-header {
+  min-height: 58px;
+  margin: 0 calc(-1 * var(--erp-space-3)) var(--erp-space-2);
+  padding: var(--erp-space-1) var(--erp-space-3);
+  background: var(--erp-surface);
+}
+
+.admin-sidebar--desktop .admin-navigation__children--module .admin-navigation__flyout-header small {
+  color: var(--erp-blue-600);
+}
+
+.admin-sidebar--desktop
+  .admin-navigation__children--module
+  .admin-navigation__flyout-header
+  strong {
+  font-size: var(--erp-font-size-lg);
+  line-height: var(--erp-line-section-title);
+}
+
+.admin-navigation__children--module .admin-navigation__flyout-header button {
+  width: 32px;
+  height: 42px;
+  grid-template-rows: 20px 12px;
+  color: var(--erp-text-heading);
+}
+
+.admin-navigation__children--module .admin-navigation__flyout-header button small {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-2xs);
+  font-weight: var(--erp-weight-regular);
+  letter-spacing: var(--erp-letter-normal);
+  text-transform: none;
+}
+
+.admin-navigation__module-summary {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  min-height: 88px;
+  align-items: center;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-2);
+  border: 1px solid var(--erp-blue-200);
+  border-radius: var(--erp-radius-card);
+  background: var(--erp-blue-50);
+}
+
+.admin-navigation__module-icon {
+  position: relative;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: var(--erp-radius-avatar);
+  background: var(--erp-blue-100);
+  color: var(--erp-blue-600);
+}
+
+.admin-navigation__module-icon > svg {
+  width: 30px;
+  height: 30px;
+}
+
+.admin-navigation__module-icon small {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 2px solid var(--erp-surface);
+  border-radius: var(--erp-radius-avatar);
+  background: var(--erp-blue-500);
+  color: var(--erp-text-on-primary);
+  font-size: var(--erp-font-size-2xs);
+  font-weight: var(--erp-weight-bold);
+}
+
+.admin-navigation__module-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.admin-navigation__module-copy strong {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-size-sm);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.admin-navigation__module-copy > span {
+  color: var(--erp-text-body);
+  font-size: var(--erp-font-size-2xs);
+  line-height: var(--erp-line-caption);
+}
+
+.admin-navigation__module-copy small {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 1px var(--erp-space-2);
+  border-radius: var(--erp-radius-pill);
+  background: var(--erp-blue-100);
+  color: var(--erp-blue-700);
+  font-size: var(--erp-font-size-2xs);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.admin-navigation__module-spark {
+  position: absolute;
+  top: var(--erp-space-2);
+  right: var(--erp-space-2);
+  color: var(--erp-kpi-orange-text);
+  font-size: var(--erp-font-size-sm);
+}
+
+.admin-navigation__group-heading {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: var(--erp-space-2);
+  padding: var(--erp-space-1) var(--erp-space-1) 2px;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-2xs);
+  font-weight: var(--erp-weight-medium);
+  letter-spacing: var(--erp-letter-wide);
+  text-transform: uppercase;
+}
+
+.admin-navigation__group-heading i {
+  height: 1px;
+  flex: 1;
+  background: var(--erp-border-subtle);
+}
+
+.admin-sidebar--desktop .admin-navigation__children--module .admin-navigation__item--child {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 16px;
+  grid-template-rows: auto auto;
+  min-height: 42px;
+  column-gap: var(--erp-space-1);
+  padding: 3px var(--erp-space-1);
+}
+
+.admin-navigation__children--module .admin-navigation__item--child::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 0 var(--erp-radius-xs) var(--erp-radius-xs) 0;
+  background: transparent;
+  content: '';
+}
+
+.admin-navigation__children--module .admin-navigation__item--child.is-active::before {
+  background: var(--erp-blue-500);
+}
+
+.admin-navigation__children--module .admin-navigation__item--child .admin-navigation__icon {
+  grid-row: 1 / 3;
+  width: 32px;
+  height: 32px;
+  align-self: center;
+  color: var(--erp-text-muted);
+}
+
+.admin-navigation__children--module
+  .admin-navigation__item--child.is-active
+  .admin-navigation__icon {
+  background: transparent;
+  color: var(--erp-blue-600);
+}
+
+.admin-navigation__children--module .admin-navigation__item--child .admin-navigation__label {
+  grid-column: 2;
+  align-self: end;
+  color: var(--erp-text-strong);
+  font-size: var(--erp-font-size-xs);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.admin-navigation__description {
+  grid-column: 2;
+  align-self: start;
+  overflow: hidden;
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-2xs);
+  line-height: var(--erp-line-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-navigation__entry-arrow {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: center;
+  color: var(--erp-text-muted);
+}
+
+.admin-navigation__guidance {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  min-height: 42px;
+  align-items: center;
+  gap: var(--erp-space-2);
+  margin-top: auto;
+  padding: var(--erp-space-1) var(--erp-space-2);
+  border: 1px solid var(--erp-blue-200);
+  border-radius: var(--erp-radius-compact);
+  background: var(--erp-blue-50);
+  color: var(--erp-blue-600);
+}
+
+.admin-navigation__guidance strong,
+.admin-navigation__guidance a {
+  font-size: var(--erp-font-size-2xs);
+}
+
+.admin-navigation__guidance strong {
+  color: var(--erp-text-strong);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.admin-navigation__guidance a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--erp-space-1);
+  color: var(--erp-text-link);
+  text-decoration: none;
+}
+
 .admin-skip-link {
   position: fixed;
   z-index: var(--erp-z-toast);
@@ -904,6 +1167,13 @@ a {
   }
 }
 
+@keyframes admin-module-enter {
+  from {
+    transform: translateX(-12px);
+    opacity: 0;
+  }
+}
+
 @keyframes admin-backdrop-enter {
   from {
     opacity: 0;
@@ -911,6 +1181,10 @@ a {
 }
 
 @media (max-width: 767px) {
+  .admin-module-backdrop {
+    display: none;
+  }
+
   .admin-shell,
   .admin-shell--collapsed {
     grid-template-columns: minmax(0, 1fr);
@@ -985,6 +1259,14 @@ a {
     display: none;
   }
 
+  .admin-sidebar--mobile .admin-navigation__module-summary,
+  .admin-sidebar--mobile .admin-navigation__group-heading,
+  .admin-sidebar--mobile .admin-navigation__guidance,
+  .admin-sidebar--mobile .admin-navigation__description,
+  .admin-sidebar--mobile .admin-navigation__entry-arrow {
+    display: none;
+  }
+
   .admin-sidebar--mobile .admin-navigation__item--section,
   .admin-sidebar--mobile .admin-navigation__item--child,
   .admin-sidebar--mobile .admin-sidebar__support {
@@ -1005,6 +1287,7 @@ a {
   .admin-shell,
   .admin-navigation__chevron,
   .admin-drawer-backdrop,
+  .admin-module-backdrop,
   .admin-sidebar--mobile,
   .admin-skip-link {
     animation-duration: 1ms;

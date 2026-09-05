@@ -29,9 +29,27 @@ export const ADMIN_ROUTES: Routes = [
         ['groups', 'groups'],
         ['sections', 'sections'],
         ['sets', 'sets'],
+      ].map(([path, section]) => ({
+        path: `academics/${path}`,
+        loadComponent: () =>
+          import('./academics/academic-structure.component').then(
+            (component) => component.AcademicStructureComponent,
+          ),
+        data: { section },
+      })),
+      ...[
         ['subjects', 'subjects'],
         ['faculties', 'faculties'],
         ['rooms', 'rooms'],
+      ].map(([path, section]) => ({
+        path: `academics/${path}`,
+        loadComponent: () =>
+          import('./academics/academic-resources.component').then(
+            (component) => component.AcademicResourcesComponent,
+          ),
+        data: { section },
+      })),
+      ...[
         ['student-allocation', 'allocations'],
         ['subject-assignment', 'subject-assignments'],
         ['timetable-masters', 'timetable-masters'],

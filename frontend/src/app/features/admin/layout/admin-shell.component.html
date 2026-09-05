@@ -40,13 +40,13 @@
       </nav>
     </div>
 
-    @if (isScholarshipWorkspace()) {
+    @if (showWorkspaceHeader()) {
       <div class="admin-header__tools">
         <label class="admin-header__search"
           ><svg lucideSearch size="17" aria-hidden="true"></svg
           ><input
             aria-label="Search students and programmes"
-            placeholder="Search by name, ID, programme…"
+            [placeholder]="workspaceSearchPlaceholder()"
         /></label>
         <button
           class="admin-icon-button admin-header__notification"
@@ -80,6 +80,16 @@
     <router-outlet />
   </main>
 </div>
+
+@if (desktopModuleOpen()) {
+  <button
+    class="admin-module-backdrop"
+    type="button"
+    tabindex="-1"
+    aria-label="Close module navigation"
+    (click)="closeDesktopFlyout()"
+  ></button>
+}
 
 @if (mobileOpen()) {
   <button
@@ -178,9 +188,15 @@
             @if (isSectionExpanded(section)) {
               <ul
                 class="admin-navigation__children"
+                [class.admin-navigation__children--module]="section.id === 'academics'"
                 [id]="(mobile ? 'mobile-' : 'desktop-') + section.id + '-navigation'"
-                [style.top.px]="!mobile ? desktopFlyoutTop() : null"
-                [style.max-height.px]="!mobile ? desktopFlyoutMaxHeight() : null"
+                [style.top.px]="!mobile && section.id !== 'academics' ? desktopFlyoutTop() : null"
+                [style.max-height.px]="
+                  !mobile && section.id !== 'academics' ? desktopFlyoutMaxHeight() : null
+                "
+                [attr.role]="!mobile ? 'dialog' : null"
+                [attr.aria-modal]="!mobile ? 'true' : null"
+                [attr.aria-label]="section.label + ' module navigation'"
               >
                 <li class="admin-navigation__flyout-header">
                   <div>
@@ -192,10 +208,35 @@
                     aria-label="Close navigation popup"
                     (click)="closeDesktopFlyout()"
                   >
-                    <svg lucideX size="16" aria-hidden="true"></svg>
+                    <svg lucideX size="19" aria-hidden="true"></svg>
+                    @if (section.id === 'academics') {
+                      <small>Esc</small>
+                    }
                   </button>
                 </li>
-                @for (entry of section.children || []; track entry.id) {
+
+                @if (section.id === 'academics') {
+                  <li class="admin-navigation__module-summary">
+                    <span class="admin-navigation__module-icon" aria-hidden="true">
+                      <svg [lucideIcon]="iconFor(section.icon)" size="42"></svg>
+                      <small>✓</small>
+                    </span>
+                    <span class="admin-navigation__module-copy">
+                      <strong>Academic workspace</strong>
+                      <span>{{ section.description }}</span>
+                      <small>{{ section.children?.length || 0 }} tools</small>
+                    </span>
+                    <span class="admin-navigation__module-spark" aria-hidden="true">✦</span>
+                  </li>
+                }
+
+                @for (entry of section.children || []; track entry.id; let entryIndex = $index) {
+                  @if (showNavigationGroup(section.children || [], entryIndex)) {
+                    <li class="admin-navigation__group-heading">
+                      <span>{{ entry.group }}</span>
+                      <i aria-hidden="true"></i>
+                    </li>
+                  }
                   <li>
                     @if (entry.children?.length) {
                       <button
@@ -270,8 +311,30 @@
                           ></svg>
                         </span>
                         <span class="admin-navigation__label">{{ entry.label }}</span>
+                        @if (entry.description) {
+                          <small class="admin-navigation__description">{{
+                            entry.description
+                          }}</small>
+                        }
+                        <svg
+                          class="admin-navigation__entry-arrow"
+                          lucideChevronRight
+                          size="16"
+                          aria-hidden="true"
+                        ></svg>
                       </a>
                     }
+                  </li>
+                }
+
+                @if (section.id === 'academics') {
+                  <li class="admin-navigation__guidance">
+                    <svg lucideCircleHelp size="19" aria-hidden="true"></svg>
+                    <strong>Need setup guidance?</strong>
+                    <a routerLink="/admin/academics/groups" (click)="selectNavigation()">
+                      View order
+                      <svg lucideChevronRight size="15" aria-hidden="true"></svg>
+                    </a>
                   </li>
                 }
               </ul>

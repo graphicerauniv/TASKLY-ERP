@@ -1,16 +1,17 @@
 @if (open()) {
-  <div class="erp-mobile-section-sheet" role="dialog" aria-modal="true" aria-label="Application sections">
+  <div
+    class="erp-mobile-section-sheet"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="heading()"
+  >
     <button
       class="erp-mobile-section-sheet__backdrop"
       type="button"
       aria-label="Close sections"
       (click)="closed.emit()"
     ></button>
-    <section
-      class="erp-mobile-section-sheet__panel"
-      cdkTrapFocus
-      [cdkTrapFocusAutoCapture]="true"
-    >
+    <section class="erp-mobile-section-sheet__panel" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
       <div class="erp-mobile-section-sheet__handle" aria-hidden="true"></div>
       <button
         class="erp-mobile-section-sheet__close"
@@ -22,6 +23,7 @@
       </button>
       <erp-form-section-navigator
         panelId="mobile-application-sections"
+        [heading]="heading()"
         [items]="items()"
         [completedCount]="completedCount()"
         [totalCount]="totalCount()"

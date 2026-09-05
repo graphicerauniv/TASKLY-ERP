@@ -747,7 +747,8 @@
   text-align: center;
 }
 
-.support-empty--illustrated img {
+.support-empty--illustrated img,
+.support-empty--illustrated erp-admin-illustration {
   width: 66px;
   height: 54px;
   object-fit: contain;
@@ -812,7 +813,8 @@
   font-size: var(--erp-font-size-2xs);
 }
 
-.action-cta img {
+.action-cta img,
+.action-cta erp-admin-illustration {
   width: 72px;
   height: 58px;
   object-fit: contain;
@@ -885,7 +887,9 @@
 }
 
 .table-empty img,
-.illustration-empty-state img {
+.table-empty erp-admin-illustration,
+.illustration-empty-state img,
+.illustration-empty-state erp-admin-illustration {
   width: 94px;
   height: 76px;
   object-fit: contain;

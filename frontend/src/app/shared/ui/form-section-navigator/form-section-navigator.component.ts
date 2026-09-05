@@ -19,6 +19,7 @@ export class FormSectionNavigatorComponent {
   readonly items = input<readonly FormSectionNavigationItem[]>([]);
   readonly completedCount = input(0);
   readonly totalCount = input(0);
+  readonly heading = input('Application sections');
   readonly panelId = input('application-sections');
   readonly sectionSelected = output<number>();
   readonly collapsed = signal(false);

@@ -1,6 +1,6 @@
 <header class="erp-section-navigator__header">
   <div>
-    <strong>Application sections</strong>
+    <strong>{{ heading() }}</strong>
     <small>{{ completedCount() }} of {{ totalCount() }} complete</small>
   </div>
   <button
@@ -34,10 +34,7 @@
         <p class="erp-section-navigator__group">{{ group.title }}</p>
       }
       @for (item of group.items; track item.id) {
-        <erp-form-section-nav-item
-          [item]="item"
-          (selected)="sectionSelected.emit($event)"
-        />
+        <erp-form-section-nav-item [item]="item" (selected)="sectionSelected.emit($event)" />
       }
     } @empty {
       <p class="erp-section-navigator__empty">No sections found.</p>

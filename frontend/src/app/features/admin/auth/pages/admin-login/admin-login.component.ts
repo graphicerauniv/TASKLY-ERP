@@ -62,8 +62,8 @@ export class AdminLoginComponent {
     this.loading.set(true);
     const { email, password } = this.form.getRawValue();
     this.api.login(email, password).subscribe({
-      next: ({ token, admin }) => {
-        this.auth.save(token, admin);
+      next: ({ token, refreshToken, admin }) => {
+        this.auth.save(token, admin, refreshToken);
         void this.router.navigate(['/admin/dashboard']);
       },
       error: (error) => {

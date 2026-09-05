@@ -40,6 +40,28 @@
   --erp-focus-ring-offset: 2px;
   --erp-backdrop: rgb(31 35 40 / 42%);
 
+  /* Academics: bright layered blues sampled from the approved structure references. */
+  --erp-academic-accent: #0674e8;
+  --erp-academic-accent-hover: #0566cf;
+  --erp-academic-canvas:
+    radial-gradient(circle at 82% 8%, #dceeff 0, transparent 28%),
+    linear-gradient(135deg, #fbfdff 0%, #f0f8ff 52%, #eaf5ff 100%);
+  --erp-academic-card: linear-gradient(145deg, #ffffff 0%, #f7fbff 56%, #eaf5ff 100%);
+  --erp-academic-drawer-surface:
+    radial-gradient(circle at 100% 0, #e9f5ff 0, transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  --erp-academic-header-surface: linear-gradient(90deg, #ffffff 0%, #edf7ff 100%);
+  --erp-academic-table-header: linear-gradient(180deg, #f6fbff 0%, #eaf4ff 100%);
+  --erp-academic-icon-surface: linear-gradient(145deg, #f0f8ff 0%, #dceeff 100%);
+  --erp-academic-icon-surface-alt: linear-gradient(145deg, #eef3ff 0%, #dfe8ff 100%);
+  --erp-academic-preview-surface: linear-gradient(110deg, #edf7ff 0%, #e2f2ff 100%);
+  --erp-academic-border: #aed3fa;
+  --erp-academic-border-soft: #d3e8fb;
+  --erp-academic-row-hover: #f0f8ff;
+  --erp-academic-backdrop: rgb(16 47 82 / 34%);
+  --erp-academic-shadow: 0 10px 30px rgb(22 101 180 / 10%);
+  --erp-academic-shadow-soft: 0 5px 16px rgb(22 101 180 / 8%);
+
   /* Text */
   --erp-text-heading: #10224d;
   --erp-text-strong: #172b55;
@@ -139,7 +161,8 @@
   --erp-grid-gutter-mobile: 16px;
 
   /* Application shell */
-  --erp-sidebar-width: 268px;
+  /* Compact desktop navigation: 20% narrower than the previous 304px rail. */
+  --erp-sidebar-width: 243px;
   --erp-sidebar-collapsed-width: 64px;
   --erp-form-structure-width: 330px;
   --erp-builder-page-padding-x: 32px;
@@ -148,7 +171,7 @@
   --erp-builder-toolbar-height: 64px;
   --erp-builder-field-row-height: 76px;
   --erp-inspector-width: 360px;
-  --erp-sidebar-item-height: 40px;
+  --erp-sidebar-item-height: 48px;
   --erp-sidebar-item-radius: 8px;
   --erp-sidebar-inline-padding: 12px;
   --erp-sidebar-icon-column: 48px;
@@ -170,7 +193,9 @@
   --erp-sidebar-text-muted: var(--erp-text-muted);
   --erp-sidebar-hover-light: var(--erp-surface-hover);
   --erp-sidebar-active-light: var(--erp-blue-500);
-  --erp-sidebar-panel-width: 292px;
+  --erp-sidebar-panel-width: 392px;
+  /* Academics module panel: 30% narrower than the previous 404px panel. */
+  --erp-sidebar-module-panel-width: 283px;
   --erp-sidebar-mobile-width: 292px;
   --erp-header-height: 68px;
   --erp-header-bg: rgb(255 255 255 / 96%);
@@ -216,7 +241,8 @@
   --erp-kpi-orange-text: #c66c00;
   --erp-kpi-orange-bg: #fff3df;
   --erp-chart-card-min-height: 320px;
-  --erp-drawer-width: 384px;
+  /* One professional drawer width across Admin; 20% wider than the previous 525px Academic drawer. */
+  --erp-drawer-width: 630px;
   --erp-modal-width: 560px;
   --erp-workflow-navigator-width: 280px;
   --erp-workflow-content-max-width: 1440px;
@@ -285,7 +311,8 @@
   /* Interaction contracts */
   --erp-standard-transition: 160ms ease-out;
   --erp-overlay-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --erp-sidebar-expand-transition: var(--erp-sidebar-expand-duration) var(--erp-sidebar-expand-easing);
+  --erp-sidebar-expand-transition: var(--erp-sidebar-expand-duration)
+    var(--erp-sidebar-expand-easing);
 }
 /* Taskly ERP motion contract.
  * These variables define timing and easing only; components consume them later.

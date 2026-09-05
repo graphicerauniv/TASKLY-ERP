@@ -1,0 +1,926 @@
+<erp-admin-page
+  [title]="title()"
+  [description]="description()"
+  variant="compact"
+  layout="collection"
+>
+  <button page-actions class="erp-button erp-button--primary" type="button" (click)="openCreate()">
+    <svg lucidePlus size="18" aria-hidden="true"></svg>
+    {{ section() === 'subjects' ? 'Create' : 'Add' }} {{ singular() }}
+  </button>
+
+  @if (error()) {
+    <div class="erp-alert erp-alert--danger">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success">{{ message() }}</div>
+  }
+
+  <section
+    class="erp-academic-metric-strip"
+    [class.erp-academic-metric-strip--four]="summaryLabels().length === 4"
+    [attr.aria-label]="title() + ' summary'"
+  >
+    @for (label of summaryLabels(); track label; let index = $index) {
+      <div class="erp-academic-metric">
+        <span class="erp-academic-metric__icon">
+          @if (section() === 'subjects') {
+            @switch (index) {
+              @case (0) {
+                <svg lucideBookOpen size="21" aria-hidden="true"></svg>
+              }
+              @case (1) {
+                <svg lucideGraduationCap size="21" aria-hidden="true"></svg>
+              }
+              @case (2) {
+                <svg lucideFlaskConical size="21" aria-hidden="true"></svg>
+              }
+              @default {
+                <svg lucideStar size="21" aria-hidden="true"></svg>
+              }
+            }
+          } @else if (section() === 'faculties') {
+            @switch (index) {
+              @case (0) {
+                <svg lucideUsersRound size="21" aria-hidden="true"></svg>
+              }
+              @case (1) {
+                <svg lucideClock3 size="21" aria-hidden="true"></svg>
+              }
+              @default {
+                <svg lucideClipboardList size="21" aria-hidden="true"></svg>
+              }
+            }
+          } @else {
+            @switch (index) {
+              @case (0) {
+                <svg lucideBuilding2 size="21" aria-hidden="true"></svg>
+              }
+              @case (1) {
+                <svg lucideGraduationCap size="21" aria-hidden="true"></svg>
+              }
+              @case (2) {
+                <svg lucideFlaskConical size="21" aria-hidden="true"></svg>
+              }
+              @default {
+                <svg lucideUsersRound size="21" aria-hidden="true"></svg>
+              }
+            }
+          }
+        </span>
+        <span
+          ><small>{{ label }}</small
+          ><strong>{{ summary(index) }}</strong></span
+        >
+      </div>
+    }
+  </section>
+
+  <section class="erp-card erp-table-shell erp-academic-directory">
+    <div class="erp-academic-directory__toolbar">
+      <label class="erp-search-control">
+        <svg lucideSearch size="18" aria-hidden="true"></svg>
+        <input
+          type="search"
+          [placeholder]="'Search by ' + singular() + ' name or code'"
+          [(ngModel)]="search"
+          (ngModelChange)="page.set(1)"
+        />
+      </label>
+      <div class="erp-academic-directory__tools">
+        <div class="erp-academic-popover-anchor">
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="filterOpen.update((v) => !v); columnsOpen.set(false)"
+          >
+            <svg lucideFilter size="17" aria-hidden="true"></svg> Filters
+          </button>
+          @if (filterOpen()) {
+            <div class="erp-academic-popover">
+              <label
+                ><span>Status</span>
+                <select
+                  class="erp-control"
+                  [ngModel]="statusFilter()"
+                  (ngModelChange)="statusFilter.set($event); page.set(1)"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </label>
+            </div>
+          }
+        </div>
+        <div class="erp-academic-popover-anchor">
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="columnsOpen.update((v) => !v); filterOpen.set(false)"
+          >
+            <svg lucideColumns3 size="17" aria-hidden="true"></svg> Columns
+          </button>
+          @if (columnsOpen()) {
+            <div class="erp-academic-popover erp-academic-popover--checks">
+              <label
+                ><input
+                  type="checkbox"
+                  [ngModel]="showDetailOne()"
+                  (ngModelChange)="showDetailOne.set($event)"
+                />
+                Detail 1</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  [ngModel]="showDetailTwo()"
+                  (ngModelChange)="showDetailTwo.set($event)"
+                />
+                Detail 2</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  [ngModel]="showStatus()"
+                  (ngModelChange)="showStatus.set($event)"
+                />
+                Status</label
+              >
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="erp-table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              {{
+                section() === 'subjects'
+                  ? 'Subject'
+                  : section() === 'faculties'
+                    ? 'Faculty member'
+                    : 'Room / code'
+              }}
+            </th>
+            @if (showDetailOne()) {
+              <th>
+                {{
+                  section() === 'subjects'
+                    ? 'Type'
+                    : section() === 'faculties'
+                      ? 'Department'
+                      : 'Type · location'
+                }}
+              </th>
+            }
+            @if (showDetailTwo()) {
+              <th>
+                {{
+                  section() === 'subjects'
+                    ? 'Credits / L–T–P'
+                    : section() === 'faculties'
+                      ? 'Subjects · availability'
+                      : 'Capacity · subjects'
+                }}
+              </th>
+            }
+            @if (showStatus()) {
+              <th>Status</th>
+            }
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of pagedRecords(); track item._id) {
+            <tr>
+              <td>
+                <strong>{{ item.name }}</strong
+                ><small>{{ item.code || '—' }}</small>
+              </td>
+              @if (showDetailOne()) {
+                <td>
+                  @if (section() === 'subjects') {
+                    <strong>{{ $any(item).subjectType | titlecase }}</strong
+                    ><small>{{ $any(item).evaluationType | titlecase }}</small>
+                  } @else if (section() === 'faculties') {
+                    <strong>{{
+                      labels('department', $any(item).departmentIds || []).join(', ') || '—'
+                    }}</strong
+                    ><small>{{ $any(item).email }}</small>
+                  } @else {
+                    <strong>{{ $any(item).roomType | titlecase }}</strong
+                    ><small
+                      >{{ $any(item).building || 'Building not set' }} ·
+                      {{ $any(item).floor || 'Floor not set' }}</small
+                    >
+                  }
+                </td>
+              }
+              @if (showDetailTwo()) {
+                <td>
+                  @if (section() === 'subjects') {
+                    <strong>{{ $any(item).credits || 0 }} credits</strong
+                    ><small
+                      >{{ $any(item).lectureHours || 0 }}–{{ $any(item).tutorialHours || 0 }}–{{
+                        $any(item).labHours || 0
+                      }}</small
+                    >
+                  } @else if (section() === 'faculties') {
+                    <strong>{{ $any(item).subjectIds?.length || 0 }} subjects</strong
+                    ><small
+                      >{{ $any(item).availableDays?.length || 0 }} days ·
+                      {{ $any(item).weeklyLimit }} hrs</small
+                    >
+                  } @else {
+                    <strong>{{ $any(item).capacity }} seats</strong
+                    ><small>{{ $any(item).subjectIds?.length || 0 }} supported subjects</small>
+                  }
+                </td>
+              }
+              @if (showStatus()) {
+                <td>
+                  <span class="erp-status" [class.erp-status--neutral]="!item.isActive"
+                    ><i aria-hidden="true"></i>{{ item.isActive ? 'Active' : 'Inactive' }}</span
+                  >
+                </td>
+              }
+              <td class="erp-table-shell__actions">
+                <erp-compact-action-menu
+                  [items]="rowActions"
+                  (selected)="handleAction($event, item)"
+                />
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="tableColspan()">
+                <div class="erp-empty-panel erp-academic-empty">
+                  @if (loading()) {
+                    <span class="erp-spinner" aria-hidden="true"></span>
+                    <h2>Loading {{ title().toLowerCase() }}…</h2>
+                  } @else {
+                    <erp-admin-illustration [kind]="emptyIllustration()" size="compact" />
+                    <h2>
+                      {{
+                        search || statusFilter() !== 'all'
+                          ? 'No matching results'
+                          : 'No ' +
+                            title().toLowerCase() +
+                            (section() === 'faculties' ? ' added' : ' created')
+                      }}
+                    </h2>
+                    <p>
+                      {{
+                        search || statusFilter() !== 'all'
+                          ? 'Try changing your search or filters.'
+                          : description()
+                      }}
+                    </p>
+                    @if (!search && statusFilter() === 'all') {
+                      <button
+                        class="erp-button erp-button--secondary"
+                        type="button"
+                        (click)="openCreate()"
+                      >
+                        <svg lucidePlus size="17"></svg
+                        >{{ section() === 'subjects' ? 'Create' : 'Add' }} {{ singular() }}
+                      </button>
+                    }
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer class="erp-table-pagination">
+      <span>{{ resultRange() }}</span>
+      <div>
+        <select
+          class="erp-control"
+          [ngModel]="pageSize()"
+          (ngModelChange)="pageSize.set(+$event); page.set(1)"
+        >
+          @for (size of pageSizeOptions; track size) {
+            <option [value]="size">{{ size }} / page</option>
+          }
+        </select>
+        <button
+          class="erp-icon-button"
+          type="button"
+          [disabled]="page() === 1"
+          (click)="page.update((v) => v - 1)"
+          aria-label="Previous page"
+        >
+          <svg lucideChevronLeft size="18"></svg>
+        </button>
+        <button
+          class="erp-icon-button"
+          type="button"
+          [disabled]="page() === totalPages()"
+          (click)="page.update((v) => v + 1)"
+          aria-label="Next page"
+        >
+          <svg lucideChevronRight size="18"></svg>
+        </button>
+      </div>
+    </footer>
+  </section>
+</erp-admin-page>
+
+@if (drawerOpen()) {
+  <div class="erp-drawer-layer">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      aria-label="Close drawer"
+      (click)="closeDrawer()"
+    ></button>
+    <aside
+      class="erp-drawer erp-academic-drawer"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <header class="erp-drawer__header">
+        <div>
+          <span class="erp-drawer__eyebrow">{{ drawerEyebrow() }}</span>
+          <h2>
+            {{ editingId() ? 'Edit' : section() === 'subjects' ? 'Create' : 'Add' }}
+            {{ singular() }}
+          </h2>
+          <p>{{ drawerDescription() }}</p>
+        </div>
+        <button class="erp-icon-button" type="button" (click)="closeDrawer()" aria-label="Close">
+          <svg lucideX size="22"></svg>
+        </button>
+      </header>
+
+      @if (section() === 'subjects') {
+        <div class="erp-subject-workflow">
+          <erp-form-section-navigator
+            class="erp-subject-workflow__navigator"
+            heading="Subject sections"
+            [items]="subjectSections()"
+            [completedCount]="subjectStep()"
+            [totalCount]="subjectSections().length"
+            (sectionSelected)="subjectStep.set($event)"
+          />
+          <main class="erp-subject-workflow__content erp-drawer__body">
+            <button
+              class="erp-button erp-button--secondary erp-subject-workflow__mobile-sections"
+              type="button"
+              (click)="mobileNavigatorOpen.set(true)"
+            >
+              <svg lucideClipboardList size="17"></svg> Subject sections
+            </button>
+            <div class="erp-subject-workflow__heading">
+              <span>Step {{ subjectStep() + 1 }} of 6</span>
+              <h3>{{ subjectSections()[subjectStep()].title }}</h3>
+            </div>
+            @switch (subjectStep()) {
+              @case (0) {
+                <fieldset class="erp-academic-form-section">
+                  <legend><svg lucideFileText size="20"></svg> Basic information</legend>
+                  <div class="erp-academic-form-grid">
+                    <label
+                      ><span>Subject name *</span
+                      ><input
+                        class="erp-control"
+                        [(ngModel)]="name"
+                        placeholder="e.g. Data Structures"
+                    /></label>
+                    <label
+                      ><span>Code *</span
+                      ><input class="erp-control" [(ngModel)]="code" placeholder="e.g. CS201"
+                    /></label>
+                    <label class="erp-academic-field--wide"
+                      ><span>Subject name in Hindi</span
+                      ><input class="erp-control" [(ngModel)]="hindiName"
+                    /></label>
+                    <label
+                      ><span>Subject type *</span
+                      ><select class="erp-control" [(ngModel)]="subjectType">
+                        <option value="theory">Theory</option>
+                        <option value="practical">Practical</option>
+                        <option value="tutorial">Tutorial</option>
+                        <option value="project">Project</option>
+                      </select></label
+                    >
+                    <label
+                      ><span>Subject option</span
+                      ><select class="erp-control" [(ngModel)]="subjectOption">
+                        <option value="required">Required</option>
+                        <option value="elective">Elective</option>
+                      </select></label
+                    >
+                    <label class="erp-academic-field--wide"
+                      ><span>Evaluation</span
+                      ><select class="erp-control" [(ngModel)]="evaluationType">
+                        <option value="marks">Marks</option>
+                        <option value="grade">Grade</option>
+                      </select></label
+                    >
+                  </div>
+                </fieldset>
+              }
+              @case (1) {
+                <fieldset class="erp-academic-form-section">
+                  <legend><svg lucideBuilding2 size="20"></svg> Academic mapping</legend>
+                  <div class="erp-academic-form-grid">
+                    <label
+                      ><span>Academic session *</span
+                      ><input
+                        class="erp-control"
+                        [(ngModel)]="session"
+                        placeholder="2026–2027" /></label
+                    ><label
+                      ><span>Semester *</span
+                      ><input class="erp-control" type="number" min="1" [(ngModel)]="semester"
+                    /></label>
+                    <label
+                      ><span>University *</span
+                      ><select
+                        class="erp-control"
+                        [(ngModel)]="universityId"
+                        (ngModelChange)="collegeId = ''"
+                      >
+                        <option value="">Select university</option>
+                        @for (item of master('university'); track item._id) {
+                          <option [value]="item._id">{{ item.name }}</option>
+                        }
+                      </select></label
+                    >
+                    <label
+                      ><span>College *</span
+                      ><select class="erp-control" [(ngModel)]="collegeId">
+                        <option value="">Select college</option>
+                        @for (item of scopedMaster('college', [universityId]); track item._id) {
+                          <option [value]="item._id">{{ item.name }}</option>
+                        }
+                      </select></label
+                    >
+                    <div class="erp-field-stack">
+                      <span>Departments *</span
+                      ><erp-multi-select-dropdown
+                        [options]="options(master('department'))"
+                        [value]="departmentIds"
+                        placeholder="Select departments"
+                        (valueChange)="departmentIds = $event"
+                      />
+                    </div>
+                    <label
+                      ><span>Level / course type</span
+                      ><select class="erp-control" [(ngModel)]="levelId">
+                        <option value="">Select level</option>
+                        @for (item of master('level'); track item._id) {
+                          <option [value]="item._id">{{ item.name }}</option>
+                        }
+                      </select></label
+                    >
+                    <div class="erp-field-stack">
+                      <span>Courses</span
+                      ><erp-multi-select-dropdown
+                        [options]="options(master('course'))"
+                        [value]="courseIds"
+                        placeholder="Select courses"
+                        (valueChange)="courseIds = $event"
+                      />
+                    </div>
+                    <div class="erp-field-stack">
+                      <span>Branches</span
+                      ><erp-multi-select-dropdown
+                        [options]="options(master('branch'))"
+                        [value]="branchIds"
+                        placeholder="Select branches"
+                        (valueChange)="branchIds = $event"
+                      />
+                    </div>
+                  </div>
+                </fieldset>
+              }
+              @case (2) {
+                <fieldset class="erp-academic-form-section">
+                  <legend><svg lucideDatabase size="20"></svg> Teaching load & credits</legend>
+                  <div class="erp-academic-form-grid erp-academic-form-grid--three">
+                    <label
+                      ><span>Credits</span
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="credits" /></label
+                    ><label
+                      ><span>Subject counter</span
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="subjectCounter"
+                    /></label>
+                    <label
+                      ><span>Lecture hours</span
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="lectureHours" /></label
+                    ><label
+                      ><span>Tutorial hours</span
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="tutorialHours" /></label
+                    ><label
+                      ><span>Practical / lab hours</span
+                      ><input class="erp-control" type="number" min="0" [(ngModel)]="labHours"
+                    /></label>
+                  </div>
+                </fieldset>
+              }
+              @case (3) {
+                <fieldset class="erp-academic-form-section">
+                  <legend><svg lucideClipboardList size="20"></svg> Evaluation & marks</legend>
+                  <div class="erp-academic-form-grid erp-academic-form-grid--three">
+                    <label
+                      ><span>Maximum marks</span
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="maxMarks" /></label
+                    ><label
+                      ><span>Pass marks</span
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="passMarks" /></label
+                    ><label
+                      ><span>Internal marks</span
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="internalMarks" /></label
+                    ><label
+                      ><span>External marks</span
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="externalMarks" /></label
+                    ><label
+                      ><span>Mid-term marks</span
+                      ><input class="erp-control" type="number" min="0" [(ngModel)]="midTermMarks"
+                    /></label>
+                  </div>
+                  <label class="erp-academic-check"
+                    ><input type="checkbox" [(ngModel)]="isPaper" /><span
+                      ><strong>Question paper required</strong
+                      ><small>Include paper configuration for this subject.</small></span
+                    ></label
+                  >
+                </fieldset>
+              }
+              @case (4) {
+                <fieldset class="erp-academic-form-section">
+                  <legend><svg lucideUsersRound size="20"></svg> Faculty permissions</legend>
+                  <div class="erp-academic-check-grid">
+                    <label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="allowMidMarksEntry" /><span
+                        ><strong>Enter mid-term marks</strong
+                        ><small>Allow assigned faculty to enter mid-term marks.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="allowExternalMarksEntry" /><span
+                        ><strong>Enter external marks</strong
+                        ><small>Allow assigned faculty to enter external marks.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="isOpenElective" /><span
+                        ><strong>Open elective</strong
+                        ><small>Offer across eligible programmes.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="isFoundation" /><span
+                        ><strong>Foundation subject</strong
+                        ><small>Mark as a foundation curriculum subject.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="isGroupSubject" /><span
+                        ><strong>Group subject</strong
+                        ><small>Allow group-level subject assignment.</small></span
+                      ></label
+                    >
+                  </div>
+                </fieldset>
+              }
+              @default {
+                <fieldset class="erp-academic-form-section">
+                  <legend><svg lucideEye size="20"></svg> Student visibility</legend>
+                  <div class="erp-academic-check-grid">
+                    <label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="showAlternativeGrade" /><span
+                        ><strong>Alternative grade</strong
+                        ><small>Show the alternative grade to students.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="showAlternativeGradePoint" /><span
+                        ><strong>Alternative grade point</strong
+                        ><small>Show the alternate grade point.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="showAlternativeSubjectCredit" /><span
+                        ><strong>Alternative credit</strong
+                        ><small>Show alternate subject credit.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="hideInternalMarks" /><span
+                        ><strong>Hide internal marks</strong
+                        ><small>Keep internal marks private.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="hideExternalMarks" /><span
+                        ><strong>Hide external marks</strong
+                        ><small>Keep external marks private.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="hideMidTermMarks" /><span
+                        ><strong>Hide mid-term marks</strong
+                        ><small>Keep mid-term marks private.</small></span
+                      ></label
+                    ><label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="hideTotalMarks" /><span
+                        ><strong>Hide total marks</strong
+                        ><small>Keep the calculated total private.</small></span
+                      ></label
+                    >
+                  </div>
+                </fieldset>
+              }
+            }
+          </main>
+        </div>
+        <erp-form-action-bar
+          [showBack]="subjectStep() > 0"
+          [showSaveDraft]="false"
+          [saving]="saving()"
+          [primaryDisabled]="
+            (subjectStep() === 0 && (!name.trim() || !code.trim())) ||
+            (subjectStep() === 5 && !formValid())
+          "
+          saveStatus=""
+          [primaryLabel]="
+            subjectStep() === 5 ? (editingId() ? 'Save changes' : 'Create subject') : 'Continue'
+          "
+          (back)="subjectStep.update((v) => v - 1)"
+          (primary)="nextSubjectStep()"
+        />
+      } @else {
+        <div class="erp-drawer__body erp-academic-drawer__body">
+          @if (section() === 'faculties') {
+            <fieldset class="erp-academic-form-section">
+              <legend><svg lucideUsersRound size="20"></svg> Faculty identity</legend>
+              <div class="erp-academic-form-grid">
+                <label
+                  ><span>Name *</span
+                  ><input
+                    class="erp-control"
+                    [(ngModel)]="name"
+                    placeholder="Enter faculty name" /></label
+                ><label
+                  ><span>Code *</span
+                  ><input
+                    class="erp-control"
+                    [(ngModel)]="code"
+                    placeholder="Enter faculty code" /></label
+                ><label class="erp-academic-field--wide"
+                  ><span>Email *</span
+                  ><input
+                    class="erp-control"
+                    type="email"
+                    [(ngModel)]="email"
+                    placeholder="name@university.edu"
+                /></label>
+              </div>
+            </fieldset>
+            <fieldset class="erp-academic-form-section">
+              <legend><svg lucideBuilding2 size="20"></svg> Institution</legend>
+              <div class="erp-academic-form-grid">
+                <label
+                  ><span>University *</span
+                  ><select
+                    class="erp-control"
+                    [(ngModel)]="universityId"
+                    (ngModelChange)="collegeId = ''"
+                  >
+                    <option value="">Select university</option>
+                    @for (item of master('university'); track item._id) {
+                      <option [value]="item._id">{{ item.name }}</option>
+                    }
+                  </select></label
+                ><label
+                  ><span>College *</span
+                  ><select class="erp-control" [(ngModel)]="collegeId">
+                    <option value="">Select college</option>
+                    @for (item of scopedMaster('college', [universityId]); track item._id) {
+                      <option [value]="item._id">{{ item.name }}</option>
+                    }
+                  </select></label
+                >
+                <div class="erp-field-stack erp-academic-field--wide">
+                  <span>Departments *</span
+                  ><erp-multi-select-dropdown
+                    [options]="options(master('department'))"
+                    [value]="departmentIds"
+                    placeholder="Select departments"
+                    (valueChange)="departmentIds = $event"
+                  />
+                </div>
+              </div>
+            </fieldset>
+            <fieldset class="erp-academic-form-section">
+              <legend><svg lucideBookOpen size="20"></svg> Teaching capability</legend>
+              <div class="erp-field-stack">
+                <span>Subjects</span
+                ><erp-multi-select-dropdown
+                  [options]="options(subjects())"
+                  [value]="subjectIds"
+                  placeholder="Select subjects"
+                  (valueChange)="subjectIds = $event"
+                />
+              </div>
+            </fieldset>
+            <fieldset class="erp-academic-form-section">
+              <legend><svg lucideCalendarDays size="20"></svg> Availability & workload</legend>
+              <span class="erp-academic-field-label">Available days</span>
+              <div class="erp-academic-weekdays">
+                @for (day of ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']; track day) {
+                  <button
+                    type="button"
+                    [class.is-selected]="availableDays.includes(day)"
+                    (click)="toggleDay(day)"
+                  >
+                    {{ day }}
+                  </button>
+                }
+              </div>
+              <label
+                ><span>Weekly workload limit</span>
+                <div class="erp-academic-unit-control">
+                  <input class="erp-control" type="number" min="1" [(ngModel)]="weeklyLimit" /><span
+                    >hours</span
+                  >
+                </div></label
+              >
+              <section class="erp-academic-mapping-preview">
+                <svg lucideClock3 size="24"></svg
+                ><span
+                  ><small>Weekly capacity</small
+                  ><strong>{{ weeklyLimit }} hours available</strong></span
+                >
+              </section>
+            </fieldset>
+          } @else {
+            <fieldset class="erp-academic-form-section">
+              <legend><svg lucideBuilding2 size="20"></svg> Institution</legend>
+              <div class="erp-academic-form-grid">
+                <label
+                  ><span>University *</span
+                  ><select
+                    class="erp-control"
+                    [(ngModel)]="universityId"
+                    (ngModelChange)="collegeId = ''"
+                  >
+                    <option value="">Select university</option>
+                    @for (item of master('university'); track item._id) {
+                      <option [value]="item._id">{{ item.name }}</option>
+                    }
+                  </select></label
+                ><label
+                  ><span>College *</span
+                  ><select class="erp-control" [(ngModel)]="collegeId">
+                    <option value="">Select college</option>
+                    @for (item of scopedMaster('college', [universityId]); track item._id) {
+                      <option [value]="item._id">{{ item.name }}</option>
+                    }
+                  </select></label
+                >
+              </div>
+            </fieldset>
+            <fieldset class="erp-academic-form-section">
+              <legend><svg lucideFileText size="20"></svg> Space identity</legend>
+              <div class="erp-academic-form-grid">
+                <label
+                  ><span>Name *</span
+                  ><input
+                    class="erp-control"
+                    [(ngModel)]="name"
+                    placeholder="e.g. Computer Lab 1" /></label
+                ><label
+                  ><span>Code *</span
+                  ><input
+                    class="erp-control"
+                    [(ngModel)]="code"
+                    placeholder="e.g. LAB-C101" /></label
+                ><label class="erp-academic-field--wide"
+                  ><span>Room type</span
+                  ><select class="erp-control" [(ngModel)]="roomType">
+                    <option value="classroom">Classroom</option>
+                    <option value="lab">Lab</option>
+                    <option value="auditorium">Auditorium</option>
+                  </select></label
+                >
+              </div>
+            </fieldset>
+            <fieldset class="erp-academic-form-section">
+              <legend><svg lucideMapPin size="20"></svg> Location</legend>
+              <div class="erp-academic-form-grid">
+                <label
+                  ><span>Building</span
+                  ><input
+                    class="erp-control"
+                    [(ngModel)]="building"
+                    placeholder="Enter building" /></label
+                ><label
+                  ><span>Floor</span
+                  ><input class="erp-control" [(ngModel)]="floor" placeholder="Enter floor"
+                /></label>
+              </div>
+            </fieldset>
+            <fieldset class="erp-academic-form-section">
+              <legend><svg lucideUsersRound size="20"></svg> Capacity & capability</legend>
+              <div class="erp-academic-form-grid">
+                <label
+                  ><span>Capacity *</span
+                  ><input class="erp-control" type="number" min="1" [(ngModel)]="capacity"
+                /></label>
+                <div class="erp-field-stack">
+                  <span>Supported subjects (optional)</span
+                  ><erp-multi-select-dropdown
+                    [options]="options(subjects())"
+                    [value]="subjectIds"
+                    placeholder="Select supported subjects"
+                    (valueChange)="subjectIds = $event"
+                  />
+                </div>
+              </div>
+              <section class="erp-academic-mapping-preview">
+                <svg lucideBuilding2 size="24"></svg
+                ><span
+                  ><strong>Space preview</strong
+                  ><small
+                    >{{ roomType | titlecase }} · Capacity {{ capacity }} ·
+                    {{
+                      subjectIds.length
+                        ? subjectIds.length + ' subjects'
+                        : 'Subjects not restricted'
+                    }}</small
+                  ></span
+                >
+              </section>
+            </fieldset>
+          }
+        </div>
+        <footer class="erp-drawer__footer">
+          <button class="erp-button erp-button--secondary" type="button" (click)="closeDrawer()">
+            Cancel</button
+          ><button
+            class="erp-button erp-button--primary"
+            type="button"
+            [disabled]="!formValid() || saving()"
+            (click)="save()"
+          >
+            {{
+              saving()
+                ? 'Saving…'
+                : editingId()
+                  ? 'Save changes'
+                  : section() === 'faculties'
+                    ? 'Add faculty member'
+                    : 'Add room or lab'
+            }}
+          </button>
+        </footer>
+      }
+    </aside>
+  </div>
+}
+
+<erp-mobile-section-navigator-sheet
+  [open]="mobileNavigatorOpen()"
+  heading="Subject sections"
+  [items]="subjectSections()"
+  [completedCount]="subjectStep()"
+  [totalCount]="subjectSections().length"
+  (closed)="mobileNavigatorOpen.set(false)"
+  (sectionSelected)="subjectStep.set($event); mobileNavigatorOpen.set(false)"
+/>

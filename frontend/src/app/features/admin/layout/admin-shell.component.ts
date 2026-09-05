@@ -84,8 +84,17 @@ export class AdminShellComponent {
   readonly desktopFlyoutTop = signal(72);
   readonly desktopFlyoutMaxHeight = signal(480);
   readonly pageContext = signal(resolveAdminPageContext(this.router.url));
+  readonly desktopModuleOpen = computed(() => this.expandedSectionId() !== null);
   readonly isScholarshipWorkspace = computed(() =>
     /^\/admin\/admissions\/[^/]+\/scholarships\/?(?:\?|$)/.test(this.currentUrl()),
+  );
+  readonly showWorkspaceHeader = computed(
+    () => this.isScholarshipWorkspace() || this.currentUrl().startsWith('/admin/academics'),
+  );
+  readonly workspaceSearchPlaceholder = computed(() =>
+    this.currentUrl().startsWith('/admin/academics')
+      ? 'Search students, admissions, academics…'
+      : 'Search by name, ID, programme…',
   );
   readonly headerSaveStatus = computed(() =>
     /\/admission\/student|\/admissions\/[^/]+\/edit/.test(this.currentUrl())
@@ -214,6 +223,11 @@ export class AdminShellComponent {
     return (
       entry.children?.some((link) => matchesAdminRoute(link.activeWhen, this.currentUrl())) ?? false
     );
+  }
+
+  showNavigationGroup(entries: readonly AdminNavigationEntry[], index: number): boolean {
+    const group = entries[index]?.group;
+    return Boolean(group && (index === 0 || entries[index - 1]?.group !== group));
   }
 
   selectNavigation(): void {

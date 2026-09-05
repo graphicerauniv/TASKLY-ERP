@@ -10,6 +10,7 @@ export const requireAdmin = asyncHandler(async (request, response, next) => {
     const { payload } = await jwtVerify(token, new TextEncoder().encode(config.jwtSecret), {
       issuer: 'taskly-erp',
     });
+    if (payload.tokenUse === 'refresh') throw new Error('Refresh tokens cannot access APIs');
     const admin = await db()
       .collection('admins')
       .findOne({ _id: id(payload.sub), isActive: true });

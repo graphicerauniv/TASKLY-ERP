@@ -6,6 +6,11 @@ Before making any frontend UI or Angular feature change, read and follow:
 FRONTEND_UI_RULES.md
 ```
 
+The global admin illustration rule in that file is mandatory for every existing
+page redesign and every new Admin Portal page. Use the semantic
+`erp-admin-illustration` registry for each applicable state; never hard-code or
+duplicate illustration assets in a feature.
+
 Keep Angular as one SPA with only `src/index.html` as the browser entry. Other
 HTML files must be Angular `*.component.html` templates. Use `routerLink` for
 internal routes and render every admin screen through the one AdminShell outlet.

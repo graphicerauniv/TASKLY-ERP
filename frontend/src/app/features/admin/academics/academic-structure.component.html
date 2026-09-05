@@ -1,0 +1,542 @@
+<erp-admin-page
+  [title]="title()"
+  [description]="description()"
+  variant="compact"
+  layout="collection"
+>
+  <button page-actions class="erp-button erp-button--primary" type="button" (click)="openCreate()">
+    <svg lucidePlus size="17" aria-hidden="true"></svg>
+    Create {{ singular() }}
+  </button>
+
+  @if (error()) {
+    <div class="erp-alert erp-alert--error" role="alert">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success" role="status">{{ message() }}</div>
+  }
+
+  <section class="erp-academic-metric-strip" aria-label="{{ title() }} summary">
+    <div class="erp-academic-metric">
+      <span class="erp-academic-metric__icon"><svg lucideUsersRound size="20"></svg></span>
+      <span
+        ><small>Total {{ title().toLowerCase() }}</small
+        ><strong>{{ records().length }}</strong></span
+      >
+    </div>
+    <div class="erp-academic-metric">
+      <span class="erp-academic-metric__icon"><svg lucideGraduationCap size="20"></svg></span>
+      <span>
+        <small>{{
+          section() === 'groups'
+            ? 'Active sessions'
+            : section() === 'sections'
+              ? 'Session'
+              : 'Selected group'
+        }}</small>
+        <strong>{{
+          section() === 'groups'
+            ? activeSessionCount()
+            : section() === 'sections'
+              ? summarySession()
+              : groupName(groupId)
+        }}</strong>
+      </span>
+    </div>
+    <div class="erp-academic-metric">
+      <span class="erp-academic-metric__icon">
+        @if (section() === 'groups') {
+          <svg lucideBuilding2 size="20"></svg>
+        } @else {
+          <svg lucideCalendarDays size="20"></svg>
+        }
+      </span>
+      <span>
+        <small>{{
+          section() === 'groups'
+            ? 'Departments'
+            : section() === 'sections'
+              ? 'Semester'
+              : 'Selected section'
+        }}</small>
+        <strong>{{
+          section() === 'groups'
+            ? departmentCount()
+            : section() === 'sections'
+              ? summarySemester()
+              : sectionName(sectionId)
+        }}</strong>
+      </span>
+    </div>
+  </section>
+
+  <section class="erp-card erp-table-shell erp-academic-directory">
+    <div class="erp-academic-directory__toolbar">
+      <label class="erp-search-control">
+        <svg lucideSearch size="17" aria-hidden="true"></svg>
+        <input
+          type="search"
+          [(ngModel)]="search"
+          (ngModelChange)="page.set(1)"
+          [placeholder]="'Search by ' + singular() + ' name'"
+        />
+      </label>
+      <div class="erp-academic-directory__tools">
+        <div class="erp-academic-popover-anchor">
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            [attr.aria-expanded]="filterOpen()"
+            (click)="filterOpen.set(!filterOpen()); columnsOpen.set(false)"
+          >
+            <svg lucideFilter size="16" aria-hidden="true"></svg> Filters
+          </button>
+          @if (filterOpen()) {
+            <div class="erp-academic-popover" role="group" aria-label="Record filters">
+              <label>
+                <span>Status</span>
+                <select
+                  class="erp-control"
+                  [ngModel]="statusFilter()"
+                  (ngModelChange)="statusFilter.set($event); page.set(1)"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </label>
+            </div>
+          }
+        </div>
+        <div class="erp-academic-popover-anchor">
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            [attr.aria-expanded]="columnsOpen()"
+            (click)="columnsOpen.set(!columnsOpen()); filterOpen.set(false)"
+          >
+            <svg lucideColumns3 size="16" aria-hidden="true"></svg> Columns
+          </button>
+          @if (columnsOpen()) {
+            <div
+              class="erp-academic-popover erp-academic-popover--checks"
+              role="group"
+              aria-label="Visible columns"
+            >
+              <label
+                ><input
+                  type="checkbox"
+                  [ngModel]="showPeriodColumn()"
+                  (ngModelChange)="showPeriodColumn.set($event)"
+                />
+                Academic period</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  [ngModel]="showContextColumn()"
+                  (ngModelChange)="showContextColumn.set($event)"
+                />
+                Mapping details</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  [ngModel]="showStatusColumn()"
+                  (ngModelChange)="showStatusColumn.set($event)"
+                />
+                Status</label
+              >
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ singular() | titlecase }}</th>
+            @if (showPeriodColumn()) {
+              <th>Academic period</th>
+            }
+            @if (showContextColumn()) {
+              <th>
+                {{
+                  section() === 'groups'
+                    ? 'Institution / mapping'
+                    : section() === 'sections'
+                      ? 'Mapped groups'
+                      : 'Group and section'
+                }}
+              </th>
+            }
+            @if (showStatusColumn()) {
+              <th>Status</th>
+            }
+            <th class="erp-table-shell__actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of pagedRecords(); track item._id) {
+            <tr>
+              <td>
+                <strong>{{ item.name }}</strong>
+              </td>
+              @if (showPeriodColumn()) {
+                <td>
+                  {{ item.academicSession }}<small>Semester {{ item.semester }}</small>
+                </td>
+              }
+              @if (showContextColumn()) {
+                <td>
+                  @if (section() === 'groups') {
+                    <strong>{{ $any(item).collegeName || '—' }}</strong>
+                    <small>{{
+                      $any(item).departmentNames?.join(', ') || 'No department mapping'
+                    }}</small>
+                  } @else if (section() === 'sections') {
+                    {{ groupNames($any(item).groupIds || []) }}
+                  } @else {
+                    <strong>{{ groupName($any(item).groupId) }}</strong>
+                    <small>{{ sectionName($any(item).sectionId) }}</small>
+                  }
+                </td>
+              }
+              @if (showStatusColumn()) {
+                <td>
+                  <span class="erp-status" [class.erp-status--neutral]="!item.isActive">
+                    <i aria-hidden="true"></i>{{ item.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+              }
+              <td class="erp-table-shell__actions">
+                <erp-compact-action-menu
+                  [items]="rowActions"
+                  (selected)="handleAction($event, item)"
+                />
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="tableColspan()">
+                <div class="erp-empty-panel erp-academic-empty">
+                  @if (loading()) {
+                    <span class="erp-spinner" aria-hidden="true"></span>
+                    <h2>Loading {{ title().toLowerCase() }}…</h2>
+                  } @else {
+                    <erp-admin-illustration
+                      [kind]="
+                        search || statusFilter() !== 'all' ? 'noResults' : 'dataConfiguration'
+                      "
+                      size="compact"
+                    />
+                    <h2>
+                      {{
+                        search || statusFilter() !== 'all'
+                          ? 'No matching results'
+                          : 'No ' + title().toLowerCase() + ' created'
+                      }}
+                    </h2>
+                    <p>
+                      {{
+                        search || statusFilter() !== 'all'
+                          ? 'Try changing your search or filters.'
+                          : description()
+                      }}
+                    </p>
+                    @if (!search && statusFilter() === 'all') {
+                      <button
+                        class="erp-button erp-button--secondary"
+                        type="button"
+                        (click)="openCreate()"
+                      >
+                        Create {{ singular() }}
+                      </button>
+                    }
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer class="erp-table-pagination">
+      <span>{{ resultRange() }}</span>
+      <div>
+        <select
+          class="erp-control erp-control--compact"
+          aria-label="Rows per page"
+          [ngModel]="pageSize()"
+          (ngModelChange)="pageSize.set(+$event); page.set(1)"
+        >
+          @for (size of pageSizeOptions; track size) {
+            <option [ngValue]="size">{{ size }} / page</option>
+          }
+        </select>
+        <button
+          class="erp-button erp-button--secondary erp-button--icon"
+          type="button"
+          aria-label="Previous page"
+          [disabled]="page() <= 1"
+          (click)="page.set(page() - 1)"
+        >
+          <svg lucideChevronLeft size="17"></svg>
+        </button>
+        <button
+          class="erp-button erp-button--secondary erp-button--icon"
+          type="button"
+          aria-label="Next page"
+          [disabled]="page() >= totalPages()"
+          (click)="page.set(page() + 1)"
+        >
+          <svg lucideChevronRight size="17"></svg>
+        </button>
+      </div>
+    </footer>
+  </section>
+</erp-admin-page>
+
+@if (drawerOpen()) {
+  <div class="erp-drawer-layer">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      tabindex="-1"
+      aria-label="Close create {{ singular() }} drawer"
+      (click)="closeDrawer()"
+    ></button>
+    <aside
+      class="erp-drawer erp-academic-drawer"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="(editingId() ? 'Edit ' : 'Create ') + singular()"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header class="erp-drawer__header">
+        <div>
+          <small>ACADEMIC STRUCTURE</small>
+          <h2>{{ editingId() ? 'Edit' : 'Create' }} {{ singular() }}</h2>
+          <p>{{ drawerDescription() }}</p>
+        </div>
+        <button
+          class="erp-button erp-button--icon erp-button--ghost"
+          type="button"
+          aria-label="Close drawer"
+          (click)="closeDrawer()"
+        >
+          <svg lucideX size="20"></svg>
+        </button>
+      </header>
+
+      <form class="erp-drawer__body erp-academic-drawer__body" (ngSubmit)="save()">
+        @if (section() === 'groups') {
+          <fieldset class="erp-academic-form-section">
+            <legend><svg lucideBuilding2 size="19"></svg> Institution</legend>
+            <div class="erp-academic-form-grid">
+              <label
+                ><span>University *</span
+                ><select class="erp-control" [(ngModel)]="universityId" name="university">
+                  <option value="">Select university</option>
+                  @for (item of master('university'); track item._id) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }
+                </select></label
+              >
+              <label
+                ><span>College *</span
+                ><select class="erp-control" [(ngModel)]="collegeId" name="college">
+                  <option value="">Select a university first</option>
+                  @for (
+                    item of scopedMaster('college', universityId ? [universityId] : []);
+                    track item._id
+                  ) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }
+                </select></label
+              >
+            </div>
+          </fieldset>
+        }
+
+        <fieldset class="erp-academic-form-section">
+          <legend><svg lucideCalendarDays size="19"></svg> Academic period</legend>
+          <div class="erp-academic-form-grid">
+            <label
+              ><span>Academic session *</span
+              ><select class="erp-control" [(ngModel)]="session" name="session">
+                <option value="">Select session</option>
+                @for (item of master('academic'); track item._id) {
+                  <option [value]="item.name">{{ item.name }}</option>
+                }
+              </select></label
+            >
+            <label
+              ><span>Semester *</span
+              ><select class="erp-control" [(ngModel)]="semester" name="semester">
+                @for (value of [1, 2, 3, 4, 5, 6, 7, 8]; track value) {
+                  <option [ngValue]="value">Semester {{ value }}</option>
+                }
+              </select></label
+            >
+          </div>
+        </fieldset>
+
+        @if (section() === 'groups') {
+          <fieldset class="erp-academic-form-section">
+            <legend><svg lucideBookOpen size="19"></svg> Academic mapping</legend>
+            <div class="erp-academic-form-grid">
+              <div class="erp-field-stack">
+                <span>Departments *</span
+                ><erp-multi-select-dropdown
+                  [options]="options(scopedMaster('department', collegeId ? [collegeId] : []))"
+                  [value]="departmentIds"
+                  placeholder="Select departments"
+                  (valueChange)="departmentIds = $event"
+                />
+              </div>
+              <label
+                ><span>Level/course type</span
+                ><select class="erp-control" [(ngModel)]="levelId" name="level">
+                  <option value="">Select level</option>
+                  @for (item of scopedMaster('level', departmentIds); track item._id) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }
+                </select></label
+              >
+              <div class="erp-field-stack">
+                <span>Courses</span
+                ><erp-multi-select-dropdown
+                  [options]="options(scopedMaster('course', levelId ? [levelId] : []))"
+                  [value]="courseIds"
+                  placeholder="Select courses"
+                  (valueChange)="courseIds = $event"
+                />
+              </div>
+              <div class="erp-field-stack">
+                <span>Branches</span
+                ><erp-multi-select-dropdown
+                  [options]="options(master('branch'))"
+                  [value]="branchIds"
+                  placeholder="Select branches"
+                  (valueChange)="branchIds = $event"
+                />
+              </div>
+            </div>
+          </fieldset>
+        }
+
+        @if (section() === 'sections') {
+          <fieldset class="erp-academic-form-section">
+            <legend><svg lucideUsersRound size="19"></svg> Group mapping</legend>
+            <div class="erp-field-stack">
+              <span>Groups *</span
+              ><erp-multi-select-dropdown
+                [options]="options(groupsForPeriod())"
+                [value]="groupIds"
+                placeholder="Select groups"
+                (valueChange)="groupIds = $event"
+              /><small>A section may be mapped to multiple groups.</small>
+            </div>
+            <div class="erp-academic-selection-preview">
+              <svg lucideUsersRound size="20"></svg
+              ><span>{{
+                groupIds.length ? groupNames(groupIds) : 'Selected groups will appear here.'
+              }}</span>
+            </div>
+          </fieldset>
+        }
+
+        @if (section() === 'sets') {
+          <fieldset class="erp-academic-form-section">
+            <legend><svg lucideUsersRound size="19"></svg> Teaching scope</legend>
+            <div class="erp-academic-form-grid erp-academic-form-grid--linked">
+              <label
+                ><span>Group *</span
+                ><select
+                  class="erp-control"
+                  [(ngModel)]="groupId"
+                  name="group"
+                  (ngModelChange)="sectionId = ''"
+                >
+                  <option value="">
+                    {{ session ? 'Select group' : 'Select a session first' }}
+                  </option>
+                  @for (item of groupsForPeriod(); track item._id) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }
+                </select></label
+              >
+              <svg lucideArrowRight size="18" aria-hidden="true"></svg>
+              <label
+                ><span>Section *</span
+                ><select class="erp-control" [(ngModel)]="sectionId" name="section">
+                  <option value="">
+                    {{ groupId ? 'Select section' : 'Select a group first' }}
+                  </option>
+                  @for (item of sectionsForGroup(); track item._id) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }
+                </select></label
+              >
+            </div>
+          </fieldset>
+        }
+
+        <fieldset class="erp-academic-form-section">
+          <legend>
+            @if (section() === 'sets') {
+              <svg lucideLayers3 size="19"></svg> Set identity
+            } @else if (section() === 'sections') {
+              <svg lucideBookOpen size="19"></svg> Section details
+            } @else {
+              <svg lucideUsersRound size="19"></svg> Group identity
+            }
+          </legend>
+          <label
+            ><span>{{ singular() | titlecase }} name *</span
+            ><input
+              class="erp-control"
+              [(ngModel)]="name"
+              name="name"
+              [placeholder]="
+                section() === 'groups'
+                  ? 'e.g. B.Tech CSE A'
+                  : section() === 'sections'
+                    ? 'e.g. Section A'
+                    : 'e.g. Set A'
+              "
+          /></label>
+        </fieldset>
+
+        <section class="erp-academic-mapping-preview">
+          <svg lucideNetwork size="22"></svg>
+          <span
+            ><strong>{{ section() === 'sets' ? 'Scope preview' : 'Mapping preview' }}</strong
+            ><small>{{
+              formValid()
+                ? name + ' is ready to save.'
+                : 'Complete required fields to preview the hierarchy.'
+            }}</small></span
+          >
+        </section>
+      </form>
+      <footer class="erp-drawer__footer">
+        <button class="erp-button erp-button--secondary" type="button" (click)="closeDrawer()">
+          Cancel
+        </button>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="!formValid() || saving()"
+          (click)="save()"
+        >
+          {{ saving() ? 'Saving…' : editingId() ? 'Save changes' : 'Create ' + singular() }}
+        </button>
+      </footer>
+    </aside>
+  </div>
+}

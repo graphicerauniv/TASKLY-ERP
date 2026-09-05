@@ -15,6 +15,7 @@ export class MobileSectionNavigatorSheetComponent {
   readonly items = input<readonly FormSectionNavigationItem[]>([]);
   readonly completedCount = input(0);
   readonly totalCount = input(0);
+  readonly heading = input('Application sections');
   readonly closed = output<void>();
   readonly sectionSelected = output<number>();
 
