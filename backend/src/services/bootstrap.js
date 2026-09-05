@@ -30,7 +30,10 @@ export async function bootstrap() {
       .updateMany({ applicationNumber: { $exists: true } }, { $unset: { applicationNumber: '' } });
     await db()
       .collection('admissions')
-      .updateMany({ status: 'submitted' }, { $set: { status: 'pending_approval', updatedAt: now } });
+      .updateMany(
+        { status: 'submitted' },
+        { $set: { status: 'pending_approval', updatedAt: now } },
+      );
     await db()
       .collection('admissions')
       .updateMany(
@@ -92,7 +95,7 @@ export async function bootstrap() {
 async function migrateAdmissionIdentities() {
   const admissions = await db()
     .collection('admissions')
-    .find({ identityVersion: { $ne: 4 } })
+    .find({ identityVersion: { $ne: 5 } })
     .toArray();
   for (const admission of admissions)
     await syncAdmissionIdentity(db(), admission, admission.responses || {}, {

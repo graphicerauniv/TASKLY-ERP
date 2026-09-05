@@ -37,6 +37,7 @@ const BUILTIN_MASTER_TYPES = [
   ['district', 'District', 'state'],
   ['city', 'City', 'district'],
 ];
+let builtinMasterTypesPromise;
 
 masterDataRouter.get(
   '/types',
@@ -270,26 +271,42 @@ async function requireType(slug) {
 }
 
 async function ensureBuiltinMasterTypes() {
-  const now = new Date();
-  for (const [order, [slug, name, parentTypeSlug]] of BUILTIN_MASTER_TYPES.entries())
-    await db()
+  builtinMasterTypesPromise ||= (async () => {
+    const existing = await db()
       .collection('masterTypes')
-      .updateOne(
-        { slug },
-        {
-          $setOnInsert: {
-            name,
-            slug,
-            parentTypeSlug,
-            isCustom: false,
-            isActive: true,
-            order,
-            createdAt: now,
-            updatedAt: now,
-          },
-        },
-        { upsert: true },
-      );
+      .find({ slug: { $in: BUILTIN_MASTER_TYPES.map(([slug]) => slug) } })
+      .project({ slug: 1 })
+      .toArray();
+    const existingSlugs = new Set(existing.map((item) => item.slug));
+    const now = new Date();
+    await Promise.all(
+      BUILTIN_MASTER_TYPES.map(async ([slug, name, parentTypeSlug], order) => {
+        if (existingSlugs.has(slug)) return;
+        await db()
+          .collection('masterTypes')
+          .updateOne(
+            { slug },
+            {
+              $setOnInsert: {
+                name,
+                slug,
+                parentTypeSlug,
+                isCustom: false,
+                isActive: true,
+                order,
+                createdAt: now,
+                updatedAt: now,
+              },
+            },
+            { upsert: true },
+          );
+      }),
+    );
+  })().catch((error) => {
+    builtinMasterTypesPromise = undefined;
+    throw error;
+  });
+  return builtinMasterTypesPromise;
 }
 
 async function ensureBuiltinMasterValues(slug) {

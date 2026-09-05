@@ -67,6 +67,7 @@ export class MasterDataComponent {
   readonly types = this.masterDataStore.types;
   readonly customTypeCount = computed(() => this.types().filter((type) => type.isCustom).length);
   readonly values = signal<MasterValue[]>([]);
+  readonly valueTotal = signal(0);
   readonly dependencyValues = signal<Record<string, MasterValue[]>>({});
   readonly loading = signal(false);
   readonly message = signal('');
@@ -93,6 +94,7 @@ export class MasterDataComponent {
   customName = '';
   customParent = '';
   private editingValue: MasterValue | null = null;
+  private valuesRequestId = 0;
   readonly currentType = () => this.types().find((type) => type.slug === this.slug());
   readonly isCreatePage = computed(() => this.mode() === 'create');
   readonly isViewPage = computed(() => this.mode() === 'view');
@@ -111,28 +113,38 @@ export class MasterDataComponent {
       const slug = this.slug();
       const editId = this.editId();
       this.mode();
+      this.loading.set(true);
+      this.error.set('');
+      this.values.set([]);
+      this.valueTotal.set(0);
       if (!editId) this.reset();
       this.loadTypes(() => {
         if (slug !== 'custom') this.loadValues();
       });
     });
   }
-  loadTypes(done?: () => void) {
-    this.masterDataStore.load().subscribe(() => {
-      done?.();
+  loadTypes(done?: () => void, force = false) {
+    this.masterDataStore.load(force).subscribe({
+      next: () => done?.(),
+      error: (error) => this.fail(error),
     });
   }
   loadValues() {
     const type = this.currentType();
     if (!type) return;
+    const requestId = ++this.valuesRequestId;
     this.loading.set(true);
     this.api.masterValues(type.slug, { search: this.search }).subscribe({
-      next: ({ items }) => {
+      next: ({ items, pagination }) => {
+        if (requestId !== this.valuesRequestId || type.slug !== this.slug()) return;
         this.values.set(items);
+        this.valueTotal.set(pagination.total);
         this.loading.set(false);
         this.syncEditRoute(items);
       },
-      error: (e) => this.fail(e),
+      error: (e) => {
+        if (requestId === this.valuesRequestId) this.fail(e);
+      },
     });
     this.selectedDependencies = {};
     this.dependencyValues.set({});
@@ -288,7 +300,7 @@ export class MasterDataComponent {
           this.customName = '';
           this.customParent = '';
           this.message.set('Custom master created.');
-          this.loadTypes();
+          this.loadTypes(undefined, true);
           void this.router.navigate(['/admin/master-data/custom/view']);
         },
         error: (e) => this.fail(e),

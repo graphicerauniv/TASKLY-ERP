@@ -15,6 +15,7 @@ const UPLOAD_TYPES = new Set(['file', 'image', 'signature']);
 
 export function validateFormForPublish(form: AdmissionForm): FormPublishIssue[] {
   const issues: FormPublishIssue[] = [];
+  const purpose = form.purpose || 'admission';
   const activeSections = form.sections.filter((section) => section.isActive);
   const activeFields = activeSections.flatMap((section) =>
     section.subsections
@@ -45,6 +46,87 @@ export function validateFormForPublish(form: AdmissionForm): FormPublishIssue[] 
         'Enable at least one section before publishing.',
       ),
     );
+  }
+  const audience = form.audience;
+  if (purpose === 'admission') {
+    if (!audience?.academicSessionIds?.length)
+      issues.push(
+        issue(
+          'audience-session',
+          'blocker',
+          'Admission session mapping is required',
+          'Select at least one academic session in Form configuration.',
+        ),
+      );
+    if (!audience?.levelIds?.length)
+      issues.push(
+        issue(
+          'audience-level',
+          'blocker',
+          'Admission level mapping is required',
+          'Select UG, PG or another applicable level in Form configuration.',
+        ),
+      );
+  }
+  if (purpose === 'faculty' && !audience?.departmentIds?.length)
+    issues.push(
+      issue(
+        'audience-department',
+        'blocker',
+        'Faculty department mapping is required',
+        'Select at least one department for this faculty form.',
+      ),
+    );
+  if (purpose !== 'admission') {
+    if (!form.destination?.navigationSectionId || !form.destination?.navigationSectionName)
+      issues.push(
+        issue(
+          'navigation-destination',
+          'blocker',
+          'Sidebar section is required',
+          'Choose an existing sidebar section or enter a new section name.',
+        ),
+      );
+    if (!form.destination?.menuName)
+      issues.push(
+        issue(
+          'navigation-menu-name',
+          'blocker',
+          'Sidebar form name is required',
+          'Enter the name administrators will click to fill this form.',
+        ),
+      );
+    if (!form.destination?.databaseSectionId || !form.destination?.databaseSectionName)
+      issues.push(
+        issue(
+          'database-destination',
+          'blocker',
+          'Database section is required',
+          'Choose an existing database section or enter a new section name.',
+        ),
+      );
+    if (form.destination?.databaseSectionId === 'students')
+      issues.push(
+        issue(
+          'database-destination-reserved',
+          'blocker',
+          'Students is a reserved database section',
+          'Choose another database section for non-student records.',
+        ),
+      );
+    if (
+      ['home', 'admissions', 'students', 'database', 'academics', 'fees', 'accounts'].includes(
+        form.destination?.navigationSectionId || '',
+      )
+    )
+      issues.push(
+        issue(
+          'navigation-destination-reserved',
+          'blocker',
+          'This sidebar section name is reserved',
+          'Choose another section name for this data-entry form.',
+        ),
+      );
   }
 
   addDuplicateIdIssues(form, issues);
@@ -131,35 +213,65 @@ export function validateFormForPublish(form: AdmissionForm): FormPublishIssue[] 
         'required-field',
         'blocker',
         'No required fields configured',
-        'Mark the minimum identity and programme fields as required before publishing.',
+        purpose === 'admission'
+          ? 'Mark the minimum student identity and programme fields as required before publishing.'
+          : `Mark the minimum ${purpose} identity fields as required before publishing.`,
       ),
     );
   }
-  const feeTypeField = activeFields.find(
-    (field) => field.dataSource?.masterTypeSlug === 'fee-type',
-  );
-  if (!feeTypeField) {
-    issues.push(
-      issue(
-        'fee-type-field',
-        'blocker',
-        'Fee Type field is required',
-        'Add a dropdown connected to Fee Type master data so the applicant can select Yearly or Semester billing.',
-      ),
-    );
-  } else if (!feeTypeField.isRequired) {
-    const location = locateField(form, feeTypeField.id);
-    issues.push(
-      issue(
-        'fee-type-required',
-        'blocker',
-        'Fee Type must be required',
-        'Mark the Fee Type master-data field as required before publishing.',
-        location?.sectionId,
-        location?.subsectionId,
-        feeTypeField.id,
-      ),
-    );
+  if (purpose === 'admission') {
+    for (const [slug, label] of [
+      ['academic', 'Academic Session'],
+      ['university', 'University'],
+      ['college', 'College'],
+      ['department', 'Department'],
+      ['level', 'Level'],
+      ['course', 'Course'],
+      ['student-type', 'Student Type'],
+      ['domicile', 'Domicile'],
+      ['fee-type', 'Fee Type'],
+    ]) {
+      const field = activeFields.find(
+        (candidate) =>
+          candidate.type === 'dropdown' && candidate.dataSource?.masterTypeSlug === slug,
+      );
+      if (!field) {
+        issues.push(
+          issue(
+            `student-master-${slug}`,
+            'blocker',
+            `${label} field is required`,
+            `Add a dropdown connected to ${label} master data.`,
+          ),
+        );
+      } else if (!field.isRequired) {
+        const location = locateField(form, field.id);
+        issues.push(
+          issue(
+            `student-master-required-${slug}`,
+            'blocker',
+            `${label} must be required`,
+            `Mark the ${label} field as required before publishing.`,
+            location?.sectionId,
+            location?.subsectionId,
+            field.id,
+          ),
+        );
+      }
+    }
+    if (
+      !activeFields.some(
+        (field) => field.isRequired && /^(student\s*name|first\s*name)$/i.test(field.name.trim()),
+      )
+    )
+      issues.push(
+        issue(
+          'student-name-required',
+          'blocker',
+          'Student name is required',
+          'Add a required Student Name or First Name field.',
+        ),
+      );
   }
   if (activeFields.length && documentFieldCount === 0) {
     issues.push(
@@ -167,7 +279,7 @@ export function validateFormForPublish(form: AdmissionForm): FormPublishIssue[] 
         'document-field',
         'warning',
         'No document evidence requested',
-        'Confirm that this admission workflow intentionally requires no document upload.',
+        `Confirm that this ${purpose} workflow intentionally requires no document upload.`,
       ),
     );
   }

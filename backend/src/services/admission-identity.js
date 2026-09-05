@@ -99,7 +99,7 @@ export async function syncAdmissionIdentity(
         course?.metadata?.defaultAcademicYear ||
         1,
     ),
-    identityVersion: 4,
+    identityVersion: 5,
     identitySyncedAt: new Date(),
     updatedAt: new Date(),
   };

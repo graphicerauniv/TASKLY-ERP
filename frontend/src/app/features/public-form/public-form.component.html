@@ -1,0 +1,122 @@
+<main class="erp-admission-page">
+  @if (loading()) {
+    <section class="erp-card erp-loading-state">
+      <div class="erp-spinner"></div>
+      <p>Loading form…</p>
+    </section>
+  } @else if (submission(); as submitted) {
+    <section class="erp-card erp-card--padded erp-admission-state">
+      <h1>{{ editing() ? 'Record updated' : 'Form submitted' }}</h1>
+      <p>
+        {{ editing() ? 'The saved record has been updated.' : 'The response has been recorded.' }}
+      </p>
+      @if (submitted.applicationCode) {
+        <p>
+          Unique code: <strong>{{ submitted.applicationCode }}</strong>
+        </p>
+      }
+      @if (!editing()) {
+        <button class="erp-button erp-button--primary" type="button" (click)="startAnother()">
+          Add another record
+        </button>
+      }
+    </section>
+  } @else if (error() && !form()) {
+    <section class="erp-card erp-card--padded erp-admission-state">
+      <h1>Form unavailable</h1>
+      <p>{{ error() }}</p>
+    </section>
+  } @else if (form(); as current) {
+    <section class="erp-page-heading">
+      <span class="erp-page-eyebrow">{{
+        editing() ? 'Edit database record' : 'Admin data entry'
+      }}</span>
+      <h1>{{ current.name }}</h1>
+      <p>{{ current.description || 'Complete the required information below.' }}</p>
+    </section>
+    @if (error()) {
+      <p class="erp-notice erp-notice--error">{{ error() }}</p>
+    }
+    @for (section of activeSubsections(); track section.id) {
+      <section class="erp-card erp-card--padded">
+        <header class="erp-section-heading">
+          <div>
+            <h2>{{ section.name }}</h2>
+            <p>{{ section.description }}</p>
+          </div>
+        </header>
+        @for (subsection of section.subsections; track subsection.id) {
+          <div class="erp-field-stack">
+            <div>
+              <h3>{{ subsection.name }}</h3>
+              <p>{{ subsection.description }}</p>
+            </div>
+            @if (subsection.isRepeatable) {
+              @for (entry of entries(subsection); track $index; let entryIndex = $index) {
+                <article class="erp-card erp-card--padded">
+                  <div class="erp-field-grid">
+                    @for (field of subsection.fields; track field.id) {
+                      @if (visible(field, entry)) {
+                        <erp-dynamic-field-renderer
+                          [field]="field"
+                          [modelValue]="value(field, entry)"
+                          [options]="fieldOptions(field)"
+                          [entryKey]="subsection.id + '-' + entryIndex"
+                          (modelChanged)="setValue(field, $event, entry)"
+                          (optionSearch)="searchOptions(field, $event)"
+                          (fileSelected)="upload(field, $event, entry)"
+                          (uploadRemoved)="setValue(field, '', entry)"
+                        />
+                      }
+                    }
+                  </div>
+                  <button
+                    class="erp-button erp-button--danger erp-button--compact"
+                    type="button"
+                    (click)="removeEntry(subsection, entryIndex)"
+                  >
+                    Remove
+                  </button>
+                </article>
+              }
+              <button
+                class="erp-button erp-button--secondary"
+                type="button"
+                (click)="addEntry(subsection)"
+              >
+                Add {{ subsection.name }}
+              </button>
+            } @else {
+              <div class="erp-field-grid">
+                @for (field of subsection.fields; track field.id) {
+                  @if (visible(field)) {
+                    <erp-dynamic-field-renderer
+                      [field]="field"
+                      [modelValue]="value(field)"
+                      [options]="fieldOptions(field)"
+                      [entryKey]="subsection.id"
+                      (modelChanged)="setValue(field, $event)"
+                      (optionSearch)="searchOptions(field, $event)"
+                      (fileSelected)="upload(field, $event)"
+                      (uploadRemoved)="setValue(field, '')"
+                    />
+                  }
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+    <div class="erp-form-actions">
+      <button
+        class="erp-button erp-button--primary"
+        type="button"
+        [disabled]="submitting()"
+        (click)="submit()"
+      >
+        {{ submitting() ? 'Saving…' : editing() ? 'Save changes' : 'Submit form' }}
+      </button>
+    </div>
+  }
+</main>

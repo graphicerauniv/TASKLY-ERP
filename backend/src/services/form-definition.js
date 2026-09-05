@@ -17,6 +17,11 @@ export const FIELD_TYPES = [
   'image',
   'signature',
 ];
+export const FORM_PURPOSES = ['admission', 'faculty', 'employee', 'general'];
+
+function normalizeIdList(value, fallback = []) {
+  return [...new Set((Array.isArray(value) ? value : fallback).map(String).filter(Boolean))];
+}
 
 export function normalizeForm(input, existing = {}) {
   const name = String(input.name || existing.name || '').trim();
@@ -73,16 +78,73 @@ export function normalizeForm(input, existing = {}) {
       }),
     ),
   }));
+  const purpose = FORM_PURPOSES.includes(input.purpose)
+    ? input.purpose
+    : existing.purpose || 'admission';
   return {
     name,
     slug: existing.slug || slugify(name),
     description: String(input.description ?? existing.description ?? ''),
+    purpose,
+    codeGeneration: normalizeCodeGeneration(input.codeGeneration, existing.codeGeneration, purpose),
+    destination: normalizeDestination(input.destination, existing.destination, purpose),
+    destinationLockedAt: existing.destinationLockedAt || null,
+    audience: {
+      academicSessionIds: normalizeIdList(
+        input.audience?.academicSessionIds,
+        existing.audience?.academicSessionIds,
+      ),
+      universityIds: normalizeIdList(
+        input.audience?.universityIds,
+        existing.audience?.universityIds,
+      ),
+      collegeIds: normalizeIdList(input.audience?.collegeIds, existing.audience?.collegeIds),
+      departmentIds: normalizeIdList(
+        input.audience?.departmentIds,
+        existing.audience?.departmentIds,
+      ),
+      levelIds: normalizeIdList(input.audience?.levelIds, existing.audience?.levelIds),
+    },
     status: ['draft', 'published', 'archived'].includes(input.status)
       ? input.status
       : existing.status || 'draft',
     isActive: input.isActive ?? existing.isActive ?? true,
     sections: normalizedSections,
   };
+}
+
+function normalizeCodeGeneration(input, existing, purpose) {
+  if (purpose === 'admission') return { enabled: false, prefix: '', digits: 6 };
+  void input;
+  void existing;
+  return { enabled: true, prefix: '', digits: 8 };
+}
+
+function normalizeDestination(input, existing, purpose) {
+  if (purpose === 'admission') return null;
+  const source = input && typeof input === 'object' ? input : existing || {};
+  return {
+    navigationSectionId: cleanSectionId(source.navigationSectionId),
+    navigationSectionName: cleanName(source.navigationSectionName),
+    menuName: cleanName(source.menuName),
+    databaseSectionId: cleanSectionId(source.databaseSectionId),
+    databaseSectionName: cleanName(source.databaseSectionName),
+  };
+}
+
+function cleanSectionId(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60);
+}
+
+function cleanName(value) {
+  return String(value || '')
+    .trim()
+    .slice(0, 80);
 }
 
 export function activeForm(form) {

@@ -13,6 +13,38 @@
       <div class="erp-spinner"></div>
       <p>Preparing your admission form...</p>
     </section>
+  } @else if (choosingForm()) {
+    <section class="erp-card erp-card--padded erp-admission-state">
+      <span class="erp-page-eyebrow">Start application</span>
+      <h1>Choose your admission form</h1>
+      <p>The session and level select the correct published application, such as UG or PG.</p>
+      @if (error()) {
+        <p class="erp-notice erp-notice--error">{{ error() }}</p>
+      }
+      <div class="erp-form-grid">
+        <label>
+          <span>Academic session *</span>
+          <select class="erp-control" [(ngModel)]="selectedAdmissionSessionId">
+            <option value="">Select session</option>
+            @for (item of admissionSessions(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>Admission level *</span>
+          <select class="erp-control" [(ngModel)]="selectedAdmissionLevelId">
+            <option value="">Select UG, PG or another level</option>
+            @for (item of admissionLevels(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <button class="erp-button erp-button--primary" type="button" (click)="beginAdmission()">
+        Continue
+      </button>
+    </section>
   } @else if (error() && !form()) {
     <section class="erp-card erp-card--padded erp-admission-state">
       <h1>Admission form unavailable</h1>

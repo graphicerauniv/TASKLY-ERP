@@ -17,14 +17,43 @@ const upload = multer({
   limits: { fileSize: config.maxUploadBytes },
 });
 
+function matchesAudience(form, query) {
+  const audience = form.audience || {};
+  const criteria = [
+    ['academicSessionId', 'academicSessionIds'],
+    ['universityId', 'universityIds'],
+    ['collegeId', 'collegeIds'],
+    ['departmentId', 'departmentIds'],
+    ['levelId', 'levelIds'],
+  ];
+  return criteria.every(([queryField, audienceField]) => {
+    const selected = String(query[queryField] || '');
+    const allowed = (audience[audienceField] || []).map(String);
+    return !selected || !allowed.length || allowed.includes(selected);
+  });
+}
+
 publicRouter.get(
   '/forms/active',
   asyncHandler(async (request, response) => {
-    const form = await db()
+    const forms = await db()
       .collection('forms')
-      .findOne({ status: 'published', isActive: true }, { sort: { updatedAt: -1 } });
+      .find({ status: 'published', isActive: true })
+      .sort({ updatedAt: -1 })
+      .toArray();
+    const purpose = String(request.query.purpose || 'admission');
+    if (purpose !== 'admission')
+      return response.status(404).json({ message: 'This form requires an administrator login.' });
+    const form = forms.find(
+      (item) => (item.purpose || 'admission') === purpose && matchesAudience(item, request.query),
+    );
     if (!form)
-      return response.status(404).json({ message: 'No admission form is currently available.' });
+      return response.status(404).json({
+        message:
+          purpose === 'admission'
+            ? 'No published admission form matches the selected session and level.'
+            : 'No matching published form is currently available.',
+      });
     response.json({ item: serialize(activeForm(form)) });
   }),
 );
@@ -50,13 +79,20 @@ publicRouter.get(
 publicRouter.post(
   '/admissions',
   asyncHandler(async (request, response) => {
-    const form = request.body.formId
+    let form = request.body.formId
       ? await db()
           .collection('forms')
           .findOne({ _id: id(request.body.formId), status: 'published', isActive: true })
-      : await db()
-          .collection('forms')
-          .findOne({ status: 'published', isActive: true }, { sort: { updatedAt: -1 } });
+      : null;
+    if (!request.body.formId) {
+      const forms = await db()
+        .collection('forms')
+        .find({ status: 'published', isActive: true })
+        .sort({ updatedAt: -1 })
+        .toArray();
+      form = forms.find((item) => (item.purpose || 'admission') === 'admission');
+    }
+    if (form && (form.purpose || 'admission') !== 'admission') form = null;
     if (!form)
       return response.status(404).json({ message: 'No admission form is currently available.' });
     const key = accessKey();

@@ -75,10 +75,8 @@ export class FormsLibraryComponent {
   readonly draftCount = computed(
     () => this.items().filter((form) => form.status === 'draft').length,
   );
-  readonly rowActions: CompactActionItem[] = [
-    { id: 'edit', label: 'Open in builder', icon: 'edit' },
-  ];
   newFormName = '';
+  newFormPurpose: AdmissionForm['purpose'] = 'admission';
 
   constructor() {
     this.load();
@@ -96,7 +94,7 @@ export class FormsLibraryComponent {
           this.loading.set(false);
         },
         error: (error) => {
-          this.error.set(error.error?.message || 'Admission forms could not be loaded.');
+          this.error.set(error.error?.message || 'Forms could not be loaded.');
           this.loading.set(false);
         },
       });
@@ -104,6 +102,7 @@ export class FormsLibraryComponent {
 
   openCreate() {
     this.newFormName = '';
+    this.newFormPurpose = 'admission';
     this.createError.set('');
     this.createOpen.set(true);
   }
@@ -123,6 +122,14 @@ export class FormsLibraryComponent {
       .createForm({
         name,
         description: '',
+        purpose: this.newFormPurpose,
+        audience: {
+          academicSessionIds: [],
+          universityIds: [],
+          collegeIds: [],
+          departmentIds: [],
+          levelIds: [],
+        },
         status: 'draft',
         isActive: true,
         sections: [],
@@ -135,7 +142,7 @@ export class FormsLibraryComponent {
           void this.openBuilder(item);
         },
         error: (error) => {
-          this.createError.set(error.error?.message || 'The admission form could not be created.');
+          this.createError.set(error.error?.message || 'The form could not be created.');
           this.creating.set(false);
         },
       });
@@ -143,6 +150,15 @@ export class FormsLibraryComponent {
 
   handleRowAction(action: string, form: AdmissionForm) {
     if (action === 'edit') void this.openBuilder(form);
+    if (action === 'fill' && form._id)
+      void this.router.navigate(['/admin/forms', form._id, 'fill']);
+  }
+
+  rowActions(form: AdmissionForm): CompactActionItem[] {
+    const actions: CompactActionItem[] = [{ id: 'edit', label: 'Open in builder', icon: 'edit' }];
+    if ((form.purpose || 'admission') !== 'admission' && form.status === 'published')
+      actions.push({ id: 'fill', label: 'Fill form', icon: 'view' });
+    return actions;
   }
 
   openBuilder(form: AdmissionForm) {
@@ -171,5 +187,14 @@ export class FormsLibraryComponent {
     if (form.status === 'published') return 'Published';
     if (form.status === 'archived') return 'Archived';
     return 'Draft';
+  }
+  purposeLabel(form: AdmissionForm) {
+    const purpose = form.purpose || 'admission';
+    return {
+      admission: 'Student admission',
+      faculty: 'Faculty application',
+      employee: 'Employee application',
+      general: 'General form',
+    }[purpose];
   }
 }

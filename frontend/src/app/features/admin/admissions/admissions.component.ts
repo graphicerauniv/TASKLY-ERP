@@ -186,6 +186,9 @@ export class AdmissionsComponent {
   readonly previewLoading = signal(false);
   readonly previewError = signal('');
   readonly masterLabels = signal<Record<string, string>>({});
+  readonly formId = signal('');
+  readonly activeOnly = signal(false);
+  readonly databaseMode = signal(false);
 
   readonly credentialStudent = signal<Admission | null>(null);
   readonly credentialSaving = signal(false);
@@ -221,11 +224,14 @@ export class AdmissionsComponent {
   constructor() {
     this.loadFilterOptions();
     this.loadViewTotals();
-    combineLatest([this.route.data, this.route.queryParamMap])
+    combineLatest([this.route.data, this.route.queryParamMap, this.route.paramMap])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([data, params]) => {
+      .subscribe(([data, params, routeParams]) => {
         const fallbackView = viewFromStatus(data['status']);
         this.view.set(normaliseView(params.get('view')) || fallbackView);
+        this.formId.set(routeParams.get('formId') || params.get('formId') || '');
+        this.activeOnly.set(data['isActive'] === true);
+        this.databaseMode.set(data['database'] === true);
         this.search = params.get('q') || '';
         this.appliedSearch.set(this.search);
         this.page = positiveInteger(params.get('page'), ERP_PAGINATION.defaultPage);
@@ -262,10 +268,12 @@ export class AdmissionsComponent {
 
   resetFilters() {
     this.search = '';
-    this.message.set('');
-    this.actionError.set('');
-    void this.router.navigate(['/admin/admissions/applications'], {
-      replaceUrl: true,
+    this.updateUrl({
+      view: this.databaseMode() ? 'approved' : 'all',
+      search: '',
+      page: ERP_PAGINATION.defaultPage,
+      pageSize: ERP_PAGINATION.defaultPageSize,
+      filters: {},
     });
   }
 
@@ -305,6 +313,8 @@ export class AdmissionsComponent {
         page: this.page,
         limit: this.pageSize,
         ...this.appliedFilters(),
+        formId: this.formId(),
+        isActive: this.activeOnly() || undefined,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

@@ -155,3 +155,33 @@ test('requires a configured country field for a foreign student selection', () =
     0,
   );
 });
+
+test('uses fixed eight-character codes and logical destinations for non-student forms', () => {
+  const faculty = normalizeForm({
+    name: 'Faculty Recruitment',
+    purpose: 'faculty',
+    codeGeneration: { enabled: false, prefix: 'fac-2026', digits: 4 },
+    destination: {
+      navigationSectionId: 'Faculty Records',
+      navigationSectionName: 'Faculty',
+      menuName: 'Make Faculty',
+      databaseSectionId: 'Faculty Database',
+      databaseSectionName: 'Faculty',
+    },
+    sections: [],
+  });
+  assert.deepEqual(faculty.codeGeneration, {
+    enabled: true,
+    prefix: '',
+    digits: 8,
+  });
+  assert.equal(faculty.destination.navigationSectionId, 'faculty-records');
+  assert.equal(faculty.destination.databaseSectionId, 'faculty-database');
+  const admission = normalizeForm({
+    name: 'Student Admission',
+    purpose: 'admission',
+    codeGeneration: { enabled: true, prefix: 'STU', digits: 8 },
+    sections: [],
+  });
+  assert.equal(admission.codeGeneration.enabled, false);
+});

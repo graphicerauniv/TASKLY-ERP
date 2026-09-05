@@ -28,6 +28,23 @@ const DOMAIN_TABLES = Object.freeze({
       'isActive',
     ],
   },
+  students: {
+    table: 'students',
+    columns: [
+      'admissionId',
+      'studentId',
+      'studentName',
+      'status',
+      'isActive',
+      'academicSession',
+      'currentAcademicYear',
+      'currentSemester',
+      'courseId',
+      'courseName',
+      'departmentName',
+      'collegeName',
+    ],
+  },
   courseFeeDrafts: {
     table: 'course_fee_drafts',
     columns: ['bookId', 'bookCode', 'courseId', 'courseName', 'academicSession', 'status'],
@@ -191,7 +208,52 @@ const DOMAIN_TABLES = Object.freeze({
       'changedAt',
     ],
   },
-  forms: { table: 'forms', columns: ['name', 'slug', 'status', 'version', 'isActive'] },
+  forms: {
+    table: 'forms',
+    columns: ['name', 'slug', 'purpose', 'status', 'version', 'isActive', 'destinationLockedAt'],
+  },
+  facultyApplications: {
+    table: 'faculty_applications',
+    columns: [
+      'formId',
+      'formName',
+      'formSlug',
+      'formVersion',
+      'purpose',
+      'applicationCode',
+      'databaseSectionId',
+      'databaseSectionName',
+      'status',
+    ],
+  },
+  employeeApplications: {
+    table: 'employee_applications',
+    columns: [
+      'formId',
+      'formName',
+      'formSlug',
+      'formVersion',
+      'purpose',
+      'applicationCode',
+      'databaseSectionId',
+      'databaseSectionName',
+      'status',
+    ],
+  },
+  formSubmissions: {
+    table: 'form_submissions',
+    columns: [
+      'formId',
+      'formName',
+      'formSlug',
+      'formVersion',
+      'purpose',
+      'applicationCode',
+      'databaseSectionId',
+      'databaseSectionName',
+      'status',
+    ],
+  },
   hostelAllocations: {
     table: 'hostel_allocations',
     columns: [
@@ -520,9 +582,12 @@ export class PostgresDocumentDatabase {
   constructor(connectionString) {
     this.pool = new pg.Pool({
       connectionString: secureConnectionString(connectionString),
-      max: 15,
+      max: 10,
+      min: 1,
       connectionTimeoutMillis: 10_000,
-      idleTimeoutMillis: 30_000,
+      idleTimeoutMillis: 300_000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10_000,
     });
   }
 

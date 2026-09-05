@@ -1,3 +1,5 @@
+import { syncActiveStudent } from './active-student.js';
+
 export async function promoteStudentProgression(database, progressionId, promotedBy) {
   const progression = await database
     .collection('studentProgressions')
@@ -24,8 +26,7 @@ export async function promoteStudentProgression(database, progressionId, promote
     const currentSemester = Number(admission.currentSemester || currentYear * 2 - 1);
     const fromMatches =
       currentYear === Number(progression.fromAcademicYear) &&
-      (progression.mode !== 'semester' ||
-        currentSemester === Number(progression.fromSemester));
+      (progression.mode !== 'semester' || currentSemester === Number(progression.fromSemester));
     const alreadyPromoted =
       currentYear === Number(progression.toAcademicYear) &&
       (progression.mode !== 'semester' || currentSemester === Number(progression.toSemester));
@@ -50,21 +51,23 @@ export async function promoteStudentProgression(database, progressionId, promote
           },
         },
       );
+    const refreshedAdmission = await database
+      .collection('admissions')
+      .findOne({ _id: admission._id });
+    await syncActiveStudent(database, refreshedAdmission);
     const promotedAt = new Date();
-    const updated = await database
-      .collection('studentProgressions')
-      .findOneAndUpdate(
-        { _id: progression._id, status: 'promoting' },
-        {
-          $set: {
-            status: 'promoted',
-            promotedBy,
-            promotedAt,
-            updatedAt: promotedAt,
-          },
+    const updated = await database.collection('studentProgressions').findOneAndUpdate(
+      { _id: progression._id, status: 'promoting' },
+      {
+        $set: {
+          status: 'promoted',
+          promotedBy,
+          promotedAt,
+          updatedAt: promotedAt,
         },
-        { returnDocument: 'after' },
-      );
+      },
+      { returnDocument: 'after' },
+    );
     return updated || { ...progression, status: 'promoted', promotedBy, promotedAt };
   } catch (error) {
     await database

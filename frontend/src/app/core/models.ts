@@ -82,10 +82,49 @@ export interface AdmissionForm {
   name: string;
   slug?: string;
   description: string;
+  purpose?: 'admission' | 'faculty' | 'employee' | 'general';
+  codeGeneration?: {
+    enabled: boolean;
+    prefix: string;
+    digits: number;
+  };
+  destination?: {
+    navigationSectionId: string;
+    navigationSectionName: string;
+    menuName: string;
+    databaseSectionId: string;
+    databaseSectionName: string;
+  } | null;
+  destinationLockedAt?: string | null;
+  audience?: {
+    academicSessionIds: string[];
+    universityIds: string[];
+    collegeIds: string[];
+    departmentIds: string[];
+    levelIds: string[];
+  };
   status: 'draft' | 'published' | 'archived';
   isActive: boolean;
   version?: number;
   sections: FormSection[];
+}
+export interface FormSubmission {
+  _id: string;
+  formId: string;
+  formName: string;
+  formVersion: number;
+  purpose: 'admission' | 'faculty' | 'employee' | 'general';
+  applicationCode?: string | null;
+  navigationSectionId?: string;
+  navigationSectionName?: string;
+  databaseSectionId?: string;
+  databaseSectionName?: string;
+  status: string;
+  formSnapshot?: AdmissionForm;
+  responses: Record<string, unknown>;
+  repeatableResponses: Record<string, Record<string, unknown>[]>;
+  submittedAt: string;
+  updatedAt?: string;
 }
 export interface Admission {
   _id: string;

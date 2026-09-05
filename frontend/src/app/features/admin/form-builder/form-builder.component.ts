@@ -29,7 +29,12 @@ import {
   FormSection,
   FormSubsection,
   MasterType,
+  MasterValue,
 } from '../../../core/models';
+import {
+  MultiSelectDropdownComponent,
+  MultiSelectOption,
+} from '../../../shared/ui/multi-select-dropdown/multi-select-dropdown.component';
 import { SettingsModalComponent } from '../../../shared/ui/settings-modal/settings-modal.component';
 import { BuilderPageHeaderComponent } from './components/builder-page-header.component';
 import { FormBuilderToolbarComponent } from './components/form-builder-toolbar.component';
@@ -83,6 +88,7 @@ type DeleteDialog = {
     FormCanvasComponent,
     FormsModule,
     SettingsModalComponent,
+    MultiSelectDropdownComponent,
     RouterLink,
     LucideArrowLeft,
     LucideCheck,
@@ -108,6 +114,7 @@ export class FormBuilderComponent {
   readonly forms = signal<AdmissionForm[]>([]);
   readonly form = signal<AdmissionForm | null>(null);
   readonly types = signal<MasterType[]>([]);
+  readonly mappingMasters = signal<Array<MasterValue & { typeSlug: string }>>([]);
   readonly selectedSectionId = signal('');
   readonly selectedSubsectionId = signal('');
   readonly selectedFieldId = signal('');
@@ -153,6 +160,7 @@ export class FormBuilderComponent {
     return 'Configuration';
   });
   newFormName = '';
+  newFormPurpose: AdmissionForm['purpose'] = 'admission';
   dialogName = '';
   dialogDescription = '';
   dialogOptionText = '';
@@ -165,6 +173,7 @@ export class FormBuilderComponent {
     this.api
       .masterTypes()
       .subscribe(({ items }) => this.types.set(items.filter((t) => t.isActive)));
+    this.api.formMappingOptions().subscribe(({ items }) => this.mappingMasters.set(items));
   }
   @HostListener('window:resize')
   handleViewportResize() {
@@ -195,7 +204,29 @@ export class FormBuilderComponent {
     if (item) this.choose(item);
   }
   choose(form: AdmissionForm) {
-    this.form.set(structuredClone(form));
+    const draft = structuredClone(form);
+    draft.purpose ||= 'admission';
+    draft.codeGeneration ||= {
+      enabled: draft.purpose !== 'admission',
+      prefix: '',
+      digits: 8,
+    };
+    if (draft.purpose !== 'admission')
+      draft.destination ||= {
+        navigationSectionId: '',
+        navigationSectionName: '',
+        menuName: draft.name,
+        databaseSectionId: '',
+        databaseSectionName: '',
+      };
+    draft.audience ||= {
+      academicSessionIds: [],
+      universityIds: [],
+      collegeIds: [],
+      departmentIds: [],
+      levelIds: [],
+    };
+    this.form.set(draft);
     this.selectedSectionId.set(form.sections[0]?.id || '');
     this.selectedSubsectionId.set(form.sections[0]?.subsections[0]?.id || '');
     this.selectedFieldId.set('');
@@ -203,6 +234,138 @@ export class FormBuilderComponent {
     this.fieldDialog.set(null);
     this.inspectorVisible.set(false);
     this.dirty.set(false);
+  }
+  mappingOptions(typeSlug: string): MultiSelectOption[] {
+    const audience = this.form()?.audience;
+    const parents =
+      typeSlug === 'college'
+        ? audience?.universityIds
+        : typeSlug === 'department'
+          ? audience?.collegeIds
+          : typeSlug === 'level'
+            ? audience?.departmentIds
+            : [];
+    return this.mappingMasters()
+      .filter(
+        (item) =>
+          item.typeSlug === typeSlug &&
+          (!parents?.length || (item.parentId && parents.includes(String(item.parentId)))),
+      )
+      .map((item) => ({ value: item._id, label: item.name }));
+  }
+  setPurpose(value: AdmissionForm['purpose']) {
+    this.change((form) => {
+      form.purpose = value || 'admission';
+      form.codeGeneration = {
+        enabled: form.purpose !== 'admission',
+        prefix: '',
+        digits: form.purpose === 'admission' ? 6 : 8,
+      };
+      form.destination =
+        form.purpose === 'admission'
+          ? null
+          : form.destination || {
+              navigationSectionId: '',
+              navigationSectionName: '',
+              menuName: form.name,
+              databaseSectionId: '',
+              databaseSectionName: '',
+            };
+      form.audience ||= {
+        academicSessionIds: [],
+        universityIds: [],
+        collegeIds: [],
+        departmentIds: [],
+        levelIds: [],
+      };
+    });
+  }
+  destinationOptions(kind: 'navigation' | 'database') {
+    const options = new Map<string, string>();
+    const purpose = this.form()?.purpose;
+    const recommended = {
+      faculty: ['faculty', 'Faculty'],
+      employee: ['employees', 'Employees'],
+      general: ['other-applications', 'Other Applications'],
+    }[purpose === 'admission' ? 'general' : purpose || 'general'];
+    options.set(recommended[0], recommended[1]);
+    for (const form of this.forms()) {
+      const destination = form.destination;
+      const id =
+        kind === 'navigation' ? destination?.navigationSectionId : destination?.databaseSectionId;
+      const name =
+        kind === 'navigation'
+          ? destination?.navigationSectionName
+          : destination?.databaseSectionName;
+      if (id && name) options.set(id, name);
+    }
+    return [...options].map(([value, label]) => ({ value, label }));
+  }
+  selectDestination(kind: 'navigation' | 'database', sectionId: string) {
+    if (!sectionId) return;
+    const option = this.destinationOptions(kind).find((item) => item.value === sectionId);
+    if (!option) return;
+    this.change((form) => {
+      if (!form.destination) return;
+      if (kind === 'navigation') {
+        form.destination.navigationSectionId = option.value;
+        form.destination.navigationSectionName = option.label;
+      } else {
+        form.destination.databaseSectionId = option.value;
+        form.destination.databaseSectionName = option.label;
+      }
+    });
+  }
+  setDestinationName(kind: 'navigation' | 'database', name: string) {
+    this.change((form) => {
+      if (!form.destination) return;
+      const normalizedName = String(name).slice(0, 80);
+      const sectionId = this.sectionSlug(normalizedName);
+      if (kind === 'navigation') {
+        form.destination.navigationSectionName = normalizedName;
+        form.destination.navigationSectionId = sectionId;
+      } else {
+        form.destination.databaseSectionName = normalizedName;
+        form.destination.databaseSectionId = sectionId;
+      }
+    });
+  }
+  setDestinationMenuName(name: string) {
+    this.change((form) => {
+      if (form.destination) form.destination.menuName = String(name).slice(0, 80);
+    });
+  }
+  destinationLocked() {
+    return Boolean(this.form()?.destinationLockedAt);
+  }
+  setAudience(
+    field: 'academicSessionIds' | 'universityIds' | 'collegeIds' | 'departmentIds' | 'levelIds',
+    values: string[],
+  ) {
+    this.change((form) => {
+      form.audience ||= {
+        academicSessionIds: [],
+        universityIds: [],
+        collegeIds: [],
+        departmentIds: [],
+        levelIds: [],
+      };
+      form.audience[field] = values;
+      const validIds = (typeSlug: string) =>
+        new Set(this.mappingOptions(typeSlug).map((item) => item.value));
+      if (field === 'universityIds')
+        form.audience.collegeIds = form.audience.collegeIds.filter((value) =>
+          validIds('college').has(value),
+        );
+      if (field === 'universityIds' || field === 'collegeIds')
+        form.audience.departmentIds = form.audience.departmentIds.filter((value) =>
+          validIds('department').has(value),
+        );
+      if (field !== 'levelIds')
+        form.audience.levelIds = form.audience.levelIds.filter((value) =>
+          validIds('level').has(value),
+        );
+    });
   }
   createForm() {
     const name = this.newFormName.trim();
@@ -213,6 +376,29 @@ export class FormBuilderComponent {
       .createForm({
         name,
         description: '',
+        purpose: this.newFormPurpose,
+        codeGeneration: {
+          enabled: this.newFormPurpose !== 'admission',
+          prefix: '',
+          digits: this.newFormPurpose === 'admission' ? 6 : 8,
+        },
+        destination:
+          this.newFormPurpose === 'admission'
+            ? null
+            : {
+                navigationSectionId: '',
+                navigationSectionName: '',
+                menuName: name,
+                databaseSectionId: '',
+                databaseSectionName: '',
+              },
+        audience: {
+          academicSessionIds: [],
+          universityIds: [],
+          collegeIds: [],
+          departmentIds: [],
+          levelIds: [],
+        },
         status: 'draft',
         isActive: true,
         sections: [],
@@ -224,6 +410,7 @@ export class FormBuilderComponent {
           this.forms.update((v) => [item, ...v]);
           this.choose(item);
           this.creatingForm.set(false);
+          this.notifyFormNavigation();
         },
         error: (error) => {
           this.createFormError.set(error.error?.message || 'Unable to create form. Try again.');
@@ -231,8 +418,17 @@ export class FormBuilderComponent {
         },
       });
   }
+  private sectionSlug(value: string) {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60);
+  }
   openCreateFormDialog() {
     this.newFormName = '';
+    this.newFormPurpose = 'admission';
     this.createFormError.set('');
     this.createFormDialog.set(true);
   }
@@ -712,6 +908,7 @@ export class FormBuilderComponent {
           this.forms.set(remaining);
           this.deleteDialog.set(null);
           this.deleting.set(false);
+          this.notifyFormNavigation();
           if (remaining[0]) this.choose(remaining[0]);
           else {
             this.form.set(null);
@@ -775,13 +972,16 @@ export class FormBuilderComponent {
         this.forms.update((items) => items.map((f) => (f._id === item._id ? item : f)));
         this.message.set(
           publish
-            ? 'Form published. The latest structure is now available in Student Admission.'
+            ? item.purpose === 'admission'
+              ? 'Form published. The latest structure is now available in Student Admission.'
+              : 'Form published. Its data-entry link and database section are now available in the sidebar.'
             : item.status === 'published'
               ? 'Live form changes saved. Draft admissions will refresh to this structure.'
               : 'Draft saved.',
         );
         this.dirty.set(false);
         this.saving.set(false);
+        this.notifyFormNavigation();
       },
       error: (e) => {
         this.error.set(e.error?.message || 'Unable to save form.');
@@ -798,5 +998,8 @@ export class FormBuilderComponent {
   }
   private uid(prefix: string) {
     return `${prefix}_${crypto.randomUUID()}`;
+  }
+  private notifyFormNavigation() {
+    window.dispatchEvent(new Event('tasklyFormsChanged'));
   }
 }

@@ -30,6 +30,8 @@ import {
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../../core/auth.service';
+import { ApiService } from '../../../core/api.service';
+import { AdmissionForm } from '../../../core/models';
 import {
   ADMIN_NAVIGATION,
   AdminNavigationEntry,
@@ -68,9 +70,10 @@ export class AdminShellComponent {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly document = inject(DOCUMENT);
+  private readonly api = inject(ApiService);
 
   readonly auth = inject(AuthService);
-  readonly navigation = ADMIN_NAVIGATION;
+  readonly navigation = signal<readonly AdminNavigationSection[]>(ADMIN_NAVIGATION);
   readonly matchesAdminRoute = matchesAdminRoute;
   readonly currentUrl = signal(this.router.url);
   // Desktop navigation starts compact; hovering/focusing the rail reveals its labels.
@@ -105,6 +108,7 @@ export class AdminShellComponent {
 
   constructor() {
     this.syncNavigation(this.router.url);
+    this.loadFormNavigation();
 
     this.router.events
       .pipe(
@@ -125,6 +129,11 @@ export class AdminShellComponent {
         body.style.overflow = previousOverflow;
       });
     });
+  }
+
+  @HostListener('window:tasklyFormsChanged')
+  reloadFormNavigation(): void {
+    this.loadFormNavigation();
   }
 
   iconFor = adminNavigationIcon;
@@ -250,6 +259,131 @@ export class AdminShellComponent {
     this.expandedSubgroupId.set(null);
     this.desktopFlyoutAnchor = null;
     this.pageContext.set(resolveAdminPageContext(url, this.deepestRouteTitle()));
+  }
+
+  private loadFormNavigation(): void {
+    this.api.forms().subscribe({
+      next: ({ items }) => this.navigation.set(this.navigationForForms(items)),
+    });
+  }
+
+  private navigationForForms(forms: AdmissionForm[]): readonly AdminNavigationSection[] {
+    const published = forms.filter(
+      (form) => form.status === 'published' && form.isActive && form._id,
+    );
+    const navigation: AdminNavigationSection[] = ADMIN_NAVIGATION.map((section) => ({
+      ...section,
+      children: section.children ? [...section.children] : undefined,
+    }));
+    const admissionsIndex = navigation.findIndex((section) => section.id === 'admissions');
+    if (admissionsIndex >= 0) {
+      const admissions = navigation[admissionsIndex];
+      const admissionForms = published.filter(
+        (form) => (form.purpose || 'admission') === 'admission',
+      );
+      navigation[admissionsIndex] = {
+        ...admissions,
+        children: [
+          ...(admissions.children || []),
+          ...admissionForms.map((form) => this.formNavigationEntry(form, 'admission')),
+        ],
+      };
+    }
+    const destinationGroups = new Map<string, { label: string; forms: AdmissionForm[] }>();
+    for (const form of published.filter((item) => item.purpose !== 'admission')) {
+      const fallback = this.purposeSection(form.purpose);
+      const sectionId = form.destination?.navigationSectionId || fallback.id;
+      const current = destinationGroups.get(sectionId) || {
+        label: form.destination?.navigationSectionName || fallback.label,
+        forms: [],
+      };
+      current.forms.push(form);
+      destinationGroups.set(sectionId, current);
+    }
+    for (const [sectionId, group] of destinationGroups) {
+      navigation.splice(
+        Math.max(
+          1,
+          navigation.findIndex((section) => section.id === 'academics'),
+        ),
+        0,
+        {
+          id: `forms-${sectionId}`,
+          label: group.label,
+          icon: 'records',
+          activeWhen: group.forms.map((form) => new RegExp(`^/admin/forms/${form._id}/fill/?$`)),
+          children: group.forms.map((form) =>
+            this.formNavigationEntry(form, form.purpose || 'general'),
+          ),
+        },
+      );
+    }
+    const databaseSections = new Map<string, string>();
+    for (const form of forms.filter(
+      (item) => item.purpose !== 'admission' && item.destination?.databaseSectionId,
+    )) {
+      const fallback = this.purposeSection(form.purpose);
+      databaseSections.set(
+        form.destination?.databaseSectionId || fallback.id,
+        form.destination?.databaseSectionName || fallback.label,
+      );
+    }
+    navigation.splice(
+      Math.max(
+        1,
+        navigation.findIndex((section) => section.id === 'academics'),
+      ),
+      0,
+      {
+        id: 'database',
+        label: 'Database',
+        icon: 'database',
+        activeWhen: [new RegExp('^/admin/database(?:/|$)')],
+        children: [
+          {
+            id: 'database-students',
+            label: 'Students',
+            route: '/admin/database/students',
+            icon: 'students',
+            activeWhen: [new RegExp('^/admin/database/students/?$')],
+          },
+          ...[...databaseSections].map(([sectionId, label]) => ({
+            id: `database-${sectionId}`,
+            label,
+            route: `/admin/database/${sectionId}`,
+            icon: 'records' as const,
+            activeWhen: [new RegExp(`^/admin/database/${sectionId}(?:/|$)`)],
+          })),
+        ],
+      },
+    );
+    return navigation;
+  }
+
+  private formNavigationEntry(
+    form: AdmissionForm,
+    purpose: 'admission' | 'faculty' | 'employee' | 'general',
+  ): AdminNavigationEntry {
+    const route =
+      purpose === 'admission'
+        ? `/admin/admissions/forms/${form._id}/applications`
+        : `/admin/forms/${form._id}/fill`;
+    return {
+      id: `${purpose}-form-${form._id}`,
+      label: form.destination?.menuName || form.name,
+      route,
+      icon: 'records',
+      activeWhen: [new RegExp(`^${route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/?$`)],
+    };
+  }
+
+  private purposeSection(purpose: AdmissionForm['purpose']) {
+    return {
+      faculty: { id: 'faculty', label: 'Faculty' },
+      employee: { id: 'employees', label: 'Employees' },
+      general: { id: 'other-applications', label: 'Other Applications' },
+      admission: { id: 'admissions', label: 'Admissions' },
+    }[purpose || 'general'];
   }
 
   private deepestRouteTitle(): string {

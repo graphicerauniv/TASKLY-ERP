@@ -9,6 +9,7 @@ import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { pageResult, pagination } from '../lib/pagination.js';
 import { syncAdmissionIdentity } from '../services/admission-identity.js';
+import { syncActiveStudent } from '../services/active-student.js';
 import { masterValueAliases, validateSubmission } from '../services/admission-validation.js';
 import { storeObject } from '../services/object-storage.js';
 import { allowedMimeTypes, extensionForMimeType } from '../services/upload-rules.js';
@@ -43,6 +44,9 @@ admissionsRouter.get(
     const { page, limit, skip } = pagination(request.query);
     const filter = {};
     if (request.query.status) filter.status = request.query.status;
+    if (request.query.isActive !== undefined)
+      filter.isActive = String(request.query.isActive) === 'true';
+    if (request.query.formId) filter.formId = id(request.query.formId, 'formId');
     if (request.query.status === 'draft') filter.hasSavedData = true;
     if (request.query.search) {
       const match = { $regex: escapeRegex(request.query.search), $options: 'i' };
@@ -186,6 +190,7 @@ admissionsRouter.patch(
         .collection('admissions')
         .updateOne({ _id: admissionId }, { $set: explicitFeePeriod });
     item = await db().collection('admissions').findOne({ _id: admissionId });
+    await syncActiveStudent(db(), item);
     if (feeModeChanged) {
       const now = new Date();
       await db().collection('studentFeeLedgers').deleteMany({
@@ -280,7 +285,10 @@ admissionsRouter.post(
     const admissionId = id(request.params.admissionId);
     const admission = await db().collection('admissions').findOne({ _id: admissionId });
     if (!admission) return response.status(404).json({ message: 'Admission not found.' });
-    if (admission.status === 'approved') return response.json({ item: safeAdmission(admission) });
+    if (admission.status === 'approved') {
+      await syncActiveStudent(db(), admission);
+      return response.json({ item: safeAdmission(admission) });
+    }
     if (admission.status !== 'pending_approval')
       return response.status(409).json({ message: 'Submit the admission before approving it.' });
     const aliases = await masterValueAliases(
@@ -332,6 +340,7 @@ admissionsRouter.post(
         },
         { returnDocument: 'after' },
       );
+    await syncActiveStudent(db(), item);
     let feeGeneration;
     try {
       feeGeneration = await generateStudentFeeLedgers(db(), item, id(request.admin._id));
@@ -444,10 +453,10 @@ admissionsRouter.get(
 admissionsRouter.delete(
   '/:admissionId',
   asyncHandler(async (request, response) => {
-    const result = await db()
-      .collection('admissions')
-      .deleteOne({ _id: id(request.params.admissionId) });
+    const admissionId = id(request.params.admissionId);
+    const result = await db().collection('admissions').deleteOne({ _id: admissionId });
     if (!result.deletedCount) return response.status(404).json({ message: 'Admission not found.' });
+    await db().collection('students').deleteMany({ admissionId });
     response.status(204).end();
   }),
 );

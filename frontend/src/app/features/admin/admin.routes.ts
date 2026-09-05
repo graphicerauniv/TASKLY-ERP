@@ -208,6 +208,55 @@ export const ADMIN_ROUTES: Routes = [
           ),
       },
       {
+        path: 'admissions/forms/:formId/applications',
+        title: 'Student applications',
+        loadComponent: () =>
+          import('./admissions/admissions.component').then(
+            (component) => component.AdmissionsComponent,
+          ),
+      },
+      {
+        path: 'applications/:purpose/:formId',
+        title: 'Application submissions',
+        loadComponent: () =>
+          import('./application-submissions/application-submissions.component').then(
+            (component) => component.ApplicationSubmissionsComponent,
+          ),
+      },
+      {
+        path: 'forms/:formId/fill',
+        title: 'Fill form',
+        loadComponent: () =>
+          import('../public-form/public-form.component').then(
+            (component) => component.PublicFormComponent,
+          ),
+      },
+      {
+        path: 'database/students',
+        title: 'Active students',
+        data: { view: 'approved', status: 'approved', isActive: true, database: true },
+        loadComponent: () =>
+          import('./admissions/admissions.component').then(
+            (component) => component.AdmissionsComponent,
+          ),
+      },
+      {
+        path: 'database/:sectionId/:purpose/:submissionId/edit',
+        title: 'Edit database record',
+        loadComponent: () =>
+          import('../public-form/public-form.component').then(
+            (component) => component.PublicFormComponent,
+          ),
+      },
+      {
+        path: 'database/:sectionId',
+        title: 'Database records',
+        loadComponent: () =>
+          import('./application-submissions/application-submissions.component').then(
+            (component) => component.ApplicationSubmissionsComponent,
+          ),
+      },
+      {
         path: 'admissions/:admissionId/scholarships',
         loadComponent: () =>
           import('./student-scholarships/student-scholarships.component').then(

@@ -2,10 +2,12 @@ import { ObjectId } from 'bson';
 import { setTimeout as delay } from 'node:timers/promises';
 import { config } from './config.js';
 import { PostgresDocumentDatabase } from './postgres-document-db.js';
+import { syncActiveStudent } from './services/active-student.js';
+import { syncAdmissionIdentity } from './services/admission-identity.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-05-v17';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-05-v17';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-05-v20';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-05-v20';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -78,6 +80,8 @@ export function serialize(document) {
 }
 
 async function ensureIndexes(databaseInstance) {
+  await migrateFormDestinations(databaseInstance);
+  await migrateActiveStudents(databaseInstance);
   await migrateHostelFloors(databaseInstance);
   await migrateFeePeriods(databaseInstance);
   await removeLegacyApplicationNumberIndex(databaseInstance);
@@ -98,6 +102,8 @@ async function ensureIndexes(databaseInstance) {
         .collection('admissions')
         .createIndex({ studentId: 1 }, { unique: true, sparse: true }),
     () => databaseInstance.collection('admissions').createIndex({ status: 1, updatedAt: -1 }),
+    () => databaseInstance.collection('students').createIndex({ admissionId: 1 }, { unique: true }),
+    () => databaseInstance.collection('students').createIndex({ studentId: 1 }, { unique: true }),
     () => databaseInstance.collection('hostels').createIndex({ code: 1 }, { unique: true }),
     () => databaseInstance.collection('hostels').createIndex({ name: 1 }),
     () =>
@@ -298,8 +304,109 @@ async function ensureIndexes(databaseInstance) {
         },
         { unique: true },
       ),
+    () =>
+      databaseInstance
+        .collection('forms')
+        .createIndex({ purpose: 1, status: 1, isActive: 1, updatedAt: -1 }),
+    () =>
+      databaseInstance
+        .collection('facultyApplications')
+        .createIndex({ formId: 1, status: 1, submittedAt: -1 }),
+    () =>
+      databaseInstance
+        .collection('facultyApplications')
+        .createIndex({ applicationCode: 1 }, { unique: true, sparse: true }),
+    () => databaseInstance.collection('facultyApplications').createIndex({ databaseSectionId: 1 }),
+    () =>
+      databaseInstance
+        .collection('employeeApplications')
+        .createIndex({ formId: 1, status: 1, submittedAt: -1 }),
+    () =>
+      databaseInstance
+        .collection('employeeApplications')
+        .createIndex({ applicationCode: 1 }, { unique: true, sparse: true }),
+    () => databaseInstance.collection('employeeApplications').createIndex({ databaseSectionId: 1 }),
+    () =>
+      databaseInstance
+        .collection('formSubmissions')
+        .createIndex({ formId: 1, status: 1, submittedAt: -1 }),
+    () =>
+      databaseInstance
+        .collection('formSubmissions')
+        .createIndex({ applicationCode: 1 }, { unique: true, sparse: true }),
+    () => databaseInstance.collection('formSubmissions').createIndex({ databaseSectionId: 1 }),
   ];
   for (const operation of indexOperations) await operation();
+}
+
+async function migrateFormDestinations(databaseInstance) {
+  const collections = {
+    faculty: 'facultyApplications',
+    employee: 'employeeApplications',
+    general: 'formSubmissions',
+  };
+  const defaults = {
+    faculty: ['faculty', 'Faculty'],
+    employee: ['employees', 'Employees'],
+    general: ['other-applications', 'Other Applications'],
+  };
+  const forms = await databaseInstance
+    .collection('forms')
+    .find({ purpose: { $in: Object.keys(collections) } })
+    .toArray();
+  for (const form of forms) {
+    const [sectionId, sectionName] = defaults[form.purpose];
+    const destination = form.destination?.databaseSectionId
+      ? form.destination
+      : {
+          navigationSectionId: sectionId,
+          navigationSectionName: sectionName,
+          menuName: form.name,
+          databaseSectionId: sectionId,
+          databaseSectionName: sectionName,
+        };
+    await databaseInstance.collection('forms').updateOne(
+      { _id: form._id },
+      {
+        $set: {
+          destination,
+          codeGeneration: { enabled: true, prefix: '', digits: 8 },
+          ...(form.status === 'published' && !form.destinationLockedAt
+            ? { destinationLockedAt: form.updatedAt || new Date() }
+            : {}),
+        },
+      },
+    );
+    await databaseInstance.collection(collections[form.purpose]).updateMany(
+      { formId: form._id },
+      {
+        $set: {
+          navigationSectionId: destination.navigationSectionId,
+          navigationSectionName: destination.navigationSectionName,
+          databaseSectionId: destination.databaseSectionId,
+          databaseSectionName: destination.databaseSectionName,
+        },
+      },
+    );
+  }
+}
+
+async function migrateActiveStudents(databaseInstance) {
+  const admissions = await databaseInstance
+    .collection('admissions')
+    .find({ status: 'approved', isActive: true })
+    .toArray();
+  for (let offset = 0; offset < admissions.length; offset += 10) {
+    await Promise.all(
+      admissions.slice(offset, offset + 10).map(async (admission) => {
+        await syncAdmissionIdentity(databaseInstance, admission, admission.responses || {});
+        const refreshed = await databaseInstance
+          .collection('admissions')
+          .findOne({ _id: admission._id });
+        await syncActiveStudent(databaseInstance, refreshed);
+      }),
+    );
+  }
 }
 
 async function migrateFeePeriods(databaseInstance) {

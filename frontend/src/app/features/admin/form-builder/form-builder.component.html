@@ -39,6 +39,152 @@
   />
 
   @if (form(); as current) {
+    <section class="erp-card erp-card--padded form-purpose-config">
+      <div class="erp-card__header">
+        <div>
+          <h2>Form purpose and audience</h2>
+          <p>
+            Controls publishing requirements, who receives this form, and where responses are
+            stored.
+          </p>
+        </div>
+      </div>
+      <div class="erp-form-grid">
+        <label>
+          <span>Form purpose *</span>
+          <select
+            class="erp-control"
+            [disabled]="destinationLocked() || current.status === 'published'"
+            [ngModel]="current.purpose || 'admission'"
+            (ngModelChange)="setPurpose($event)"
+          >
+            <option value="admission">Student admission</option>
+            <option value="faculty">Faculty application</option>
+            <option value="employee">Employee application</option>
+            <option value="general">General/custom form</option>
+          </select>
+        </label>
+        @if ((current.purpose || 'admission') === 'admission') {
+          <div class="erp-field-stack">
+            <span>Academic sessions *</span>
+            <erp-multi-select-dropdown
+              [options]="mappingOptions('academic')"
+              [value]="current.audience?.academicSessionIds || []"
+              placeholder="Select sessions"
+              (valueChange)="setAudience('academicSessionIds', $event)"
+            />
+          </div>
+          <div class="erp-field-stack">
+            <span>Admission levels *</span>
+            <erp-multi-select-dropdown
+              [options]="mappingOptions('level')"
+              [value]="current.audience?.levelIds || []"
+              placeholder="Select UG, PG or other levels"
+              (valueChange)="setAudience('levelIds', $event)"
+            />
+          </div>
+        }
+        @if ((current.purpose || 'admission') !== 'general') {
+          <div class="erp-field-stack">
+            <span>Universities</span>
+            <erp-multi-select-dropdown
+              [options]="mappingOptions('university')"
+              [value]="current.audience?.universityIds || []"
+              placeholder="All universities"
+              (valueChange)="setAudience('universityIds', $event)"
+            />
+          </div>
+          <div class="erp-field-stack">
+            <span>Colleges</span>
+            <erp-multi-select-dropdown
+              [options]="mappingOptions('college')"
+              [value]="current.audience?.collegeIds || []"
+              placeholder="All colleges"
+              (valueChange)="setAudience('collegeIds', $event)"
+            />
+          </div>
+          <div class="erp-field-stack">
+            <span>{{
+              (current.purpose || 'admission') === 'faculty'
+                ? 'Faculty departments *'
+                : 'Departments'
+            }}</span>
+            <erp-multi-select-dropdown
+              [options]="mappingOptions('department')"
+              [value]="current.audience?.departmentIds || []"
+              placeholder="Select departments"
+              (valueChange)="setAudience('departmentIds', $event)"
+            />
+          </div>
+        }
+        @if ((current.purpose || 'admission') !== 'admission') {
+          <label>
+            <span>Existing sidebar section</span>
+            <select
+              class="erp-control"
+              [disabled]="destinationLocked()"
+              [ngModel]="current.destination?.navigationSectionId || ''"
+              (ngModelChange)="selectDestination('navigation', $event)"
+            >
+              <option value="">Add new section</option>
+              @for (option of destinationOptions('navigation'); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Sidebar section name *</span>
+            <input
+              class="erp-control"
+              [disabled]="destinationLocked()"
+              [ngModel]="current.destination?.navigationSectionName || ''"
+              (ngModelChange)="setDestinationName('navigation', $event)"
+              placeholder="e.g. Faculty"
+            />
+          </label>
+          <label>
+            <span>Form name in sidebar *</span>
+            <input
+              class="erp-control"
+              [ngModel]="current.destination?.menuName || current.name"
+              (ngModelChange)="setDestinationMenuName($event)"
+              placeholder="e.g. Make Faculty"
+            />
+          </label>
+          <label>
+            <span>Existing database section</span>
+            <select
+              class="erp-control"
+              [disabled]="destinationLocked()"
+              [ngModel]="current.destination?.databaseSectionId || ''"
+              (ngModelChange)="selectDestination('database', $event)"
+            >
+              <option value="">Add new section</option>
+              @for (option of destinationOptions('database'); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Database section name *</span>
+            <input
+              class="erp-control"
+              [disabled]="destinationLocked()"
+              [ngModel]="current.destination?.databaseSectionName || ''"
+              (ngModelChange)="setDestinationName('database', $event)"
+              placeholder="e.g. Faculty"
+            />
+          </label>
+          <div class="erp-notice">
+            Every submitted record receives a unique eight-character alphanumeric code.
+            @if (destinationLocked()) {
+              The sidebar and database destination are locked because this form has been published.
+            }
+          </div>
+        }
+      </div>
+    </section>
+
     <div class="builder-mobile-actions">
       <button class="secondary" type="button" (click)="structureVisible.set(true)">
         <svg lucideListTree size="17" aria-hidden="true"></svg> Form structure
@@ -628,7 +774,7 @@
     >
       <header class="dialog__header">
         <div>
-          <small>Admission</small>
+          <small>Forms</small>
           <h2 id="create-form-title">Create form</h2>
         </div>
         <button type="button" aria-label="Close dialog" (click)="closeCreateFormDialog()">×</button>
@@ -643,6 +789,15 @@
             autocomplete="off"
             autofocus
         /></label>
+        <label>
+          <span>Form purpose *</span>
+          <select name="formPurpose" [(ngModel)]="newFormPurpose">
+            <option value="admission">Student admission</option>
+            <option value="faculty">Faculty application</option>
+            <option value="employee">Employee application</option>
+            <option value="general">General/custom form</option>
+          </select>
+        </label>
         @if (createFormError()) {
           <p class="dialog-form__error" role="alert">{{ createFormError() }}</p>
         }

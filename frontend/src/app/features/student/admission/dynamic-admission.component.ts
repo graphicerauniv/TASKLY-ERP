@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, input, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LucideAlertTriangle, LucideCheck } from '@lucide/angular';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
 import {
   Admission,
@@ -23,6 +25,7 @@ import { MobileSectionNavigatorSheetComponent } from '../../../shared/ui/mobile-
 @Component({
   selector: 'erp-dynamic-admission',
   imports: [
+    FormsModule,
     RouterLink,
     LucideCheck,
     LucideAlertTriangle,
@@ -54,6 +57,11 @@ export class DynamicAdmissionComponent implements OnInit {
   readonly dirty = signal(false);
   readonly mobileNavigatorOpen = signal(false);
   readonly reviewMode = signal(false);
+  readonly choosingForm = signal(false);
+  readonly admissionSessions = signal<MasterValue[]>([]);
+  readonly admissionLevels = signal<MasterValue[]>([]);
+  selectedAdmissionSessionId = '';
+  selectedAdmissionLevelId = '';
   private accessKey = '';
   ngOnInit() {
     this.initialize();
@@ -75,23 +83,55 @@ export class DynamicAdmissionComponent implements OnInit {
     } else this.loadNew();
   }
   private loadNew() {
-    this.api.activeForm().subscribe({
-      next: ({ item }) => {
-        this.form.set(item);
-        this.api.startAdmission(item._id).subscribe({
-          next: ({ item: admission, accessKey }) => {
-            this.accessKey = accessKey;
-            localStorage.setItem(
-              this.storageKey(),
-              JSON.stringify({ id: admission._id, key: accessKey }),
-            );
-            this.acceptAdmission(admission);
-          },
-          error: (e) => this.fail(e),
-        });
+    this.loading.set(true);
+    this.form.set(null);
+    forkJoin({
+      sessions: this.api.publicOptions('academic'),
+      levels: this.api.publicOptions('level'),
+    }).subscribe({
+      next: ({ sessions, levels }) => {
+        this.admissionSessions.set(sessions.items);
+        this.admissionLevels.set(levels.items);
+        this.choosingForm.set(true);
+        this.loading.set(false);
       },
       error: (e) => this.fail(e),
     });
+  }
+  beginAdmission() {
+    if (!this.selectedAdmissionSessionId || !this.selectedAdmissionLevelId) {
+      this.error.set('Select an academic session and admission level to continue.');
+      return;
+    }
+    this.loading.set(true);
+    this.choosingForm.set(false);
+    this.error.set('');
+    this.api
+      .activeForm({
+        purpose: 'admission',
+        academicSessionId: this.selectedAdmissionSessionId,
+        levelId: this.selectedAdmissionLevelId,
+      })
+      .subscribe({
+        next: ({ item }) => {
+          this.form.set(item);
+          this.api.startAdmission(item._id).subscribe({
+            next: ({ item: admission, accessKey }) => {
+              this.accessKey = accessKey;
+              localStorage.setItem(
+                this.storageKey(),
+                JSON.stringify({ id: admission._id, key: accessKey }),
+              );
+              this.acceptAdmission(admission);
+            },
+            error: (e) => this.fail(e),
+          });
+        },
+        error: (e) => {
+          this.choosingForm.set(true);
+          this.fail(e);
+        },
+      });
   }
   private acceptAdmission(item: Admission) {
     this.admission.set(item);

@@ -1,15 +1,23 @@
 <erp-admin-page
-  [title]="activeView().pageTitle"
+  [eyebrow]="databaseMode() ? 'Database' : 'Admissions'"
+  [title]="databaseMode() ? 'Active students' : activeView().pageTitle"
   [badge]="total()"
+  [description]="
+    databaseMode()
+      ? 'Search and manage approved active student records.'
+      : activeView().description
+  "
   variant="compact"
   layout="collection"
 >
-  <div page-actions>
-    <a class="erp-button erp-button--primary" routerLink="/admin/admission/student">
-      <svg lucidePlus size="16" aria-hidden="true"></svg>
-      New application
-    </a>
-  </div>
+  @if (!databaseMode()) {
+    <div page-actions>
+      <a class="erp-button erp-button--primary" routerLink="/admin/admission/student">
+        <svg lucidePlus size="16" aria-hidden="true"></svg>
+        New application
+      </a>
+    </div>
+  }
 
   <div class="applications-feedback" aria-live="polite">
     @if (message()) {

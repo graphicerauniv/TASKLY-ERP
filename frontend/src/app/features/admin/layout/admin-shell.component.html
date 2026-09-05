@@ -150,7 +150,7 @@
     (scroll)="!mobile && repositionDesktopFlyout()"
   >
     <ul class="admin-navigation__list">
-      @for (section of navigation; track section.id) {
+      @for (section of navigation(); track section.id) {
         <li class="admin-navigation__section">
           @if (section.children?.length) {
             <button

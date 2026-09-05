@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { tap } from 'rxjs';
+import { of, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { MasterType } from './models';
 
@@ -8,7 +8,8 @@ export class MasterDataStore {
   private readonly api = inject(ApiService);
   readonly types = signal<MasterType[]>([]);
 
-  load() {
+  load(force = false) {
+    if (!force && this.types().length) return of({ items: this.types() });
     return this.api
       .masterTypes()
       .pipe(tap(({ items }) => this.types.set(items.filter((item) => item.isActive))));

@@ -44,6 +44,7 @@ import {
   TimetableMaster,
   TimetableStructure,
   TimetablePeriod,
+  FormSubmission,
 } from './models';
 import type { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
@@ -149,9 +150,10 @@ export class ApiService {
     let params = new HttpParams().set('limit', 100);
     for (const [key, value] of Object.entries(options))
       if (value !== undefined && value !== '') params = params.set(key, String(value));
-    return this.http.get<{ items: MasterValue[] }>(`${API_BASE_URL}/master-data/${slug}/values`, {
-      params,
-    });
+    return this.http.get<{
+      items: MasterValue[];
+      pagination: { page: number; limit: number; total: number; pages: number };
+    }>(`${API_BASE_URL}/master-data/${slug}/values`, { params });
   }
   createMasterValue(slug: string, body: Partial<MasterValue>) {
     return this.http.post<{ item: MasterValue }>(
@@ -176,6 +178,14 @@ export class ApiService {
   forms() {
     return this.http.get<{ items: AdmissionForm[] }>(`${API_BASE_URL}/forms`);
   }
+  form(id: string) {
+    return this.http.get<{ item: AdmissionForm }>(`${API_BASE_URL}/forms/${id}`);
+  }
+  formMappingOptions() {
+    return this.http.get<{ items: Array<MasterValue & { typeSlug: string }> }>(
+      `${API_BASE_URL}/forms/mapping-options`,
+    );
+  }
   createForm(body: Partial<AdmissionForm>) {
     return this.http.post<{ item: AdmissionForm }>(`${API_BASE_URL}/forms`, body);
   }
@@ -184,6 +194,52 @@ export class ApiService {
   }
   deleteForm(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/forms/${id}`);
+  }
+  applicationSubmissions(purpose: string, formId: string) {
+    return this.http.get<{ items: FormSubmission[]; form: AdmissionForm }>(
+      `${API_BASE_URL}/forms/submissions/${encodeURIComponent(purpose)}/${encodeURIComponent(formId)}`,
+    );
+  }
+  databaseSubmissions(sectionId: string) {
+    return this.http.get<{
+      section: { id: string; name: string };
+      items: FormSubmission[];
+    }>(`${API_BASE_URL}/forms/database/${encodeURIComponent(sectionId)}`);
+  }
+  formSubmission(purpose: string, submissionId: string) {
+    return this.http.get<{ item: FormSubmission }>(
+      `${API_BASE_URL}/forms/submission/${encodeURIComponent(purpose)}/${encodeURIComponent(submissionId)}`,
+    );
+  }
+  updateFormSubmission(
+    purpose: string,
+    submissionId: string,
+    responses: Record<string, unknown>,
+    repeatableResponses: Record<string, Record<string, unknown>[]>,
+  ) {
+    return this.http.patch<{ item: FormSubmission }>(
+      `${API_BASE_URL}/forms/submission/${encodeURIComponent(purpose)}/${encodeURIComponent(submissionId)}`,
+      { responses, repeatableResponses },
+    );
+  }
+  submitAdminForm(
+    formId: string,
+    responses: Record<string, unknown>,
+    repeatableResponses: Record<string, Record<string, unknown>[]>,
+  ) {
+    return this.http.post<{ item: FormSubmission }>(
+      `${API_BASE_URL}/forms/${encodeURIComponent(formId)}/submissions`,
+      { responses, repeatableResponses },
+    );
+  }
+  uploadAdminForm(formId: string, fieldId: string, file: File) {
+    const data = new FormData();
+    data.append('fieldId', fieldId);
+    data.append('file', file);
+    return this.http.post<{ file: { name: string; key: string; url: string } }>(
+      `${API_BASE_URL}/forms/${encodeURIComponent(formId)}/upload`,
+      data,
+    );
   }
   admissions(
     options: {
@@ -199,6 +255,8 @@ export class ApiService {
       branch?: string;
       course?: string;
       session?: string;
+      formId?: string;
+      isActive?: boolean;
     } = {},
   ) {
     let params = new HttpParams();
@@ -474,8 +532,21 @@ export class ApiService {
       data,
     );
   }
-  activeForm() {
-    return this.http.get<{ item: AdmissionForm }>(`${API_BASE_URL}/public/forms/active`);
+  activeForm(
+    options: {
+      purpose?: AdmissionForm['purpose'];
+      academicSessionId?: string;
+      universityId?: string;
+      collegeId?: string;
+      departmentId?: string;
+      levelId?: string;
+    } = {},
+  ) {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(options)) if (value) params = params.set(key, value);
+    return this.http.get<{ item: AdmissionForm }>(`${API_BASE_URL}/public/forms/active`, {
+      params,
+    });
   }
   publicOptions(slug: string, parentId?: string, search?: string) {
     let params = new HttpParams();
