@@ -1507,6 +1507,11 @@
   overflow: hidden;
 }
 
+/* Let shared toolbar popovers escape the rounded table card without disabling table scrolling. */
+.erp-table-shell:has(erp-filter-popover) {
+  overflow: visible;
+}
+
 .erp-table-shell__scroll {
   overflow: auto;
 }
@@ -4616,9 +4621,9 @@ erp-admin-shell {
 
 .brand__mark {
   display: grid;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   place-items: center;
   overflow: hidden;
   border: 1px solid #c8e1f2;
@@ -4628,8 +4633,8 @@ erp-admin-shell {
 }
 
 .brand__mark img {
-  width: 36px;
-  height: 36px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -4822,11 +4827,11 @@ erp-admin-shell {
 .nav-link__icon,
 .nav-button__icon {
   display: grid;
-  width: 44px;
-  height: 34px;
-  flex: 0 0 44px;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
   place-items: center;
-  border-radius: 9px;
+  border-radius: var(--erp-radius-control);
   color: var(--erp-text-muted);
   transition:
     color var(--erp-duration-standard) ease-out,
@@ -4854,7 +4859,8 @@ erp-admin-shell {
   background: var(--erp-sidebar-hover-light);
   border-color: rgb(144 202 249 / 36%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 55%);
-  transform: translateX(2px);
+  /* Keep the icon column anchored while the rail expands. */
+  transform: none;
 }
 
 .nav-link:hover::after,
@@ -5346,7 +5352,7 @@ erp-admin-shell {
   min-height: 38px;
   align-items: center;
   gap: 11px;
-  padding: 5px 13px;
+  padding: 5px 10px;
   overflow: hidden;
   border: 0;
   border-radius: 9px;
@@ -5369,8 +5375,8 @@ erp-admin-shell {
 }
 
 .sidebar__footer svg {
-  width: 22px;
-  flex: 0 0 22px;
+  width: 24px;
+  flex: 0 0 24px;
 }
 
 .service-status i {
@@ -5427,8 +5433,8 @@ erp-admin-shell {
 }
 
 .shell--collapsed .sidebar-search {
-  width: 46px;
-  margin-inline: 15px;
+  width: 44px;
+  margin-inline: 10px;
   padding-inline: 12px;
 }
 
@@ -5471,16 +5477,16 @@ erp-admin-shell {
 }
 
 .shell--collapsed :is(.nav-link, .nav-button) {
-  width: 52px;
-  min-height: 46px;
-  margin: 5px auto;
-  padding-inline: 5px;
-  border-radius: 12px;
+  width: 44px;
+  min-height: var(--erp-sidebar-item-height);
+  margin: 3px auto;
+  padding-inline: 10px;
+  border-radius: var(--erp-sidebar-item-radius);
 }
 
 .shell--collapsed :is(.nav-link__icon, .nav-button__icon) {
-  width: 42px;
-  flex-basis: 42px;
+  width: 24px;
+  flex-basis: 24px;
 }
 
 .shell--collapsed :is(.nav-link, .nav-button)::after {
@@ -5516,7 +5522,7 @@ erp-admin-shell {
   .sidebar:focus-within
   :is(.sidebar__footer a, .sidebar__footer button, .service-status) {
   justify-content: flex-start;
-  padding-inline: 13px;
+  padding-inline: 10px;
 }
 
 .shell--collapsed [data-tooltip] {
@@ -5692,6 +5698,13 @@ erp-admin-shell {
   margin: auto;
   padding: var(--erp-page-padding-desktop);
   overflow-wrap: anywhere;
+}
+
+/* Keep the main grid track stretched so it owns vertical scrolling. Page content
+ * remains top-aligned through normal document flow inside this scrollport. */
+.admin-main {
+  align-self: stretch;
+  margin: 0;
 }
 
 .content:has(.erp-page--collection) {
@@ -9201,8 +9214,7 @@ erp-upload-field {
   min-height: calc(100dvh - var(--erp-header-height));
   padding: 28px 36px 32px;
   background:
-    radial-gradient(circle at 72% 0%, rgb(214 232 255 / 34%), transparent 34rem),
-    var(--erp-canvas);
+    radial-gradient(circle at 72% 0%, rgb(214 232 255 / 34%), transparent 34rem), var(--erp-canvas);
 }
 
 .content:has(erp-form-builder) .form-builder-page {
@@ -10578,8 +10590,7 @@ erp-admission-journey-rail {
 .content:has(erp-form-builder) {
   padding: 28px 36px 36px;
   background:
-    radial-gradient(circle at 72% 0%, rgb(214 232 255 / 36%), transparent 34rem),
-    var(--erp-canvas);
+    radial-gradient(circle at 72% 0%, rgb(214 232 255 / 36%), transparent 34rem), var(--erp-canvas);
 }
 
 .form-builder-page {
@@ -10663,8 +10674,7 @@ erp-admission-journey-rail {
   overflow: visible;
   padding: 24px 36px 12px;
   background:
-    radial-gradient(circle at 75% 0%, rgb(214 232 255 / 34%), transparent 34rem),
-    var(--erp-canvas);
+    radial-gradient(circle at 75% 0%, rgb(214 232 255 / 34%), transparent 34rem), var(--erp-canvas);
 }
 
 .erp-admission-page--embedded {
@@ -11051,10 +11061,19 @@ erp-admission-journey-rail {
     grid-column: 1;
   }
 
-  .erp-admission-page--embedded .erp-form-progress-header { grid-row: 1; }
-  .erp-admission-page--embedded > .erp-notice { grid-row: 2; }
-  .erp-admission-page--embedded erp-admission-journey-rail { grid-row: 3; height: auto; }
-  .erp-admission-page--embedded .erp-guided-form-workspace { grid-row: 4; }
+  .erp-admission-page--embedded .erp-form-progress-header {
+    grid-row: 1;
+  }
+  .erp-admission-page--embedded > .erp-notice {
+    grid-row: 2;
+  }
+  .erp-admission-page--embedded erp-admission-journey-rail {
+    grid-row: 3;
+    height: auto;
+  }
+  .erp-admission-page--embedded .erp-guided-form-workspace {
+    grid-row: 4;
+  }
 
   .erp-admission-page--embedded .erp-journey {
     min-height: 0;

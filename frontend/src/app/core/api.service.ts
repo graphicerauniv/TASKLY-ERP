@@ -195,6 +195,7 @@ export class ApiService {
       studentId?: string;
       studentName?: string;
       university?: string;
+      college?: string;
       branch?: string;
       course?: string;
       session?: string;

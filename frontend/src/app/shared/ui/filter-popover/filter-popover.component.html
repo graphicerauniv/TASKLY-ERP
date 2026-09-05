@@ -22,7 +22,13 @@
       aria-label="Close filters"
       (click)="open.set(false)"
     ></button>
-    <section class="filter-popover__panel" [id]="panelId" role="dialog" aria-label="{{ label() }}">
+    <section
+      class="filter-popover__panel"
+      [id]="panelId"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="label()"
+    >
       <header>
         <strong>{{ label() }}</strong>
         <button type="button" aria-label="Close filters" (click)="open.set(false)">
@@ -36,12 +42,13 @@
         </div>
         <div class="filter-popover__fields">
           @for (field of fields(); track field.id) {
-            <label>
+            <label [for]="'erp-filter-' + field.id">
               <span>{{ field.label }}</span>
               @if (field.type === 'select') {
                 <select
                   class="erp-control"
-                  [ngModel]="draftValues()[field.id] || ''"
+                  [id]="'erp-filter-' + field.id"
+                  [ngModel]="draftValues()[field.id] || values()[field.id] || ''"
                   (ngModelChange)="updateDraft(field.id, $event)"
                 >
                   <option value="">All {{ field.label.toLowerCase() }}</option>
@@ -52,9 +59,10 @@
               } @else {
                 <input
                   class="erp-control"
+                  [id]="'erp-filter-' + field.id"
                   type="text"
                   [placeholder]="field.placeholder || 'Enter ' + field.label.toLowerCase()"
-                  [ngModel]="draftValues()[field.id] || ''"
+                  [ngModel]="draftValues()[field.id] || values()[field.id] || ''"
                   (ngModelChange)="updateDraft(field.id, $event)"
                   (keydown.enter)="apply()"
                 />

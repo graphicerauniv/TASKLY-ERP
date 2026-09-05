@@ -40,14 +40,40 @@
       </nav>
     </div>
 
-    <div class="admin-header__status" aria-live="polite">
-      <svg lucideCircleCheck size="20" aria-hidden="true"></svg>
-      <span>{{ headerSaveStatus() }}</span>
-      <span class="admin-header__status-divider" aria-hidden="true"></span>
-      <button class="admin-icon-button" type="button" aria-label="Open header options">
-        <svg lucideChevronDown size="18" aria-hidden="true"></svg>
-      </button>
-    </div>
+    @if (isScholarshipWorkspace()) {
+      <div class="admin-header__tools">
+        <label class="admin-header__search"
+          ><svg lucideSearch size="17" aria-hidden="true"></svg
+          ><input
+            aria-label="Search students and programmes"
+            placeholder="Search by name, ID, programme…"
+        /></label>
+        <button
+          class="admin-icon-button admin-header__notification"
+          type="button"
+          aria-label="Notifications"
+        >
+          <svg lucideBell size="19" aria-hidden="true"></svg><small>12</small>
+        </button>
+        <button class="admin-icon-button" type="button" aria-label="Help">
+          <svg lucideCircleHelp size="19" aria-hidden="true"></svg>
+        </button>
+        <span class="admin-header__avatar">{{ adminInitials() }}</span>
+        <strong class="admin-header__admin-name">{{ auth.admin()?.name || 'Super Admin' }}</strong>
+        <button class="admin-icon-button" type="button" aria-label="Open profile menu">
+          <svg lucideChevronDown size="17" aria-hidden="true"></svg>
+        </button>
+      </div>
+    } @else {
+      <div class="admin-header__status" aria-live="polite">
+        <svg lucideCircleCheck size="20" aria-hidden="true"></svg>
+        <span>{{ headerSaveStatus() }}</span>
+        <span class="admin-header__status-divider" aria-hidden="true"></span>
+        <button class="admin-icon-button" type="button" aria-label="Open header options">
+          <svg lucideChevronDown size="18" aria-hidden="true"></svg>
+        </button>
+      </div>
+    }
   </header>
 
   <main id="admin-main" class="content admin-main" tabindex="-1">

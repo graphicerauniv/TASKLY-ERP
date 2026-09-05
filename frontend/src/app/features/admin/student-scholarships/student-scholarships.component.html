@@ -1,8 +1,8 @@
-<erp-admin-page title="Scholarship review" variant="minimal">
+<erp-admin-page [title]="pageTitle()" [description]="pageDescription()" variant="module">
   <div page-actions>
     <a class="erp-button erp-button--secondary" routerLink="/admin/admissions/approved">
       <svg lucideArrowLeft size="16" aria-hidden="true"></svg>
-      Students
+      Back to approved students
     </a>
   </div>
 
@@ -16,49 +16,6 @@
   @if (loading()) {
     <section class="erp-card erp-card--padded">Loading scholarship record…</section>
   } @else if (student(); as item) {
-    <section class="erp-card student-context" aria-label="Student context">
-      <div class="student-context__identity">
-        <span class="student-context__avatar"
-          ><svg lucideUserRound size="20" aria-hidden="true"></svg
-        ></span>
-        <div>
-          <div class="student-context__name-line">
-            <h2>{{ item.studentName || 'Student record' }}</h2>
-            <span class="erp-status">{{
-              item.status === 'approved' ? 'Active' : item.status
-            }}</span>
-          </div>
-          <p>
-            {{ item.studentId || 'ID pending' }} · {{ item.courseName || 'Programme not mapped' }}
-          </p>
-        </div>
-      </div>
-      <dl class="student-context__facts">
-        <div>
-          <dt>Session</dt>
-          <dd>{{ item.academicSession || '—' }}</dd>
-        </div>
-        <div>
-          <dt>Current period</dt>
-          <dd>
-            {{
-              item.feeFrequency === 'semester'
-                ? 'Semester ' + item.currentSemester
-                : 'Year ' + item.currentAcademicYear
-            }}
-          </dd>
-        </div>
-        <div>
-          <dt>Billing cycle</dt>
-          <dd>{{ item.feeFrequency === 'semester' ? 'Semester-wise' : 'Annual' }}</dd>
-        </div>
-        <div>
-          <dt>College</dt>
-          <dd>{{ item.collegeName || '—' }}</dd>
-        </div>
-      </dl>
-    </section>
-
     <nav class="scholarship-tabs" aria-label="Scholarship review sections">
       <button
         type="button"
@@ -94,268 +51,308 @@
     </nav>
 
     @if (activeTab() === 'overview') {
-      <section class="financial-summary" aria-label="Financial summary">
+      <section class="erp-card student-context" aria-label="Student context">
+        <div class="student-context__identity">
+          <span class="student-context__avatar">{{ initials(item.studentName || 'Student') }}</span>
+          <div>
+            <div class="student-context__name-line">
+              <h2>{{ item.studentName || 'Student record' }}</h2>
+              <span class="erp-status">{{
+                item.status === 'approved' ? 'Active' : item.status
+              }}</span>
+            </div>
+            <p>
+              {{ item.studentId || 'ID pending' }} · {{ item.courseName || 'Programme not mapped' }}
+            </p>
+          </div>
+        </div>
+        <dl class="student-context__facts">
+          <div>
+            <dt>Session</dt>
+            <dd>{{ item.academicSession || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Current period</dt>
+            <dd>
+              {{
+                item.feeFrequency === 'semester'
+                  ? 'Semester ' + item.currentSemester
+                  : 'Year ' + item.currentAcademicYear
+              }}
+            </dd>
+          </div>
+          <div>
+            <dt>Billing cycle</dt>
+            <dd>{{ item.feeFrequency === 'semester' ? 'Semester-wise' : 'Annual' }}</dd>
+          </div>
+          <div>
+            <dt>College</dt>
+            <dd>{{ item.collegeName || '—' }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="financial-summary financial-summary--overview" aria-label="Financial summary">
         <button type="button" class="financial-summary__item" (click)="activeTab.set('impact')">
-          <span>Gross fees</span
+          <span class="metric-icon metric-icon--blue"
+            ><svg lucideReceiptText size="17" aria-hidden="true"></svg></span
+          ><span>Gross fees</span
           ><strong>{{ totalCharges() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
-          ><small>{{ ledgers().length }} fee periods</small>
+          ><small>Before concessions</small>
         </button>
         <button
           type="button"
           class="financial-summary__item financial-summary__item--discount"
           (click)="activeTab.set('impact')"
         >
-          <span>Total concessions</span
+          <span class="metric-icon metric-icon--green"
+            ><svg lucideGraduationCap size="17" aria-hidden="true"></svg></span
+          ><span>Total concessions</span
           ><strong>− {{ totalDiscounts() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
-          ><small>Scholarships and discounts</small>
+          ><small>Scholarships & discounts</small>
         </button>
         <button type="button" class="financial-summary__item" (click)="activeTab.set('impact')">
-          <span>Net payable</span
+          <span class="metric-icon metric-icon--blue"
+            ><svg lucideWalletCards size="17" aria-hidden="true"></svg></span
+          ><span>Net payable</span
           ><strong>{{ totalPayable() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
           ><small>After concessions</small>
         </button>
         <button type="button" class="financial-summary__item" (click)="activeTab.set('impact')">
-          <span>Paid</span><strong>{{ totalPaid() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
-          ><small>Posted payments</small>
+          <span class="metric-icon metric-icon--violet"
+            ><svg lucideCheckCircle2 size="17" aria-hidden="true"></svg></span
+          ><span>Paid amount</span
+          ><strong>{{ totalPaid() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
+          ><small>Total payments made</small>
         </button>
         <button
           type="button"
           class="financial-summary__item financial-summary__item--balance"
           (click)="activeTab.set('impact')"
         >
-          <span>Outstanding</span
+          <span class="metric-icon metric-icon--red"
+            ><svg lucideReceiptText size="17" aria-hidden="true"></svg></span
+          ><span>Outstanding</span
           ><strong>{{ totalBalance() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
           ><small>Current balance</small>
         </button>
+        <div class="financial-summary__item financial-summary__item--status">
+          <span class="metric-icon metric-icon--blue"
+            ><svg lucideCalendarDays size="17" aria-hidden="true"></svg></span
+          ><span>Account status</span><strong>{{ totalBalance() > 0 ? 'Due' : 'Paid' }}</strong
+          ><small>{{ ledgers().length }} fee periods</small>
+        </div>
       </section>
 
-      <section class="erp-card erp-table-shell overview-periods">
-        <div class="erp-table-toolbar">
-          <div>
-            <h2>
-              Fee-period summary <small>{{ ledgers().length }}</small>
-            </h2>
+      <div class="overview-grid">
+        <section class="erp-card erp-table-shell overview-periods">
+          <div class="erp-table-toolbar">
+            <div>
+              <h2>
+                Fee period summary <small>{{ ledgers().length }}</small>
+              </h2>
+              <p>Summary of all academic periods for this admission.</p>
+            </div>
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="activeTab.set('impact')"
+            >
+              View full fee impact <svg lucideArrowRight size="15" aria-hidden="true"></svg>
+            </button>
           </div>
-          <button
-            class="erp-button erp-button--secondary"
-            type="button"
-            (click)="activeTab.set('impact')"
-          >
-            Full fee breakdown
-          </button>
-        </div>
-        <div class="erp-table-shell__scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Fee period</th>
-                <th>Gross fee</th>
-                <th>Concessions</th>
-                <th>Net payable</th>
-                <th>Paid</th>
-                <th>Balance</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (ledger of ledgers(); track ledger._id) {
+          <div class="erp-table-shell__scroll">
+            <table>
+              <thead>
                 <tr>
-                  <td>
-                    <strong>{{ ledger.periodLabel }}</strong
-                    ><small>{{ ledger.academicSession }} · {{ ledger.feeBookCode }}</small>
-                  </td>
-                  <td>{{ ledger.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
-                  <td class="amount-discount">
-                    − {{ ledger.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}
-                  </td>
-                  <td>
-                    <strong>{{ ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
-                  </td>
-                  <td>{{ ledger.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
-                  <td>
-                    <strong>{{
-                      ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2'
-                    }}</strong>
-                  </td>
-                  <td>
-                    <span
-                      class="fee-status"
-                      [class.fee-status--paid]="ledger.paymentStatus === 'paid'"
-                      [class.fee-status--partial]="ledger.paymentStatus === 'partial'"
-                      >{{
-                        ledger.paymentStatus === 'partial'
-                          ? 'Part paid'
-                          : (ledger.paymentStatus | titlecase)
-                      }}</span
-                    >
-                  </td>
+                  <th>Fee period</th>
+                  <th>Gross fees</th>
+                  <th>Concessions</th>
+                  <th>Net payable</th>
+                  <th>Paid</th>
+                  <th>Balance</th>
+                  <th>Status</th>
+                  <th class="erp-table-shell__actions">Action</th>
                 </tr>
-              } @empty {
-                <tr>
-                  <td colspan="7" class="erp-empty-state">
-                    No fee ledger has been generated for this student.
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                @for (ledger of ledgers(); track ledger._id) {
+                  <tr>
+                    <td>
+                      <strong>{{ ledger.periodLabel }}</strong
+                      ><small>{{ ledger.academicSession }}</small>
+                    </td>
+                    <td>{{ ledger.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                    <td class="amount-discount">
+                      − {{ ledger.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}
+                    </td>
+                    <td>
+                      <strong class="amount-primary">{{
+                        ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2'
+                      }}</strong>
+                    </td>
+                    <td>{{ ledger.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                    <td>
+                      <strong>{{
+                        ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2'
+                      }}</strong>
+                    </td>
+                    <td>
+                      <span
+                        class="fee-status"
+                        [class.fee-status--paid]="ledger.paymentStatus === 'paid'"
+                        [class.fee-status--partial]="ledger.paymentStatus === 'partial'"
+                        >{{
+                          ledger.paymentStatus === 'partial'
+                            ? 'Part paid'
+                            : (ledger.paymentStatus | titlecase)
+                        }}</span
+                      >
+                    </td>
+                    <td class="erp-table-shell__actions">
+                      <button
+                        type="button"
+                        class="table-icon-button"
+                        aria-label="View fee impact"
+                        (click)="selectedImpactLedgerId.set(ledger._id); activeTab.set('impact')"
+                      >
+                        <svg lucideEye size="16" aria-hidden="true"></svg>
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="erp-empty-state">
+                      No fee ledger has been generated for this student.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <footer class="table-result-footer">
+            Showing {{ ledgers().length }} of {{ ledgers().length }} periods
+          </footer>
+        </section>
 
-      <section class="support-grid">
-        <article class="erp-card support-panel">
-          <header>
-            <div>
-              <svg lucideGraduationCap size="18" aria-hidden="true"></svg>
-              <h2>Scholarships</h2>
-            </div>
-            <button type="button" (click)="activeTab.set('scholarships')">Manage</button>
-          </header>
-          @for (assignment of assignments(); track assignment._id) {
-            <div class="support-record">
+        <div class="overview-side-stack">
+          <article class="erp-card support-panel">
+            <header>
               <div>
-                <strong>{{ assignment.scholarshipName }}</strong
-                ><small
-                  >From
-                  {{
-                    assignment.startSemester
-                      ? 'Semester ' + assignment.startSemester
-                      : 'Year ' + assignment.startAcademicYear
-                  }}</small
+                <svg lucideGraduationCap size="18" aria-hidden="true"></svg>
+                <h2>Active scholarships</h2>
+              </div>
+              <button type="button" (click)="activeTab.set('scholarships')">Manage all</button>
+            </header>
+            @for (assignment of assignments(); track assignment._id) {
+              <div class="support-record">
+                <div>
+                  <strong>{{ assignment.scholarshipName }}</strong
+                  ><small
+                    >From
+                    {{
+                      assignment.startSemester
+                        ? 'Semester ' + assignment.startSemester
+                        : 'Year ' + assignment.startAcademicYear
+                    }}</small
+                  >
+                </div>
+                <b>{{
+                  assignmentValue(assignment) ??
+                    (assignment.value | currency: 'INR' : 'symbol' : '1.0-2')
+                }}</b>
+              </div>
+            } @empty {
+              <div class="support-empty support-empty--illustrated">
+                <img [src]="assets.emptyScholarships" alt="" loading="lazy" /><strong
+                  >No scholarships applied</strong
+                ><small>Assign an approved scholarship scheme.</small
+                ><button
+                  type="button"
+                  (click)="activeTab.set('scholarships'); scholarshipPanelOpen.set(true)"
                 >
+                  Assign scholarship <svg lucideArrowRight size="14" aria-hidden="true"></svg>
+                </button>
               </div>
-              <b>{{
-                assignmentValue(assignment) ??
-                  (assignment.value | currency: 'INR' : 'symbol' : '1.0-2')
-              }}</b>
-            </div>
-          } @empty {
-            <button class="support-empty" type="button" (click)="activeTab.set('scholarships')">
-              Assign the first scholarship
-            </button>
-          }
-        </article>
-        <article class="erp-card support-panel">
-          <header>
-            <div>
-              <svg lucideBadgePercent size="18" aria-hidden="true"></svg>
-              <h2>One-time discounts</h2>
-            </div>
-            <button type="button" (click)="activeTab.set('discounts')">Manage</button>
-          </header>
-          @for (discount of discounts(); track discount._id) {
-            <div class="support-record">
+            }
+          </article>
+          <article class="erp-card support-panel">
+            <header>
               <div>
-                <strong>{{ discount.name }}</strong
-                ><small>{{ discount.targetPeriodLabel }} · {{ discount.academicSession }}</small>
+                <svg lucideBadgePercent size="18" aria-hidden="true"></svg>
+                <h2>Active one-time discounts</h2>
               </div>
-              <b>{{
-                discountValueLabel(discount) ??
-                  (discount.value | currency: 'INR' : 'symbol' : '1.0-2')
-              }}</b>
-            </div>
-          } @empty {
-            <button class="support-empty" type="button" (click)="activeTab.set('discounts')">
-              Add a one-time discount
-            </button>
-          }
-        </article>
+              <button type="button" (click)="activeTab.set('discounts')">Add discount</button>
+            </header>
+            @for (discount of discounts(); track discount._id) {
+              <div class="support-record">
+                <div>
+                  <strong>{{ discount.name }}</strong
+                  ><small>{{ discount.targetPeriodLabel }} · {{ discount.academicSession }}</small>
+                </div>
+                <b>{{
+                  discountValueLabel(discount) ??
+                    (discount.value | currency: 'INR' : 'symbol' : '1.0-2')
+                }}</b>
+              </div>
+            } @empty {
+              <div class="support-empty support-empty--illustrated">
+                <img [src]="assets.discountTicket" alt="" loading="lazy" /><strong
+                  >No one-time discounts applied</strong
+                ><small>Add an approved exception for a specific fee period.</small
+                ><button
+                  type="button"
+                  (click)="activeTab.set('discounts'); discountPanelOpen.set(true)"
+                >
+                  Add one-time discount <svg lucideArrowRight size="14" aria-hidden="true"></svg>
+                </button>
+              </div>
+            }
+          </article>
+        </div>
+      </div>
+      <section class="erp-card page-info-banner page-info-banner--plain">
+        <span class="page-info-banner__icon"
+          ><svg lucideInfo size="17" aria-hidden="true"></svg
+        ></span>
+        <div>
+          <strong>Changes reflect automatically</strong>
+          <p>Any new scholarship or discount updates the fee impact instantly.</p>
+        </div>
+        <button
+          type="button"
+          class="erp-button erp-button--secondary"
+          (click)="activeTab.set('impact')"
+        >
+          Go to fee impact <svg lucideArrowRight size="15" aria-hidden="true"></svg>
+        </button>
       </section>
     }
 
     @if (activeTab() === 'scholarships') {
-      <section class="erp-card action-workspace">
-        <div class="action-workspace__intro">
-          <span class="section-icon"
-            ><svg lucideGraduationCap size="20" aria-hidden="true"></svg
-          ></span>
-          <div>
-            <h2>Assign scholarship</h2>
-            <p>
-              Preconfigured schemes use their saved value. Custom schemes let you enter the
-              student’s value here.
-            </p>
-          </div>
-        </div>
-        <div class="action-workspace__controls">
-          <label
-            ><span>Scholarship scheme</span
-            ><select
-              class="erp-control"
-              [ngModel]="scholarshipId()"
-              (ngModelChange)="scholarshipId.set($event)"
-            >
-              <option value="">Select an active scheme</option>
-              @for (scholarship of availableScholarships(); track scholarship._id) {
-                <option [value]="scholarship._id">
-                  {{ scholarship.name }} ·
-                  {{
-                    scholarship.valueMode === 'custom'
-                      ? 'Custom value'
-                      : scholarship.type === 'percentage'
-                        ? scholarship.value + '%'
-                        : (scholarship.value | currency: 'INR' : 'symbol' : '1.0-2')
-                  }}
-                </option>
-              }
-            </select></label
-          >
-          @if (selectedScholarship()?.valueMode === 'custom') {
-            <label
-              ><span>Calculation</span
-              ><select class="erp-control" [(ngModel)]="customScholarshipType">
-                <option value="percentage">Percentage</option>
-                <option value="fixed">Fixed amount</option>
-              </select></label
-            >
-            <label
-              ><span>{{ customScholarshipType === 'percentage' ? 'Percentage' : 'Amount' }}</span
-              ><input
-                class="erp-control"
-                type="number"
-                min="0.01"
-                step="0.01"
-                [max]="customScholarshipType === 'percentage' ? 100 : 1000000000"
-                [(ngModel)]="customScholarshipValue"
-            /></label>
-          }
-          <label
-            ><span>Application</span
-            ><select class="erp-control" [(ngModel)]="scholarshipRecurring">
-              <option [ngValue]="true">Recurring · carry forward</option>
-              <option [ngValue]="false">One-time only</option>
-            </select></label
-          >
-          @if (!scholarshipRecurring) {
-            <label
-              ><span>Fee period</span
-              ><select class="erp-control" [(ngModel)]="scholarshipLedgerId">
-                <option value="">Select fee period</option>
-                @for (ledger of ledgers(); track ledger._id) {
-                  <option [value]="ledger._id">
-                    {{ ledger.periodLabel }} · {{ ledger.academicSession }}
-                  </option>
-                }
-              </select></label
-            >
-          }
-          <button
-            class="erp-button erp-button--primary"
-            type="button"
-            [disabled]="saving() || !scholarshipId()"
-            (click)="assign()"
-          >
-            {{ saving() ? 'Applying…' : 'Assign scholarship' }}
-          </button>
-        </div>
-      </section>
-
-      <section class="erp-card erp-table-shell">
-        <div class="erp-table-toolbar">
+      <section class="erp-card erp-table-shell section-card">
+        <div class="erp-table-toolbar section-card__toolbar">
           <div>
             <h2>
               Assigned scholarships <small>{{ assignments().length }}</small>
             </h2>
+            <p>Recurring concessions currently applied to this student.</p>
+          </div>
+          <div class="section-card__actions">
+            <label class="inline-search"
+              ><svg lucideSearch size="15" aria-hidden="true"></svg
+              ><input
+                aria-label="Search scholarships"
+                placeholder="Search scholarships…"
+                [ngModel]="scholarshipSearch()"
+                (ngModelChange)="scholarshipSearch.set($event)" /></label
+            ><button
+              class="erp-button erp-button--primary"
+              type="button"
+              (click)="scholarshipPanelOpen.set(true)"
+            >
+              <svg lucidePlus size="16" aria-hidden="true"></svg> Assign scholarship
+            </button>
           </div>
         </div>
         <div class="erp-table-shell__scroll">
@@ -363,8 +360,8 @@
             <thead>
               <tr>
                 <th>Scholarship scheme</th>
-                <th>Method</th>
                 <th>Benefit</th>
+                <th>Application</th>
                 <th>Effective from</th>
                 <th>Assigned on</th>
                 <th>Status</th>
@@ -372,22 +369,33 @@
               </tr>
             </thead>
             <tbody>
-              @for (assignment of assignments(); track assignment._id) {
+              @for (assignment of filteredAssignments(); track assignment._id) {
                 <tr>
                   <td>
-                    <strong>{{ assignment.scholarshipName }}</strong
-                    ><small>{{
-                      assignment.recurring
-                        ? 'Recurring tuition concession'
-                        : 'One-time tuition concession'
-                    }}</small>
+                    <span class="scheme-cell"
+                      ><span class="scheme-cell__icon"
+                        ><svg lucideGraduationCap size="17" aria-hidden="true"></svg></span
+                      ><span
+                        ><strong>{{ assignment.scholarshipName }}</strong
+                        ><small>{{
+                          assignment.recurring
+                            ? 'Recurring tuition concession'
+                            : 'One-time tuition concession'
+                        }}</small></span
+                      ></span
+                    >
                   </td>
-                  <td>{{ assignment.type === 'percentage' ? 'Percentage' : 'Fixed amount' }}</td>
                   <td>
                     <strong class="amount-discount">{{
                       assignmentValue(assignment) ??
                         (assignment.value | currency: 'INR' : 'symbol' : '1.0-2')
                     }}</strong>
+                  </td>
+                  <td>
+                    <span class="fee-status fee-status--paid">{{
+                      assignment.recurring ? 'Recurring' : 'One-time'
+                    }}</span
+                    ><small>{{ assignment.recurring ? 'Carry forward' : 'Selected period' }}</small>
                   </td>
                   <td>
                     {{
@@ -398,7 +406,10 @@
                         : assignment.targetPeriodLabel
                     }}
                   </td>
-                  <td>{{ assignment.assignedAt | date: 'dd MMM yyyy' }}</td>
+                  <td>
+                    {{ assignment.assignedAt | date: 'dd MMM yyyy'
+                    }}<small>{{ assignment.assignedAt | date: 'h:mm a' }}</small>
+                  </td>
                   <td><span class="fee-status fee-status--paid">Active</span></td>
                   <td class="erp-table-shell__actions">
                     <erp-compact-action-menu
@@ -409,116 +420,267 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="erp-empty-state">No scholarship is assigned.</td>
+                  <td colspan="7">
+                    <div class="table-empty">
+                      <img
+                        [src]="scholarshipSearch() ? assets.noResults : assets.addStudent"
+                        alt=""
+                        loading="lazy"
+                      /><strong>{{
+                        scholarshipSearch()
+                          ? 'No scholarships match your search'
+                          : 'No scholarships assigned'
+                      }}</strong
+                      ><span>{{
+                        scholarshipSearch()
+                          ? 'Try a different search term.'
+                          : 'Assign an active scholarship scheme to provide a tuition concession.'
+                      }}</span>
+                    </div>
+                  </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
+        <footer class="table-result-footer">
+          Showing {{ filteredAssignments().length }} of {{ assignments().length }} scholarships
+        </footer>
+      </section>
+      @if (scholarshipPanelOpen()) {
+        <section class="erp-card action-workspace action-workspace--panel">
+          <header class="workspace-header">
+            <div class="action-workspace__intro">
+              <span class="section-icon"
+                ><svg lucideGraduationCap size="20" aria-hidden="true"></svg
+              ></span>
+              <div>
+                <h2>Assign scholarship</h2>
+                <p>Choose an active scheme and apply it to this student.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="icon-button"
+              aria-label="Close assign scholarship"
+              (click)="scholarshipPanelOpen.set(false)"
+            >
+              ×
+            </button>
+          </header>
+          <div class="action-workspace__controls">
+            <label
+              ><span>Scholarship scheme</span
+              ><select
+                class="erp-control"
+                [ngModel]="scholarshipId()"
+                (ngModelChange)="scholarshipId.set($event)"
+              >
+                <option value="">Select an active scheme</option>
+                @for (scholarship of availableScholarships(); track scholarship._id) {
+                  <option [value]="scholarship._id">
+                    {{ scholarship.name }} ·
+                    {{
+                      scholarship.valueMode === 'custom'
+                        ? 'Custom value'
+                        : scholarship.type === 'percentage'
+                          ? scholarship.value + '%'
+                          : (scholarship.value | currency: 'INR' : 'symbol' : '1.0-2')
+                    }}
+                  </option>
+                }
+              </select></label
+            >
+            @if (selectedScholarship()?.valueMode === 'custom') {
+              <label
+                ><span>Calculation</span
+                ><select class="erp-control" [(ngModel)]="customScholarshipType">
+                  <option value="percentage">Percentage</option>
+                  <option value="fixed">Fixed amount</option>
+                </select></label
+              ><label
+                ><span>{{ customScholarshipType === 'percentage' ? 'Percentage' : 'Amount' }}</span
+                ><input
+                  class="erp-control"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  [max]="customScholarshipType === 'percentage' ? 100 : 1000000000"
+                  [(ngModel)]="customScholarshipValue"
+              /></label>
+            }
+            <label
+              ><span>Application</span
+              ><select class="erp-control" [(ngModel)]="scholarshipRecurring">
+                <option [ngValue]="true">Recurring · carry forward</option>
+                <option [ngValue]="false">One-time only</option>
+              </select></label
+            >
+            @if (!scholarshipRecurring) {
+              <label
+                ><span>Fee period</span
+                ><select class="erp-control" [(ngModel)]="scholarshipLedgerId">
+                  <option value="">Select fee period</option>
+                  @for (ledger of ledgers(); track ledger._id) {
+                    <option [value]="ledger._id">
+                      {{ ledger.periodLabel }} · {{ ledger.academicSession }}
+                    </option>
+                  }
+                </select></label
+              >
+            }
+            <button
+              class="erp-button erp-button--primary"
+              type="button"
+              [disabled]="saving() || !scholarshipId()"
+              (click)="assign()"
+            >
+              {{ saving() ? 'Applying…' : 'Assign scholarship' }}
+            </button>
+          </div>
+        </section>
+      } @else {
+        <section class="erp-card action-cta">
+          <img [src]="assets.feeWallet" alt="" loading="lazy" />
+          <div>
+            <strong>Need to apply another scholarship?</strong>
+            <p>
+              Assign an active scholarship scheme to this student to provide tuition fee
+              concessions.
+            </p>
+          </div>
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="scholarshipPanelOpen.set(true)"
+          >
+            <svg lucidePlus size="16" aria-hidden="true"></svg> Assign scholarship
+          </button>
+        </section>
+      }
+      <section class="erp-card page-info-banner page-info-banner--plain">
+        <span class="page-info-banner__icon"
+          ><svg lucideInfo size="17" aria-hidden="true"></svg
+        ></span>
+        <div>
+          <strong>How it works</strong>
+          <p>
+            Recurring scholarships apply to tuition fee and carry forward to future unpaid periods.
+            Removing a scholarship does not affect periods that are already paid.
+          </p>
+        </div>
       </section>
     }
 
     @if (activeTab() === 'discounts') {
-      <section class="erp-card discount-workspace">
-        <header class="discount-workspace__header">
-          <span class="section-icon"
-            ><svg lucideBadgePercent size="20" aria-hidden="true"></svg
+      <section class="discount-summary" aria-label="One-time discount summary">
+        <div>
+          <span class="metric-icon metric-icon--blue"
+            ><svg lucideBadgePercent size="18" aria-hidden="true"></svg
           ></span>
-          <div>
-            <h2>Add one-time discount</h2>
-            <p>Apply an approved exception to one fee period.</p>
-          </div>
-        </header>
-        <div class="discount-form__grid">
-          <label
-            ><span>Discount name</span
-            ><input
-              class="erp-control"
-              maxlength="120"
-              [(ngModel)]="discountName"
-              placeholder="e.g. Special approval discount"
-          /></label>
-          <label
-            ><span>Fee period</span
-            ><select class="erp-control" [(ngModel)]="discountLedgerId">
-              <option value="">Select fee period</option>
-              @for (ledger of ledgers(); track ledger._id) {
-                <option [value]="ledger._id">
-                  {{ ledger.periodLabel }} · {{ ledger.academicSession }}
-                </option>
-              }
-            </select></label
-          >
-          <label
-            ><span>Calculation method</span
-            ><select class="erp-control" [(ngModel)]="discountType">
-              <option value="fixed">Fixed amount</option>
-              <option value="percentage">Percentage</option>
-            </select></label
-          >
-          <label
-            ><span>{{ discountType === 'percentage' ? 'Percentage' : 'Discount amount' }}</span
-            ><input
-              class="erp-control"
-              type="number"
-              min="0.01"
-              [max]="discountType === 'percentage' ? 100 : 1000000000"
-              step="0.01"
-              [(ngModel)]="discountValue"
-          /></label>
-          <label class="discount-form__remark"
-            ><span>Approval note</span
-            ><textarea
-              class="erp-control"
-              maxlength="1000"
-              rows="3"
-              [(ngModel)]="discountRemark"
-              placeholder="Reason, approver and reference number"
-            ></textarea
-            ><small>Internal admin record only.</small></label
-          >
+          <p>
+            <strong>{{ discounts().length }}</strong
+            ><small>Active discounts</small>
+          </p>
         </div>
-        <footer>
-          <button
-            class="erp-button erp-button--primary"
-            type="button"
-            [disabled]="saving() || !ledgers().length"
-            (click)="createDiscount()"
-          >
-            {{ saving() ? 'Applying…' : 'Apply discount' }}
-          </button>
-        </footer>
+        <div>
+          <span class="metric-icon metric-icon--green"
+            ><svg lucideArrowDown size="18" aria-hidden="true"></svg
+          ></span>
+          <p>
+            <strong class="amount-discount">{{
+              oneTimeDiscountTotal() | currency: 'INR' : 'symbol' : '1.0-2'
+            }}</strong
+            ><small>Total discount amount</small>
+          </p>
+        </div>
+        <div>
+          <span class="metric-icon metric-icon--violet"
+            ><svg lucideCalendarDays size="18" aria-hidden="true"></svg
+          ></span>
+          <p>
+            <strong>{{ discountAffectedPeriods() }}</strong
+            ><small>Fee periods affected</small>
+          </p>
+        </div>
+        <div>
+          <span class="metric-icon metric-icon--blue"
+            ><svg lucideRefreshCw size="18" aria-hidden="true"></svg
+          ></span>
+          <p>
+            <small>Last applied</small
+            ><strong>{{
+              lastDiscountApplied() ? (lastDiscountApplied() | date: 'dd MMM yyyy') : 'Not yet'
+            }}</strong
+            ><small>{{
+              lastDiscountApplied()
+                ? (lastDiscountApplied() | date: 'h:mm a')
+                : 'No discount recorded'
+            }}</small>
+          </p>
+        </div>
       </section>
-
-      <section class="erp-card erp-table-shell">
-        <div class="erp-table-toolbar">
+      <section class="erp-card erp-table-shell section-card">
+        <div class="erp-table-toolbar section-card__toolbar">
           <div>
             <h2>
-              Discount history <small>{{ discounts().length }}</small>
+              Active one-time discounts <small>{{ discounts().length }}</small>
             </h2>
+            <p>Approved exceptions applied to a specific fee period.</p>
+          </div>
+          <div class="section-card__actions">
+            <label class="inline-search"
+              ><svg lucideSearch size="15" aria-hidden="true"></svg
+              ><input
+                aria-label="Search discounts"
+                placeholder="Search discounts…"
+                [ngModel]="discountSearch()"
+                (ngModelChange)="discountSearch.set($event)" /></label
+            ><button
+              class="erp-button erp-button--primary"
+              type="button"
+              (click)="discountPanelOpen.set(true)"
+            >
+              <svg lucidePlus size="16" aria-hidden="true"></svg> Add discount
+            </button>
           </div>
         </div>
         <div class="erp-table-shell__scroll">
           <table>
             <thead>
               <tr>
-                <th>Discount</th>
-                <th>Method</th>
-                <th>Value</th>
+                <th>Discount name</th>
                 <th>Fee period</th>
+                <th>Method</th>
+                <th>Discount value</th>
                 <th>Approval note</th>
+                <th>Applied on</th>
                 <th>Status</th>
                 <th class="erp-table-shell__actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              @for (discount of discounts(); track discount._id) {
+              @for (discount of filteredDiscounts(); track discount._id) {
                 <tr>
                   <td>
-                    <strong>{{ discount.name }}</strong
-                    ><small>Created {{ discount.createdAt | date: 'dd MMM yyyy' }}</small>
+                    <span class="scheme-cell scheme-cell--discount"
+                      ><span class="scheme-cell__icon"
+                        ><svg lucideBadgePercent size="17" aria-hidden="true"></svg></span
+                      ><span
+                        ><strong>{{ discount.name }}</strong
+                        ><small>Approved by Accounts</small></span
+                      ></span
+                    >
                   </td>
-                  <td>{{ discount.type === 'percentage' ? 'Percentage' : 'Fixed amount' }}</td>
+                  <td>
+                    <strong>{{ discount.targetPeriodLabel }}</strong
+                    ><small>{{ discount.academicSession }}</small>
+                  </td>
+                  <td>
+                    <span class="fee-status fee-status--paid">{{
+                      discount.type === 'percentage' ? 'Percentage' : 'Fixed amount'
+                    }}</span>
+                  </td>
                   <td>
                     <strong class="amount-discount">{{
                       discountValueLabel(discount) ??
@@ -526,204 +688,511 @@
                     }}</strong>
                   </td>
                   <td>
-                    <strong>{{ discount.targetPeriodLabel }}</strong
-                    ><small>{{ discount.academicSession }}</small>
+                    <span class="private-remark">{{ discount.internalRemark }}</span>
                   </td>
                   <td>
-                    <span class="private-remark">{{ discount.internalRemark }}</span>
+                    {{ discount.createdAt | date: 'dd MMM yyyy'
+                    }}<small>{{ discount.createdAt | date: 'h:mm a' }}</small>
                   </td>
                   <td><span class="fee-status fee-status--paid">Active</span></td>
                   <td class="erp-table-shell__actions">
                     <erp-compact-action-menu
-                      [items]="removeActions"
+                      [items]="discountRemoveActions"
                       (selected)="handleDiscountAction($event, discount)"
                     />
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="erp-empty-state">
-                    No one-time discount has been applied.
+                  <td colspan="8">
+                    <div class="table-empty">
+                      <img
+                        [src]="discountSearch() ? assets.noResults : assets.discountTicket"
+                        alt=""
+                        loading="lazy"
+                      /><strong>{{
+                        discountSearch()
+                          ? 'No discounts match your search'
+                          : 'No one-time discounts applied'
+                      }}</strong
+                      ><span>{{
+                        discountSearch()
+                          ? 'Try a different search term.'
+                          : 'Add an approved exception for a specific fee period.'
+                      }}</span>
+                    </div>
                   </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
+        <footer class="table-result-footer table-result-footer--pagination">
+          <span>Showing {{ filteredDiscounts().length }} of {{ discounts().length }} discounts</span
+          ><span class="table-pagination"
+            ><button type="button" aria-label="Previous page" disabled>‹</button><b>1</b
+            ><button type="button" aria-label="Next page" disabled>›</button></span
+          >
+        </footer>
+      </section>
+      @if (discountPanelOpen()) {
+        <section class="erp-card discount-workspace discount-workspace--panel">
+          <header class="discount-workspace__header">
+            <div class="action-workspace__intro">
+              <span class="section-icon"
+                ><svg lucideBadgePercent size="20" aria-hidden="true"></svg
+              ></span>
+              <div>
+                <h2>Add one-time discount</h2>
+                <p>Apply an approved exception to one fee period.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="icon-button"
+              aria-label="Close add discount"
+              (click)="discountPanelOpen.set(false)"
+            >
+              ×
+            </button>
+          </header>
+          <div class="discount-form__grid">
+            <label
+              ><span>Discount name</span
+              ><input
+                class="erp-control"
+                maxlength="120"
+                [(ngModel)]="discountName"
+                placeholder="e.g. Special approval discount" /></label
+            ><label
+              ><span>Fee period</span
+              ><select class="erp-control" [(ngModel)]="discountLedgerId">
+                <option value="">Select fee period</option>
+                @for (ledger of ledgers(); track ledger._id) {
+                  <option [value]="ledger._id">
+                    {{ ledger.periodLabel }} · {{ ledger.academicSession }}
+                  </option>
+                }
+              </select></label
+            ><label
+              ><span>Calculation method</span
+              ><select class="erp-control" [(ngModel)]="discountType">
+                <option value="fixed">Fixed amount</option>
+                <option value="percentage">Percentage</option>
+              </select></label
+            ><label
+              ><span>{{ discountType === 'percentage' ? 'Percentage' : 'Discount amount' }}</span
+              ><input
+                class="erp-control"
+                type="number"
+                min="0.01"
+                [max]="discountType === 'percentage' ? 100 : 1000000000"
+                step="0.01"
+                [(ngModel)]="discountValue" /></label
+            ><label class="discount-form__remark"
+              ><span>Approval note</span
+              ><textarea
+                class="erp-control"
+                maxlength="1000"
+                rows="3"
+                [(ngModel)]="discountRemark"
+                placeholder="Reason, approver and reference number"
+              ></textarea
+              ><small>Internal admin record only.</small></label
+            >
+          </div>
+          <footer>
+            <button
+              class="erp-button erp-button--primary"
+              type="button"
+              [disabled]="saving() || !ledgers().length"
+              (click)="createDiscount()"
+            >
+              {{ saving() ? 'Applying…' : 'Apply discount' }}
+            </button>
+          </footer>
+        </section>
+      } @else {
+        <section class="erp-card action-cta action-cta--dashed">
+          <img [src]="assets.discountTicket" alt="" loading="lazy" />
+          <div>
+            <strong>Need to add a new one-time discount?</strong>
+            <p>Apply an approved discount to a specific fee period.</p>
+          </div>
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="discountPanelOpen.set(true)"
+          >
+            <svg lucidePlus size="16" aria-hidden="true"></svg> Add one-time discount
+          </button>
+        </section>
+      }
+      <section class="erp-card page-info-banner page-info-banner--plain">
+        <span class="page-info-banner__icon"
+          ><svg lucideInfo size="17" aria-hidden="true"></svg
+        ></span>
+        <div>
+          <strong>How one-time discounts work</strong>
+          <p>
+            One-time discounts apply only to the selected fee period and do not carry forward. If
+            the fee period already has payments, discount removal may be restricted.
+          </p>
+        </div>
+        <button type="button" class="text-link">
+          Learn more <svg lucideArrowRight size="14" aria-hidden="true"></svg>
+        </button>
       </section>
     }
 
     @if (activeTab() === 'impact') {
       <section class="impact-summary" aria-label="Combined fee impact">
         <div>
-          <span>Gross charges</span
-          ><strong>{{ totalCharges() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          <span class="metric-icon metric-icon--blue"
+            ><svg lucideReceiptText size="17" aria-hidden="true"></svg></span
+          ><span>Total fees (Gross)</span
+          ><strong>{{ totalCharges() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
+          ><small>Before concessions</small>
         </div>
         <div class="impact-summary__discount">
-          <span>Scholarship & discounts</span
-          ><strong>− {{ totalDiscounts() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          <span class="metric-icon metric-icon--green"
+            ><svg lucideGraduationCap size="17" aria-hidden="true"></svg></span
+          ><span>Total concessions</span
+          ><strong>− {{ totalDiscounts() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
+          ><small>Scholarships & discounts</small>
         </div>
         <div>
-          <span>Net payable</span
-          ><strong>{{ totalPayable() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          <span class="metric-icon metric-icon--blue"
+            ><svg lucideWalletCards size="17" aria-hidden="true"></svg></span
+          ><span>Net payable</span
+          ><strong>{{ totalPayable() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
+          ><small>After concessions</small>
         </div>
         <div>
-          <span>Paid</span><strong>{{ totalPaid() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          <span class="metric-icon metric-icon--violet"
+            ><svg lucideCheckCircle2 size="17" aria-hidden="true"></svg></span
+          ><span>Paid amount</span
+          ><strong>{{ totalPaid() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
+          ><small>Total payments made</small>
         </div>
         <div class="impact-summary__balance">
-          <span>Outstanding</span
-          ><strong>{{ totalBalance() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
+          <span class="metric-icon metric-icon--red"
+            ><svg lucideReceiptText size="17" aria-hidden="true"></svg></span
+          ><span>Outstanding</span
+          ><strong>{{ totalBalance() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong
+          ><small>Current balance</small>
+        </div>
+        <div>
+          <span class="metric-icon metric-icon--blue"
+            ><svg lucideRefreshCw size="17" aria-hidden="true"></svg></span
+          ><span>Last recalculated</span
+          ><strong>{{
+            lastRecalculated() ? (lastRecalculated() | date: 'dd MMM yyyy') : 'Not yet'
+          }}</strong
+          ><small>{{
+            lastRecalculated() ? (lastRecalculated() | date: 'h:mm a') : 'Awaiting ledger'
+          }}</small>
         </div>
       </section>
-
-      <div class="fee-impact-list">
-        @for (ledger of ledgers(); track ledger._id) {
-          <section class="erp-card erp-table-shell fee-ledger">
-            <header class="fee-ledger__header">
-              <div class="fee-ledger__title">
-                <span class="section-icon"
-                  ><svg lucideReceiptText size="19" aria-hidden="true"></svg
-                ></span>
-                <div>
-                  <h2>{{ ledger.periodLabel }}</h2>
-                  <p>{{ ledger.academicSession }} · {{ ledger.feeBookCode }} · {{ ledger.name }}</p>
-                </div>
+      <div class="impact-layout">
+        <div class="impact-main">
+          <section class="erp-card erp-table-shell impact-breakdown-card">
+            <div class="erp-table-toolbar">
+              <div>
+                <h2>Fee head impact breakdown</h2>
+                <p>Detailed impact of each fee head after applying scholarships and discounts.</p>
               </div>
-              <div class="fee-ledger__totals">
-                <span
-                  >Payable<strong>{{
-                    ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2'
-                  }}</strong></span
-                ><span
-                  >Outstanding<strong>{{
-                    ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2'
-                  }}</strong></span
-                ><span
-                  class="fee-status"
-                  [class.fee-status--paid]="ledger.paymentStatus === 'paid'"
-                  [class.fee-status--partial]="ledger.paymentStatus === 'partial'"
-                  >{{
-                    ledger.paymentStatus === 'partial'
-                      ? 'Part paid'
-                      : (ledger.paymentStatus | titlecase)
-                  }}</span
-                >
+              <div class="section-card__actions">
+                <label class="compact-select"
+                  ><svg lucideCalendarDays size="15" aria-hidden="true"></svg
+                  ><select
+                    aria-label="Select fee period"
+                    [ngModel]="selectedImpactLedgerId()"
+                    (ngModelChange)="selectedImpactLedgerId.set($event)"
+                  >
+                    @for (ledger of ledgers(); track ledger._id) {
+                      <option [value]="ledger._id">
+                        {{ ledger.periodLabel }} ({{ ledger.academicSession }})
+                      </option>
+                    }
+                  </select></label
+                ><button class="erp-button erp-button--secondary" type="button">
+                  <svg lucideDownload size="15" aria-hidden="true"></svg> Export
+                </button>
               </div>
-            </header>
-            <div class="erp-table-shell__scroll">
-              <table class="fee-head-table">
-                <thead>
-                  <tr>
-                    <th>Fee head / adjustment</th>
-                    <th>Type</th>
-                    <th>Period</th>
-                    <th>Gross charge</th>
-                    <th>Concession</th>
-                    <th>Net impact</th>
-                    <th>Paid</th>
-                    <th>Balance</th>
-                    <th>Due date</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (
-                    entry of ledger.entries;
-                    track entry.feeHeadId + entry.feeHeadName + entry.category
-                  ) {
-                    <tr
-                      [class.fee-head-table__adjustment]="
-                        entry.isScholarship || entry.isOneTimeDiscount
-                      "
-                    >
-                      <td>
-                        <strong>{{ entry.feeHeadName }}</strong
-                        ><small>Priority {{ entry.priority }}</small>
-                      </td>
-                      <td>
+            </div>
+            @if (visibleImpactLedgers().length) {
+              <div class="fee-impact-list">
+                @for (ledger of visibleImpactLedgers(); track ledger._id) {
+                  <section class="fee-ledger">
+                    <header class="fee-ledger__header">
+                      <div class="fee-ledger__title">
+                        <span class="section-icon"
+                          ><svg lucideReceiptText size="19" aria-hidden="true"></svg
+                        ></span>
+                        <div>
+                          <h2>{{ ledger.periodLabel }}</h2>
+                          <p>
+                            {{ ledger.academicSession }} · {{ ledger.feeBookCode }} ·
+                            {{ ledger.name }}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="fee-ledger__totals">
                         <span
-                          class="entry-type"
-                          [class.entry-type--discount]="
-                            entry.isScholarship || entry.isOneTimeDiscount
-                          "
-                          >{{ entryType(entry) }}</span
-                        >
-                      </td>
-                      <td>{{ entry.periodLabel }}</td>
-                      <td>
-                        {{
-                          entry.isScholarship || entry.isOneTimeDiscount
-                            ? '—'
-                            : (entry.amount | currency: 'INR' : 'symbol' : '1.0-2')
-                        }}
-                      </td>
-                      <td class="amount-discount">
-                        {{
-                          entry.isScholarship || entry.isOneTimeDiscount
-                            ? '− ' + (entry.amount | currency: 'INR' : 'symbol' : '1.0-2')
-                            : entry.discountAmount
-                              ? '− ' + (entry.discountAmount | currency: 'INR' : 'symbol' : '1.0-2')
-                              : '—'
-                        }}
-                      </td>
-                      <td>
-                        <strong [class.amount-discount]="entryNetAmount(entry) < 0">{{
-                          entryNetAmount(entry) | currency: 'INR' : 'symbol' : '1.0-2'
-                        }}</strong>
-                      </td>
-                      <td>
-                        {{
-                          entry.isScholarship || entry.isOneTimeDiscount
-                            ? '—'
-                            : (entry.paidAmount | currency: 'INR' : 'symbol' : '1.0-2')
-                        }}
-                      </td>
-                      <td>
-                        {{
-                          entry.isScholarship || entry.isOneTimeDiscount
-                            ? '—'
-                            : (entry.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2')
-                        }}
-                      </td>
-                      <td>{{ entry.dueDate ? (entry.dueDate | date: 'dd MMM yyyy') : '—' }}</td>
-                      <td>
-                        <span
+                          >Payable<strong>{{
+                            ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2'
+                          }}</strong></span
+                        ><span
+                          >Outstanding<strong>{{
+                            ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2'
+                          }}</strong></span
+                        ><span
                           class="fee-status"
-                          [class.fee-status--paid]="entry.status === 'paid'"
-                          [class.fee-status--partial]="entry.status === 'partial'"
-                          >{{ statusLabel(entry.status) }}</span
+                          [class.fee-status--paid]="ledger.paymentStatus === 'paid'"
+                          [class.fee-status--partial]="ledger.paymentStatus === 'partial'"
+                          >{{
+                            ledger.paymentStatus === 'partial'
+                              ? 'Part paid'
+                              : (ledger.paymentStatus | titlecase)
+                          }}</span
                         >
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="10" class="erp-empty-state">
-                        No fee-head entries exist for this period.
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <th colspan="3">Period total</th>
-                    <th>{{ ledger.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th>
-                    <th class="amount-discount">
-                      − {{ ledger.discountAmount | currency: 'INR' : 'symbol' : '1.0-2' }}
-                    </th>
-                    <th>{{ ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th>
-                    <th>{{ ledger.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th>
-                    <th>{{ ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th>
-                    <th colspan="2"></th>
-                  </tr>
-                </tfoot>
-              </table>
+                      </div>
+                    </header>
+                    <div class="erp-table-shell__scroll">
+                      <table class="fee-head-table">
+                        <thead class="fee-impact-table__head">
+                          <tr>
+                            <th rowspan="2">Fee head</th>
+                            <th rowspan="2">Gross amount</th>
+                            @if (assignments().length) {
+                              <th
+                                class="fee-impact-group fee-impact-group--scholarship"
+                                [attr.colspan]="assignments().length"
+                              >
+                                Scholarships
+                              </th>
+                            }
+                            @if (discounts().length) {
+                              <th
+                                class="fee-impact-group fee-impact-group--discount"
+                                [attr.colspan]="discounts().length"
+                              >
+                                One-time discount
+                              </th>
+                            }
+                            <th rowspan="2">Net impact</th>
+                            <th rowspan="2">Paid</th>
+                            <th rowspan="2">Balance</th>
+                            <th rowspan="2">Status</th>
+                          </tr>
+                          <tr>
+                            @for (assignment of assignments(); track assignment._id) {
+                              <th class="fee-impact-subhead fee-impact-subhead--scholarship">
+                                {{ assignment.scholarshipName }}
+                                <small>({{ assignmentValue(assignment) ?? 'Fixed' }})</small>
+                              </th>
+                            }
+                            @for (discount of discounts(); track discount._id) {
+                              <th class="fee-impact-subhead fee-impact-subhead--discount">
+                                {{ discount.name }}
+                              </th>
+                            }
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (
+                            entry of feeHeadEntries(ledger);
+                            track entry.feeHeadId + entry.feeHeadName + entry.category
+                          ) {
+                            <tr>
+                              <td>
+                                <span class="fee-head-name"
+                                  ><svg lucideReceiptText size="15" aria-hidden="true"></svg
+                                  ><strong>{{ entry.feeHeadName }}</strong></span
+                                >
+                              </td>
+                              <td>
+                                <strong>{{
+                                  entry.amount | currency: 'INR' : 'symbol' : '1.0-2'
+                                }}</strong>
+                              </td>
+                              @for (assignment of assignments(); track assignment._id) {
+                                <td class="amount-discount">
+                                  {{
+                                    scholarshipImpact(ledger, assignment, entry.feeHeadName)
+                                      ? '− ' +
+                                        (scholarshipImpact(ledger, assignment, entry.feeHeadName)
+                                          | currency: 'INR' : 'symbol' : '1.0-2')
+                                      : '—'
+                                  }}
+                                </td>
+                              }
+                              @for (discount of discounts(); track discount._id) {
+                                <td class="amount-one-time">
+                                  {{
+                                    discountImpact(ledger, discount, entry.feeHeadName)
+                                      ? '− ' +
+                                        (discountImpact(ledger, discount, entry.feeHeadName)
+                                          | currency: 'INR' : 'symbol' : '1.0-2')
+                                      : '—'
+                                  }}
+                                </td>
+                              }
+                              <td>
+                                <strong class="amount-primary">{{
+                                  feeHeadNetAmount(entry) | currency: 'INR' : 'symbol' : '1.0-2'
+                                }}</strong>
+                              </td>
+                              <td>{{ entry.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                              <td [class.amount-due]="entry.balanceAmount > 0">
+                                {{ entry.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}
+                              </td>
+                              <td>
+                                <span
+                                  class="fee-status"
+                                  [class.fee-status--paid]="entry.status === 'paid'"
+                                  [class.fee-status--partial]="entry.status === 'partial'"
+                                  >{{ statusLabel(entry.status) }}</span
+                                >
+                              </td>
+                            </tr>
+                          } @empty {
+                            <tr>
+                              <td
+                                [attr.colspan]="6 + assignments().length + discounts().length"
+                                class="erp-empty-state"
+                              >
+                                No fee-head entries exist for this period.
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <th>Total ({{ ledger.periodLabel }})</th>
+                            <th>
+                              {{ ledger.chargeAmount | currency: 'INR' : 'symbol' : '1.0-2' }}
+                            </th>
+                            @for (assignment of assignments(); track assignment._id) {
+                              <th class="amount-discount">
+                                −
+                                {{
+                                  scholarshipImpact(ledger, assignment, 'Tuition Fee')
+                                    | currency: 'INR' : 'symbol' : '1.0-2'
+                                }}
+                              </th>
+                            }
+                            @for (discount of discounts(); track discount._id) {
+                              <th class="amount-one-time">
+                                −
+                                {{
+                                  discountImpact(ledger, discount, 'Tuition Fee')
+                                    | currency: 'INR' : 'symbol' : '1.0-2'
+                                }}
+                              </th>
+                            }
+                            <th class="amount-primary">
+                              {{ ledger.totalAmount | currency: 'INR' : 'symbol' : '1.0-2' }}
+                            </th>
+                            <th>{{ ledger.paidAmount | currency: 'INR' : 'symbol' : '1.0-2' }}</th>
+                            <th class="amount-due">
+                              {{ ledger.balanceAmount | currency: 'INR' : 'symbol' : '1.0-2' }}
+                            </th>
+                            <th>
+                              <span
+                                class="fee-status"
+                                [class.fee-status--paid]="ledger.paymentStatus === 'paid'"
+                                >{{ ledger.paymentStatus === 'paid' ? 'Paid' : 'Due' }}</span
+                              >
+                            </th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </section>
+                }
+              </div>
+            } @else {
+              <div class="illustration-empty-state">
+                <img [src]="assets.campusUnavailable" alt="" loading="lazy" /><strong
+                  >No academic fee ledger yet</strong
+                ><span>Fee impact will appear when the student's fee period is generated.</span>
+              </div>
+            }
+          </section>
+          <section class="erp-card page-info-banner page-info-banner--plain impact-note">
+            <span class="page-info-banner__icon"
+              ><svg lucideInfo size="17" aria-hidden="true"></svg
+            ></span>
+            <div>
+              <p>Concessions apply to future and unpaid periods. Paid amounts remain unchanged.</p>
             </div>
           </section>
-        } @empty {
-          <section class="erp-card erp-card--padded erp-empty-state">
-            No academic fee ledger exists yet.
+        </div>
+        <aside class="impact-aside">
+          <section class="erp-card insights-card">
+            <header>
+              <h2>Key insights</h2>
+              <svg lucideInfo size="16" aria-hidden="true"></svg>
+            </header>
+            <div class="insight-card insight-card--success">
+              <span><svg lucideCheckCircle2 size="17" aria-hidden="true"></svg></span>
+              <div>
+                <strong>Concessions applied</strong
+                ><small
+                  >{{ totalDiscounts() | currency: 'INR' : 'symbol' : '1.0-2' }} saved from total
+                  fees</small
+                >
+              </div>
+            </div>
+            <div class="insight-card insight-card--warning">
+              <span><svg lucideReceiptText size="17" aria-hidden="true"></svg></span>
+              <div>
+                <strong>Next due</strong
+                ><small>{{ totalBalance() | currency: 'INR' : 'symbol' : '1.0-2' }} is due</small>
+              </div>
+            </div>
+            <div class="insight-card insight-card--blue">
+              <span><svg lucideWalletCards size="17" aria-hidden="true"></svg></span>
+              <div>
+                <strong>Most impact</strong
+                ><small
+                  >Tuition Fee ·
+                  {{
+                    mostImpactfulLedger()?.discountAmount | currency: 'INR' : 'symbol' : '1.0-2'
+                  }}
+                  total concession</small
+                >
+              </div>
+            </div>
+            <div class="insight-card insight-card--violet">
+              <span><svg lucideCalendarDays size="17" aria-hidden="true"></svg></span>
+              <div>
+                <strong>Periods affected</strong
+                ><small
+                  >{{ affectedPeriods() }} fee period{{ affectedPeriods() === 1 ? '' : 's' }} ·
+                  {{ mostImpactfulLedger()?.periodLabel || 'No period' }}</small
+                >
+              </div>
+            </div>
           </section>
-        }
+          <section class="erp-card recalculate-card">
+            <div>
+              <h2>Need to recalculate?</h2>
+              <p>Recalculate fee impact if any scholarship or discount changes.</p>
+            </div>
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              [disabled]="loading()"
+              (click)="load()"
+            >
+              <svg lucideRefreshCw size="15" aria-hidden="true"></svg>
+              {{ loading() ? 'Recalculating…' : 'Recalculate now' }}
+            </button>
+          </section>
+        </aside>
       </div>
     }
   }
@@ -731,28 +1200,28 @@
 
 @if (removingAssignment(); as assignment) {
   <erp-confirm-dialog
-    [open]="true"
-    eyebrow="Scholarship"
-    title="Remove this scholarship?"
+    title="Remove scholarship?"
     [message]="
+      'Remove ' +
       assignment.scholarshipName +
-      ' will be removed from applicable unpaid fee periods. Paid records will be preserved.'
+      ' from future and unpaid fee periods? Paid records are preserved.'
     "
     confirmLabel="Remove scholarship"
-    [destructive]="true"
     (cancelled)="cancelRemove()"
     (confirmed)="remove(assignment)"
   />
 }
-
 @if (removingDiscount(); as discount) {
   <erp-confirm-dialog
-    [open]="true"
-    eyebrow="One-time discount"
-    title="Remove this discount?"
-    [message]="discount.name + ' will be removed from ' + discount.targetPeriodLabel + '.'"
+    title="Remove one-time discount?"
+    [message]="
+      'Remove ' +
+      discount.name +
+      ' from ' +
+      discount.targetPeriodLabel +
+      '? Paid records are preserved.'
+    "
     confirmLabel="Remove discount"
-    [destructive]="true"
     (cancelled)="cancelDiscountRemove()"
     (confirmed)="removeDiscount(discount)"
   />

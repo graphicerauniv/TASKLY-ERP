@@ -51,7 +51,7 @@
       <div class="applications-toolbar__controls">
         <erp-filter-popover
           label="Filters"
-          [fields]="filterFields"
+          [fields]="filterFields()"
           [values]="appliedFilters()"
           (filtersChange)="applyAdvancedFilters($event)"
         />

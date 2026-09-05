@@ -207,6 +207,8 @@
   --erp-card-padding: 16px;
   --erp-card-padding-compact: 12px;
   --erp-card-padding-dense: 12px;
+  --erp-filter-popover-width: 560px;
+  --erp-filter-popover-max-height: 640px;
   --erp-kpi-card-min-width: 260px;
   --erp-kpi-card-height: 126px;
   --erp-kpi-purple-text: #7652c7;
@@ -283,7 +285,7 @@
   /* Interaction contracts */
   --erp-standard-transition: 160ms ease-out;
   --erp-overlay-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --erp-sidebar-expand-transition: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --erp-sidebar-expand-transition: var(--erp-sidebar-expand-duration) var(--erp-sidebar-expand-easing);
 }
 /* Taskly ERP motion contract.
  * These variables define timing and easing only; components consume them later.
@@ -306,8 +308,8 @@
   /* Sidebar hover behavior */
   --erp-sidebar-expand-delay: 90ms;
   --erp-sidebar-collapse-delay: 180ms;
-  --erp-sidebar-expand-duration: 240ms;
-  --erp-sidebar-collapse-duration: 240ms;
+  --erp-sidebar-expand-duration: 1000ms;
+  --erp-sidebar-collapse-duration: 1000ms;
   --erp-sidebar-expand-easing: var(--erp-ease-enter);
   --erp-sidebar-collapse-easing: var(--erp-ease-standard);
   --erp-sidebar-label-enter-delay: 70ms;

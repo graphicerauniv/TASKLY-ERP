@@ -113,10 +113,11 @@ const FILTER_FIELDS: readonly FilterPopoverField[] = [
   { id: 'application', label: 'Application ID', placeholder: 'e.g. APP-2026-0012' },
   { id: 'studentId', label: 'Student ID', placeholder: 'e.g. STU-10482' },
   { id: 'studentName', label: 'Student name', placeholder: 'Enter applicant name' },
-  { id: 'university', label: 'University / college', placeholder: 'Enter institution name' },
-  { id: 'branch', label: 'Branch / department', placeholder: 'Enter branch name' },
-  { id: 'course', label: 'Course', placeholder: 'Enter course name' },
-  { id: 'session', label: 'Academic session', placeholder: 'e.g. 2026-27' },
+  { id: 'university', label: 'University', type: 'select', options: [] },
+  { id: 'college', label: 'College', type: 'select', options: [] },
+  { id: 'branch', label: 'Branch', type: 'select', options: [] },
+  { id: 'course', label: 'Course', type: 'select', options: [] },
+  { id: 'session', label: 'Academic session', type: 'select', options: [] },
 ];
 
 @Component({
@@ -175,7 +176,7 @@ export class AdmissionsComponent {
   readonly appliedSearch = signal('');
   readonly selectedStudentIds = signal<Set<string>>(new Set());
   readonly tableColumns = TABLE_COLUMNS;
-  readonly filterFields = FILTER_FIELDS;
+  readonly filterFields = signal<readonly FilterPopoverField[]>(FILTER_FIELDS);
   readonly appliedFilters = signal<Readonly<Record<string, string>>>({});
   readonly visibleColumns = signal<readonly string[]>(TABLE_COLUMNS.map((column) => column.id));
   readonly visibleTableColumnCount = computed(() => this.visibleColumns().length + 2);
@@ -218,6 +219,7 @@ export class AdmissionsComponent {
   confirmPassword = '';
 
   constructor() {
+    this.loadFilterOptions();
     this.loadViewTotals();
     combineLatest([this.route.data, this.route.queryParamMap])
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -812,6 +814,37 @@ export class AdmissionsComponent {
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((totals) => this.viewTotals.set(totals));
+  }
+
+  private loadFilterOptions() {
+    forkJoin({
+      universities: this.api.masterValues('university', { active: true }),
+      colleges: this.api.masterValues('college', { active: true }),
+      departments: this.api.masterValues('department', { active: true }),
+      courses: this.api.masterValues('course', { active: true }),
+      sessions: this.api.masterValues('academic', { active: true }),
+    })
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (!result) return;
+        const options = (items: readonly { _id: string; name: string }[]) =>
+          items.map((item) => ({ label: item.name, value: item.name }));
+        this.filterFields.update((fields) =>
+          fields.map((field) =>
+            field.id === 'university'
+              ? { ...field, type: 'select' as const, options: options(result.universities.items) }
+              : field.id === 'college'
+                ? { ...field, type: 'select' as const, options: options(result.colleges.items) }
+              : field.id === 'branch'
+                ? { ...field, type: 'select' as const, options: options(result.departments.items) }
+                : field.id === 'course'
+                  ? { ...field, type: 'select' as const, options: options(result.courses.items) }
+                : field.id === 'session'
+                  ? { ...field, type: 'select' as const, options: options(result.sessions.items) }
+                  : field,
+          ),
+        );
+      });
   }
 
   @HostListener('document:keydown.escape')

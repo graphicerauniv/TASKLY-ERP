@@ -35,15 +35,22 @@
 
 .filter-popover__panel {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   z-index: calc(var(--erp-z-dropdown) + 1);
   top: calc(100% + var(--erp-space-2));
   right: 0;
-  width: min(420px, calc(100vw - 24px));
+  width: min(var(--erp-filter-popover-width), calc(100vw - 24px));
+  max-height: min(var(--erp-filter-popover-max-height), calc(100dvh - var(--erp-space-10)));
   overflow: hidden;
   border: 1px solid var(--erp-border-default);
   border-radius: var(--erp-radius-overlay);
   background: var(--erp-surface-overlay);
   box-shadow: var(--erp-shadow-overlay);
+}
+
+.filter-popover__panel:not(:has(.filter-popover__fields)) {
+  width: min(260px, calc(100vw - 24px));
 }
 
 .filter-popover__panel header,
@@ -54,6 +61,7 @@
   justify-content: space-between;
   gap: var(--erp-space-2);
   padding: var(--erp-space-2) var(--erp-space-3);
+  flex: 0 0 auto;
 }
 
 .filter-popover__panel header {
@@ -86,7 +94,7 @@
 .filter-popover__intro {
   display: grid;
   gap: var(--erp-space-1);
-  padding: var(--erp-space-4) var(--erp-space-4) var(--erp-space-2);
+  padding: var(--erp-space-3) var(--erp-space-4) var(--erp-space-1);
 }
 
 .filter-popover__intro strong,
@@ -103,21 +111,26 @@
 
 .filter-popover__fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--erp-space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--erp-space-3) var(--erp-space-3);
   max-height: min(55vh, 420px);
   overflow-y: auto;
   padding: var(--erp-space-3) var(--erp-space-4) var(--erp-space-4);
+  min-height: 0;
+  flex: 1 1 auto;
 }
 
 .filter-popover__fields label {
   display: grid;
-  gap: var(--erp-space-2);
+  gap: var(--erp-space-1);
   min-width: 0;
 }
 
 .filter-popover__fields .erp-control {
   width: 100%;
+  min-height: var(--erp-control-height-compact);
+  padding: 5px 9px;
+  font-size: var(--erp-font-size-xs);
 }
 
 .filter-popover__footer-actions {
@@ -132,6 +145,18 @@
     width: auto;
   }
 
+  .filter-popover__fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .filter-popover__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
   .filter-popover__fields {
     grid-template-columns: 1fr;
   }

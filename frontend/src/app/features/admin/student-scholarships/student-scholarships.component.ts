@@ -4,10 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   LucideArrowLeft,
+  LucideArrowDown,
+  LucideArrowRight,
   LucideBadgePercent,
+  LucideCalendarDays,
+  LucideCheckCircle2,
+  LucideDownload,
+  LucideEye,
   LucideGraduationCap,
+  LucideInfo,
+  LucidePlus,
+  LucideRefreshCw,
   LucideReceiptText,
-  LucideUserRound,
+  LucideSearch,
   LucideWalletCards,
 } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
@@ -35,10 +44,19 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
     DatePipe,
     FormsModule,
     LucideArrowLeft,
+    LucideArrowDown,
+    LucideArrowRight,
     LucideBadgePercent,
+    LucideCalendarDays,
+    LucideCheckCircle2,
+    LucideDownload,
+    LucideEye,
     LucideGraduationCap,
+    LucideInfo,
+    LucidePlus,
+    LucideRefreshCw,
     LucideReceiptText,
-    LucideUserRound,
+    LucideSearch,
     LucideWalletCards,
     RouterLink,
     TitleCasePipe,
@@ -62,8 +80,35 @@ export class StudentScholarshipsComponent {
   readonly removingId = signal<string | null>(null);
   readonly removingDiscountId = signal<string | null>(null);
   readonly activeTab = signal<'overview' | 'scholarships' | 'discounts' | 'impact'>('overview');
+  readonly scholarshipPanelOpen = signal(false);
+  readonly discountPanelOpen = signal(false);
+  readonly scholarshipSearch = signal('');
+  readonly discountSearch = signal('');
+  readonly selectedImpactLedgerId = signal('');
+  readonly pageTitle = computed(() =>
+    this.activeTab() === 'impact' ? 'Fee impact' : 'Scholarships & discounts',
+  );
+  readonly pageDescription = computed(() => {
+    if (this.activeTab() === 'impact')
+      return "See how scholarships and discounts affect the student's fee account.";
+    if (this.activeTab() === 'discounts')
+      return 'Manage approved one-time discounts and review their impact on the student fee account.';
+    return 'Manage tuition concessions and review their impact on the student fee account.';
+  });
+  readonly assets = {
+    feeWallet: '/assets/images/scholarships/illustration-fee-wallet.png',
+    campusUnavailable: '/assets/images/scholarships/illustration-campus-unavailable.png',
+    noResults: '/assets/images/scholarships/illustration-no-results.png',
+    pendingReview: '/assets/images/scholarships/illustration-pending-review.png',
+    emptyScholarships: '/assets/images/scholarships/illustration-empty-scholarships.png',
+    addStudent: '/assets/images/scholarships/illustration-add-student.png',
+    discountTicket: '/assets/images/scholarships/illustration-discount-ticket.png',
+  } as const;
   readonly removeActions: CompactActionItem[] = [
     { id: 'remove', label: 'Remove assignment', icon: 'delete', destructive: true },
+  ];
+  readonly discountRemoveActions: CompactActionItem[] = [
+    { id: 'remove', label: 'Remove discount', icon: 'delete', destructive: true },
   ];
   readonly availableScholarships = computed(() => {
     const assigned = new Set(this.assignments().map((item) => item.scholarshipId));
@@ -98,6 +143,64 @@ export class StudentScholarshipsComponent {
   readonly totalBalance = computed(() =>
     this.ledgers().reduce((sum, ledger) => sum + Number(ledger.balanceAmount || 0), 0),
   );
+  readonly oneTimeDiscountTotal = computed(() =>
+    this.ledgers().reduce((sum, ledger) => sum + this.oneTimeDiscountAmount(ledger), 0),
+  );
+  readonly discountAffectedPeriods = computed(
+    () => this.ledgers().filter((ledger) => this.oneTimeDiscountAmount(ledger) > 0).length,
+  );
+  readonly lastDiscountApplied = computed(() => {
+    const dates = this.discounts()
+      .map((discount) => discount.createdAt)
+      .filter(Boolean)
+      .sort();
+    return dates[dates.length - 1] || '';
+  });
+  readonly filteredAssignments = computed(() => {
+    const query = this.scholarshipSearch().trim().toLowerCase();
+    if (!query) return this.assignments();
+    return this.assignments().filter((item) =>
+      [item.scholarshipName, item.type, item.recurring ? 'recurring' : 'one-time']
+        .join(' ')
+        .toLowerCase()
+        .includes(query),
+    );
+  });
+  readonly filteredDiscounts = computed(() => {
+    const query = this.discountSearch().trim().toLowerCase();
+    if (!query) return this.discounts();
+    return this.discounts().filter((item) =>
+      [item.name, item.type, item.targetPeriodLabel, item.internalRemark]
+        .join(' ')
+        .toLowerCase()
+        .includes(query),
+    );
+  });
+  readonly lastRecalculated = computed(() => {
+    const dates = this.ledgers()
+      .map((ledger) => ledger.createdAt)
+      .filter(Boolean)
+      .sort();
+    return dates[dates.length - 1] || '';
+  });
+  readonly mostImpactfulLedger = computed(() =>
+    this.ledgers().reduce<StudentFeeLedger | null>(
+      (selected, ledger) =>
+        !selected || Number(ledger.discountAmount || 0) > Number(selected.discountAmount || 0)
+          ? ledger
+          : selected,
+      null,
+    ),
+  );
+  readonly affectedPeriods = computed(
+    () => this.ledgers().filter((ledger) => Number(ledger.discountAmount || 0) > 0).length,
+  );
+  readonly visibleImpactLedgers = computed(() => {
+    const selectedId = this.selectedImpactLedgerId();
+    if (!selectedId) return this.ledgers();
+    const selected = this.ledgers().find((ledger) => ledger._id === selectedId);
+    return selected ? [selected] : this.ledgers();
+  });
   readonly studentAdmissionId = this.route.snapshot.paramMap.get('admissionId') || '';
   scholarshipId = signal('');
   customScholarshipType: 'percentage' | 'fixed' = 'percentage';
@@ -124,6 +227,9 @@ export class StudentScholarshipsComponent {
         this.scholarships.set(scholarships);
         this.discounts.set(discounts);
         this.ledgers.set(ledgers);
+        if (!ledgers.some((ledger) => ledger._id === this.selectedImpactLedgerId())) {
+          this.selectedImpactLedgerId.set(ledgers[0]?._id || '');
+        }
         if (!this.availableScholarships().some((item) => item._id === this.scholarshipId()))
           this.scholarshipId.set('');
         if (!ledgers.some((ledger) => ledger._id === this.discountLedgerId))
@@ -173,6 +279,7 @@ export class StudentScholarshipsComponent {
           this.customScholarshipValue = null;
           this.scholarshipRecurring = true;
           this.saving.set(false);
+          this.scholarshipPanelOpen.set(false);
           this.load();
         },
         error: (error) => {
@@ -244,6 +351,7 @@ export class StudentScholarshipsComponent {
           this.discountValue = null;
           this.discountRemark = '';
           this.saving.set(false);
+          this.discountPanelOpen.set(false);
           this.load();
         },
         error: (error) => {
@@ -307,6 +415,30 @@ export class StudentScholarshipsComponent {
       .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
   }
 
+  feeHeadEntries(ledger: StudentFeeLedger) {
+    return ledger.entries.filter(
+      (entry) => entry.category === 'fee' && !entry.isScholarship && !entry.isOneTimeDiscount,
+    );
+  }
+
+  scholarshipImpact(ledger: StudentFeeLedger, assignment: StudentScholarship, feeHeadName: string) {
+    if (!/\btuition\b/i.test(feeHeadName)) return 0;
+    return ledger.entries
+      .filter((entry) => entry.isScholarship && entry.scholarshipAssignmentId === assignment._id)
+      .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+  }
+
+  discountImpact(ledger: StudentFeeLedger, discount: StudentDiscount, feeHeadName: string) {
+    if (!/\btuition\b/i.test(feeHeadName)) return 0;
+    return ledger.entries
+      .filter((entry) => entry.isOneTimeDiscount && entry.customDiscountId === discount._id)
+      .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+  }
+
+  feeHeadNetAmount(entry: StudentFeeLedger['entries'][number]) {
+    return Math.max(0, Number(entry.amount || 0) - Number(entry.discountAmount || 0));
+  }
+
   entryType(entry: StudentFeeLedger['entries'][number]) {
     if (entry.isScholarship) return 'Recurring scholarship';
     if (entry.isOneTimeDiscount) return 'One-time discount';
@@ -329,6 +461,13 @@ export class StudentScholarshipsComponent {
 
   discountValueLabel(item: StudentDiscount) {
     return item.type === 'percentage' ? `${item.value}%` : null;
+  }
+
+  initials(name: string) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    const value =
+      parts.length > 1 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : name.slice(0, 2);
+    return value.toUpperCase();
   }
 
   private defaultLedgerId(student: Admission, ledgers: StudentFeeLedger[]) {

@@ -100,6 +100,8 @@ export interface Admission {
   feeTypeId?: string | null;
   feeTypeName?: string;
   academicSessionId?: string | null;
+  universityId?: string | null;
+  universityName?: string;
   courseName?: string;
   courseId?: string | null;
   collegeName?: string;

@@ -17,11 +17,14 @@ import {
   LucideChevronDown,
   LucideChevronLeft,
   LucideChevronRight,
+  LucideBell,
+  LucideCircleHelp,
   LucideCircleCheck,
   LucideDynamicIcon,
   LucideLifeBuoy,
   LucideLogOut,
   LucideMenu,
+  LucideSearch,
   LucideX,
 } from '@lucide/angular';
 import { filter } from 'rxjs';
@@ -47,11 +50,14 @@ import {
     LucideChevronDown,
     LucideChevronLeft,
     LucideChevronRight,
+    LucideBell,
+    LucideCircleHelp,
     LucideCircleCheck,
     LucideDynamicIcon,
     LucideLifeBuoy,
     LucideLogOut,
     LucideMenu,
+    LucideSearch,
     LucideX,
   ],
   templateUrl: './admin-shell.component.html',
@@ -67,13 +73,17 @@ export class AdminShellComponent {
   readonly navigation = ADMIN_NAVIGATION;
   readonly matchesAdminRoute = matchesAdminRoute;
   readonly currentUrl = signal(this.router.url);
-  readonly desktopCollapsed = signal(false);
+  // Desktop navigation starts compact; hovering/focusing the rail reveals its labels.
+  readonly desktopCollapsed = signal(true);
   readonly mobileOpen = signal(false);
   readonly expandedSectionId = signal<string | null>(null);
   readonly expandedSubgroupId = signal<string | null>(null);
   readonly desktopFlyoutTop = signal(72);
   readonly desktopFlyoutMaxHeight = signal(480);
   readonly pageContext = signal(resolveAdminPageContext(this.router.url));
+  readonly isScholarshipWorkspace = computed(() =>
+    /^\/admin\/admissions\/[^/]+\/scholarships\/?(?:\?|$)/.test(this.currentUrl()),
+  );
   readonly headerSaveStatus = computed(() =>
     /\/admission\/student|\/admissions\/[^/]+\/edit/.test(this.currentUrl())
       ? 'Draft saved just now'
@@ -156,10 +166,15 @@ export class AdminShellComponent {
     const viewportPadding = 12;
     const minimumHeight = 220;
     const preferredTop = Math.max(viewportPadding, rect.top - 8);
-    const maximumTop = Math.max(viewportPadding, window.innerHeight - minimumHeight - viewportPadding);
+    const maximumTop = Math.max(
+      viewportPadding,
+      window.innerHeight - minimumHeight - viewportPadding,
+    );
     const top = Math.min(preferredTop, maximumTop);
     this.desktopFlyoutTop.set(top);
-    this.desktopFlyoutMaxHeight.set(Math.max(minimumHeight, window.innerHeight - top - viewportPadding));
+    this.desktopFlyoutMaxHeight.set(
+      Math.max(minimumHeight, window.innerHeight - top - viewportPadding),
+    );
   }
 
   closeDesktopFlyout(): void {

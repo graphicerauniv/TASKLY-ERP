@@ -12,6 +12,7 @@ const DOMAIN_TABLES = Object.freeze({
       'studentName',
       'status',
       'academicSession',
+      'universityName',
       'currentAcademicYear',
       'currentSemester',
       'feeFrequency',
@@ -874,6 +875,13 @@ function compileFilter(filter, parameters, alias = 'document') {
       if (nested.length) clauses.push(`(${nested.join(' or ')})`);
       continue;
     }
+    if (field === '$and') {
+      const nested = condition
+        .map((item) => compileFilter(item, parameters, alias))
+        .filter(Boolean);
+      if (nested.length) clauses.push(`(${nested.join(' and ')})`);
+      continue;
+    }
     const jsonExpression = `${alias} #> '{${pathSql(field)}}'`;
     const textExpression = `${alias} #>> '{${pathSql(field)}}'`;
     if (plainObject(condition) && Object.keys(condition).some((key) => key.startsWith('$'))) {
@@ -970,6 +978,7 @@ function equalitySeed(filter) {
 function matchesFilter(document, filter) {
   return Object.entries(filter || {}).every(([field, expected]) => {
     if (field === '$or') return expected.some((item) => matchesFilter(document, item));
+    if (field === '$and') return expected.every((item) => matchesFilter(document, item));
     const actual = getPath(document, field);
     if (plainObject(expected) && Object.keys(expected).some((key) => key.startsWith('$'))) {
       if (expected.$in && !expected.$in.some((item) => valuesEqual(actual, item))) return false;

@@ -20,6 +20,7 @@ export const BUILTIN_MASTERS = [
 ];
 
 const BOOTSTRAP_MIGRATION_VERSION = 'bootstrap-data-2026-08-27-v2';
+const UNIVERSITY_IDENTITY_MIGRATION_VERSION = 'admission-university-identity-2026-09-05-v1';
 
 export async function bootstrap() {
   const now = new Date();
@@ -67,6 +68,10 @@ export async function bootstrap() {
     await migrateFormSpecializationSources(now);
     await db().markRuntimeMigration(BOOTSTRAP_MIGRATION_VERSION);
   }
+  if (!(await db().hasRuntimeMigration(UNIVERSITY_IDENTITY_MIGRATION_VERSION))) {
+    await migrateAdmissionUniversities();
+    await db().markRuntimeMigration(UNIVERSITY_IDENTITY_MIGRATION_VERSION);
+  }
   const { email, password, name } = config.bootstrapAdmin;
   if (email && password && !(await db().collection('admins').findOne({ email }))) {
     await db()
@@ -92,6 +97,17 @@ async function migrateAdmissionIdentities() {
   for (const admission of admissions)
     await syncAdmissionIdentity(db(), admission, admission.responses || {}, {
       generateStudentId: admission.status !== 'draft',
+    });
+}
+
+async function migrateAdmissionUniversities() {
+  const admissions = await db()
+    .collection('admissions')
+    .find({ universityName: { $exists: false } })
+    .toArray();
+  for (const admission of admissions)
+    await syncAdmissionIdentity(db(), admission, admission.responses || {}, {
+      generateStudentId: false,
     });
 }
 

@@ -9,6 +9,7 @@ export function admissionContext(form, responses = {}) {
   };
   return {
     sessionValueId: valueId('academic'),
+    universityValueId: valueId('university'),
     collegeValueId: valueId('college'),
     departmentValueId: valueId('department'),
     levelValueId: valueId('level'),
@@ -31,6 +32,7 @@ export async function syncAdmissionIdentity(
   const context = admissionContext(admission.formSnapshot, responses);
   const values = [
     context.sessionValueId,
+    context.universityValueId,
     context.collegeValueId,
     context.departmentValueId,
     context.levelValueId,
@@ -44,7 +46,7 @@ export async function syncAdmissionIdentity(
     ? await database
         .collection('masterValues')
         .find({ _id: { $in: values } })
-        .project({ name: 1, typeSlug: 1, metadata: 1 })
+        .project({ name: 1, typeSlug: 1, metadata: 1, parentId: 1 })
         .toArray()
     : [];
   const session = masterValues.find(
@@ -56,6 +58,12 @@ export async function syncAdmissionIdentity(
   const master = (slug, valueId) =>
     masterValues.find((value) => value.typeSlug === slug && value._id.equals(valueId));
   const college = master('college', context.collegeValueId);
+  let university = master('university', context.universityValueId);
+  if (!university && college?.parentId) {
+    university = await database
+      .collection('masterValues')
+      .findOne({ _id: college.parentId, typeSlug: 'university' }, { projection: { name: 1 } });
+  }
   const department = master('department', context.departmentValueId);
   const level = master('level', context.levelValueId);
   const domicile = master('domicile', context.domicileValueId);
@@ -67,6 +75,8 @@ export async function syncAdmissionIdentity(
     studentName: context.studentName || '',
     academicSessionId: session?._id || null,
     academicSession: session?.name || '',
+    universityId: university?._id || college?.parentId || null,
+    universityName: university?.name || '',
     collegeId: college?._id || null,
     collegeName: college?.name || '',
     departmentId: department?._id || null,

@@ -54,10 +54,11 @@ admissionsRouter.get(
       ];
     }
     const fieldFilters = {
-      application: ['applicationNumber'],
+      application: ['applicationNumber', 'studentId'],
       studentId: ['studentId'],
       studentName: ['studentName'],
-      university: ['universityName', 'collegeName'],
+      university: ['universityName'],
+      college: ['collegeName'],
       branch: ['branchName', 'departmentName'],
       course: ['courseName'],
       session: ['academicSession'],

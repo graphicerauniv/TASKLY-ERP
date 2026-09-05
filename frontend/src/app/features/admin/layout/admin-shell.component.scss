@@ -38,10 +38,7 @@ a {
   min-width: 0;
   flex-direction: column;
   background:
-    linear-gradient(
-      var(--erp-sidebar-pattern) 1px,
-      transparent 1px
-    ),
+    linear-gradient(var(--erp-sidebar-pattern) 1px, transparent 1px),
     linear-gradient(90deg, var(--erp-sidebar-pattern) 1px, transparent 1px),
     radial-gradient(circle at top left, var(--erp-sidebar-glow), transparent 42%),
     var(--erp-sidebar-surface);
@@ -239,7 +236,8 @@ a {
   background: var(--erp-sidebar-hover-bg);
   color: var(--erp-text-heading);
   outline-color: var(--erp-sidebar-divider);
-  transform: translateX(2px);
+  /* Keep the icon column anchored while the rail expands and on item hover. */
+  transform: none;
 }
 
 .admin-navigation__item.is-active {
@@ -254,9 +252,9 @@ a {
 
 .admin-navigation__icon {
   display: inline-grid;
-  width: 22px;
+  width: 24px;
   height: 22px;
-  flex: 0 0 22px;
+  flex: 0 0 24px;
   place-items: center;
   border-radius: var(--erp-radius-control);
   background: transparent;
@@ -306,7 +304,10 @@ a {
   position: fixed;
   z-index: var(--erp-z-dropdown);
   left: calc(var(--erp-sidebar-width) + var(--erp-space-2));
-  width: min(var(--erp-sidebar-panel-width), calc(100vw - var(--erp-sidebar-width) - var(--erp-space-8)));
+  width: min(
+    var(--erp-sidebar-panel-width),
+    calc(100vw - var(--erp-sidebar-width) - var(--erp-space-8))
+  );
   margin: 0;
   padding: var(--erp-space-1);
   overflow-y: auto;
@@ -317,7 +318,10 @@ a {
     linear-gradient(var(--erp-sidebar-pattern) 1px, transparent 1px),
     linear-gradient(90deg, var(--erp-sidebar-pattern) 1px, transparent 1px),
     var(--erp-surface-overlay);
-  background-size: 24px 24px, 24px 24px, auto;
+  background-size:
+    24px 24px,
+    24px 24px,
+    auto;
   box-shadow: var(--erp-shadow-sidebar-flyout);
   animation: admin-flyout-enter 150ms var(--erp-ease-enter);
   scrollbar-width: thin;
@@ -529,6 +533,78 @@ a {
   color: var(--erp-blue-700);
 }
 
+.admin-header__tools {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--erp-space-2);
+  color: var(--erp-text-heading);
+}
+
+.admin-header__search {
+  display: flex;
+  width: min(320px, 25vw);
+  min-height: 36px;
+  align-items: center;
+  gap: var(--erp-space-2);
+  padding-inline: var(--erp-space-3);
+  color: var(--erp-text-muted);
+  background: var(--erp-surface);
+  border: 1px solid var(--erp-border-default);
+  border-radius: var(--erp-radius-control);
+}
+
+.admin-header__search input {
+  width: 100%;
+  min-width: 0;
+  color: var(--erp-text-body);
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.admin-header__notification {
+  position: relative;
+}
+
+.admin-header__notification small {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  display: grid;
+  min-width: 16px;
+  height: 16px;
+  place-items: center;
+  padding-inline: 3px;
+  color: var(--erp-text-on-primary);
+  font-size: 9px;
+  line-height: 1;
+  background: var(--erp-danger-600, var(--erp-danger-text));
+  border: 2px solid var(--erp-surface);
+  border-radius: var(--erp-radius-pill);
+}
+
+.admin-header__avatar {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--erp-blue-700);
+  font-size: var(--erp-font-size-xs);
+  font-weight: var(--erp-weight-bold);
+  background: var(--erp-blue-50);
+  border-radius: var(--erp-radius-avatar);
+}
+
+.admin-header__admin-name {
+  max-width: 9rem;
+  overflow: hidden;
+  font-size: var(--erp-font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .admin-breadcrumbs {
   min-width: 0;
 }
@@ -573,10 +649,14 @@ a {
 .admin-main {
   grid-column: 2;
   grid-row: 2;
+  align-self: stretch;
+  height: 100%;
   min-height: 0;
-  height: auto;
-  overflow: auto;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .admin-main:has(erp-dynamic-admission.embedded) {
@@ -660,9 +740,9 @@ a {
   transform: translateX(-6px);
   transition:
     max-width var(--erp-sidebar-expand-duration) var(--erp-sidebar-expand-easing),
-    opacity var(--erp-standard-transition),
-    transform var(--erp-standard-transition),
-    visibility 0s linear var(--erp-sidebar-expand-duration);
+    opacity var(--erp-sidebar-expand-duration) var(--erp-sidebar-expand-easing),
+    transform var(--erp-sidebar-expand-duration) var(--erp-sidebar-expand-easing),
+    visibility 0s linear var(--erp-sidebar-collapse-duration);
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop .admin-navigation__children,
@@ -677,11 +757,11 @@ a {
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop .admin-navigation__item--section {
-  width: 44px;
+  width: 100%;
   min-height: var(--erp-sidebar-item-height);
-  justify-content: center;
-  margin-inline: auto;
-  padding: 0;
+  justify-content: flex-start;
+  margin-inline: 0;
+  padding: 0 12px;
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop .admin-navigation__icon {
@@ -690,8 +770,8 @@ a {
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop .admin-sidebar__support {
-  justify-content: center;
-  padding-inline: 0;
+  justify-content: flex-start;
+  padding-inline: 12px;
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop .admin-user {
@@ -708,9 +788,9 @@ a {
 
 .admin-shell--collapsed .admin-sidebar--desktop:hover .admin-brand__mark,
 .admin-shell--collapsed .admin-sidebar--desktop:focus-within .admin-brand__mark {
-  width: 30px;
-  height: 30px;
-  flex-basis: 30px;
+  width: 24px;
+  height: 24px;
+  flex-basis: 24px;
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop:hover .admin-brand__copy,
@@ -736,7 +816,8 @@ a {
   width: 100%;
   justify-content: flex-start;
   margin-inline: 0;
-  padding: 0 var(--erp-space-2);
+  /* The same 12px inset keeps the 24px icon slot fixed as the rail widens. */
+  padding: 0 12px;
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop:hover .admin-navigation__label,
@@ -773,7 +854,8 @@ a {
 .admin-shell--collapsed .admin-sidebar--desktop:hover .admin-sidebar__support,
 .admin-shell--collapsed .admin-sidebar--desktop:focus-within .admin-sidebar__support {
   justify-content: flex-start;
-  padding-inline: var(--erp-space-2);
+  /* Keep the support icon in the same column as the collapsed rail. */
+  padding-inline: 12px;
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop:hover .admin-sidebar__support span,
@@ -858,7 +940,8 @@ a {
     display: block;
   }
 
-  .admin-header__status {
+  .admin-header__status,
+  .admin-header__tools {
     display: none;
   }
 
