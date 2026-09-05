@@ -1,0 +1,426 @@
+<erp-admin-page
+  [title]="step() === 3 ? 'Configure subjects' : 'Subject assignment'"
+  [description]="step() === 1 ? 'Assign subjects to a group for the selected academic scope.' : ''"
+  variant="compact"
+  layout="collection"
+>
+  <div page-actions class="erp-workflow-head">
+    <nav class="erp-workflow-stepper" aria-label="Subject assignment progress">
+      @for (item of [1, 2, 3]; track item) {
+        <div [class.is-active]="step() === item" [class.is-complete]="step() > item">
+          <span>
+            @if (step() > item) {
+              <svg lucideCheck size="14"></svg>
+            } @else {
+              {{ item }}
+            }
+          </span>
+          <strong>{{ item === 1 ? 'Scope' : item === 2 ? 'Subjects' : 'Review' }}</strong>
+        </div>
+      }
+    </nav>
+    @if (step() === 1) {
+      <button class="erp-button erp-button--secondary" type="button" (click)="scrollToHistory()">
+        <svg lucideHistory size="17"></svg> Assignment history
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="erp-alert erp-alert--danger">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success">{{ message() }}</div>
+  }
+
+  @if (step() === 1) {
+    <section class="erp-card erp-workflow-scope-card">
+      <header>
+        <h2>Choose academic scope</h2>
+        <p>Select the academic session, semester and group to manage subject assignments.</p>
+      </header>
+      <div class="erp-workflow-scope-grid erp-workflow-scope-grid--three">
+        <label
+          ><span>Academic session *</span
+          ><select class="erp-control" [(ngModel)]="session" (ngModelChange)="resetScope(true)">
+            <option value="">Select session</option>
+            @for (item of sessions(); track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Semester *</span
+          ><select class="erp-control" [(ngModel)]="semester" (ngModelChange)="resetScope(true)">
+            @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
+              <option [value]="item">Semester {{ item }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Group *</span
+          ><select class="erp-control" [(ngModel)]="groupId" (ngModelChange)="clearSelection()">
+            <option value="">Select group</option>
+            @for (item of availableGroups(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+      </div>
+      <footer>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="!scopeValid() || loading()"
+          (click)="openLibrary()"
+        >
+          Open subject library <svg lucideArrowRight size="17"></svg>
+        </button>
+      </footer>
+    </section>
+
+    <section id="subject-assignment-history" class="erp-card erp-table-shell erp-subject-history">
+      <header class="erp-subject-history__head">
+        <h2>Existing assignments</h2>
+        <div>
+          <label class="erp-search-control"
+            ><svg lucideSearch size="17"></svg
+            ><input type="search" placeholder="Search assignments…" /></label
+          ><button class="erp-button erp-button--secondary" type="button">
+            <svg lucideFilter size="17"></svg> Filters
+          </button>
+        </div>
+      </header>
+      <div class="erp-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Session</th>
+              <th>Semester</th>
+              <th>Subject</th>
+              <th>Requirement</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of scopeHistory(); track item._id) {
+              <tr>
+                <td>
+                  <strong>{{ item.groupName || groupName() }}</strong>
+                </td>
+                <td>{{ item.academicSession }}</td>
+                <td>Semester {{ item.semester }}</td>
+                <td>{{ item.subjectCode }} · {{ item.subjectName }}</td>
+                <td>
+                  <span
+                    class="erp-subject-type"
+                    [class.is-elective]="item.requirement === 'elective'"
+                    >{{ item.requirement }}</span
+                  >
+                </td>
+                <td>
+                  <button class="erp-icon-button" type="button" aria-label="Assignment actions">
+                    <svg lucideMoreVertical size="17"></svg>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6">
+                  <div class="erp-empty-panel erp-empty-panel--compact">
+                    <span class="erp-subject-empty-icon"
+                      ><svg lucideBookOpen size="31"></svg><svg lucideLink2 size="15"></svg
+                    ></span>
+                    <h2>No assignments found for the selected scope.</h2>
+                    <p>
+                      Choose an academic session, semester and group above to view existing
+                      assignments.
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (step() === 2 || step() === 3) {
+    <section class="erp-workflow-scope-summary">
+      <svg lucideCalendarDays size="18"></svg><strong>{{ session }}</strong
+      ><i></i><svg lucideGraduationCap size="18"></svg><span>Semester {{ semester }}</span
+      ><i></i><svg lucideUsersRound size="18"></svg><span>{{ groupName() }}</span
+      ><button type="button" (click)="changeScope()">
+        <svg lucidePencil size="16"></svg> Change
+      </button>
+    </section>
+  }
+
+  @if (step() === 2) {
+    <section class="erp-card erp-table-shell erp-subject-library">
+      <header class="erp-workflow-table-tools">
+        <label class="erp-search-control"
+          ><svg lucideSearch size="18"></svg
+          ><input
+            type="search"
+            [(ngModel)]="search"
+            placeholder="Search subject name or code"
+            (keyup.enter)="page.set(1); loadSubjects()" /></label
+        ><button class="erp-button erp-button--secondary" type="button" (click)="loadSubjects()">
+          <svg lucideFilter size="17"></svg> Filters</button
+        ><button class="erp-button erp-button--secondary" type="button">
+          <svg lucideColumns3 size="17"></svg> Columns</button
+        ><button
+          class="erp-icon-button"
+          type="button"
+          aria-label="Refresh subjects"
+          (click)="loadSubjects()"
+        >
+          <svg lucideRefreshCw size="18"></svg></button
+        ><strong>{{ total() | number }} subjects</strong>
+      </header>
+      <nav class="erp-subject-filters">
+        @for (
+          item of [
+            { value: '', label: 'All' },
+            { value: 'theory', label: 'Theory' },
+            { value: 'practical', label: 'Practical' },
+            { value: 'elective', label: 'Elective' },
+          ];
+          track item.value
+        ) {
+          <button
+            type="button"
+            [class.is-active]="typeFilter === item.value"
+            (click)="setTypeFilter(item.value)"
+          >
+            {{ item.label }}
+          </button>
+        }
+      </nav>
+      <div class="erp-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  [checked]="allVisibleSelected()"
+                  (change)="toggleVisible()"
+                />
+              </th>
+              <th>Subject</th>
+              <th>Code</th>
+              <th>Type</th>
+              <th>Credits</th>
+              <th>Department</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (subject of subjects(); track subject._id) {
+              <tr [class.is-selected]="isSelected(subject._id)">
+                <td>
+                  <input
+                    type="checkbox"
+                    [checked]="isSelected(subject._id)"
+                    (change)="toggleSubject(subject)"
+                  />
+                </td>
+                <td>
+                  <span class="erp-subject-name"
+                    ><svg lucideBookOpen size="16"></svg><strong>{{ subject.name }}</strong></span
+                  >
+                </td>
+                <td>{{ subject.code }}</td>
+                <td>
+                  <span
+                    class="erp-subject-type"
+                    [class.is-practical]="subject.subjectType.toLowerCase().includes('practical')"
+                    [class.is-elective]="subject.subjectOption.toLowerCase() === 'elective'"
+                    >{{
+                      subject.subjectOption.toLowerCase() === 'elective'
+                        ? 'Elective'
+                        : subject.subjectType
+                    }}</span
+                  >
+                </td>
+                <td>{{ subject.credits }}</td>
+                <td>{{ subject.departmentName || '—' }}</td>
+                <td>
+                  <span class="erp-status" [class.erp-status--muted]="!subject.assigned"
+                    ><i></i>{{ subject.assigned ? 'Assigned' : 'Unassigned' }}</span
+                  >
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">
+                  <div class="erp-empty-panel">
+                    <erp-admin-illustration kind="noResults" size="compact" />
+                    <h2>No subjects found</h2>
+                    <p>Change the search or academic scope.</p>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="erp-workflow-table-footer">
+        <span
+          >Showing {{ total() ? (page() - 1) * pageSize() + 1 : 0 }}–{{ rangeEnd() }} of
+          {{ total() | number }}</span
+        >
+        <div>
+          <select
+            class="erp-control"
+            [ngModel]="pageSize()"
+            (ngModelChange)="pageSize.set(+$event); changePage(1)"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">{{ size }} / page</option>
+            }</select
+          ><button
+            class="erp-icon-button"
+            type="button"
+            [disabled]="page() === 1"
+            (click)="changePage(page() - 1)"
+          >
+            <svg lucideChevronLeft size="17"></svg></button
+          ><b>{{ page() }}</b
+          ><button
+            class="erp-icon-button"
+            type="button"
+            [disabled]="page() === pages()"
+            (click)="changePage(page() + 1)"
+          >
+            <svg lucideChevronRight size="17"></svg>
+          </button>
+        </div>
+      </footer>
+    </section>
+    @if (selectedCount()) {
+      <footer class="erp-workflow-action-bar">
+        <strong>{{ selectedCount() }} subjects selected</strong
+        ><button type="button" (click)="clearSelection()">Clear</button
+        ><button class="erp-button erp-button--primary" type="button" (click)="openReview()">
+          Configure {{ selectedCount() }} subjects <svg lucideArrowRight size="17"></svg>
+        </button>
+      </footer>
+    }
+  }
+
+  @if (step() === 3) {
+    <section class="erp-card erp-table-shell erp-subject-review">
+      <header class="erp-subject-review__tools">
+        <strong
+          >{{ selectedCount() }} selected · {{ requiredCount() }} required ·
+          {{ electiveCount() }} elective · {{ totalCredits() }} credits</strong
+        ><label class="erp-search-control"
+          ><svg lucideSearch size="17"></svg
+          ><input type="search" placeholder="Search subjects…" /></label
+        ><select
+          class="erp-control"
+          #requirement
+          (change)="setAllRequirements(requirement.value === 'elective' ? 'elective' : 'required')"
+        >
+          <option value="">Set requirement</option>
+          <option value="required">Required</option>
+          <option value="elective">Elective</option></select
+        ><button class="erp-button erp-button--danger" type="button" (click)="removeSelected()">
+          <svg lucideTrash2 size="17"></svg> Remove selected
+        </button>
+      </header>
+      <div class="erp-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Code</th>
+              <th>Type</th>
+              <th>Credits</th>
+              <th>Requirement</th>
+              <th>Validation</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (subject of selectedSubjects(); track subject._id) {
+              <tr>
+                <td>
+                  <span class="erp-subject-name"
+                    ><svg lucideBookOpen size="16"></svg><strong>{{ subject.name }}</strong></span
+                  >
+                </td>
+                <td>{{ subject.code }}</td>
+                <td>
+                  <span
+                    class="erp-subject-type"
+                    [class.is-practical]="subject.subjectType.toLowerCase().includes('practical')"
+                    [class.is-elective]="subject.subjectOption.toLowerCase() === 'elective'"
+                    >{{
+                      subject.subjectOption.toLowerCase() === 'elective'
+                        ? 'Elective'
+                        : subject.subjectType
+                    }}</span
+                  >
+                </td>
+                <td>{{ subject.credits }}</td>
+                <td>
+                  <select
+                    class="erp-control"
+                    [ngModel]="requirementFor(subject._id)"
+                    (ngModelChange)="setRequirement(subject._id, $event)"
+                  >
+                    <option value="required">Required</option>
+                    <option value="elective">Elective</option>
+                  </select>
+                </td>
+                <td>
+                  <span class="erp-status" [class.erp-status--warning]="subject.assigned"
+                    ><i></i>
+                    @if (subject.assigned) {
+                      Already assigned
+                    } @else {
+                      Ready
+                    }
+                  </span>
+                </td>
+                <td>
+                  <button class="erp-icon-button" type="button" aria-label="Subject actions">
+                    <svg lucideMoreVertical size="17"></svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <footer class="erp-workflow-action-bar erp-workflow-action-bar--review">
+      <button class="erp-button erp-button--secondary" type="button" (click)="step.set(2)">
+        <svg lucideArrowLeft size="17"></svg> Back to library</button
+      ><button class="erp-button erp-button--secondary" type="button" (click)="saveDraft()">
+        Save draft</button
+      ><label
+        ><input
+          type="checkbox"
+          [ngModel]="confirmation()"
+          (ngModelChange)="confirmation.set($event)"
+        />
+        I reviewed this subject plan</label
+      ><button
+        class="erp-button erp-button--primary"
+        type="button"
+        [disabled]="!confirmation() || !readySubjects().length || saving()"
+        (click)="assignReady()"
+      >
+        {{ saving() ? 'Assigning…' : 'Assign ' + readySubjects().length + ' ready subjects' }}
+        <svg lucideArrowRight size="17"></svg>
+      </button>
+    </footer>
+  }
+</erp-admin-page>

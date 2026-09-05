@@ -117,6 +117,63 @@ export class ApiService {
       invalid: number;
     }>(`${API_BASE_URL}/academics/allocations/preview`, { rows });
   }
+  eligibleAcademicStudents(options: {
+    academicSession: string;
+    semester: number;
+    groupId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }) {
+    return this.http.get<{
+      items: Array<{
+        _id: string;
+        studentName?: string;
+        studentId?: string;
+        applicationNumber?: string;
+        courseName?: string;
+        currentAllocation?: string;
+        validation: 'ready' | 'warning';
+      }>;
+      pagination: { page: number; limit: number; total: number; pages: number };
+    }>(`${API_BASE_URL}/academics/allocations/students`, { params: { ...options } });
+  }
+  resolveAcademicStudents(studentIds: string[]) {
+    return this.http.post<{
+      items: Array<{
+        _id: string;
+        studentName?: string;
+        studentId?: string;
+        applicationNumber?: string;
+        courseName?: string;
+        currentAllocation?: string;
+        validation: 'ready' | 'warning';
+      }>;
+      unresolved: string[];
+    }>(`${API_BASE_URL}/academics/allocations/resolve-students`, { studentIds });
+  }
+  assignableAcademicSubjects(options: {
+    academicSession: string;
+    semester: number;
+    groupId: string;
+    search?: string;
+    subjectType?: string;
+    page: number;
+    limit: number;
+  }) {
+    return this.http.get<{
+      items: Array<
+        AcademicSubject & {
+          departmentName?: string;
+          assigned: boolean;
+          assignedRequirement?: 'required' | 'elective' | null;
+        }
+      >;
+      pagination: { page: number; limit: number; total: number; pages: number };
+    }>(`${API_BASE_URL}/academics/subject-assignments/subjects`, {
+      params: { ...options },
+    });
+  }
   bulkAcademicAllocations(rows: unknown[]) {
     return this.http.post<{ assigned: number; errors: Array<{ row: number; message: string }> }>(
       `${API_BASE_URL}/academics/allocations/bulk`,

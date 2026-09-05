@@ -1,0 +1,484 @@
+<erp-admin-page
+  [title]="title()"
+  [description]="description()"
+  variant="compact"
+  layout="collection"
+>
+  <button page-actions class="erp-button erp-button--primary" type="button" (click)="openCreate()">
+    <svg lucidePlus size="18"></svg>
+    {{ isMasterMode() ? 'New timetable master' : 'New structure' }}
+  </button>
+
+  @if (error()) {
+    <div class="erp-alert erp-alert--danger">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success">{{ message() }}</div>
+  }
+
+  @if (!isMasterMode()) {
+    <section class="erp-timetable-master-strip">
+      <svg lucideLayers3 size="21"></svg><span>Timetable master:</span>
+      <select
+        class="erp-control"
+        [ngModel]="selectedMasterId"
+        (ngModelChange)="chooseMaster($event)"
+      >
+        <option value="">All masters</option>
+        @for (master of masters(); track master._id) {
+          <option [value]="master._id">{{ master.name }}</option>
+        }
+      </select>
+    </section>
+  }
+
+  <section
+    class="erp-card erp-table-shell erp-timetable-collection"
+    [class.erp-timetable-master-table]="isMasterMode()"
+  >
+    <header class="erp-timetable-tools">
+      <label class="erp-search-control"
+        ><svg lucideSearch size="18"></svg
+        ><input
+          type="search"
+          [(ngModel)]="search"
+          [placeholder]="isMasterMode() ? 'Search timetable master' : 'Search structure'"
+          (ngModelChange)="page.set(1)"
+      /></label>
+      <button class="erp-button erp-button--secondary" type="button">
+        <svg lucideFilter size="17"></svg> Filters <svg lucideChevronDown size="15"></svg>
+      </button>
+      <button class="erp-button erp-button--secondary" type="button">
+        <svg lucideColumns3 size="17"></svg> Columns <svg lucideChevronDown size="15"></svg>
+      </button>
+      <button class="erp-icon-button" type="button" aria-label="Refresh" (click)="load()">
+        <svg lucideRefreshCw size="18"></svg>
+      </button>
+      <strong
+        >{{ filteredRecords().length }} {{ isMasterMode() ? 'master' : 'structure'
+        }}{{ filteredRecords().length === 1 ? '' : 's' }}</strong
+      >
+    </header>
+    <div class="erp-table-scroll">
+      <table>
+        <thead>
+          @if (isMasterMode()) {
+            <tr>
+              <th>Name</th>
+              <th>Academic session</th>
+              <th>University</th>
+              <th>College</th>
+              <th>Status</th>
+              <th>Last updated</th>
+              <th>Actions</th>
+            </tr>
+          } @else {
+            <tr>
+              <th>Name</th>
+              <th>Timetable</th>
+              <th>Working days</th>
+              <th>Number of periods</th>
+              <th>Status</th>
+              <th>Last updated</th>
+              <th>Actions</th>
+            </tr>
+          }
+        </thead>
+        <tbody>
+          @for (record of pagedRecords(); track record._id) {
+            <tr (dblclick)="openDetail(record)">
+              <td>
+                <strong>{{ record.name }}</strong>
+              </td>
+              @if (isMaster(record)) {
+                <td>{{ record.academicSession }}</td>
+                <td>{{ record.universityName || '—' }}</td>
+                <td>{{ record.collegeName || '—' }}</td>
+              } @else {
+                <td>{{ masterName(record.timetableMasterId) }}</td>
+                <td>
+                  {{ record.workingDays.slice(0, 2).join(', ')
+                  }}{{
+                    record.workingDays.length > 2 ? ' +' + (record.workingDays.length - 2) : ''
+                  }}
+                </td>
+                <td>{{ record.periodCount }} periods</td>
+              }
+              <td>
+                <span class="erp-status"><i></i>{{ record.isActive ? 'Active' : 'Inactive' }}</span>
+              </td>
+              <td>—</td>
+              <td>
+                <button
+                  class="erp-icon-button"
+                  type="button"
+                  aria-label="Open details"
+                  (click)="openDetail(record)"
+                >
+                  <svg lucideEllipsisVertical size="18"></svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="erp-timetable-table-blank">
+      <erp-admin-illustration kind="taskSchedule" size="compact" />
+      <p>
+        {{
+          isMasterMode()
+            ? 'Timetable masters hold the academic scope for your timetable structures.'
+            : 'Select a structure to review its period setup.'
+        }}
+      </p>
+    </div>
+    @if (isMasterMode()) {
+      <div class="erp-timetable-notice">
+        <svg lucideInfo size="18"></svg
+        ><span>Create a master first, then add structures and periods.</span
+        ><button type="button" aria-label="Dismiss"><svg lucideX size="16"></svg></button>
+      </div>
+    }
+    <footer class="erp-timetable-pagination">
+      <span
+        >Showing {{ filteredRecords().length ? (page() - 1) * pageSize() + 1 : 0 }}–{{
+          rangeEnd()
+        }}
+        of {{ filteredRecords().length }}</span
+      >
+      <div>
+        <select
+          class="erp-control"
+          [ngModel]="pageSize()"
+          (ngModelChange)="pageSize.set(+$event); page.set(1)"
+        >
+          @for (size of pageSizeOptions; track size) {
+            <option [value]="size">{{ size }} / page</option>
+          }</select
+        ><button
+          class="erp-icon-button"
+          type="button"
+          [disabled]="page() === 1"
+          (click)="page.set(page() - 1)"
+        >
+          <svg lucideChevronLeft size="17"></svg></button
+        ><b>{{ page() }}</b
+        ><button
+          class="erp-icon-button"
+          type="button"
+          [disabled]="page() === totalPages()"
+          (click)="page.set(page() + 1)"
+        >
+          <svg lucideChevronRight size="17"></svg>
+        </button>
+      </div>
+    </footer>
+  </section>
+</erp-admin-page>
+
+@if (drawer()) {
+  <div class="erp-drawer-layer">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      aria-label="Close drawer"
+      (click)="closeDrawer()"
+    ></button>
+    <aside class="erp-drawer erp-timetable-drawer" role="dialog" aria-modal="true">
+      @if (drawer() === 'create') {
+        <header class="erp-drawer__header erp-timetable-drawer__header">
+          <span class="erp-timetable-drawer__icon">
+            @if (isMasterMode()) {
+              <svg lucideCalendarDays size="25"></svg>
+            } @else {
+              <svg lucideLayers3 size="25"></svg>
+            }
+          </span>
+          <div>
+            <h2>
+              {{ editingId() ? 'Edit' : 'New' }}
+              {{ isMasterMode() ? 'timetable master' : 'timetable structure' }}
+            </h2>
+            <p>
+              {{
+                isMasterMode()
+                  ? 'Create the academic container for timetable planning.'
+                  : 'Set the weekly framework before configuring individual periods.'
+              }}
+            </p>
+          </div>
+          <button class="erp-icon-button" type="button" aria-label="Close" (click)="closeDrawer()">
+            <svg lucideX size="21"></svg>
+          </button>
+        </header>
+        <div class="erp-drawer__body erp-timetable-drawer__body">
+          @if (isMasterMode()) {
+            <fieldset class="erp-timetable-form-card">
+              <legend>Academic scope</legend>
+              <label
+                ><span>Academic session *</span
+                ><select class="erp-control" [(ngModel)]="session">
+                  <option value="">Select session</option>
+                  @for (item of sessions(); track item) {
+                    <option [value]="item">{{ item }}</option>
+                  }
+                </select></label
+              >
+              <label
+                ><span>University *</span
+                ><select
+                  class="erp-control"
+                  [(ngModel)]="universityId"
+                  (ngModelChange)="loadColleges()"
+                >
+                  <option value="">Select university</option>
+                  @for (item of universities(); track item._id) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }
+                </select></label
+              >
+              <label
+                ><span>College *</span
+                ><select class="erp-control" [(ngModel)]="collegeId" [disabled]="!universityId">
+                  <option value="">
+                    {{ universityId ? 'Select college' : 'Select a university first' }}
+                  </option>
+                  @for (item of colleges(); track item._id) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }
+                </select></label
+              ><small>Colleges are filtered based on the selected university.</small>
+            </fieldset>
+            <fieldset class="erp-timetable-form-card">
+              <legend>Master details</legend>
+              <label
+                ><span>Name *</span
+                ><input class="erp-control" [(ngModel)]="name" placeholder="Enter master name"
+              /></label>
+            </fieldset>
+            <div class="erp-timetable-info">
+              <svg lucideInfo size="18"></svg> Structures and periods are configured after this
+              master is created.
+            </div>
+          } @else {
+            <label
+              ><span>Timetable *</span
+              ><select
+                class="erp-control"
+                [(ngModel)]="timetableMasterId"
+                [disabled]="!!editingId()"
+              >
+                <option value="">Select timetable</option>
+                @for (master of masters(); track master._id) {
+                  <option [value]="master._id">{{ master.name }}</option>
+                }
+              </select></label
+            >
+            <label
+              ><span>Name *</span
+              ><input class="erp-control" [(ngModel)]="name" placeholder="Enter structure name"
+            /></label>
+            <div class="erp-field-stack">
+              <span>Working days *</span
+              ><erp-multi-select-dropdown
+                [options]="workingDayOptions"
+                [value]="workingDays"
+                placeholder="Select working days"
+                (valueChange)="workingDays = $event"
+              />
+            </div>
+            <label
+              ><span>Number of periods *</span
+              ><select class="erp-control" [(ngModel)]="periodCount" [disabled]="!!editingId()">
+                @for (item of [4, 5, 6, 7, 8, 9, 10, 12]; track item) {
+                  <option [value]="item">{{ item }} periods</option>
+                }
+              </select></label
+            >
+            <div class="erp-timetable-info">
+              <svg lucideInfo size="18"></svg
+              ><strong
+                >{{ workingDays.length }} working days · {{ periodCount }} periods per day</strong
+              >
+            </div>
+            <div class="erp-timetable-info erp-timetable-info--outline">
+              <svg lucideInfo size="18"></svg>You will configure start time, duration and period
+              type after creating the structure.
+            </div>
+          }
+          <footer class="erp-drawer__footer">
+            <button class="erp-button erp-button--secondary" type="button" (click)="closeDrawer()">
+              Cancel</button
+            ><button
+              class="erp-button erp-button--primary"
+              type="button"
+              [disabled]="!formValid() || saving()"
+              (click)="save()"
+            >
+              {{
+                saving()
+                  ? 'Saving…'
+                  : editingId()
+                    ? 'Save changes'
+                    : isMasterMode()
+                      ? 'Create master'
+                      : 'Create structure'
+              }}
+            </button>
+          </footer>
+        </div>
+      } @else if (selected(); as record) {
+        <header class="erp-drawer__header erp-timetable-detail-head">
+          <span class="erp-timetable-drawer__icon">
+            @if (isMaster(record)) {
+              <svg lucideCalendarDays size="25"></svg>
+            } @else {
+              <svg lucideLayers3 size="25"></svg>
+            }
+          </span>
+          <div>
+            <h2>
+              {{ record.name }} <span class="erp-status"><i></i>Active</span>
+            </h2>
+            <p>{{ isMaster(record) ? 'Saved just now' : masterName(record.timetableMasterId) }}</p>
+          </div>
+          <button class="erp-icon-button" type="button" aria-label="More actions">
+            <svg lucideEllipsisVertical size="18"></svg></button
+          ><button class="erp-icon-button" type="button" aria-label="Close" (click)="closeDrawer()">
+            <svg lucideX size="21"></svg>
+          </button>
+        </header>
+        <div class="erp-drawer__body erp-timetable-detail-body">
+          <section class="erp-timetable-detail-card">
+            <h3>Overview</h3>
+            @if (isMaster(record)) {
+              <dl>
+                <div>
+                  <dt>Name</dt>
+                  <dd>{{ record.name }}</dd>
+                </div>
+                <div>
+                  <dt>Academic session</dt>
+                  <dd>{{ record.academicSession }}</dd>
+                </div>
+                <div>
+                  <dt>University</dt>
+                  <dd>{{ record.universityName || '—' }}</dd>
+                </div>
+                <div>
+                  <dt>College</dt>
+                  <dd>{{ record.collegeName || '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd>
+                    <span class="erp-status"><i></i>Active</span>
+                  </dd>
+                </div>
+              </dl>
+            } @else {
+              <dl>
+                <div>
+                  <dt>Timetable</dt>
+                  <dd>{{ masterName(record.timetableMasterId) }}</dd>
+                </div>
+                <div>
+                  <dt>Number of periods</dt>
+                  <dd>{{ record.periodCount }}</dd>
+                </div>
+              </dl>
+              <h4>Working days</h4>
+              <div class="erp-timetable-days">
+                @for (day of record.workingDays; track day) {
+                  <span>{{ day }}</span>
+                }
+              </div>
+            }
+          </section>
+          <section class="erp-timetable-detail-card">
+            <h3>{{ isMaster(record) ? 'Timetable setup' : 'Configuration' }}</h3>
+            @if (isMaster(record)) {
+              <div class="erp-timetable-step is-complete">
+                <i><svg lucideCheck size="17"></svg></i
+                ><span
+                  ><strong>Master details</strong
+                  ><small>Basic information about this timetable master.</small></span
+                ><b>Complete</b>
+              </div>
+              <div class="erp-timetable-step">
+                <i>2</i
+                ><span
+                  ><strong>Structures</strong
+                  ><small>Add and manage academic structures.</small></span
+                ><button
+                  class="erp-button erp-button--secondary"
+                  type="button"
+                  (click)="openStructures(record._id)"
+                >
+                  Open structures
+                </button>
+              </div>
+              <div class="erp-timetable-step">
+                <i>3</i
+                ><span
+                  ><strong>Period configuration</strong
+                  ><small>Available after a structure is selected.</small></span
+                ><b>Not available</b>
+              </div>
+            } @else {
+              <div class="erp-timetable-step is-complete">
+                <i><svg lucideCheck size="17"></svg></i
+                ><span
+                  ><strong>Structure details</strong
+                  ><small>Basic information and working days.</small></span
+                ><b>Complete</b>
+              </div>
+              <div class="erp-timetable-step">
+                <i><svg lucideClock3 size="17"></svg></i
+                ><span
+                  ><strong>Period timings</strong
+                  ><small>Set period type, start time and duration.</small></span
+                ><button
+                  class="erp-button erp-button--primary"
+                  type="button"
+                  (click)="configurePeriods(record)"
+                >
+                  Configure periods
+                </button>
+              </div>
+            }
+          </section>
+          <footer class="erp-timetable-detail-actions">
+            <button class="erp-button erp-button--danger" type="button" (click)="deleteSelected()">
+              <svg lucideTrash2 size="17"></svg> Delete
+              {{ isMaster(record) ? 'master' : 'structure' }}</button
+            ><span></span
+            ><button class="erp-button erp-button--secondary" type="button" (click)="openEdit()">
+              <svg lucidePencil size="17"></svg> Edit
+              {{ isMaster(record) ? 'master' : 'structure' }}
+            </button>
+            @if (isMaster(record)) {
+              <button
+                class="erp-button erp-button--primary"
+                type="button"
+                (click)="openStructures(record._id)"
+              >
+                Open structures
+              </button>
+            } @else {
+              <button
+                class="erp-button erp-button--primary"
+                type="button"
+                (click)="configurePeriods(record)"
+              >
+                Configure periods
+              </button>
+            }
+          </footer>
+        </div>
+      }
+    </aside>
+  </div>
+}

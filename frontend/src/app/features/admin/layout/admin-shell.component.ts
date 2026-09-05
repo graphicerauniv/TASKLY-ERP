@@ -80,11 +80,13 @@ export class AdminShellComponent {
   readonly desktopCollapsed = signal(true);
   readonly mobileOpen = signal(false);
   readonly expandedSectionId = signal<string | null>(null);
+  readonly closingSectionId = signal<string | null>(null);
+  readonly flyoutClosing = computed(() => this.closingSectionId() !== null);
   readonly expandedSubgroupId = signal<string | null>(null);
-  readonly desktopFlyoutTop = signal(72);
-  readonly desktopFlyoutMaxHeight = signal(480);
   readonly pageContext = signal(resolveAdminPageContext(this.router.url));
-  readonly desktopModuleOpen = computed(() => this.expandedSectionId() !== null);
+  readonly desktopModuleOpen = computed(
+    () => this.expandedSectionId() !== null || this.closingSectionId() !== null,
+  );
   readonly isScholarshipWorkspace = computed(() =>
     /^\/admin\/admissions\/[^/]+\/scholarships\/?(?:\?|$)/.test(this.currentUrl()),
   );
@@ -114,6 +116,7 @@ export class AdminShellComponent {
   @ViewChild('mobileCloseButton') private mobileCloseButton?: ElementRef<HTMLButtonElement>;
   @ViewChild('pageTitle') private pageTitle?: ElementRef<HTMLElement>;
   private desktopFlyoutAnchor: HTMLElement | null = null;
+  private flyoutCloseTimer: ReturnType<typeof window.setTimeout> | null = null;
 
   constructor() {
     this.syncNavigation(this.router.url);
@@ -166,40 +169,42 @@ export class AdminShellComponent {
 
   toggleSection(section: AdminNavigationSection, event?: Event, mobile = false): void {
     if (!section.children?.length) return;
+    if (mobile) {
+      const opening = this.expandedSectionId() !== section.id;
+      this.expandedSectionId.set(opening ? section.id : null);
+      if (!opening) this.expandedSubgroupId.set(null);
+      return;
+    }
+
+    if (this.expandedSectionId() === section.id) {
+      this.closeDesktopFlyout();
+      return;
+    }
+    this.cancelFlyoutClose();
     const opening = this.expandedSectionId() !== section.id;
     this.expandedSectionId.set(opening ? section.id : null);
     if (!opening) this.expandedSubgroupId.set(null);
 
-    if (!mobile && opening) {
+    if (opening) {
       this.desktopFlyoutAnchor = event?.currentTarget as HTMLElement | null;
-      window.requestAnimationFrame(() => this.repositionDesktopFlyout());
-    } else if (!mobile) {
+    } else {
       this.desktopFlyoutAnchor = null;
     }
   }
 
-  repositionDesktopFlyout(): void {
-    if (!this.desktopFlyoutAnchor || !this.expandedSectionId()) return;
-    const rect = this.desktopFlyoutAnchor.getBoundingClientRect();
-    const viewportPadding = 12;
-    const minimumHeight = 220;
-    const preferredTop = Math.max(viewportPadding, rect.top - 8);
-    const maximumTop = Math.max(
-      viewportPadding,
-      window.innerHeight - minimumHeight - viewportPadding,
-    );
-    const top = Math.min(preferredTop, maximumTop);
-    this.desktopFlyoutTop.set(top);
-    this.desktopFlyoutMaxHeight.set(
-      Math.max(minimumHeight, window.innerHeight - top - viewportPadding),
-    );
-  }
-
   closeDesktopFlyout(): void {
+    const sectionId = this.expandedSectionId();
+    if (!sectionId || this.flyoutClosing()) return;
+    this.closingSectionId.set(sectionId);
     this.expandedSectionId.set(null);
     this.expandedSubgroupId.set(null);
-    this.desktopFlyoutAnchor?.focus();
-    this.desktopFlyoutAnchor = null;
+    const anchor = this.desktopFlyoutAnchor;
+    this.flyoutCloseTimer = window.setTimeout(() => {
+      this.closingSectionId.set(null);
+      anchor?.focus();
+      this.desktopFlyoutAnchor = null;
+      this.flyoutCloseTimer = null;
+    }, 220);
   }
 
   toggleSubgroup(entry: AdminNavigationEntry): void {
@@ -208,6 +213,26 @@ export class AdminShellComponent {
 
   isSectionExpanded(section: AdminNavigationSection): boolean {
     return this.expandedSectionId() === section.id;
+  }
+
+  isSectionVisible(section: AdminNavigationSection, mobile: boolean): boolean {
+    return (
+      this.expandedSectionId() === section.id || (!mobile && this.closingSectionId() === section.id)
+    );
+  }
+
+  moduleTitle(section: AdminNavigationSection): string {
+    return section.id === 'academics' ? 'Academic workspace' : `${section.label} workspace`;
+  }
+
+  sectionDescription(section: AdminNavigationSection): string {
+    return section.description || `Access and manage ${section.label.toLowerCase()} tools.`;
+  }
+
+  entryDescription(entry: AdminNavigationEntry): string {
+    if (entry.description) return entry.description;
+    if (entry.children?.length) return `Manage ${entry.label.toLowerCase()} options`;
+    return `Open ${entry.label.toLowerCase()}`;
   }
 
   isSubgroupExpanded(entry: AdminNavigationEntry): boolean {
@@ -226,12 +251,24 @@ export class AdminShellComponent {
   }
 
   showNavigationGroup(entries: readonly AdminNavigationEntry[], index: number): boolean {
-    const group = entries[index]?.group;
-    return Boolean(group && (index === 0 || entries[index - 1]?.group !== group));
+    const group = entries[index]?.group || 'Tools';
+    const previousGroup = index > 0 ? entries[index - 1]?.group || 'Tools' : '';
+    return index === 0 || previousGroup !== group;
   }
 
-  selectNavigation(): void {
-    this.closeMobileNavigation(false);
+  navigationGroupLabel(entries: readonly AdminNavigationEntry[], index: number): string {
+    return entries[index]?.group || 'Tools';
+  }
+
+  selectNavigation(event: Event, route: string, mobile: boolean): void {
+    if (mobile) {
+      this.closeMobileNavigation(false);
+      return;
+    }
+    if (!this.expandedSectionId()) return;
+    event.preventDefault();
+    this.closeDesktopFlyout();
+    window.setTimeout(() => void this.router.navigateByUrl(route), 220);
   }
 
   logout(): void {
@@ -253,9 +290,7 @@ export class AdminShellComponent {
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
     if (this.expandedSectionId() && !target?.closest('.admin-sidebar--desktop')) {
-      this.expandedSectionId.set(null);
-      this.expandedSubgroupId.set(null);
-      this.desktopFlyoutAnchor = null;
+      this.closeDesktopFlyout();
     }
   }
 
@@ -264,15 +299,22 @@ export class AdminShellComponent {
     const width = window.innerWidth;
     if (width > 767) this.closeMobileNavigation(false);
     if (width <= 1080 && width > 767) this.desktopCollapsed.set(true);
-    this.repositionDesktopFlyout();
   }
 
   private syncNavigation(url: string): void {
+    this.cancelFlyoutClose();
     this.currentUrl.set(url);
     this.expandedSectionId.set(null);
+    this.closingSectionId.set(null);
     this.expandedSubgroupId.set(null);
     this.desktopFlyoutAnchor = null;
     this.pageContext.set(resolveAdminPageContext(url, this.deepestRouteTitle()));
+  }
+
+  private cancelFlyoutClose(): void {
+    if (this.flyoutCloseTimer !== null) window.clearTimeout(this.flyoutCloseTimer);
+    this.flyoutCloseTimer = null;
+    this.closingSectionId.set(null);
   }
 
   private loadFormNavigation(): void {

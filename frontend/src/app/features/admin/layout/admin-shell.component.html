@@ -84,6 +84,7 @@
 @if (desktopModuleOpen()) {
   <button
     class="admin-module-backdrop"
+    [class.is-closing]="flyoutClosing()"
     type="button"
     tabindex="-1"
     aria-label="Close module navigation"
@@ -157,7 +158,6 @@
   <nav
     class="admin-navigation"
     [attr.aria-label]="mobile ? 'Mobile admin navigation' : 'Primary admin navigation'"
-    (scroll)="!mobile && repositionDesktopFlyout()"
   >
     <ul class="admin-navigation__list">
       @for (section of navigation(); track section.id) {
@@ -185,15 +185,11 @@
               ></svg>
             </button>
 
-            @if (isSectionExpanded(section)) {
+            @if (isSectionVisible(section, mobile)) {
               <ul
-                class="admin-navigation__children"
-                [class.admin-navigation__children--module]="section.id === 'academics'"
+                class="admin-navigation__children admin-navigation__children--module"
+                [class.is-closing]="!mobile && closingSectionId() === section.id"
                 [id]="(mobile ? 'mobile-' : 'desktop-') + section.id + '-navigation'"
-                [style.top.px]="!mobile && section.id !== 'academics' ? desktopFlyoutTop() : null"
-                [style.max-height.px]="
-                  !mobile && section.id !== 'academics' ? desktopFlyoutMaxHeight() : null
-                "
                 [attr.role]="!mobile ? 'dialog' : null"
                 [attr.aria-modal]="!mobile ? 'true' : null"
                 [attr.aria-label]="section.label + ' module navigation'"
@@ -209,31 +205,27 @@
                     (click)="closeDesktopFlyout()"
                   >
                     <svg lucideX size="19" aria-hidden="true"></svg>
-                    @if (section.id === 'academics') {
-                      <small>Esc</small>
-                    }
+                    <small>Esc</small>
                   </button>
                 </li>
 
-                @if (section.id === 'academics') {
-                  <li class="admin-navigation__module-summary">
-                    <span class="admin-navigation__module-icon" aria-hidden="true">
-                      <svg [lucideIcon]="iconFor(section.icon)" size="42"></svg>
-                      <small>✓</small>
-                    </span>
-                    <span class="admin-navigation__module-copy">
-                      <strong>Academic workspace</strong>
-                      <span>{{ section.description }}</span>
-                      <small>{{ section.children?.length || 0 }} tools</small>
-                    </span>
-                    <span class="admin-navigation__module-spark" aria-hidden="true">✦</span>
-                  </li>
-                }
+                <li class="admin-navigation__module-summary">
+                  <span class="admin-navigation__module-icon" aria-hidden="true">
+                    <svg [lucideIcon]="iconFor(section.icon)" size="42"></svg>
+                    <small>✓</small>
+                  </span>
+                  <span class="admin-navigation__module-copy">
+                    <strong>{{ moduleTitle(section) }}</strong>
+                    <span>{{ sectionDescription(section) }}</span>
+                    <small>{{ section.children?.length || 0 }} tools</small>
+                  </span>
+                  <span class="admin-navigation__module-spark" aria-hidden="true">✦</span>
+                </li>
 
                 @for (entry of section.children || []; track entry.id; let entryIndex = $index) {
                   @if (showNavigationGroup(section.children || [], entryIndex)) {
                     <li class="admin-navigation__group-heading">
-                      <span>{{ entry.group }}</span>
+                      <span>{{ navigationGroupLabel(section.children || [], entryIndex) }}</span>
                       <i aria-hidden="true"></i>
                     </li>
                   }
@@ -257,6 +249,9 @@
                           ></svg>
                         </span>
                         <span class="admin-navigation__label">{{ entry.label }}</span>
+                        <small class="admin-navigation__description">{{
+                          entryDescription(entry)
+                        }}</small>
                         <svg
                           class="admin-navigation__chevron"
                           [class.is-open]="isSubgroupExpanded(entry)"
@@ -280,7 +275,7 @@
                                   matchesAdminRoute(link.activeWhen, currentUrl()) ? 'page' : null
                                 "
                                 [routerLink]="link.route"
-                                (click)="selectNavigation()"
+                                (click)="selectNavigation($event, link.route, mobile)"
                               >
                                 <span class="admin-navigation__icon">
                                   <svg
@@ -301,7 +296,9 @@
                         [class.is-active]="isEntryActive(entry)"
                         [attr.aria-current]="isEntryActive(entry) ? 'page' : null"
                         [routerLink]="entry.route || '/admin/dashboard'"
-                        (click)="selectNavigation()"
+                        (click)="
+                          selectNavigation($event, entry.route || '/admin/dashboard', mobile)
+                        "
                       >
                         <span class="admin-navigation__icon">
                           <svg
@@ -311,11 +308,9 @@
                           ></svg>
                         </span>
                         <span class="admin-navigation__label">{{ entry.label }}</span>
-                        @if (entry.description) {
-                          <small class="admin-navigation__description">{{
-                            entry.description
-                          }}</small>
-                        }
+                        <small class="admin-navigation__description">{{
+                          entryDescription(entry)
+                        }}</small>
                         <svg
                           class="admin-navigation__entry-arrow"
                           lucideChevronRight
@@ -327,16 +322,19 @@
                   </li>
                 }
 
-                @if (section.id === 'academics') {
-                  <li class="admin-navigation__guidance">
-                    <svg lucideCircleHelp size="19" aria-hidden="true"></svg>
-                    <strong>Need setup guidance?</strong>
-                    <a routerLink="/admin/academics/groups" (click)="selectNavigation()">
-                      View order
+                <li class="admin-navigation__guidance">
+                  <svg lucideCircleHelp size="19" aria-hidden="true"></svg>
+                  <strong>{{ section.label }} tools</strong>
+                  @if (section.children?.[0]?.route; as firstRoute) {
+                    <a
+                      [routerLink]="firstRoute"
+                      (click)="selectNavigation($event, firstRoute, mobile)"
+                    >
+                      Open first
                       <svg lucideChevronRight size="15" aria-hidden="true"></svg>
                     </a>
-                  </li>
-                }
+                  }
+                </li>
               </ul>
             }
           } @else {
@@ -346,7 +344,7 @@
               [attr.title]="desktopCollapsed() && !mobile ? section.label : null"
               [attr.aria-current]="isSectionActive(section) ? 'page' : null"
               [routerLink]="section.route || '/admin/dashboard'"
-              (click)="selectNavigation()"
+              (click)="mobile ? closeMobileNavigation(false) : null"
             >
               <span class="admin-navigation__icon">
                 <svg [lucideIcon]="iconFor(section.icon)" size="18" aria-hidden="true"></svg>

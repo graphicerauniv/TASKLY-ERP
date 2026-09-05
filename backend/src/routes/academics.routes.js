@@ -2,6 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
+import { pageResult, pagination } from '../lib/pagination.js';
 
 export const academicsRouter = express.Router();
 export const studentAcademicsRouter = express.Router();
@@ -237,6 +238,7 @@ function duplicateError(label) {
   error.status = 409;
   return error;
 }
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function overlap(leftStart, leftEnd, rightStart, rightEnd) {
   return leftStart < rightEnd && rightStart < leftEnd;
 }
@@ -356,6 +358,70 @@ academicsRouter.get(
       timetablePeriods: timetablePeriods.map(serialize),
       groupSubjects: groupSubjects.map(serialize),
     });
+  }),
+);
+
+academicsRouter.get(
+  '/subject-assignments/subjects',
+  asyncHandler(async (request, response) => {
+    const { page, limit, skip } = pagination(request.query);
+    const academicSession = String(request.query.academicSession || '').trim();
+    const semester = Number(request.query.semester || 0);
+    const groupId = request.query.groupId ? id(String(request.query.groupId), 'groupId') : null;
+    const filter = { isActive: true };
+    if (academicSession) filter.academicSession = academicSession;
+    if (semester) filter.semester = semester;
+    const subjectType = String(request.query.subjectType || '').trim();
+    if (subjectType === 'elective') filter.subjectOption = { $regex: '^elective$', $options: 'i' };
+    else if (subjectType)
+      filter.subjectType = { $regex: `^${escapeRegex(subjectType)}`, $options: 'i' };
+    const search = String(request.query.search || '').trim();
+    if (search) {
+      const match = { $regex: escapeRegex(search), $options: 'i' };
+      filter.$or = [{ name: match }, { code: match }, { departmentNames: match }];
+    }
+    const [subjects, total] = await Promise.all([
+      db()
+        .collection('subjects')
+        .find(filter)
+        .sort({ name: 1, code: 1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+      db().collection('subjects').countDocuments(filter),
+    ]);
+    const assignments =
+      groupId && subjects.length
+        ? await db()
+            .collection('groupSubjectAssignments')
+            .find({
+              groupId,
+              subjectId: { $in: subjects.map((subject) => subject._id) },
+              academicSession,
+              semester,
+              status: 'active',
+            })
+            .toArray()
+        : [];
+    const assignmentBySubject = new Map(
+      assignments.map((assignment) => [String(assignment.subjectId), assignment]),
+    );
+    response.json(
+      pageResult(
+        subjects.map((subject) => {
+          const assignment = assignmentBySubject.get(String(subject._id));
+          return serialize({
+            ...subject,
+            departmentName: subject.departmentNames?.join(', ') || '—',
+            assigned: Boolean(assignment),
+            assignedRequirement: assignment?.requirement || null,
+          });
+        }),
+        total,
+        page,
+        limit,
+      ),
+    );
   }),
 );
 
@@ -540,6 +606,33 @@ academicsRouter.patch(
       const current = await db().collection(collection).findOne({ _id: itemId });
       if (!current)
         return response.status(404).json({ message: 'Timetable period was not found.' });
+      if (request.body.clearConfiguration === true) {
+        const inUse = await db()
+          .collection('timetableEntries')
+          .findOne({
+            $or: [{ timetablePeriodId: itemId }, { timetablePeriodIds: itemId }],
+          });
+        if (inUse)
+          return response.status(409).json({
+            message: 'This period is already used in a timetable and cannot be cleared.',
+          });
+        await db().collection(collection).updateOne(
+          { _id: itemId },
+          {
+            $set: {
+              periodType: null,
+              startTime: null,
+              endTime: null,
+              durationMinutes: null,
+              isConfigured: false,
+              updatedAt: new Date(),
+            },
+          },
+        );
+        return response.json({
+          item: serialize(await db().collection(collection).findOne({ _id: itemId })),
+        });
+      }
       data = timetablePeriodSchema.parse({
         timetableMasterId: String(current.timetableMasterId),
         timetableStructureId: String(current.timetableStructureId),
@@ -691,6 +784,101 @@ async function validateAllocation(data) {
     return 'Student course is not included in this group.';
   return null;
 }
+
+academicsRouter.get(
+  '/allocations/students',
+  asyncHandler(async (request, response) => {
+    const { page, limit, skip } = pagination(request.query);
+    const academicSession = String(request.query.academicSession || '').trim();
+    const semester = Number(request.query.semester || 0);
+    const group = request.query.groupId
+      ? await db()
+          .collection('academicGroups')
+          .findOne({ _id: id(String(request.query.groupId), 'groupId'), isActive: true })
+      : null;
+    const filter = { status: 'approved', isActive: true };
+    if (academicSession) filter.academicSession = academicSession;
+    if (semester) filter.currentSemester = semester;
+    if (group?.courseIds?.length) filter.courseId = { $in: group.courseIds };
+    const search = String(request.query.search || '').trim();
+    if (search) {
+      const match = { $regex: escapeRegex(search), $options: 'i' };
+      filter.$or = [
+        { studentName: match },
+        { studentId: match },
+        { applicationNumber: match },
+        { courseName: match },
+      ];
+    }
+    const [students, total] = await Promise.all([
+      db()
+        .collection('admissions')
+        .find(filter)
+        .project({ passwordHash: 0, accessKeyHash: 0, formSnapshot: 0, responses: 0 })
+        .sort({ studentName: 1, studentId: 1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+      db().collection('admissions').countDocuments(filter),
+    ]);
+    const assignments = students.length
+      ? await db()
+          .collection('studentAcademicAssignments')
+          .find({
+            studentAdmissionId: { $in: students.map((student) => student._id) },
+            ...(academicSession ? { academicSession } : {}),
+            ...(semester ? { semester } : {}),
+            status: 'active',
+          })
+          .toArray()
+      : [];
+    const assignmentByStudent = new Map(
+      assignments.map((assignment) => [String(assignment.studentAdmissionId), assignment]),
+    );
+    response.json(
+      pageResult(
+        students.map((student) => {
+          const assignment = assignmentByStudent.get(String(student._id));
+          return serialize({
+            _id: student._id,
+            studentName: student.studentName,
+            studentId: student.studentId,
+            applicationNumber: student.applicationNumber,
+            courseName: student.courseName,
+            currentAllocation: assignment
+              ? `${assignment.groupName} · ${assignment.sectionName} · ${assignment.setName}`
+              : '',
+            validation: assignment ? 'warning' : 'ready',
+          });
+        }),
+        total,
+        page,
+        limit,
+      ),
+    );
+  }),
+);
+
+academicsRouter.post(
+  '/allocations/resolve-students',
+  asyncHandler(async (request, response) => {
+    const data = z
+      .object({ studentIds: z.array(z.string().trim().min(1)).min(1).max(5000) })
+      .parse(request.body);
+    const normalizedIds = [...new Set(data.studentIds.map((value) => value.toUpperCase()))];
+    const students = await db()
+      .collection('admissions')
+      .find({ studentId: { $in: normalizedIds }, status: 'approved', isActive: true })
+      .project({ _id: 1, studentName: 1, studentId: 1, applicationNumber: 1, courseName: 1 })
+      .limit(5000)
+      .toArray();
+    const found = new Set(students.map((student) => student.studentId));
+    response.json({
+      items: students.map((student) => serialize({ ...student, validation: 'ready' })),
+      unresolved: normalizedIds.filter((studentId) => !found.has(studentId)),
+    });
+  }),
+);
 
 academicsRouter.post(
   '/allocations/preview',

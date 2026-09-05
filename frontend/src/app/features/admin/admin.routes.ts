@@ -49,17 +49,35 @@ export const ADMIN_ROUTES: Routes = [
           ),
         data: { section },
       })),
+      {
+        path: 'academics/timetable-periods',
+        loadComponent: () =>
+          import('./academics/timetable-periods.component').then(
+            (component) => component.TimetablePeriodsComponent,
+          ),
+      },
+      {
+        path: 'academics/student-allocation',
+        loadComponent: () =>
+          import('./academics/student-allocation.component').then(
+            (component) => component.StudentAllocationComponent,
+          ),
+      },
+      {
+        path: 'academics/subject-assignment',
+        loadComponent: () =>
+          import('./academics/subject-assignment.component').then(
+            (component) => component.SubjectAssignmentComponent,
+          ),
+      },
       ...[
-        ['student-allocation', 'allocations'],
-        ['subject-assignment', 'subject-assignments'],
         ['timetable-masters', 'timetable-masters'],
         ['timetable-structures', 'timetable-structures'],
-        ['timetable-periods', 'timetable-periods'],
       ].map(([path, section]) => ({
         path: `academics/${path}`,
         loadComponent: () =>
-          import('./academics/academic-workspace.component').then(
-            (component) => component.AcademicWorkspaceComponent,
+          import('./academics/timetable-setup.component').then(
+            (component) => component.TimetableSetupComponent,
           ),
         data: { section },
       })),

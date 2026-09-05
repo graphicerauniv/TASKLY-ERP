@@ -116,6 +116,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
   {
     id: 'admissions',
     label: 'Admissions',
+    description: 'Create admission forms and manage applicant intake.',
     icon: 'admissions',
     activeWhen: [
       exact('/admin/admission/student'),
@@ -128,6 +129,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'new-admission',
         label: 'New admission',
+        description: 'Register a new student application',
         route: '/admin/admission/student',
         icon: 'createStudent',
         activeWhen: [exact('/admin/admission/student'), /^\/admin\/admissions\/[^/]+\/edit\/?$/],
@@ -135,6 +137,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'admission-forms',
         label: 'Forms',
+        description: 'Build and manage admission forms',
         route: '/admin/admissions/forms',
         icon: 'draft',
         activeWhen: [branch('/admin/admissions/forms'), branch('/admin/form-builder')],
@@ -144,6 +147,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
   {
     id: 'students',
     label: 'Students',
+    description: 'Review applications and manage the student lifecycle.',
     icon: 'students',
     activeWhen: [
       exact('/admin/admissions/applications'),
@@ -158,6 +162,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'all-student-applications',
         label: 'All applications',
+        description: 'Browse every submitted application',
         route: '/admin/admissions/applications',
         icon: 'records',
         activeWhen: [exact('/admin/admissions/applications')],
@@ -165,6 +170,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'student-drafts',
         label: 'Draft applications',
+        description: 'Continue incomplete applications',
         route: '/admin/admissions/unfilled',
         icon: 'draft',
         activeWhen: [exact('/admin/admissions/unfilled')],
@@ -172,6 +178,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'student-review-queue',
         label: 'Awaiting review',
+        description: 'Process applications needing approval',
         route: '/admin/admissions/not-approved',
         icon: 'approval',
         activeWhen: [exact('/admin/admissions/not-approved')],
@@ -179,6 +186,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'student-directory',
         label: 'Approved students',
+        description: 'Open the active student directory',
         route: '/admin/admissions/approved',
         icon: 'students',
         activeWhen: [
@@ -189,6 +197,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'student-promotions',
         label: 'Student promotions',
+        description: 'Move eligible students forward',
         route: '/admin/admissions/promotions',
         icon: 'calendar',
         activeWhen: [branch('/admin/admissions/promotions')],
@@ -196,6 +205,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'record-deletion',
         label: 'Record deletion',
+        description: 'Review and remove student records',
         route: '/admin/delete-admissions',
         icon: 'delete',
         activeWhen: [exact('/admin/delete-admissions')],
@@ -322,12 +332,14 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
   {
     id: 'finance',
     label: 'Finance',
+    description: 'Manage fees, payments, scholarships and publications.',
     icon: 'finance',
     activeWhen: [branch('/admin/fees'), branch('/admin/accounts')],
     children: [
       {
         id: 'accounts',
         label: 'Accounts & payments',
+        description: 'Track collections and payment activity',
         route: '/admin/accounts',
         icon: 'finance',
         activeWhen: [branch('/admin/accounts')],
@@ -335,6 +347,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'fee-progression',
         label: 'Fee progression',
+        description: 'Prepare fees for upcoming periods',
         route: '/admin/fees/progression',
         icon: 'calendar',
         activeWhen: [branch('/admin/fees/progression')],
@@ -342,6 +355,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'fee-schedules',
         label: 'Fee change & publication',
+        description: 'Schedule and publish fee changes',
         route: '/admin/fees/schedules',
         icon: 'calendar',
         activeWhen: [branch('/admin/fees/schedules')],
@@ -349,6 +363,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'scholarships',
         label: 'Scholarships',
+        description: 'Configure student discounts and awards',
         route: '/admin/fees/scholarships/view',
         icon: 'scholarship',
         activeWhen: [branch('/admin/fees/scholarships')],
@@ -356,6 +371,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'fee-configuration',
         label: 'Fee configuration',
+        description: 'Set up reusable fee structures',
         icon: 'fees',
         children: [
           {
@@ -393,12 +409,14 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
   {
     id: 'hostel',
     label: 'Hostel',
+    description: 'Manage hostel structure, rooms and student occupancy.',
     icon: 'hostel',
     activeWhen: [branch('/admin/master-data/hostel')],
     children: [
       {
         id: 'hostel-details',
         label: 'Hostel details',
+        description: 'Maintain hostel identity and facilities',
         route: '/admin/master-data/hostel/details',
         icon: 'building',
         activeWhen: [exact('/admin/master-data/hostel/details')],
@@ -406,6 +424,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'hostel-structure',
         label: 'Structure',
+        description: 'Organise blocks and floors',
         route: '/admin/master-data/hostel/structure',
         icon: 'structure',
         activeWhen: [exact('/admin/master-data/hostel/structure')],
@@ -413,6 +432,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'hostel-rooms',
         label: 'Rooms',
+        description: 'Create and manage hostel rooms',
         route: '/admin/master-data/hostel/rooms',
         icon: 'room',
         activeWhen: [exact('/admin/master-data/hostel/rooms')],
@@ -420,6 +440,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'hostel-capacity',
         label: 'Room capacity',
+        description: 'Configure beds and room limits',
         route: '/admin/master-data/hostel/capacity',
         icon: 'bed',
         activeWhen: [exact('/admin/master-data/hostel/capacity')],
@@ -427,6 +448,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'hostel-allocation',
         label: 'Allocations',
+        description: 'Assign students to available beds',
         route: '/admin/master-data/hostel/allocation',
         icon: 'students',
         activeWhen: [exact('/admin/master-data/hostel/allocation')],
@@ -434,6 +456,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'hostel-overview',
         label: 'Occupancy overview',
+        description: 'Monitor availability and occupancy',
         route: '/admin/master-data/hostel/overview',
         icon: 'records',
         activeWhen: [exact('/admin/master-data/hostel/overview')],
@@ -443,12 +466,14 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
   {
     id: 'settings',
     label: 'Settings',
+    description: 'Configure reusable academic and operational master data.',
     icon: 'settings',
     activeWhen: [/^\/admin\/master-data\/(?!hostel(?:\/|$))[^/]+(?:\/|$)/],
     children: [
       {
         id: 'academic-masters',
         label: 'Academic masters',
+        description: 'Sessions, institutions and programmes',
         icon: 'academic',
         children: [
           masterLink('academic', 'Academic sessions', 'academic'),
@@ -462,6 +487,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'student-masters',
         label: 'Student setup',
+        description: 'Student categories and fee types',
         icon: 'students',
         children: [
           masterLink('domicile', 'Domiciles', 'location'),
@@ -472,6 +498,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'location-masters',
         label: 'Locations',
+        description: 'Countries, states, districts and cities',
         icon: 'location',
         children: [
           masterLink('country', 'Countries', 'globe'),
@@ -483,6 +510,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'custom-masters',
         label: 'Custom masters',
+        description: 'Create organisation-specific lists',
         route: '/admin/master-data/custom/view',
         icon: 'database',
         activeWhen: [branch('/admin/master-data/custom')],

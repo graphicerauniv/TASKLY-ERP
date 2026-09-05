@@ -1,0 +1,357 @@
+<erp-admin-page
+  title="Configure periods"
+  description="Set timing and teaching type for each period in a structure."
+  variant="compact"
+  layout="collection"
+>
+  <button
+    page-actions
+    class="erp-button erp-button--primary"
+    type="button"
+    [disabled]="!scopedPeriods().length"
+    (click)="openPrimaryConfigure()"
+  >
+    <svg lucidePlus size="18"></svg>
+    Configure period
+  </button>
+
+  @if (error() && !drawer()) {
+    <div class="erp-alert erp-alert--danger">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success">{{ message() }}</div>
+  }
+
+  <section class="erp-period-scope">
+    <div>
+      <svg lucideCalendarDays size="21"></svg>
+      <span>Timetable</span>
+      <select
+        class="erp-control"
+        [ngModel]="timetableMasterId"
+        (ngModelChange)="changeMaster($event)"
+      >
+        <option value="">Select timetable</option>
+        @for (master of masters(); track master._id) {
+          <option [value]="master._id">{{ master.name }}</option>
+        }
+      </select>
+    </div>
+    <i></i>
+    <div>
+      <svg lucideLandmark size="21"></svg>
+      <span>Structure</span>
+      <select
+        class="erp-control"
+        [ngModel]="timetableStructureId"
+        (ngModelChange)="changeStructure($event)"
+      >
+        <option value="">Select structure</option>
+        @for (structure of structuresForMaster(); track structure._id) {
+          <option [value]="structure._id">{{ structure.name }}</option>
+        }
+      </select>
+    </div>
+  </section>
+
+  <section class="erp-card erp-table-shell erp-period-table">
+    <header class="erp-period-tools">
+      <nav aria-label="Period status filters">
+        <button type="button" [class.is-active]="filter() === 'all'" (click)="setFilter('all')">
+          All <b>{{ scopedPeriods().length }}</b>
+        </button>
+        <button
+          type="button"
+          [class.is-active]="filter() === 'configured'"
+          (click)="setFilter('configured')"
+        >
+          Configured <b class="is-success">{{ configuredCount() }}</b>
+        </button>
+        <button
+          type="button"
+          [class.is-active]="filter() === 'unconfigured'"
+          (click)="setFilter('unconfigured')"
+        >
+          Not configured <b>{{ unconfiguredCount() }}</b>
+        </button>
+      </nav>
+      <label class="erp-search-control">
+        <svg lucideSearch size="18"></svg>
+        <input
+          type="search"
+          [(ngModel)]="search"
+          placeholder="Search period"
+          (ngModelChange)="page.set(1)"
+        />
+      </label>
+      <button class="erp-button erp-button--secondary" type="button">
+        <svg lucideFilter size="17"></svg> Filters
+      </button>
+      <button class="erp-icon-button" type="button" aria-label="Refresh" (click)="load()">
+        <svg lucideRefreshCw size="18"></svg>
+      </button>
+    </header>
+
+    <div class="erp-table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Type</th>
+            <th>Start time</th>
+            <th>End time</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (period of pagedPeriods(); track period._id) {
+            <tr
+              [class.is-selected]="selected()?._id === period._id"
+              (dblclick)="openPeriod(period)"
+            >
+              <td>
+                <strong>{{ structureName() }} - Period {{ period.periodNumber }}</strong>
+              </td>
+              <td>
+                {{
+                  period.isConfigured ? (period.periodType === 'break' ? 'Break' : 'Lecture') : '—'
+                }}
+              </td>
+              <td>{{ period.startTime || '—' }}</td>
+              <td>{{ period.endTime || '—' }}</td>
+              <td>{{ period.durationMinutes ? period.durationMinutes + ' min' : '—' }}</td>
+              <td>
+                <span class="erp-period-status" [class.is-configured]="period.isConfigured">
+                  <i></i>{{ period.isConfigured ? 'Configured' : 'Not configured' }}
+                </span>
+              </td>
+              <td>
+                <button
+                  class="erp-icon-button"
+                  type="button"
+                  [attr.aria-label]="'Open Period ' + period.periodNumber"
+                  (click)="openPeriod(period)"
+                >
+                  <svg lucideEllipsisVertical size="18"></svg>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="erp-period-empty">
+                {{
+                  timetableStructureId
+                    ? 'No periods match the current search or filter.'
+                    : 'Select a timetable and structure to configure periods.'
+                }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="erp-timetable-pagination">
+      <span>
+        Showing {{ filteredPeriods().length ? (page() - 1) * pageSize() + 1 : 0 }}–{{
+          rangeEnd()
+        }}
+        of {{ filteredPeriods().length }}
+      </span>
+      <div>
+        <select
+          class="erp-control"
+          [ngModel]="pageSize()"
+          (ngModelChange)="pageSize.set(+$event); page.set(1)"
+        >
+          @for (size of pageSizeOptions; track size) {
+            <option [value]="size">{{ size }} / page</option>
+          }
+        </select>
+        <button
+          class="erp-icon-button"
+          type="button"
+          [disabled]="page() === 1"
+          (click)="page.set(page() - 1)"
+        >
+          <svg lucideChevronLeft size="17"></svg>
+        </button>
+        <b>{{ page() }}</b>
+        <button
+          class="erp-icon-button"
+          type="button"
+          [disabled]="page() === totalPages()"
+          (click)="page.set(page() + 1)"
+        >
+          <svg lucideChevronRight size="17"></svg>
+        </button>
+      </div>
+    </footer>
+  </section>
+</erp-admin-page>
+
+@if (drawer() && selected(); as period) {
+  <div class="erp-drawer-layer">
+    <button
+      class="erp-drawer-backdrop"
+      type="button"
+      aria-label="Close drawer"
+      (click)="closeDrawer()"
+    ></button>
+    <aside class="erp-drawer erp-period-drawer" role="dialog" aria-modal="true">
+      <header class="erp-drawer__header erp-period-drawer__header">
+        <span>
+          @if (drawer() === 'detail') {
+            <svg lucideClock3 size="25"></svg>
+          } @else {
+            <svg lucideCalendarDays size="25"></svg>
+          }
+        </span>
+        <div>
+          <h2>
+            {{
+              drawer() === 'detail'
+                ? 'Period ' + period.periodNumber
+                : 'Configure Period ' + period.periodNumber
+            }}
+            @if (drawer() === 'detail') {
+              <em>Configured</em>
+            }
+          </h2>
+          <p>{{ masterName() }} · {{ structureName() }}</p>
+        </div>
+        @if (drawer() === 'detail') {
+          <button class="erp-icon-button" type="button" aria-label="More actions">
+            <svg lucideEllipsisVertical size="18"></svg>
+          </button>
+        }
+        <button class="erp-icon-button" type="button" aria-label="Close" (click)="closeDrawer()">
+          <svg lucideX size="21"></svg>
+        </button>
+      </header>
+
+      @if (drawer() === 'configure') {
+        <div class="erp-drawer__body erp-period-form">
+          @if (error()) {
+            <div class="erp-alert erp-alert--danger">{{ error() }}</div>
+          }
+          <label>
+            <span>Period *</span>
+            <input class="erp-control" [value]="'Period ' + period.periodNumber" disabled />
+          </label>
+          <label>
+            <span>Period type *</span>
+            <select class="erp-control" [(ngModel)]="periodType">
+              <option value="lecture">Lecture</option>
+              <option value="break">Break</option>
+            </select>
+          </label>
+          <label>
+            <span>From time *</span>
+            <input class="erp-control" type="time" [(ngModel)]="startTime" />
+          </label>
+          <label>
+            <span>Duration *</span>
+            <select class="erp-control" [(ngModel)]="durationMinutes">
+              @for (duration of durationOptions; track duration) {
+                <option [value]="duration">{{ duration }} minutes</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>To time</span>
+            <input
+              class="erp-control"
+              [value]="
+                calculatedEndTime() === '—' ? 'Calculated automatically' : calculatedEndTime()
+              "
+              readonly
+            />
+          </label>
+
+          <section class="erp-period-preview">
+            <h3>Timing preview</h3>
+            <div>
+              <span
+                ><small>Start</small><strong>{{ startTime || '—' }}</strong></span
+              >
+              <svg lucideArrowRight size="18"></svg>
+              <span
+                ><small>Duration</small><strong>{{ durationMinutes }} min</strong></span
+              >
+              <svg lucideArrowRight size="18"></svg>
+              <span
+                ><small>End</small><strong>{{ calculatedEndTime() }}</strong></span
+              >
+            </div>
+            <p>
+              <svg lucideInfo size="17"></svg> End time is calculated from start time and duration.
+            </p>
+          </section>
+          <div class="erp-period-conflict-note">
+            <svg lucideClock3 size="17"></svg> Conflicts will be checked before saving.
+          </div>
+          <footer class="erp-drawer__footer">
+            <button class="erp-button erp-button--secondary" type="button" (click)="closeDrawer()">
+              Cancel
+            </button>
+            <button
+              class="erp-button erp-button--primary"
+              type="button"
+              [disabled]="!formValid() || saving()"
+              (click)="save()"
+            >
+              {{ saving() ? 'Saving…' : 'Save period configuration' }}
+            </button>
+          </footer>
+        </div>
+      } @else {
+        <div class="erp-drawer__body erp-period-detail">
+          <section class="erp-period-time-card">
+            <strong>{{ period.startTime }}</strong>
+            <svg lucideArrowRight size="27"></svg>
+            <strong>{{ period.endTime }}</strong>
+            <span>{{ period.durationMinutes }} minutes</span>
+          </section>
+          <section class="erp-timetable-detail-card">
+            <h3><svg lucideCalendarDays size="19"></svg> Period details</h3>
+            <dl>
+              <div>
+                <dt>Period type</dt>
+                <dd>{{ period.periodType === 'break' ? 'Break' : 'Lecture' }}</dd>
+              </div>
+              <div>
+                <dt>From time</dt>
+                <dd>{{ period.startTime }}</dd>
+              </div>
+              <div>
+                <dt>To time</dt>
+                <dd>{{ period.endTime }}</dd>
+              </div>
+              <div>
+                <dt>Duration</dt>
+                <dd>{{ period.durationMinutes }} minutes</dd>
+              </div>
+            </dl>
+          </section>
+          <div class="erp-period-success">
+            <svg lucideCheck size="18"></svg> No timing conflict detected.
+          </div>
+          <button class="erp-period-clear" type="button" (click)="clearSelected()">
+            <svg lucideTrash2 size="18"></svg> Clear configuration
+          </button>
+          <footer class="erp-drawer__footer">
+            <button class="erp-button erp-button--secondary" type="button" (click)="closeDrawer()">
+              Close
+            </button>
+            <button class="erp-button erp-button--primary" type="button" (click)="editSelected()">
+              <svg lucidePencil size="18"></svg> Edit configuration
+            </button>
+          </footer>
+        </div>
+      }
+    </aside>
+  </div>
+}

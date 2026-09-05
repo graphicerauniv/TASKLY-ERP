@@ -1,0 +1,427 @@
+<erp-admin-page
+  [title]="step() === 3 ? 'Review allocation' : 'Student allocation'"
+  [description]="
+    step() === 1
+      ? 'Define the academic scope to find and allocate students.'
+      : step() === 2
+        ? ''
+        : ''
+  "
+  variant="compact"
+  layout="collection"
+>
+  <div page-actions class="erp-workflow-head erp-workflow-head--allocation">
+    <nav class="erp-workflow-stepper" aria-label="Student allocation progress">
+      @for (item of [1, 2, 3]; track item) {
+        <div [class.is-active]="step() === item" [class.is-complete]="step() > item">
+          <span>
+            @if (step() > item) {
+              <svg lucideCheck size="14"></svg>
+            } @else {
+              {{ item }}
+            }
+          </span>
+          <strong>{{ item === 1 ? 'Scope' : item === 2 ? 'Students' : 'Review' }}</strong>
+        </div>
+      }
+    </nav>
+    @if (step() === 1) {
+      <label class="erp-button erp-button--secondary erp-file-button">
+        <svg lucideUpload size="17" aria-hidden="true"></svg> Import CSV
+        <input type="file" accept=".csv,text/csv" (change)="readCsv($event)" />
+      </label>
+      <button class="erp-button erp-button--secondary" type="button">
+        <svg lucideHistory size="17"></svg> Allocation history
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="erp-alert erp-alert--danger">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success">{{ message() }}</div>
+  }
+
+  @if (step() === 1) {
+    <section class="erp-card erp-workflow-scope-card">
+      <header>
+        <h2>Choose allocation scope</h2>
+      </header>
+      <div class="erp-workflow-scope-grid erp-workflow-scope-grid--five">
+        <label
+          ><span>Academic session *</span
+          ><select class="erp-control" [(ngModel)]="session" (ngModelChange)="selectSession()">
+            <option value="">Select session</option>
+            @for (item of sessions(); track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Semester *</span
+          ><select class="erp-control" [(ngModel)]="semester" (ngModelChange)="selectSession()">
+            @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
+              <option [value]="item">Semester {{ item }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Group *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="groupId"
+            (ngModelChange)="selectGroup()"
+            [disabled]="!session"
+          >
+            <option value="">{{ session ? 'Select group' : 'Select a session first' }}</option>
+            @for (item of availableGroups(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Section *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="sectionId"
+            (ngModelChange)="selectSection()"
+            [disabled]="!groupId"
+          >
+            <option value="">{{ groupId ? 'Select section' : 'Select a group first' }}</option>
+            @for (item of availableSections(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Set *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="setId"
+            (ngModelChange)="clearSelection()"
+            [disabled]="!sectionId"
+          >
+            <option value="">{{ sectionId ? 'Select set' : 'Select a section first' }}</option>
+            @for (item of availableSets(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+      </div>
+
+      <footer>
+        <span>{{
+          scopeValid()
+            ? 'Scope complete. Eligible students are ready to load.'
+            : 'Select all criteria to find eligible students.'
+        }}</span>
+        <button class="erp-button erp-button--ghost" type="button" (click)="downloadTemplate()">
+          <svg lucideDownload size="17"></svg> CSV template
+        </button>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="!scopeValid() || loading()"
+          (click)="openStudents()"
+        >
+          <svg lucideSearch size="17"></svg> Find students
+        </button>
+      </footer>
+    </section>
+
+    <section class="erp-workflow-empty-intro">
+      <erp-admin-illustration kind="addStudent" size="compact" />
+      <h2>Select a scope to load eligible students.</h2>
+    </section>
+  }
+
+  @if (step() === 2) {
+    <section class="erp-workflow-scope-summary">
+      <svg lucideGraduationCap size="19"></svg><strong>{{ session }}</strong
+      ><i></i> <span>Semester {{ semester }}</span
+      ><i></i><span>{{ groupName() }}</span
+      ><i></i> <span>{{ sectionName() }}</span
+      ><i></i><span>{{ setName() }}</span>
+      <button type="button" (click)="changeScope()">Change</button>
+    </section>
+
+    <section class="erp-allocation-student-tools">
+      <label class="erp-search-control"
+        ><svg lucideSearch size="18"></svg
+        ><input
+          type="search"
+          [(ngModel)]="search"
+          placeholder="Search name, student ID, application ID or programme"
+          (keyup.enter)="page.set(1); loadStudents()"
+      /></label>
+      <button
+        class="erp-button erp-button--secondary"
+        type="button"
+        (click)="page.set(1); loadStudents()"
+      >
+        <svg lucideFilter size="17"></svg> Apply
+      </button>
+      <button class="erp-button erp-button--secondary" type="button">
+        <svg lucideColumns3 size="17"></svg> Columns
+      </button>
+      <button
+        class="erp-icon-button"
+        type="button"
+        aria-label="Refresh students"
+        (click)="loadStudents()"
+      >
+        <svg lucideRefreshCw size="18"></svg>
+      </button>
+    </section>
+    <div class="erp-allocation-filter-line">
+      <span>Admission: Approved</span><span>Scope compatible</span
+      ><button type="button" (click)="search = ''; page.set(1); loadStudents()">Clear search</button
+      ><strong>{{ total() | number }} matching students</strong>
+    </div>
+
+    <section class="erp-card erp-table-shell erp-allocation-student-table">
+      <div class="erp-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  [checked]="allVisibleSelected()"
+                  (change)="toggleVisible()"
+                  aria-label="Select current page"
+                />
+              </th>
+              <th>Student</th>
+              <th>Student ID</th>
+              <th>Application ID</th>
+              <th>Programme</th>
+              <th>Current allocation</th>
+              <th>Admission status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of students(); track student._id) {
+              <tr [class.is-selected]="isSelected(student._id)">
+                <td>
+                  <input
+                    type="checkbox"
+                    [checked]="isSelected(student._id)"
+                    (change)="toggleStudent(student)"
+                    [attr.aria-label]="'Select ' + student.studentName"
+                  />
+                </td>
+                <td>
+                  <span class="erp-allocation-student"
+                    ><i><svg lucideUserRound size="16"></svg></i
+                    ><strong>{{ student.studentName || 'Student' }}</strong></span
+                  >
+                </td>
+                <td>{{ student.studentId || '—' }}</td>
+                <td>{{ student.applicationNumber || '—' }}</td>
+                <td>{{ student.courseName || '—' }}</td>
+                <td>{{ student.currentAllocation || 'Unassigned' }}</td>
+                <td>
+                  <span class="erp-status"><i></i>Approved</span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">
+                  <div class="erp-empty-panel">
+                    @if (loading()) {
+                      <span class="erp-spinner"></span>
+                      <h2>Loading eligible students…</h2>
+                    } @else {
+                      <erp-admin-illustration kind="noResults" size="compact" />
+                      <h2>No compatible students found</h2>
+                      <p>Change the scope or search to continue.</p>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (selectedCount()) {
+        <div class="erp-workflow-action-bar erp-workflow-action-bar--student">
+          <span
+            ><b>{{ selectedCount() }}</b>
+            {{ selectedCount() === 1 ? 'student' : 'students' }} selected</span
+          ><button type="button" (click)="clearSelection()">Clear selection</button
+          ><button
+            class="erp-button erp-button--primary"
+            type="button"
+            [disabled]="loading()"
+            (click)="review()"
+          >
+            Review {{ selectedCount() }} students <svg lucideArrowRight size="17"></svg>
+          </button>
+        </div>
+      }
+    </section>
+    <footer class="erp-allocation-pagination">
+      <span
+        >Showing {{ total() ? (page() - 1) * pageSize() + 1 : 0 }}–{{ rangeEnd() }} of
+        {{ total() | number }} results</span
+      >
+      <div>
+        <select
+          class="erp-control"
+          [ngModel]="pageSize()"
+          (ngModelChange)="pageSize.set(+$event); changePage(1)"
+        >
+          @for (size of pageSizeOptions; track size) {
+            <option [value]="size">{{ size }} / page</option>
+          }</select
+        ><button
+          class="erp-icon-button"
+          type="button"
+          [disabled]="page() === 1"
+          (click)="changePage(page() - 1)"
+        >
+          <svg lucideChevronLeft size="17"></svg>
+        </button>
+        @for (item of [page() - 1, page(), page() + 1]; track item) {
+          @if (item > 0 && item <= pages()) {
+            <button
+              class="erp-allocation-page-number"
+              [class.is-current]="item === page()"
+              type="button"
+              (click)="changePage(item)"
+            >
+              {{ item }}
+            </button>
+          }
+        }
+        <button
+          class="erp-icon-button"
+          type="button"
+          [disabled]="page() === pages()"
+          (click)="changePage(page() + 1)"
+        >
+          <svg lucideChevronRight size="17"></svg></button
+        ><small>Server-side pagination</small>
+      </div>
+    </footer>
+  }
+
+  @if (step() === 3) {
+    <section class="erp-workflow-scope-summary">
+      <svg lucideGraduationCap size="19"></svg><strong>{{ session }}</strong
+      ><i></i> <span>Semester {{ semester }}</span
+      ><i></i><span>{{ groupName() }}</span
+      ><i></i> <span>{{ sectionName() }}</span
+      ><i></i><span>{{ setName() }}</span>
+      <button type="button" (click)="step.set(2)">Edit selection</button>
+    </section>
+    <section class="erp-allocation-review-summary">
+      <svg lucideUsersRound size="19"></svg><strong>{{ reviewRows().length }} selected</strong>
+      <span>· {{ readyRows().length }} ready</span
+      ><span>· {{ warningRows().length }} warnings</span>
+    </section>
+    <section class="erp-card erp-table-shell erp-allocation-review-table">
+      <nav>
+        <button
+          [class.is-active]="activeReviewTab() === 'all'"
+          type="button"
+          (click)="activeReviewTab.set('all')"
+        >
+          All <b>{{ reviewRows().length }}</b>
+        </button>
+        <button
+          [class.is-active]="activeReviewTab() === 'ready'"
+          type="button"
+          (click)="activeReviewTab.set('ready')"
+        >
+          Ready <b>{{ readyRows().length }}</b></button
+        ><button
+          [class.is-active]="activeReviewTab() === 'warning'"
+          type="button"
+          (click)="activeReviewTab.set('warning')"
+        >
+          Warnings <b>{{ warningRows().length }}</b>
+        </button>
+      </nav>
+      <div class="erp-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Student ID</th>
+              <th>Programme</th>
+              <th>Current allocation</th>
+              <th>Validation</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of visibleReviewRows(); track student._id) {
+              <tr>
+                <td>
+                  <span class="erp-allocation-student"
+                    ><i><svg lucideUserRound size="16"></svg></i
+                    ><strong>{{ student.studentName }}</strong></span
+                  >
+                </td>
+                <td>{{ student.studentId }}</td>
+                <td>{{ student.courseName || '—' }}</td>
+                <td>{{ student.currentAllocation || 'Unassigned' }}</td>
+                <td>
+                  <span
+                    class="erp-status"
+                    [class.erp-status--warning]="
+                      !!student.error || student.validation === 'warning'
+                    "
+                    ><i></i>{{ student.error ? 'Review conflict' : 'Ready' }}</span
+                  >
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5">
+                  <div class="erp-empty-panel">
+                    <h2>No {{ activeReviewTab() }} records</h2>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    @if (warningRows().length) {
+      <div class="erp-allocation-warning">
+        <svg lucideAlertTriangle size="20"></svg
+        ><strong>{{ warningRows().length }} students need attention</strong
+        ><button type="button" (click)="activeReviewTab.set('warning')">Review warnings</button>
+      </div>
+    }
+    <label class="erp-allocation-confirm"
+      ><input
+        type="checkbox"
+        [ngModel]="confirmation()"
+        (ngModelChange)="confirmation.set($event)"
+      />
+      I have reviewed the target and validation results.</label
+    >
+    <footer class="erp-allocation-final-bar">
+      <strong>{{ readyRows().length }} ready · {{ warningRows().length }} require attention</strong>
+      <div>
+        <button class="erp-button erp-button--secondary" type="button" (click)="step.set(2)">
+          Back to students</button
+        ><button class="erp-button erp-button--secondary" type="button" (click)="saveDraft()">
+          Save draft</button
+        ><button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="!confirmation() || !readyRows().length || saving()"
+          (click)="assignReady()"
+        >
+          {{ saving() ? 'Assigning…' : 'Assign ' + readyRows().length + ' ready students' }}
+        </button>
+      </div>
+    </footer>
+  }
+</erp-admin-page>
