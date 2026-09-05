@@ -7,6 +7,13 @@
       aria-hidden="true"
       decoding="async"
     />
+    <img
+      class="admin-login-shell__mobile-art"
+      src="assets/images/auth/admin/admin-mobile-login-art.png"
+      alt=""
+      aria-hidden="true"
+      decoding="async"
+    />
 
     <header class="admin-login-shell__desktop-brand">
       <a routerLink="/login" aria-label="Graphic Era ERP admin login">
@@ -23,18 +30,16 @@
     <header class="admin-login-shell__mobile-brand">
       <a class="admin-login-shell__mobile-identity" routerLink="/login">
         <img
-          src="assets/images/brand/graphic-era-mark.png"
-          alt="Graphic Era University"
-          width="88"
-          height="88"
+          src="assets/images/brand/graphic-era-logo.png"
+          alt="Graphic Era deemed to be University, Dehradun"
+          width="438"
+          height="137"
           fetchpriority="high"
         />
         <span>GEU ERP</span>
       </a>
       <span class="admin-login-shell__admin-badge">Admin</span>
     </header>
-
-    <p class="admin-login-shell__console-label">Operations Console</p>
 
     <img
       class="admin-login-shell__building"
@@ -141,6 +146,7 @@
             <span class="admin-auth-form__spinner" aria-hidden="true"></span>
             Signing in…
           } @else {
+            <svg lucideShieldCheck [size]="20" [strokeWidth]="1.8" aria-hidden="true"></svg>
             Continue securely
           }
         </button>
@@ -153,5 +159,11 @@
         </div>
       </form>
     </section>
+    <div class="admin-login-shell__mobile-footer" role="status">
+      <span class="admin-login-shell__mobile-footer-dot" aria-hidden="true"></span>
+      <span>ERP services operational</span>
+      <i aria-hidden="true"></i>
+      <a href="mailto:support@geu.ac.in">Need help? Contact support</a>
+    </div>
   </section>
 </main>

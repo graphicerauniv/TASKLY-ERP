@@ -19,8 +19,8 @@
   --erp-sidebar-gradient-end: var(--erp-blue-700);
 
   /* Surfaces */
-  --erp-canvas: #f6f8fa;
-  --erp-canvas-soft: #f3f4f6;
+  --erp-canvas: #f7faff;
+  --erp-canvas-soft: #f2f7fd;
   --erp-surface: #ffffff;
   --erp-surface-raised: #ffffff;
   --erp-surface-overlay: #ffffff;
@@ -31,9 +31,9 @@
   --erp-surface-selected: #eaf4ff;
   --erp-surface-hover: #f3f4f6;
   --erp-surface-neutral: #eff1f3;
-  --erp-border-subtle: #e5e7eb;
-  --erp-border-default: #d0d7de;
-  --erp-border-strong: #afb8c1;
+  --erp-border-subtle: #e2ebf7;
+  --erp-border-default: #cbdcf1;
+  --erp-border-strong: #a9c3e4;
   --erp-focus-outline: #0969da;
   --erp-focus-ring: rgb(9 105 218 / 30%);
   --erp-focus-ring-width: 2px;
@@ -41,10 +41,10 @@
   --erp-backdrop: rgb(31 35 40 / 42%);
 
   /* Text */
-  --erp-text-heading: #1f2328;
-  --erp-text-strong: #24292f;
-  --erp-text-body: #3d444d;
-  --erp-text-muted: #59636e;
+  --erp-text-heading: #10224d;
+  --erp-text-strong: #172b55;
+  --erp-text-body: #35527d;
+  --erp-text-muted: #587098;
   --erp-text-light: #6e7781;
   --erp-text-disabled: #8c959f;
   --erp-text-link: #0969da;
@@ -139,8 +139,8 @@
   --erp-grid-gutter-mobile: 16px;
 
   /* Application shell */
-  --erp-sidebar-width: 280px;
-  --erp-sidebar-collapsed-width: 76px;
+  --erp-sidebar-width: 268px;
+  --erp-sidebar-collapsed-width: 64px;
   --erp-form-structure-width: 330px;
   --erp-builder-page-padding-x: 32px;
   --erp-builder-page-padding-y: 24px;
@@ -148,8 +148,8 @@
   --erp-builder-toolbar-height: 64px;
   --erp-builder-field-row-height: 76px;
   --erp-inspector-width: 360px;
-  --erp-sidebar-item-height: 44px;
-  --erp-sidebar-item-radius: 10px;
+  --erp-sidebar-item-height: 40px;
+  --erp-sidebar-item-radius: 8px;
   --erp-sidebar-inline-padding: 12px;
   --erp-sidebar-icon-column: 48px;
   --erp-sidebar-bg: linear-gradient(
@@ -159,8 +159,8 @@
   );
   --erp-sidebar-layer: var(--erp-surface-detail);
   --erp-sidebar-pattern: rgb(11 102 195 / 6%);
-  --erp-sidebar-glow: rgb(122 190 255 / 22%);
-  --erp-sidebar-panel-surface: rgb(255 255 255 / 56%);
+  --erp-sidebar-glow: rgb(122 190 255 / 14%);
+  --erp-sidebar-panel-surface: rgb(255 255 255 / 68%);
   --erp-sidebar-active-bg: var(--erp-surface-raised);
   --erp-sidebar-hover-bg: rgb(255 255 255 / 64%);
   --erp-sidebar-active-edge: var(--erp-blue-500);
@@ -170,9 +170,9 @@
   --erp-sidebar-text-muted: var(--erp-text-muted);
   --erp-sidebar-hover-light: var(--erp-surface-hover);
   --erp-sidebar-active-light: var(--erp-blue-500);
-  --erp-sidebar-panel-width: 360px;
-  --erp-sidebar-mobile-width: 304px;
-  --erp-header-height: 56px;
+  --erp-sidebar-panel-width: 292px;
+  --erp-sidebar-mobile-width: 292px;
+  --erp-header-height: 68px;
   --erp-header-bg: rgb(255 255 255 / 96%);
   --erp-header-border: var(--erp-border-default);
   --erp-header-padding-inline: 20px;
@@ -181,25 +181,26 @@
   --erp-admin-workspace-max-width: 1480px;
   --erp-admin-main-min-width: 0;
   --erp-admin-context-width: var(--erp-inspector-width);
-  --erp-admin-workspace-gap: 20px;
+  --erp-admin-workspace-gap: 24px;
   --erp-admin-section-gap: 24px;
   --erp-admin-page-header-gap: 16px;
   --erp-admin-sticky-top: calc(var(--erp-header-height) + 20px);
 
   /* Radius and elevation */
   --erp-radius-xs: 4px;
-  --erp-radius-control: 6px;
-  --erp-radius-compact: 8px;
+  --erp-radius-control: 8px;
+  --erp-radius-compact: 10px;
   --erp-radius-chip: 999px;
   --erp-radius-pill: 999px;
-  --erp-radius-card: 8px;
-  --erp-radius-overlay: 10px;
+  --erp-radius-card: 12px;
+  --erp-radius-overlay: 12px;
   --erp-radius-avatar: 999px;
   --erp-shadow-card: 0 1px 2px rgb(31 35 40 / 4%);
   --erp-shadow-enterprise-card: 0 1px 2px rgb(31 35 40 / 4%);
   --erp-shadow-card-hover: 0 1px 2px rgb(31 35 40 / 6%);
   --erp-shadow-header: 0 1px 0 var(--erp-header-border);
   --erp-shadow-sidebar: 2px 0 8px rgb(31 35 40 / 8%);
+  --erp-shadow-sidebar-flyout: 0 10px 28px rgb(31 35 40 / 14%);
   --erp-shadow-overlay: 0 8px 24px rgb(31 35 40 / 18%);
 
   /* Cards and overlays */
@@ -213,7 +214,7 @@
   --erp-kpi-orange-text: #c66c00;
   --erp-kpi-orange-bg: #fff3df;
   --erp-chart-card-min-height: 320px;
-  --erp-drawer-width: 420px;
+  --erp-drawer-width: 384px;
   --erp-modal-width: 560px;
   --erp-workflow-navigator-width: 280px;
   --erp-workflow-content-max-width: 1440px;

@@ -1,8 +1,36 @@
 <header class="erp-form-progress-header">
   <div class="erp-form-progress-header__heading">
-    <span>{{ eyebrow() }}</span>
+    @if (eyebrow()) {
+      <span>{{ eyebrow() }}</span>
+    }
     <h1>{{ title() }}</h1>
     <p>{{ description() }}</p>
   </div>
-  <span class="erp-form-progress-header__save" aria-live="polite">{{ saveStatus() }}</span>
+  <div class="erp-form-progress-header__tools">
+    <ng-content></ng-content>
+    <div class="erp-form-progress-header__progress">
+      <button
+        class="erp-form-progress-header__section-button"
+        type="button"
+        (click)="sectionsRequested.emit()"
+      >
+        <svg lucideSearch size="17" aria-hidden="true"></svg>
+        Section {{ currentSection() }} of {{ totalSections() }}
+      </button>
+      <span class="erp-form-progress-header__progress-label">
+        {{ progressLabel() || (progress() + '% complete') }}
+      </span>
+      <span
+        class="erp-form-progress-header__progress-track"
+        role="progressbar"
+        [attr.aria-valuenow]="boundedProgress()"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-label]="progressLabel() || 'Form completion'"
+      >
+        <span [style.width.%]="boundedProgress()"></span>
+      </span>
+      <strong>{{ boundedProgress() }}%</strong>
+    </div>
+  </div>
 </header>

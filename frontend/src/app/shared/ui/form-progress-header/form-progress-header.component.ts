@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { LucideSearch } from '@lucide/angular';
 
 @Component({
   selector: 'erp-form-progress-header',
+  imports: [LucideSearch],
   templateUrl: './form-progress-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -12,6 +14,7 @@ export class FormProgressHeaderComponent {
   readonly currentSection = input(1);
   readonly totalSections = input(1);
   readonly progress = input(0);
+  readonly progressLabel = input('');
   readonly saveStatus = input('Draft saved');
   readonly sectionsRequested = output<void>();
 

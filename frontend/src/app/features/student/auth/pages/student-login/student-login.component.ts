@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   LucideEye,
   LucideEyeOff,
@@ -15,6 +15,7 @@ import { StudentSessionService } from '../../../shared/services/student-session.
   selector: 'erp-student-login',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     LucideEye,
     LucideEyeOff,
     LucideLockKeyhole,

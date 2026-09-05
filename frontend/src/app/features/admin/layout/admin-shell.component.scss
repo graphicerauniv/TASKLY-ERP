@@ -1,6 +1,9 @@
 /* ERP-LOCAL-STYLE: Admin shell geometry, responsive composition, and navigation states are owned by this component. */
 :host {
   display: block;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
   min-width: 0;
 }
 
@@ -18,8 +21,10 @@ a {
 .admin-shell {
   display: grid;
   grid-template-columns: var(--erp-sidebar-width) minmax(0, 1fr);
-  grid-template-rows: var(--erp-header-height) minmax(calc(100dvh - var(--erp-header-height)), auto);
-  min-height: 100dvh;
+  grid-template-rows: var(--erp-header-height) minmax(0, 1fr);
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
   background: var(--erp-canvas);
   transition: grid-template-columns var(--erp-sidebar-expand-transition);
 }
@@ -49,10 +54,10 @@ a {
 }
 
 .admin-sidebar--desktop {
-  position: sticky;
+  position: fixed;
   z-index: var(--erp-z-sidebar);
-  top: 0;
-  grid-row: 1 / -1;
+  inset: 0 auto 0 0;
+  width: var(--erp-sidebar-width);
   height: 100dvh;
   overflow: visible;
   border-right: 1px solid var(--erp-sidebar-divider);
@@ -83,9 +88,9 @@ a {
 
 .admin-brand__mark {
   display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   place-items: center;
   padding: 2px;
   border: 1px solid var(--erp-sidebar-divider);
@@ -166,7 +171,7 @@ a {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: var(--erp-space-3) var(--erp-space-2);
+  padding: var(--erp-space-2);
   scrollbar-width: thin;
 }
 
@@ -179,7 +184,7 @@ a {
 }
 
 .admin-navigation__section + .admin-navigation__section {
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .admin-navigation__section,
@@ -213,19 +218,19 @@ a {
 .admin-navigation__item--section {
   min-height: var(--erp-sidebar-item-height);
   padding: 0 var(--erp-space-2);
-  font-size: var(--erp-font-size-sm);
+  font-size: var(--erp-font-size-xs);
   font-weight: var(--erp-weight-medium);
 }
 
 .admin-navigation__item--child {
-  min-height: 40px;
+  min-height: 36px;
   padding: 0 var(--erp-space-2);
   font-size: var(--erp-font-size-xs);
 }
 
 .admin-navigation__item--leaf {
-  min-height: 38px;
-  padding: 0 var(--erp-space-2) 0 var(--erp-space-6);
+  min-height: 34px;
+  padding: 0 var(--erp-space-2) 0 var(--erp-space-5);
   color: var(--erp-text-muted);
   font-size: var(--erp-font-size-xs);
 }
@@ -249,9 +254,9 @@ a {
 
 .admin-navigation__icon {
   display: inline-grid;
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
   place-items: center;
   border-radius: var(--erp-radius-control);
   background: transparent;
@@ -301,19 +306,19 @@ a {
   position: fixed;
   z-index: var(--erp-z-dropdown);
   left: calc(var(--erp-sidebar-width) + var(--erp-space-2));
-  width: min(19rem, calc(100vw - var(--erp-sidebar-width) - var(--erp-space-8)));
+  width: min(var(--erp-sidebar-panel-width), calc(100vw - var(--erp-sidebar-width) - var(--erp-space-8)));
   margin: 0;
-  padding: var(--erp-space-2) var(--erp-space-2) var(--erp-space-3);
+  padding: var(--erp-space-1);
   overflow-y: auto;
   overscroll-behavior: contain;
   border: 1px solid var(--erp-border-default);
-  border-radius: var(--erp-radius-overlay);
+  border-radius: var(--erp-radius-compact);
   background:
     linear-gradient(var(--erp-sidebar-pattern) 1px, transparent 1px),
     linear-gradient(90deg, var(--erp-sidebar-pattern) 1px, transparent 1px),
     var(--erp-surface-overlay);
   background-size: 24px 24px, 24px 24px, auto;
-  box-shadow: var(--erp-shadow-overlay);
+  box-shadow: var(--erp-shadow-sidebar-flyout);
   animation: admin-flyout-enter 150ms var(--erp-ease-enter);
   scrollbar-width: thin;
 }
@@ -328,7 +333,7 @@ a {
 }
 
 .admin-sidebar--desktop .admin-navigation__item--child {
-  min-height: 42px;
+  min-height: 36px;
   padding: 0 var(--erp-space-2);
 }
 
@@ -337,8 +342,8 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: var(--erp-space-3);
-  margin: calc(-1 * var(--erp-space-2)) calc(-1 * var(--erp-space-2)) var(--erp-space-2);
-  padding: var(--erp-space-3);
+  margin: calc(-1 * var(--erp-space-1)) calc(-1 * var(--erp-space-1)) var(--erp-space-1);
+  padding: var(--erp-space-2) var(--erp-space-3);
   border-bottom: 1px solid var(--erp-border-subtle);
   background: var(--erp-surface-detail-soft);
 }
@@ -389,13 +394,13 @@ a {
 }
 
 .admin-sidebar--desktop .admin-navigation__subgroup {
-  margin: var(--erp-space-1) 0 var(--erp-space-2) var(--erp-space-4);
-  padding: var(--erp-space-1) 0 var(--erp-space-1) var(--erp-space-2);
+  margin: 2px 0 var(--erp-space-1) var(--erp-space-4);
+  padding: 2px 0 2px var(--erp-space-2);
 }
 
 .admin-sidebar__footer {
   flex: 0 0 auto;
-  padding: var(--erp-space-2);
+  padding: var(--erp-space-1) var(--erp-space-2);
   border-top: 1px solid var(--erp-sidebar-divider);
   background: var(--erp-sidebar-panel-surface);
   backdrop-filter: blur(12px);
@@ -497,6 +502,33 @@ a {
   flex: 1;
 }
 
+.admin-header__status {
+  display: flex;
+  min-width: max-content;
+  align-items: center;
+  gap: var(--erp-space-2);
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-size-xs);
+  white-space: nowrap;
+}
+
+.admin-header__status > svg {
+  flex: 0 0 auto;
+  color: var(--erp-blue-700);
+}
+
+.admin-header__status-divider {
+  width: 1px;
+  height: 24px;
+  margin-inline: var(--erp-space-3);
+  background: var(--erp-border-subtle);
+}
+
+.admin-header__status .admin-icon-button {
+  flex: 0 0 32px;
+  color: var(--erp-blue-700);
+}
+
 .admin-breadcrumbs {
   min-width: 0;
 }
@@ -541,7 +573,14 @@ a {
 .admin-main {
   grid-column: 2;
   grid-row: 2;
-  min-height: calc(100dvh - var(--erp-header-height));
+  min-height: 0;
+  height: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-main:has(erp-dynamic-admission.embedded) {
+  overflow: hidden;
 }
 
 .admin-drawer-backdrop {
@@ -638,7 +677,7 @@ a {
 }
 
 .admin-shell--collapsed .admin-sidebar--desktop .admin-navigation__item--section {
-  width: 52px;
+  width: 44px;
   min-height: var(--erp-sidebar-item-height);
   justify-content: center;
   margin-inline: auto;
@@ -702,7 +741,7 @@ a {
 
 .admin-shell--collapsed .admin-sidebar--desktop:hover .admin-navigation__label,
 .admin-shell--collapsed .admin-sidebar--desktop:focus-within .admin-navigation__label {
-  max-width: 11rem;
+  max-width: 7.5rem;
   flex: 1;
   visibility: visible;
   opacity: 1;
@@ -817,6 +856,10 @@ a {
 
   .admin-header__context {
     display: block;
+  }
+
+  .admin-header__status {
+    display: none;
   }
 
   .admin-breadcrumbs li:not(.admin-breadcrumbs__current) {

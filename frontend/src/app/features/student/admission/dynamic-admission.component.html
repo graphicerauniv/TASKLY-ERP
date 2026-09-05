@@ -67,15 +67,35 @@
     </section>
   } @else if (form(); as current) {
     <erp-form-progress-header
-      [eyebrow]="embedded() ? 'New student admission' : 'Student admission'"
-      [title]="current.name"
-      [description]="current.description || 'Complete each section to submit the application.'"
+      [eyebrow]="embedded() ? '' : 'Student admission'"
+      [title]="embedded() ? 'New student admission' : current.name"
+      [description]="
+        embedded()
+          ? current.name
+          : current.description || 'Complete each section to submit the application.'
+      "
       [currentSection]="activeIndex() + 1"
       [totalSections]="current.sections.length"
       [progress]="progressPercent()"
+      [progressLabel]="
+        completedRequiredFields() + ' of ' + requiredFieldTotal() + ' required fields completed'
+      "
       [saveStatus]="saveStatusText()"
       (sectionsRequested)="requestSections()"
-    />
+    >
+      @if (embedded()) {
+        <erp-form-action-bar
+          [saveStatus]="saveStatusText()"
+          [showBack]="activeIndex() > 0 || reviewMode()"
+          [saving]="saving()"
+          [primaryLabel]="primaryActionLabel()"
+          [primaryDisabled]="reviewMode() && applicationMissingRequired() > 0"
+          (back)="backAction()"
+          (saveDraft)="save()"
+          (primary)="primaryAction()"
+        />
+      }
+    </erp-form-progress-header>
 
     <erp-admission-journey-rail
       [items]="sectionNavigationItems()"
@@ -231,16 +251,18 @@
       </div>
     }
 
-    <erp-form-action-bar
-      [saveStatus]="saveStatusText()"
-      [showBack]="activeIndex() > 0 || reviewMode()"
-      [saving]="saving()"
-      [primaryLabel]="primaryActionLabel()"
-      [primaryDisabled]="reviewMode() && applicationMissingRequired() > 0"
-      (back)="backAction()"
-      (saveDraft)="save()"
-      (primary)="primaryAction()"
-    />
+    @if (!embedded()) {
+      <erp-form-action-bar
+        [saveStatus]="saveStatusText()"
+        [showBack]="activeIndex() > 0 || reviewMode()"
+        [saving]="saving()"
+        [primaryLabel]="primaryActionLabel()"
+        [primaryDisabled]="reviewMode() && applicationMissingRequired() > 0"
+        (back)="backAction()"
+        (saveDraft)="save()"
+        (primary)="primaryAction()"
+      />
+    }
 
     <erp-mobile-section-navigator-sheet
       [open]="mobileNavigatorOpen()"

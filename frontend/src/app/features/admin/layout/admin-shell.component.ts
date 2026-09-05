@@ -17,6 +17,7 @@ import {
   LucideChevronDown,
   LucideChevronLeft,
   LucideChevronRight,
+  LucideCircleCheck,
   LucideDynamicIcon,
   LucideLifeBuoy,
   LucideLogOut,
@@ -46,6 +47,7 @@ import {
     LucideChevronDown,
     LucideChevronLeft,
     LucideChevronRight,
+    LucideCircleCheck,
     LucideDynamicIcon,
     LucideLifeBuoy,
     LucideLogOut,
@@ -65,13 +67,18 @@ export class AdminShellComponent {
   readonly navigation = ADMIN_NAVIGATION;
   readonly matchesAdminRoute = matchesAdminRoute;
   readonly currentUrl = signal(this.router.url);
-  readonly desktopCollapsed = signal(true);
+  readonly desktopCollapsed = signal(false);
   readonly mobileOpen = signal(false);
   readonly expandedSectionId = signal<string | null>(null);
   readonly expandedSubgroupId = signal<string | null>(null);
   readonly desktopFlyoutTop = signal(72);
   readonly desktopFlyoutMaxHeight = signal(480);
   readonly pageContext = signal(resolveAdminPageContext(this.router.url));
+  readonly headerSaveStatus = computed(() =>
+    /\/admission\/student|\/admissions\/[^/]+\/edit/.test(this.currentUrl())
+      ? 'Draft saved just now'
+      : 'Saved just now',
+  );
   readonly adminInitials = computed(() => {
     const name = this.auth.admin()?.name?.trim() || 'Administrator';
     return name

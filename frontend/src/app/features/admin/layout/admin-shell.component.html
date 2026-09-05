@@ -39,6 +39,15 @@
         </ol>
       </nav>
     </div>
+
+    <div class="admin-header__status" aria-live="polite">
+      <svg lucideCircleCheck size="20" aria-hidden="true"></svg>
+      <span>{{ headerSaveStatus() }}</span>
+      <span class="admin-header__status-divider" aria-hidden="true"></span>
+      <button class="admin-icon-button" type="button" aria-label="Open header options">
+        <svg lucideChevronDown size="18" aria-hidden="true"></svg>
+      </button>
+    </div>
   </header>
 
   <main id="admin-main" class="content admin-main" tabindex="-1">
