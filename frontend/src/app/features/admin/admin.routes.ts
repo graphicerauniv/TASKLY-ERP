@@ -249,7 +249,7 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'admissions/applications',
-        title: 'Applications',
+        title: 'All applications',
         loadComponent: () =>
           import('./admissions/admissions.component').then(
             (component) => component.AdmissionsComponent,
@@ -263,7 +263,7 @@ export const ADMIN_ROUTES: Routes = [
           ),
         data: {
           status: 'draft',
-          title: 'Applications',
+          title: 'Draft applications',
         },
       },
       {
@@ -274,7 +274,7 @@ export const ADMIN_ROUTES: Routes = [
           ),
         data: {
           status: 'pending_approval',
-          title: 'Applications',
+          title: 'Awaiting review',
         },
       },
       {
@@ -285,7 +285,7 @@ export const ADMIN_ROUTES: Routes = [
           ),
         data: {
           status: 'approved',
-          title: 'Applications',
+          title: 'Approved students',
         },
       },
       {

@@ -185,7 +185,21 @@ export class ApiService {
   deleteForm(id: string) {
     return this.http.delete<void>(`${API_BASE_URL}/forms/${id}`);
   }
-  admissions(options: { status?: string; search?: string; page?: number; limit?: number } = {}) {
+  admissions(
+    options: {
+      status?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+      application?: string;
+      studentId?: string;
+      studentName?: string;
+      university?: string;
+      branch?: string;
+      course?: string;
+      session?: string;
+    } = {},
+  ) {
     let params = new HttpParams();
     for (const [key, value] of Object.entries(options))
       if (value !== undefined && value !== '') params = params.set(key, String(value));

@@ -53,6 +53,22 @@ admissionsRouter.get(
         { academicSession: match },
       ];
     }
+    const fieldFilters = {
+      application: ['applicationNumber'],
+      studentId: ['studentId'],
+      studentName: ['studentName'],
+      university: ['universityName', 'collegeName'],
+      branch: ['branchName', 'departmentName'],
+      course: ['courseName'],
+      session: ['academicSession'],
+    };
+    for (const [queryKey, documentFields] of Object.entries(fieldFilters)) {
+      const value = String(request.query[queryKey] || '').trim();
+      if (!value) continue;
+      const match = { $regex: escapeRegex(value), $options: 'i' };
+      if (documentFields.length === 1) filter[documentFields[0]] = match;
+      else filter.$and = [...(filter.$and || []), { $or: documentFields.map((field) => ({ [field]: match })) }];
+    }
     const [items, total] = await Promise.all([
       db()
         .collection('admissions')

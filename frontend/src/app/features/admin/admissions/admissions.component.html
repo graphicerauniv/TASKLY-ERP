@@ -1,7 +1,6 @@
 <erp-admin-page
-  eyebrow="Admissions"
-  title="Applications"
-  description="Review, locate, and progress student applications from one operational workbench."
+  [title]="activeView().pageTitle"
+  [badge]="total()"
   variant="compact"
   layout="collection"
 >
@@ -35,53 +34,47 @@
     class="erp-card erp-table-shell applications-directory"
     aria-labelledby="applications-list-title"
   >
-    <header class="erp-table-toolbar applications-toolbar">
-      <div>
-        <h2 id="applications-list-title">
-          {{ activeView().label }}
-          <small>{{ total() }}</small>
-        </h2>
-        <p>
-          {{ activeView().description }}. Selection is limited to approved records on this page.
-        </p>
-      </div>
+    <header class="applications-command-bar">
+      <nav class="applications-tabs" aria-label="Application status views">
+        @for (savedView of savedViews; track savedView.id) {
+          <button
+            type="button"
+            [class.is-active]="view() === savedView.id"
+            [attr.aria-current]="view() === savedView.id ? 'page' : null"
+            (click)="setView(savedView.id)"
+          >
+            <span>{{ savedView.tabLabel }}</span>
+            <small>{{ viewTotal(savedView.id) }}</small>
+          </button>
+        }
+      </nav>
       <div class="applications-toolbar__controls">
-        <label class="applications-search">
+        <erp-filter-popover
+          label="Filters"
+          [fields]="filterFields"
+          [values]="appliedFilters()"
+          (filtersChange)="applyAdvancedFilters($event)"
+        />
+        <form class="applications-search" role="search" (ngSubmit)="searchRecords()">
           <span class="erp-sr-only">Search applications</span>
           <svg lucideSearch size="16" aria-hidden="true"></svg>
           <input
+            name="applicationSearch"
             type="search"
             [(ngModel)]="search"
-            placeholder="Name, student ID, programme, session"
-            (keyup.enter)="searchRecords()"
+            placeholder="Search by name, ID, programme, session…"
           />
           @if (search) {
             <button type="button" aria-label="Clear application search" (click)="clearSearch()">
               <svg lucideX size="14" aria-hidden="true"></svg>
             </button>
           }
-        </label>
-        <button
-          class="erp-button erp-button--secondary erp-button--compact"
-          type="button"
-          (click)="searchRecords()"
-        >
-          Search
-        </button>
-        <erp-filter-popover
-          label="Rows"
-          [options]="pageSizeFilterOptions"
-          [value]="pageSize.toString()"
-          [resetValue]="pageSizeOptions[1].toString()"
-          (valueChange)="changePageSizeFromFilter($any($event))"
+        </form>
+        <erp-column-visibility-popover
+          [options]="tableColumns"
+          [visible]="visibleColumns()"
+          (visibleChange)="updateVisibleColumns($event)"
         />
-        <button
-          class="erp-button erp-button--ghost erp-button--compact"
-          type="button"
-          (click)="resetFilters()"
-        >
-          Reset
-        </button>
       </div>
     </header>
 
@@ -110,10 +103,7 @@
     <div class="erp-table-shell__scroll">
       <table [attr.aria-busy]="loading()">
         <caption class="erp-sr-only">
-          {{
-            activeView().label
-          }}
-          application records
+          {{ activeView().pageTitle }} records
         </caption>
         <thead>
           <tr>
@@ -127,11 +117,21 @@
                 (change)="togglePage($any($event.target).checked)"
               />
             </th>
-            <th scope="col">Application</th>
-            <th scope="col">Applicant</th>
-            <th scope="col">Programme and intake</th>
-            <th scope="col">Stage</th>
-            <th scope="col">Last activity</th>
+            @if (columnVisible('application')) {
+              <th scope="col">Application ID</th>
+            }
+            @if (columnVisible('applicant')) {
+              <th scope="col">Applicant</th>
+            }
+            @if (columnVisible('programme')) {
+              <th scope="col">Programme &amp; intake</th>
+            }
+            @if (columnVisible('stage')) {
+              <th scope="col">Stage</th>
+            }
+            @if (columnVisible('activity')) {
+              <th scope="col">Last activity</th>
+            }
             <th class="erp-table-shell__actions" scope="col">Actions</th>
           </tr>
         </thead>
@@ -140,17 +140,27 @@
             @for (row of [1, 2, 3, 4, 5, 6]; track row) {
               <tr aria-hidden="true">
                 <td><span class="erp-skeleton applications-skeleton--check"></span></td>
-                <td><span class="erp-skeleton applications-skeleton--reference"></span></td>
-                <td><span class="erp-skeleton applications-skeleton--person"></span></td>
-                <td><span class="erp-skeleton applications-skeleton--programme"></span></td>
-                <td><span class="erp-skeleton applications-skeleton--status"></span></td>
-                <td><span class="erp-skeleton applications-skeleton--date"></span></td>
+                @if (columnVisible('application')) {
+                  <td><span class="erp-skeleton applications-skeleton--reference"></span></td>
+                }
+                @if (columnVisible('applicant')) {
+                  <td><span class="erp-skeleton applications-skeleton--person"></span></td>
+                }
+                @if (columnVisible('programme')) {
+                  <td><span class="erp-skeleton applications-skeleton--programme"></span></td>
+                }
+                @if (columnVisible('stage')) {
+                  <td><span class="erp-skeleton applications-skeleton--status"></span></td>
+                }
+                @if (columnVisible('activity')) {
+                  <td><span class="erp-skeleton applications-skeleton--date"></span></td>
+                }
                 <td><span class="erp-skeleton applications-skeleton--action"></span></td>
               </tr>
             }
           } @else if (listError()) {
             <tr>
-              <td colspan="7">
+              <td [attr.colspan]="visibleTableColumnCount()">
                 <div class="applications-state" role="alert">
                   <span class="erp-empty-panel__icon"
                     ><svg lucideCircleAlert size="20" aria-hidden="true"></svg
@@ -185,47 +195,53 @@
                     (change)="toggleStudent(item, $any($event.target).checked)"
                   />
                 </td>
-                <td class="applications-reference">
-                  <strong>{{ reference(item) }}</strong>
-                  <small>{{
-                    item.studentId ? 'Student ID assigned' : 'Application reference'
-                  }}</small>
-                </td>
-                <td>
-                  <button
-                    class="applications-applicant"
-                    type="button"
-                    (click)="openPreview(item, $event)"
-                  >
-                    <span class="applications-avatar">{{ initials(item) }}</span>
-                    <span>
-                      <strong>{{ item.studentName || 'Unnamed application' }}</strong>
-                      <small>{{
-                        item.studentTypeName || item.countryName || 'Applicant details pending'
-                      }}</small>
-                    </span>
-                  </button>
-                </td>
-                <td>
-                  <strong>{{ item.courseName || 'Programme not selected' }}</strong>
-                  <small>{{ item.academicSession || 'Academic session pending' }}</small>
-                </td>
-                <td>
-                  <span
-                    class="erp-status"
-                    [class.erp-status--draft]="item.status === 'draft'"
-                    [class.erp-status--warning]="
-                      item.status === 'pending_approval' || item.status === 'submitted'
-                    "
-                    >{{ statusLabel(item) }}</span
-                  >
-                </td>
-                <td class="applications-activity">
-                  <strong>{{ activityLabel(item) }}</strong>
-                  <small>{{
-                    item.approvedAt ? 'Approved' : item.submittedAt ? 'Submitted' : 'Created'
-                  }}</small>
-                </td>
+                @if (columnVisible('application')) {
+                  <td class="applications-reference">
+                    <strong>{{ reference(item) }}</strong>
+                    <small>{{ item.studentId ? 'Student ID assigned' : 'Reference' }}</small>
+                  </td>
+                }
+                @if (columnVisible('applicant')) {
+                  <td>
+                    <button
+                      class="applications-applicant"
+                      type="button"
+                      (click)="openPreview(item, $event)"
+                    >
+                      <span class="applications-avatar">{{ initials(item) }}</span>
+                      <span>
+                        <strong>{{ item.studentName || 'Unnamed application' }}</strong>
+                        <small>{{ item.studentTypeName || item.countryName || 'Applicant' }}</small>
+                      </span>
+                    </button>
+                  </td>
+                }
+                @if (columnVisible('programme')) {
+                  <td>
+                    <strong>{{ item.courseName || 'Programme not selected' }}</strong>
+                    <small>{{ item.academicSession || 'Academic session pending' }}</small>
+                  </td>
+                }
+                @if (columnVisible('stage')) {
+                  <td>
+                    <span
+                      class="erp-status"
+                      [class.erp-status--draft]="item.status === 'draft'"
+                      [class.erp-status--warning]="
+                        item.status === 'pending_approval' || item.status === 'submitted'
+                      "
+                      >{{ statusLabel(item) }}</span
+                    >
+                  </td>
+                }
+                @if (columnVisible('activity')) {
+                  <td class="applications-activity">
+                    <strong>{{ activityLabel(item) }}</strong>
+                    <small>{{
+                      item.approvedAt ? 'Approved' : item.submittedAt ? 'Submitted' : 'Created'
+                    }}</small>
+                  </td>
+                }
                 <td class="erp-table-shell__actions">
                   <erp-compact-action-menu
                     [items]="rowActions(item)"
@@ -235,7 +251,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="7">
+                <td [attr.colspan]="visibleTableColumnCount()">
                   <div class="applications-state">
                     <span class="erp-empty-panel__icon"
                       ><svg lucideInbox size="20" aria-hidden="true"></svg
@@ -269,10 +285,10 @@
     </div>
 
     <footer class="erp-pagination applications-pagination">
-      <span>Showing {{ firstResult() }}–{{ lastResult() }} of {{ total() }}</span>
+      <span>Showing {{ firstResult() }}–{{ lastResult() }} of {{ total() }} results</span>
       <div class="erp-pagination__pages">
         <label>
-          <span class="erp-sr-only">Rows per page</span>
+          <span class="applications-pagination__label">Rows per page</span>
           <select
             class="erp-control erp-pagination__size"
             [ngModel]="pageSize"
@@ -292,7 +308,19 @@
         >
           <svg lucideChevronLeft size="16" aria-hidden="true"></svg>
         </button>
-        <span class="applications-page-number">Page {{ page }} of {{ pages() }}</span>
+        @for (pageNumber of pageNumbers(); track pageNumber) {
+          <button
+            class="erp-pagination__button"
+            [class.erp-pagination__button--active]="pageNumber === page"
+            type="button"
+            [attr.aria-label]="'Page ' + pageNumber"
+            [attr.aria-current]="pageNumber === page ? 'page' : null"
+            [disabled]="loading()"
+            (click)="changePage(pageNumber)"
+          >
+            {{ pageNumber }}
+          </button>
+        }
         <button
           class="erp-pagination__button"
           type="button"

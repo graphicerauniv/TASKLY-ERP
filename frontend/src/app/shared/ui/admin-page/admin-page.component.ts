@@ -27,7 +27,12 @@ export type AdminPageLayout = 'default' | 'collection';
           @if (eyebrow() && variant() !== 'minimal') {
             <span class="erp-page-header__eyebrow">{{ eyebrow() }}</span>
           }
-          <h1>{{ title() }}</h1>
+          <div class="erp-page-header__title">
+            <h1>{{ title() }}</h1>
+            @if (badge() !== null && badge() !== '') {
+              <span class="erp-page-header__badge">{{ badge() }}</span>
+            }
+          </div>
           @if (description() && variant() !== 'minimal') {
             <p>{{ description() }}</p>
           }
@@ -48,6 +53,7 @@ export type AdminPageLayout = 'default' | 'collection';
 export class AdminPageComponent {
   readonly eyebrow = input('');
   readonly title = input.required<string>();
+  readonly badge = input<string | number | null>(null);
   readonly description = input('');
   readonly variant = input<AdminPageHeaderVariant>('minimal');
   readonly layout = input<AdminPageLayout>('default');

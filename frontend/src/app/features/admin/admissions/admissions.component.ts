@@ -23,17 +23,24 @@ import {
   LucideUserRound,
   LucideX,
 } from '@lucide/angular';
-import { Subscription, combineLatest } from 'rxjs';
+import { Subscription, catchError, combineLatest, forkJoin, map, of } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
 import { ERP_PAGINATION } from '../../../core/config/data-view.constants';
 import { Admission } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 import {
+  ColumnVisibilityOption,
+  ColumnVisibilityPopoverComponent,
+} from '../../../shared/ui/column-visibility-popover/column-visibility-popover.component';
+import {
   CompactActionItem,
   CompactActionMenuComponent,
 } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
-import { FilterPopoverComponent } from '../../../shared/ui/filter-popover/filter-popover.component';
+import {
+  FilterPopoverComponent,
+  FilterPopoverField,
+} from '../../../shared/ui/filter-popover/filter-popover.component';
 import {
   admissionCaptureStats,
   admissionDateLabel,
@@ -47,8 +54,10 @@ type WorkbenchView = 'all' | 'draft' | 'review' | 'approved';
 
 interface SavedView {
   id: WorkbenchView;
-  label: string;
+  tabLabel: string;
+  pageTitle: string;
   description: string;
+  route: string;
   status?: 'draft' | 'pending_approval' | 'approved';
 }
 
@@ -61,27 +70,53 @@ interface FeePeriodDraft {
 const SAVED_VIEWS: SavedView[] = [
   {
     id: 'all',
-    label: 'All applications',
+    tabLabel: 'All',
+    pageTitle: 'All applications',
     description: 'Every application stage',
+    route: '/admin/admissions/applications',
   },
   {
     id: 'draft',
-    label: 'Drafts',
+    tabLabel: 'Drafts',
+    pageTitle: 'Draft applications',
     description: 'Started but not submitted',
+    route: '/admin/admissions/unfilled',
     status: 'draft',
   },
   {
     id: 'review',
-    label: 'Awaiting review',
+    tabLabel: 'Awaiting review',
+    pageTitle: 'Awaiting review',
     description: 'Submitted for an admin decision',
+    route: '/admin/admissions/not-approved',
     status: 'pending_approval',
   },
   {
     id: 'approved',
-    label: 'Approved',
+    tabLabel: 'Approved',
+    pageTitle: 'Approved students',
     description: 'Activated student records',
+    route: '/admin/admissions/approved',
     status: 'approved',
   },
+];
+
+const TABLE_COLUMNS: readonly ColumnVisibilityOption[] = [
+  { id: 'application', label: 'Application ID' },
+  { id: 'applicant', label: 'Applicant' },
+  { id: 'programme', label: 'Programme & intake' },
+  { id: 'stage', label: 'Stage' },
+  { id: 'activity', label: 'Last activity' },
+];
+
+const FILTER_FIELDS: readonly FilterPopoverField[] = [
+  { id: 'application', label: 'Application ID', placeholder: 'e.g. APP-2026-0012' },
+  { id: 'studentId', label: 'Student ID', placeholder: 'e.g. STU-10482' },
+  { id: 'studentName', label: 'Student name', placeholder: 'Enter applicant name' },
+  { id: 'university', label: 'University / college', placeholder: 'Enter institution name' },
+  { id: 'branch', label: 'Branch / department', placeholder: 'Enter branch name' },
+  { id: 'course', label: 'Course', placeholder: 'Enter course name' },
+  { id: 'session', label: 'Academic session', placeholder: 'e.g. 2026-27' },
 ];
 
 @Component({
@@ -89,6 +124,7 @@ const SAVED_VIEWS: SavedView[] = [
   imports: [
     AdminPageComponent,
     CdkTrapFocus,
+    ColumnVisibilityPopoverComponent,
     CompactActionMenuComponent,
     ConfirmDialogComponent,
     FilterPopoverComponent,
@@ -130,8 +166,19 @@ export class AdmissionsComponent {
   readonly message = signal('');
   readonly total = signal(0);
   readonly pages = signal(1);
+  readonly viewTotals = signal<Record<WorkbenchView, number>>({
+    all: 0,
+    draft: 0,
+    review: 0,
+    approved: 0,
+  });
   readonly appliedSearch = signal('');
   readonly selectedStudentIds = signal<Set<string>>(new Set());
+  readonly tableColumns = TABLE_COLUMNS;
+  readonly filterFields = FILTER_FIELDS;
+  readonly appliedFilters = signal<Readonly<Record<string, string>>>({});
+  readonly visibleColumns = signal<readonly string[]>(TABLE_COLUMNS.map((column) => column.id));
+  readonly visibleTableColumnCount = computed(() => this.visibleColumns().length + 2);
 
   readonly previewOpen = signal(false);
   readonly preview = signal<Admission | null>(null);
@@ -148,10 +195,6 @@ export class AdmissionsComponent {
   readonly feeGenerationIds = signal<string[]>([]);
 
   readonly pageSizeOptions = ERP_PAGINATION.pageSizeOptions;
-  readonly pageSizeFilterOptions = ERP_PAGINATION.pageSizeOptions.map((option) => ({
-    label: `${option} rows`,
-    value: String(option),
-  }));
   readonly academicYearOptions = Array.from({ length: 10 }, (_, index) => index + 1);
   readonly semesterOptions = Array.from({ length: 20 }, (_, index) => index + 1);
   readonly eligibleOnPage = computed(() =>
@@ -175,6 +218,7 @@ export class AdmissionsComponent {
   confirmPassword = '';
 
   constructor() {
+    this.loadViewTotals();
     combineLatest([this.route.data, this.route.queryParamMap])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([data, params]) => {
@@ -184,6 +228,9 @@ export class AdmissionsComponent {
         this.appliedSearch.set(this.search);
         this.page = positiveInteger(params.get('page'), ERP_PAGINATION.defaultPage);
         this.pageSize = allowedPageSize(params.get('size'));
+        this.appliedFilters.set(
+          Object.fromEntries(FILTER_FIELDS.map((field) => [field.id, params.get(field.id) || ''])),
+        );
         this.clearSelection();
         this.closePreview(false);
         this.load();
@@ -191,7 +238,15 @@ export class AdmissionsComponent {
   }
 
   setView(view: WorkbenchView) {
-    this.updateUrl({ view, page: 1 });
+    const target = SAVED_VIEWS.find((savedView) => savedView.id === view) || SAVED_VIEWS[0];
+    this.message.set('');
+    this.actionError.set('');
+    void this.router.navigate([target.route], {
+      queryParams: {
+        q: this.appliedSearch() || null,
+        size: this.pageSize !== ERP_PAGINATION.defaultPageSize ? this.pageSize : null,
+      },
+    });
   }
 
   searchRecords() {
@@ -205,12 +260,27 @@ export class AdmissionsComponent {
 
   resetFilters() {
     this.search = '';
-    this.updateUrl({
-      view: 'all',
-      search: '',
-      page: ERP_PAGINATION.defaultPage,
-      pageSize: ERP_PAGINATION.defaultPageSize,
+    this.message.set('');
+    this.actionError.set('');
+    void this.router.navigate(['/admin/admissions/applications'], {
+      replaceUrl: true,
     });
+  }
+
+  applyAdvancedFilters(filters: Readonly<Record<string, string>>) {
+    this.updateUrl({ filters, page: 1 });
+  }
+
+  columnVisible(column: string) {
+    return this.visibleColumns().includes(column);
+  }
+
+  updateVisibleColumns(columns: readonly string[]) {
+    this.visibleColumns.set(columns);
+  }
+
+  viewTotal(view: WorkbenchView) {
+    return this.viewTotals()[view];
   }
 
   changePage(nextPage: number) {
@@ -220,10 +290,6 @@ export class AdmissionsComponent {
 
   changePageSize(nextPageSize: number) {
     this.updateUrl({ pageSize: Number(nextPageSize), page: 1 });
-  }
-
-  changePageSizeFromFilter(nextPageSize: string) {
-    this.changePageSize(Number(nextPageSize));
   }
 
   load() {
@@ -236,6 +302,7 @@ export class AdmissionsComponent {
         search: this.appliedSearch(),
         page: this.page,
         limit: this.pageSize,
+        ...this.appliedFilters(),
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -245,6 +312,10 @@ export class AdmissionsComponent {
             Object.fromEntries(items.map((item) => [item._id, feePeriodFromAdmission(item)])),
           );
           this.total.set(pagination.total);
+          this.viewTotals.update((totals) => ({
+            ...totals,
+            [this.view()]: pagination.total,
+          }));
           this.pages.set(Math.max(1, pagination.pages));
           this.page = pagination.page || this.page;
           this.loading.set(false);
@@ -664,10 +735,17 @@ export class AdmissionsComponent {
     return Math.min(this.page * this.pageSize, this.total());
   }
 
+  pageNumbers() {
+    const pageCount = this.pages();
+    if (pageCount <= 5) return Array.from({ length: pageCount }, (_, index) => index + 1);
+    const start = Math.max(1, Math.min(this.page - 2, pageCount - 4));
+    return Array.from({ length: 5 }, (_, index) => start + index);
+  }
+
   emptyTitle() {
     return this.appliedSearch()
       ? 'No matching applications'
-      : `No ${this.activeView().label.toLowerCase()}`;
+      : `No ${this.activeView().pageTitle.toLowerCase()}`;
   }
 
   emptyDescription() {
@@ -682,12 +760,14 @@ export class AdmissionsComponent {
       search: string;
       page: number;
       pageSize: number;
+      filters: Readonly<Record<string, string>>;
     }>,
   ) {
     const nextView = changes.view ?? this.view();
     const nextSearch = changes.search ?? this.search.trim();
     const nextPage = changes.page ?? this.page;
     const nextPageSize = changes.pageSize ?? this.pageSize;
+    const nextFilters = changes.filters ?? this.appliedFilters();
     this.message.set('');
     this.actionError.set('');
     const unchanged =
@@ -695,7 +775,10 @@ export class AdmissionsComponent {
       nextSearch === this.appliedSearch() &&
       nextPage === this.page &&
       nextPageSize === this.pageSize;
-    if (unchanged) {
+    const filtersUnchanged = FILTER_FIELDS.every(
+      (field) => (nextFilters[field.id] || '') === (this.appliedFilters()[field.id] || ''),
+    );
+    if (unchanged && filtersUnchanged) {
       this.load();
       return;
     }
@@ -706,9 +789,29 @@ export class AdmissionsComponent {
         q: nextSearch || null,
         page: nextPage > 1 ? nextPage : null,
         size: nextPageSize !== ERP_PAGINATION.defaultPageSize ? nextPageSize : null,
+        ...Object.fromEntries(
+          FILTER_FIELDS.map((field) => [field.id, nextFilters[field.id] || null]),
+        ),
       },
       replaceUrl: true,
     });
+  }
+
+  private loadViewTotals() {
+    const totalFor = (status?: 'draft' | 'pending_approval' | 'approved') =>
+      this.api.admissions({ status, page: 1, limit: 1 }).pipe(
+        map(({ pagination }) => pagination.total),
+        catchError(() => of(0)),
+      );
+
+    forkJoin({
+      all: totalFor(),
+      draft: totalFor('draft'),
+      review: totalFor('pending_approval'),
+      approved: totalFor('approved'),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((totals) => this.viewTotals.set(totals));
   }
 
   @HostListener('document:keydown.escape')

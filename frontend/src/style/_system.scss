@@ -1290,6 +1290,27 @@
   min-width: 0;
 }
 
+.erp-page-header__title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--erp-space-2);
+}
+
+.erp-page-header__badge {
+  display: inline-grid;
+  min-width: var(--erp-space-9);
+  min-height: var(--erp-space-5);
+  padding-inline: var(--erp-space-2);
+  place-items: center;
+  color: var(--erp-blue-700);
+  background: var(--erp-blue-50);
+  border-radius: var(--erp-radius-pill);
+  font-size: var(--erp-font-size-xs);
+  font-weight: var(--erp-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
 .erp-page-header__eyebrow {
   display: block;
   color: var(--erp-blue-600);

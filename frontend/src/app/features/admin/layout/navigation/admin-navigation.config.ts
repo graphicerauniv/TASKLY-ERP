@@ -465,7 +465,10 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
 
 const ADMIN_PAGE_TITLES: readonly { readonly pattern: RegExp; readonly title: string }[] = [
   { pattern: exact('/admin/admission/student'), title: 'New admission' },
-  { pattern: exact('/admin/admissions/applications'), title: 'Applications' },
+  { pattern: exact('/admin/admissions/applications'), title: 'All applications' },
+  { pattern: exact('/admin/admissions/unfilled'), title: 'Draft applications' },
+  { pattern: exact('/admin/admissions/not-approved'), title: 'Awaiting review' },
+  { pattern: exact('/admin/admissions/approved'), title: 'Approved students' },
   {
     pattern: /^\/admin\/admissions\/applications\/[^/]+\/?$/,
     title: 'Application record',

@@ -38,7 +38,7 @@
   z-index: calc(var(--erp-z-dropdown) + 1);
   top: calc(100% + var(--erp-space-2));
   right: 0;
-  width: min(260px, calc(100vw - 24px));
+  width: min(420px, calc(100vw - 24px));
   overflow: hidden;
   border: 1px solid var(--erp-border-default);
   border-radius: var(--erp-radius-overlay);
@@ -81,6 +81,60 @@
   display: grid;
   gap: var(--erp-space-1);
   padding: var(--erp-space-2);
+}
+
+.filter-popover__intro {
+  display: grid;
+  gap: var(--erp-space-1);
+  padding: var(--erp-space-4) var(--erp-space-4) var(--erp-space-2);
+}
+
+.filter-popover__intro strong,
+.filter-popover__fields label > span {
+  color: var(--erp-text-heading);
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.filter-popover__intro span {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-caption);
+}
+
+.filter-popover__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+  max-height: min(55vh, 420px);
+  overflow-y: auto;
+  padding: var(--erp-space-3) var(--erp-space-4) var(--erp-space-4);
+}
+
+.filter-popover__fields label {
+  display: grid;
+  gap: var(--erp-space-2);
+  min-width: 0;
+}
+
+.filter-popover__fields .erp-control {
+  width: 100%;
+}
+
+.filter-popover__footer-actions {
+  display: flex;
+  gap: var(--erp-space-2);
+}
+
+@media (max-width: 520px) {
+  .filter-popover__panel {
+    position: fixed;
+    inset: auto var(--erp-space-3) var(--erp-space-3);
+    width: auto;
+  }
+
+  .filter-popover__fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 .filter-popover__options button {
