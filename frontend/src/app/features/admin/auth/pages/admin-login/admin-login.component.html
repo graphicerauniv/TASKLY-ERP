@@ -7,14 +7,6 @@
       aria-hidden="true"
       decoding="async"
     />
-    <img
-      class="admin-login-shell__mobile-art"
-      src="assets/images/auth/admin/admin-mobile-login-art.png"
-      alt=""
-      aria-hidden="true"
-      decoding="async"
-    />
-
     <header class="admin-login-shell__desktop-brand">
       <a routerLink="/login" aria-label="Graphic Era ERP admin login">
         <img
@@ -27,8 +19,8 @@
       </a>
     </header>
 
-    <header class="admin-login-shell__mobile-brand">
-      <a class="admin-login-shell__mobile-identity" routerLink="/login">
+    <section class="erp-mobile-auth-hero" aria-label="Graphic Era University">
+      <a class="erp-mobile-auth-hero__brand" routerLink="/login">
         <img
           src="assets/images/brand/graphic-era-logo.png"
           alt="Graphic Era deemed to be University, Dehradun"
@@ -36,10 +28,15 @@
           height="137"
           fetchpriority="high"
         />
-        <span>GEU ERP</span>
       </a>
-      <span class="admin-login-shell__admin-badge">Admin</span>
-    </header>
+      <img
+        class="erp-mobile-auth-hero__art"
+        src="assets/images/auth/admin/graphic-era-building-mobile.webp"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+      />
+    </section>
 
     <img
       class="admin-login-shell__building"

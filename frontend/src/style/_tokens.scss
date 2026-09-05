@@ -411,6 +411,33 @@
   --erp-auth-bg-opacity: 0.34;
   --erp-auth-bg-size: max(1180px, 100vw) auto;
   --erp-auth-bg-position: center;
+  --erp-auth-mobile-blue: #087cf0;
+  --erp-auth-mobile-blue-strong: #0b75db;
+  --erp-auth-mobile-ink: #102b57;
+  --erp-auth-mobile-label: #35547f;
+  --erp-auth-mobile-muted: #7189a9;
+  --erp-auth-mobile-security: #6784aa;
+  --erp-auth-mobile-icon: #5f7da5;
+  --erp-auth-mobile-icon-muted: #5e7da4;
+  --erp-auth-mobile-placeholder: #7e96b6;
+  --erp-auth-mobile-border: #c8e0f7;
+  --erp-auth-mobile-background: #edf7ff;
+  --erp-auth-mobile-gradient-start: #e8f5ff;
+  --erp-auth-mobile-gradient-end: #f5fbff;
+  --erp-auth-mobile-surface: rgb(255 255 255 / 97%);
+  --erp-auth-mobile-surface-border: rgb(255 255 255 / 92%);
+  --erp-auth-mobile-control-surface: rgb(255 255 255 / 76%);
+  --erp-auth-mobile-control-inset: rgb(28 95 153 / 2%);
+  --erp-auth-mobile-card-shadow: 0 -10px 30px rgb(90 151 204 / 10%);
+  --erp-auth-mobile-button-shadow: 0 12px 22px rgb(8 123 239 / 20%);
+  --erp-auth-mobile-focus-shadow: 0 0 0 3px rgb(8 124 240 / 11%);
+  --erp-auth-mobile-frame-gap: clamp(10px, 3vw, 20px);
+  --erp-auth-mobile-frame-border-width: 4px;
+  --erp-auth-mobile-frame-radius: 24px;
+  --erp-auth-mobile-frame-shadow: 0 14px 34px rgb(29 73 112 / 12%);
+  --erp-auth-mobile-hero-height: clamp(240px, 38dvh, 330px);
+  --erp-auth-mobile-hero-height-short: 210px;
+  --erp-auth-mobile-hero-height-compact: 190px;
 
   /* Empty, error and refresh states */
   --erp-state-panel-min-height: 200px;
