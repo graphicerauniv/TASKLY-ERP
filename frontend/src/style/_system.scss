@@ -1233,6 +1233,82 @@
   display: none;
 }
 
+.erp-subject-pass-control {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(90px, 0.7fr);
+  align-items: end;
+  gap: var(--erp-space-2);
+}
+
+.erp-subject-pass-control .erp-academic-check--compact {
+  min-height: var(--erp-control-height);
+  padding-block: var(--erp-space-1);
+}
+
+.erp-subject-flags {
+  margin-top: var(--erp-space-2);
+}
+
+.erp-subject-visibility-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+}
+
+.erp-subject-visibility-option {
+  display: grid;
+  gap: var(--erp-space-2);
+}
+
+.erp-subject-visibility-option > label,
+.erp-subject-visibility-check {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: var(--erp-space-2);
+  margin: 0;
+  color: var(--erp-text-strong);
+  font-size: var(--erp-font-label);
+  font-weight: var(--erp-weight-semibold);
+}
+
+.erp-subject-visibility-option input[type='checkbox'],
+.erp-subject-visibility-check input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  accent-color: var(--erp-academic-accent);
+}
+
+.erp-subject-split-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--erp-space-3);
+  margin-top: var(--erp-space-3);
+}
+
+.erp-subject-split-card {
+  overflow: hidden;
+  border: 1px solid var(--erp-academic-border-soft);
+  border-radius: var(--erp-radius-control);
+  background: var(--erp-surface-overlay);
+  box-shadow: var(--erp-shadow-sm);
+}
+
+.erp-subject-split-card h4 {
+  padding: var(--erp-space-3);
+  margin: 0;
+  color: var(--erp-academic-accent);
+  background: var(--erp-academic-header-surface);
+  font-size: var(--erp-font-section-title);
+}
+
+.erp-subject-split-card > div {
+  display: grid;
+  gap: var(--erp-space-3);
+  padding: var(--erp-space-3);
+}
+
 .erp-academic-field-label {
   color: var(--erp-text-strong);
   font-size: var(--erp-font-label);
@@ -1339,7 +1415,9 @@
   .erp-academic-form-grid,
   .erp-academic-form-grid--linked,
   .erp-academic-form-grid--three,
-  .erp-academic-check-grid {
+  .erp-academic-check-grid,
+  .erp-subject-visibility-grid,
+  .erp-subject-split-grid {
     grid-template-columns: 1fr;
   }
 
@@ -4683,6 +4761,33 @@ erp-admin-login {
   color: #b42318;
   background: #fff3f2;
   font-size: 0.82rem;
+}
+
+.admin-auth-form__role-switch {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  padding: 4px;
+  margin: -10px 0 22px;
+  border: 1px solid #c9d8e7;
+  border-radius: 8px;
+  background: #eef5fb;
+}
+
+.admin-auth-form__role-switch button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  color: #58708e;
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-auth-form__role-switch button.is-active {
+  color: #075eaf;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(18 53 89 / 10%);
 }
 
 .admin-auth-form__options {

@@ -1,0 +1,68 @@
+<div class="student-fees-page" aria-label="Student attendance">
+  <header class="student-fees-heading">
+    <div class="student-fees-heading__copy">
+      <nav><span>Academics</span><b>/</b><strong>Attendance</strong></nav>
+      <h1>My Attendance</h1>
+      <p>Only lectures where faculty saved attendance are included.</p>
+    </div>
+  </header>
+  @if (loading()) {
+    <section class="student-fees-message"><strong>Loading attendance…</strong></section>
+  } @else if (error()) {
+    <section class="student-fees-message" role="alert">
+      <strong>{{ error() }}</strong>
+    </section>
+  } @else {
+    <section class="student-fee-ledger">
+      <header>
+        <div>
+          <h2>Overall Attendance</h2>
+          <p>
+            {{ overall().presentLectures }} present from {{ overall().totalLectures }} conducted
+            lectures
+          </p>
+        </div>
+        <strong>{{ overall().attendancePercentage }}%</strong>
+      </header>
+    </section>
+    <section class="student-fee-ledger">
+      <header>
+        <div><h2>Subjects</h2></div>
+      </header>
+      <div class="student-fee-ledger__table">
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Subject code</th>
+              <th>Faculty</th>
+              <th>Total lectures</th>
+              <th>Present</th>
+              <th>Absent</th>
+              <th>Attendance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (subject of subjects(); track subject.subjectId) {
+              <tr>
+                <td>{{ subject.subjectName }}</td>
+                <td>{{ subject.subjectCode || '—' }}</td>
+                <td>{{ subject.facultyNames.join(', ') || '—' }}</td>
+                <td>{{ subject.totalLectures }}</td>
+                <td>{{ subject.presentLectures }}</td>
+                <td>{{ subject.absentLectures }}</td>
+                <td>
+                  <strong>{{ subject.attendancePercentage }}%</strong>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">No attendance has been marked yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>

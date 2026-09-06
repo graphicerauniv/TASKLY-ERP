@@ -20,7 +20,6 @@ import {
   LucideClipboardList,
   LucideClock3,
   LucideColumns3,
-  LucideDatabase,
   LucideEye,
   LucideFileText,
   LucideFilter,
@@ -55,6 +54,20 @@ import {
 
 type ResourceSection = 'subjects' | 'faculties' | 'rooms';
 type ResourceRecord = AcademicSubject | AcademicFaculty | AcademicRoom;
+type SubjectSplitType =
+  | ''
+  | 'internal_external'
+  | 'internal_external_midterm'
+  | 'internal_external_practical'
+  | 'internal_external_midterm_practical';
+type MarkPartKey = 'internal' | 'external' | 'midTerm' | 'practical' | 'internalPractical';
+interface MarkSplitDraft {
+  key: MarkPartKey;
+  label: string;
+  maxMarks: number;
+  passMarksEnabled: boolean;
+  passMarks: number;
+}
 
 function apiMessage(error: unknown, fallback: string): string {
   if (typeof error === 'object' && error && 'error' in error) {
@@ -85,7 +98,6 @@ function apiMessage(error: unknown, fallback: string): string {
     LucideClipboardList,
     LucideClock3,
     LucideColumns3,
-    LucideDatabase,
     LucideEye,
     LucideFileText,
     LucideFilter,
@@ -143,14 +155,16 @@ export class AcademicResourcesComponent {
   roomType = 'classroom';
   capacity = 1;
   session = '';
-  semester = 1;
+  sessionId = '';
+  semester = 0;
   hindiName = '';
   levelId = '';
   courseIds: string[] = [];
   branchIds: string[] = [];
-  subjectType = 'theory';
-  subjectOption = 'required';
-  evaluationType = 'marks';
+  markType = '';
+  subjectType = '';
+  subjectOption = '';
+  evaluationType = '';
   credits = 0;
   subjectCounter = 0;
   lectureHours = 0;
@@ -158,6 +172,7 @@ export class AcademicResourcesComponent {
   labHours = 0;
   maxMarks = 0;
   passMarks = 0;
+  passMarksEnabled = false;
   internalMarks = 0;
   externalMarks = 0;
   midTermMarks = 0;
@@ -170,10 +185,19 @@ export class AcademicResourcesComponent {
   showAlternativeGrade = false;
   showAlternativeGradePoint = false;
   showAlternativeSubjectCredit = false;
+  alternativeGrade = '';
+  alternativeGradePoint = 0;
+  alternativeSubjectCredit = 0;
   hideInternalMarks = false;
   hideExternalMarks = false;
   hideMidTermMarks = false;
   hideTotalMarks = false;
+  hideExternalMarksToStudent = false;
+  hideTotalMarksToStudent = false;
+  splitType: SubjectSplitType = '';
+  splitCategory = '';
+  markSplits = createMarkSplits();
+  readonly semesterOptions = Array.from({ length: 20 }, (_, index) => index + 1);
 
   readonly rowActions: readonly CompactActionItem[] = [
     { id: 'edit', label: 'Edit', icon: 'edit' },
@@ -183,12 +207,10 @@ export class AcademicResourcesComponent {
   readonly subjectSections = computed<FormSectionNavigationItem[]>(() => {
     const current = this.subjectStep();
     return [
-      ['basic', 'Basic information', 'Identity and type'],
-      ['mapping', 'Academic mapping', 'Academic scope'],
-      ['load', 'Teaching load & credits', 'Credits and hours'],
-      ['marks', 'Evaluation & marks', 'Marks structure'],
-      ['permissions', 'Faculty permissions', 'Teaching controls'],
-      ['visibility', 'Student visibility', 'Result visibility'],
+      ['course', 'Course details', 'Academic mapping'],
+      ['subject', 'Subject details', 'Identity, load and permissions'],
+      ['visibility', 'Marks visibility', 'Result visibility'],
+      ['split', 'Subject split', 'Evaluation components'],
     ].map(([id, title, status], index) => ({
       id,
       index,
@@ -297,6 +319,65 @@ export class AcademicResourcesComponent {
 
   label(type: string, id: string): string {
     return this.master(type).find((item) => item._id === id)?.name || '';
+  }
+
+  singleDepartmentId(): string {
+    return this.departmentIds[0] || '';
+  }
+
+  singleCourseId(): string {
+    return this.courseIds[0] || '';
+  }
+
+  departmentOptions(): Array<MasterValue & { typeSlug: string }> {
+    return this.scopedMaster('department', this.collegeId ? [this.collegeId] : []);
+  }
+
+  levelOptions(): Array<MasterValue & { typeSlug: string }> {
+    return this.scopedMaster('level', this.singleDepartmentId() ? [this.singleDepartmentId()] : []);
+  }
+
+  courseOptions(): Array<MasterValue & { typeSlug: string }> {
+    return this.scopedMaster('course', this.levelId ? [this.levelId] : []);
+  }
+
+  selectUniversity(value: string): void {
+    this.universityId = value;
+    this.collegeId = '';
+    this.selectDepartment('');
+  }
+
+  selectCollege(value: string): void {
+    this.collegeId = value;
+    this.selectDepartment('');
+  }
+
+  selectDepartment(value: string): void {
+    this.departmentIds = value ? [value] : [];
+    this.levelId = '';
+    this.courseIds = [];
+  }
+
+  selectLevel(value: string): void {
+    this.levelId = value;
+    this.courseIds = [];
+  }
+
+  activeMarkSplits(): MarkSplitDraft[] {
+    const keys: Record<SubjectSplitType, MarkPartKey[]> = {
+      '': [],
+      internal_external: ['internal', 'external'],
+      internal_external_midterm: ['internal', 'external', 'midTerm'],
+      internal_external_practical: ['internal', 'external', 'practical', 'internalPractical'],
+      internal_external_midterm_practical: [
+        'internal',
+        'external',
+        'midTerm',
+        'practical',
+        'internalPractical',
+      ],
+    };
+    return keys[this.splitType].map((key) => this.markSplits[key]);
   }
 
   labels(type: string, ids: string[]): string[] {
@@ -414,11 +495,17 @@ export class AcademicResourcesComponent {
       visibility?: Record<string, boolean>;
     };
     this.session = item.academicSession;
+    this.sessionId =
+      item.academicSessionId ||
+      this.master('academic').find((value) => value.name === item.academicSession)?._id ||
+      '';
     this.semester = item.semester;
     this.hindiName = item.hindiName || '';
-    this.subjectType = item.subjectType;
-    this.subjectOption = item.subjectOption;
-    this.evaluationType = item.evaluationType;
+    this.levelId = item.levelId || '';
+    this.markType = item.markType || '';
+    this.subjectType = item.subjectType || '';
+    this.subjectOption = item.subjectOption || '';
+    this.evaluationType = item.evaluationType || '';
     this.credits = item.credits;
     this.departmentIds = [...(item.departmentIds || [])];
     this.courseIds = [...(item.courseIds || [])];
@@ -428,6 +515,7 @@ export class AcademicResourcesComponent {
     this.labHours = subject.labHours || 0;
     this.maxMarks = subject.maxMarks || 0;
     this.passMarks = subject.passMarks || 0;
+    this.passMarksEnabled = this.passMarks > 0;
     this.internalMarks = subject.internalMarks || 0;
     this.externalMarks = subject.externalMarks || 0;
     this.midTermMarks = subject.midTermMarks || 0;
@@ -442,10 +530,24 @@ export class AcademicResourcesComponent {
     this.showAlternativeGrade = Boolean(visibility['showAlternativeGrade']);
     this.showAlternativeGradePoint = Boolean(visibility['showAlternativeGradePoint']);
     this.showAlternativeSubjectCredit = Boolean(visibility['showAlternativeSubjectCredit']);
+    this.alternativeGrade = item.alternativeGrade || '';
+    this.alternativeGradePoint = item.alternativeGradePoint || 0;
+    this.alternativeSubjectCredit = item.alternativeSubjectCredit || 0;
     this.hideInternalMarks = Boolean(visibility['hideInternalMarks']);
     this.hideExternalMarks = Boolean(visibility['hideExternalMarks']);
     this.hideMidTermMarks = Boolean(visibility['hideMidTermMarks']);
     this.hideTotalMarks = Boolean(visibility['hideTotalMarks']);
+    this.hideExternalMarksToStudent = Boolean(visibility['hideExternalMarksToStudent']);
+    this.hideTotalMarksToStudent = Boolean(visibility['hideTotalMarksToStudent']);
+    this.splitType = (item.splitType as SubjectSplitType) || '';
+    this.splitCategory = item.splitCategory || '';
+    this.markSplits = createMarkSplits();
+    for (const part of item.markSplits || []) this.markSplits[part.key] = { ...part };
+    if (!item.markSplits?.length) {
+      this.markSplits.internal.maxMarks = subject.internalMarks || 0;
+      this.markSplits.external.maxMarks = subject.externalMarks || 0;
+      this.markSplits.midTerm.maxMarks = subject.midTermMarks || 0;
+    }
   }
 
   private editFaculty(item: AcademicFaculty): void {
@@ -476,12 +578,21 @@ export class AcademicResourcesComponent {
   }
 
   formValid(): boolean {
+    if (this.section() === 'subjects') return this.subjectMarksValid();
     if (!this.name.trim() || !this.code.trim()) return false;
-    if (this.section() === 'subjects')
-      return Boolean(this.session && this.universityId && this.collegeId);
     if (!this.universityId || !this.collegeId) return false;
     if (this.section() === 'faculties') return Boolean(this.email && this.departmentIds.length);
     return this.capacity > 0;
+  }
+
+  subjectMarksValid(): boolean {
+    if (this.passMarksEnabled && this.maxMarks > 0 && this.passMarks > this.maxMarks) return false;
+    const parts = this.activeMarkSplits();
+    if (parts.some((part) => part.passMarksEnabled && part.passMarks > part.maxMarks)) return false;
+    return (
+      this.maxMarks <= 0 ||
+      parts.reduce((sum, part) => sum + Number(part.maxMarks || 0), 0) <= this.maxMarks
+    );
   }
 
   nextSubjectStep(): void {
@@ -546,7 +657,8 @@ export class AcademicResourcesComponent {
       name: this.name.trim(),
       hindiName: this.hindiName,
       code: this.code.trim(),
-      academicSession: this.session,
+      academicSessionId: this.sessionId,
+      academicSession: this.label('academic', this.sessionId) || this.session,
       semester: Number(this.semester),
       ...institution,
       departmentIds: this.departmentIds,
@@ -555,6 +667,9 @@ export class AcademicResourcesComponent {
       courseNames: this.labels('course', this.courseIds),
       branchIds: this.branchIds,
       branchNames: this.labels('branch', this.branchIds),
+      levelId: this.levelId,
+      levelName: this.label('level', this.levelId),
+      markType: this.markType,
       subjectType: this.subjectType,
       subjectOption: this.subjectOption,
       evaluationType: this.evaluationType,
@@ -564,10 +679,24 @@ export class AcademicResourcesComponent {
       tutorialHours: Number(this.tutorialHours),
       labHours: Number(this.labHours),
       maxMarks: Number(this.maxMarks),
-      passMarks: Number(this.passMarks),
-      internalMarks: Number(this.internalMarks),
-      externalMarks: Number(this.externalMarks),
-      midTermMarks: Number(this.midTermMarks),
+      passMarks: this.passMarksEnabled ? Number(this.passMarks) : 0,
+      internalMarks: Number(this.markSplits.internal.maxMarks),
+      externalMarks: Number(this.markSplits.external.maxMarks),
+      midTermMarks: Number(this.markSplits.midTerm.maxMarks),
+      alternativeGrade: this.showAlternativeGrade ? this.alternativeGrade.trim() : '',
+      alternativeGradePoint: this.showAlternativeGradePoint
+        ? Number(this.alternativeGradePoint)
+        : 0,
+      alternativeSubjectCredit: this.showAlternativeSubjectCredit
+        ? Number(this.alternativeSubjectCredit)
+        : 0,
+      splitType: this.splitType,
+      splitCategory: this.splitCategory,
+      markSplits: this.activeMarkSplits().map((part) => ({
+        ...part,
+        maxMarks: Number(part.maxMarks),
+        passMarks: part.passMarksEnabled ? Number(part.passMarks) : 0,
+      })),
       flags: {
         isPaper: this.isPaper,
         isOpenElective: this.isOpenElective,
@@ -584,6 +713,8 @@ export class AcademicResourcesComponent {
         hideExternalMarks: this.hideExternalMarks,
         hideMidTermMarks: this.hideMidTermMarks,
         hideTotalMarks: this.hideTotalMarks,
+        hideExternalMarksToStudent: this.hideExternalMarksToStudent,
+        hideTotalMarksToStudent: this.hideTotalMarksToStudent,
       },
       isActive: true,
     };
@@ -612,14 +743,16 @@ export class AcademicResourcesComponent {
     this.roomType = 'classroom';
     this.capacity = 1;
     this.session = '';
-    this.semester = 1;
+    this.sessionId = '';
+    this.semester = 0;
     this.hindiName = '';
     this.levelId = '';
     this.courseIds = [];
     this.branchIds = [];
-    this.subjectType = 'theory';
-    this.subjectOption = 'required';
-    this.evaluationType = 'marks';
+    this.markType = '';
+    this.subjectType = '';
+    this.subjectOption = '';
+    this.evaluationType = '';
     this.credits = this.subjectCounter = this.lectureHours = this.tutorialHours = this.labHours = 0;
     this.maxMarks =
       this.passMarks =
@@ -631,11 +764,19 @@ export class AcademicResourcesComponent {
     this.allowMidMarksEntry = this.allowExternalMarksEntry = false;
     this.showAlternativeGrade = this.showAlternativeGradePoint = false;
     this.showAlternativeSubjectCredit = false;
+    this.alternativeGrade = '';
+    this.alternativeGradePoint = 0;
+    this.alternativeSubjectCredit = 0;
     this.hideInternalMarks =
       this.hideExternalMarks =
       this.hideMidTermMarks =
       this.hideTotalMarks =
         false;
+    this.hideExternalMarksToStudent = this.hideTotalMarksToStudent = false;
+    this.passMarksEnabled = false;
+    this.splitType = '';
+    this.splitCategory = '';
+    this.markSplits = createMarkSplits();
   }
 
   @HostListener('document:keydown.escape')
@@ -645,4 +786,44 @@ export class AcademicResourcesComponent {
     this.filterOpen.set(false);
     this.columnsOpen.set(false);
   }
+}
+
+function createMarkSplits(): Record<MarkPartKey, MarkSplitDraft> {
+  return {
+    internal: {
+      key: 'internal',
+      label: 'Internal Marks',
+      maxMarks: 0,
+      passMarksEnabled: false,
+      passMarks: 0,
+    },
+    external: {
+      key: 'external',
+      label: 'External Marks',
+      maxMarks: 0,
+      passMarksEnabled: false,
+      passMarks: 0,
+    },
+    midTerm: {
+      key: 'midTerm',
+      label: 'Mid-Term Marks',
+      maxMarks: 0,
+      passMarksEnabled: false,
+      passMarks: 0,
+    },
+    practical: {
+      key: 'practical',
+      label: 'Practical Marks',
+      maxMarks: 0,
+      passMarksEnabled: false,
+      passMarks: 0,
+    },
+    internalPractical: {
+      key: 'internalPractical',
+      label: 'Internal Practical Marks',
+      maxMarks: 0,
+      passMarksEnabled: false,
+      passMarks: 0,
+    },
+  };
 }

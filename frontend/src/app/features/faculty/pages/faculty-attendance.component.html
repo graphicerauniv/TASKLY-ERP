@@ -1,0 +1,99 @@
+<section class="faculty-attendance-page">
+  <header class="faculty-attendance-heading">
+    <div>
+      <p>Faculty portal</p>
+      <h1>Attendance</h1>
+      <span>Open a scheduled class and mark its combined student roster.</span>
+    </div>
+    <label
+      ><span>Attendance date</span
+      ><input class="erp-control" type="date" [(ngModel)]="date" (ngModelChange)="loadClasses()"
+    /></label>
+  </header>
+  @if (error()) {
+    <div class="erp-alert erp-alert--error">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success">{{ message() }}</div>
+  }
+  @if (!mapped()) {
+    <div class="faculty-attendance-empty">
+      <h2>Faculty timetable mapping required</h2>
+      <p>Your Academic Faculty code must match your Employee ID.</p>
+    </div>
+  } @else if (!selectedClass()) {
+    <div class="faculty-class-list">
+      @for (item of classes(); track item._id) {
+        <button type="button" (click)="openClass(item)">
+          <span
+            ><strong>{{ item.subjectName }}</strong
+            ><small
+              >{{ item.subjectCode }} · {{ item.groupName }} / {{ item.sectionName }}</small
+            ></span
+          >
+          <span
+            ><strong>{{ item.startTime }}–{{ item.endTime }}</strong
+            ><small
+              >{{ item.rosterCount }} students ·
+              {{ item.attendanceStatus === 'saved' ? 'Attendance saved' : 'Not marked' }}</small
+            ></span
+          >
+        </button>
+      } @empty {
+        <div class="faculty-attendance-empty">
+          <h2>No classes on this date</h2>
+          <p>Classes appear after both a subject and faculty are assigned in the timetable.</p>
+        </div>
+      }
+    </div>
+  } @else {
+    <section class="faculty-roster">
+      <header>
+        <div>
+          <button type="button" (click)="selectedClass.set(null)">← Classes</button>
+          <h2>{{ selectedClass()?.subjectName }}</h2>
+          <p>{{ selectedClass()?.groupName }} · {{ selectedClass()?.sectionName }}</p>
+        </div>
+        <div>
+          <button type="button" (click)="setAll('present')">Mark all present</button
+          ><button type="button" (click)="setAll('absent')">Mark all absent</button>
+        </div>
+      </header>
+      <div class="faculty-roster__table">
+        <table>
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Student</th>
+              <th>Attendance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of students(); track student.admissionId) {
+              <tr>
+                <td>{{ student.studentId }}</td>
+                <td>{{ student.studentName }}</td>
+                <td>
+                  <select class="erp-control" [(ngModel)]="student.status">
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                  </select>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="saving() || !students().length"
+          (click)="save()"
+        >
+          {{ saving() ? 'Saving…' : 'Save attendance' }}
+        </button>
+      </footer>
+    </section>
+  }
+</section>

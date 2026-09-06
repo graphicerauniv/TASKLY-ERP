@@ -115,6 +115,7 @@ export interface FormSubmission {
   formVersion: number;
   purpose: 'admission' | 'faculty' | 'employee' | 'general';
   applicationCode?: string | null;
+  employeeId?: string | null;
   navigationSectionId?: string;
   navigationSectionName?: string;
   databaseSectionId?: string;
@@ -125,6 +126,13 @@ export interface FormSubmission {
   repeatableResponses: Record<string, Record<string, unknown>[]>;
   submittedAt: string;
   updatedAt?: string;
+}
+export interface FacultySession {
+  id: string;
+  employeeId: string;
+  name: string;
+  mustChangePassword: boolean;
+  formName?: string;
 }
 export interface Admission {
   _id: string;
@@ -210,23 +218,54 @@ export interface AcademicSubject {
   name: string;
   hindiName?: string;
   code: string;
+  academicSessionId?: string;
   academicSession: string;
   semester: number;
+  universityId?: string;
+  universityName?: string;
+  collegeId?: string;
+  collegeName?: string;
+  levelId?: string;
+  levelName?: string;
+  markType?: string;
   subjectType: string;
   subjectOption: string;
   evaluationType: string;
   credits: number;
+  subjectCounter?: number;
+  lectureHours?: number;
+  tutorialHours?: number;
+  labHours?: number;
+  maxMarks?: number;
+  passMarks?: number;
+  alternativeGrade?: string;
+  alternativeGradePoint?: number;
+  alternativeSubjectCredit?: number;
+  splitType?: string;
+  splitCategory?: string;
+  markSplits?: AcademicSubjectMarkSplit[];
+  flags?: Record<string, boolean>;
+  visibility?: Record<string, boolean>;
   departmentIds: string[];
   departmentNames: string[];
   courseIds: string[];
   courseNames: string[];
   isActive: boolean;
 }
+export interface AcademicSubjectMarkSplit {
+  key: 'internal' | 'external' | 'midTerm' | 'practical' | 'internalPractical';
+  label: string;
+  maxMarks: number;
+  passMarksEnabled: boolean;
+  passMarks: number;
+}
 export interface AcademicFaculty {
   _id: string;
   name: string;
   code: string;
   email: string;
+  universityId?: string;
+  collegeId?: string;
   departmentIds: string[];
   subjectIds: string[];
   weeklyLimit: number;
@@ -285,12 +324,16 @@ export interface AcademicTimetableEntry {
   timetablePeriodId: string;
   timetablePeriodIds?: string[];
   groupId: string;
+  groupIds?: string[];
   groupName: string;
   sectionId: string;
+  sectionIds?: string[];
   sectionName: string;
   setIds: string[];
+  audiences?: TimetableAudience[];
   subjectId: string;
   subjectName: string;
+  subjectCode?: string;
   facultyId: string;
   facultyName: string;
   roomId: string;
@@ -301,6 +344,32 @@ export interface AcademicTimetableEntry {
   classType: string;
   status?: 'draft' | 'published';
   isActive: boolean;
+}
+export interface TimetableAudience {
+  groupId: string;
+  sectionIds: string[];
+  setIds: string[];
+}
+export interface FacultyAttendanceClass extends AcademicTimetableEntry {
+  rosterCount: number;
+  attendanceStatus: 'not_marked' | 'saved';
+  attendanceSessionId?: string | null;
+}
+export interface AttendanceStudent {
+  admissionId: string;
+  studentId: string;
+  studentName: string;
+  status: 'present' | 'absent';
+}
+export interface StudentAttendanceSubject {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  facultyNames: string[];
+  totalLectures: number;
+  presentLectures: number;
+  absentLectures: number;
+  attendancePercentage: number;
 }
 export interface AcademicAllocationInput {
   studentAdmissionId: string;

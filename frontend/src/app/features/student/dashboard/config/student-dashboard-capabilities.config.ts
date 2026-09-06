@@ -11,14 +11,14 @@ export const STUDENT_DASHBOARD_CAPABILITIES = Object.freeze({
     reason: 'Authenticated student identity is returned by the existing login response.',
   },
   schedule: {
-    endpoint: null,
-    available: false,
-    reason: 'No student-authorized timetable or schedule endpoint exists.',
+    endpoint: '/api/v1/student-academics/timetable',
+    available: true,
+    reason: 'The student-authorized timetable endpoint provides the current weekly schedule.',
   },
   attendance: {
-    endpoint: null,
-    available: false,
-    reason: 'No student-authorized attendance endpoint exists.',
+    endpoint: '/api/v1/student-attendance',
+    available: true,
+    reason: 'The student-authorized attendance endpoint provides subject and overall totals.',
   },
   academics: {
     endpoint: null,

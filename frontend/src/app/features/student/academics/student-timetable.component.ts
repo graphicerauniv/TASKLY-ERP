@@ -6,6 +6,7 @@ import {
   TimetablePeriod,
   TimetableStructure,
 } from '../../../core/models';
+import { StudentSessionService } from '../shared/services/student-session.service';
 
 @Component({
   selector: 'erp-student-timetable',
@@ -15,6 +16,7 @@ import {
 })
 export class StudentTimetableComponent {
   private readonly api = inject(ApiService);
+  private readonly session = inject(StudentSessionService);
   readonly items = signal<AcademicTimetableEntry[]>([]);
   readonly subjects = signal<AcademicSubject[]>([]);
   readonly structure = signal<TimetableStructure | null>(null);
@@ -23,7 +25,7 @@ export class StudentTimetableComponent {
   readonly error = signal('');
   readonly days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   constructor() {
-    this.api.studentTimetable().subscribe({
+    this.api.studentTimetable(this.session.token()).subscribe({
       next: (result) => {
         this.items.set(result.items);
         this.subjects.set(result.subjects || []);

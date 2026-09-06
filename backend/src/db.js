@@ -6,8 +6,8 @@ import { syncActiveStudent } from './services/active-student.js';
 import { syncAdmissionIdentity } from './services/admission-identity.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-05-v20';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-05-v20';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-06-v23';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-06-v23';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -81,6 +81,7 @@ export function serialize(document) {
 
 async function ensureIndexes(databaseInstance) {
   await migrateFormDestinations(databaseInstance);
+  await migrateFacultyAccounts(databaseInstance);
   await migrateActiveStudents(databaseInstance);
   await migrateHostelFloors(databaseInstance);
   await migrateFeePeriods(databaseInstance);
@@ -306,6 +307,22 @@ async function ensureIndexes(databaseInstance) {
       ),
     () =>
       databaseInstance
+        .collection('attendanceSessions')
+        .createIndex({ timetableEntryId: 1, date: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('attendanceRecords')
+        .createIndex({ timetableEntryId: 1, date: 1, studentAdmissionId: 1 }, { unique: true }),
+    () =>
+      databaseInstance.collection('attendanceRecords').createIndex({
+        studentAdmissionId: 1,
+        academicSession: 1,
+        semester: 1,
+        date: -1,
+        subjectId: 1,
+      }),
+    () =>
+      databaseInstance
         .collection('forms')
         .createIndex({ purpose: 1, status: 1, isActive: 1, updatedAt: -1 }),
     () =>
@@ -316,6 +333,10 @@ async function ensureIndexes(databaseInstance) {
       databaseInstance
         .collection('facultyApplications')
         .createIndex({ applicationCode: 1 }, { unique: true, sparse: true }),
+    () =>
+      databaseInstance
+        .collection('facultyApplications')
+        .createIndex({ employeeId: 1 }, { unique: true, sparse: true }),
     () => databaseInstance.collection('facultyApplications').createIndex({ databaseSectionId: 1 }),
     () =>
       databaseInstance
@@ -337,6 +358,70 @@ async function ensureIndexes(databaseInstance) {
     () => databaseInstance.collection('formSubmissions').createIndex({ databaseSectionId: 1 }),
   ];
   for (const operation of indexOperations) await operation();
+}
+
+async function migrateFacultyAccounts(databaseInstance) {
+  const facultyRecords = await databaseInstance
+    .collection('facultyApplications')
+    .find({})
+    .project({
+      applicationCode: 1,
+      employeeId: 1,
+      mustChangePassword: 1,
+      isActive: 1,
+      formSnapshot: 1,
+      responses: 1,
+    })
+    .toArray();
+  for (const faculty of facultyRecords) {
+    if (!faculty.applicationCode) continue;
+    await databaseInstance.collection('facultyApplications').updateOne(
+      { _id: faculty._id },
+      {
+        $set: {
+          employeeId: faculty.employeeId || faculty.applicationCode,
+          mustChangePassword: faculty.mustChangePassword !== false,
+          isActive: faculty.isActive !== false,
+        },
+      },
+    );
+    const employeeId = faculty.employeeId || faculty.applicationCode;
+    const existingAcademicFaculty = await databaseInstance
+      .collection('faculties')
+      .findOne({ code: employeeId });
+    if (!existingAcademicFaculty)
+      await databaseInstance.collection('faculties').insertOne({
+        facultyApplicationId: faculty._id,
+        code: employeeId,
+        name: migratedFacultyName(faculty),
+        email: '',
+        universityId: null,
+        collegeId: null,
+        departmentIds: [],
+        subjectIds: [],
+        weeklyLimit: 40,
+        availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+  }
+}
+
+function migratedFacultyName(faculty) {
+  const fields = (faculty.formSnapshot?.sections || [])
+    .flatMap((section) => section.subsections || [])
+    .flatMap((subsection) => subsection.fields || []);
+  const responseFor = (pattern) => {
+    const field = fields.find((candidate) => pattern.test(String(candidate.name || '').trim()));
+    const value = field ? faculty.responses?.[field.id] : '';
+    return typeof value === 'string' ? value.trim() : '';
+  };
+  return (
+    responseFor(/^(faculty\s*)?(full\s*)?name$/i) ||
+    [responseFor(/^first\s*name$/i), responseFor(/^last\s*name$/i)].filter(Boolean).join(' ') ||
+    `Faculty ${faculty.employeeId || faculty.applicationCode}`
+  );
 }
 
 async function migrateFormDestinations(databaseInstance) {

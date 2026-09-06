@@ -1,11 +1,11 @@
 import express from 'express';
 import argon2 from 'argon2';
-import { SignJWT } from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
-import { requireAdmin, requireStudent } from '../middleware/auth.js';
+import { requireAdmin, requireFaculty, requireStudent } from '../middleware/auth.js';
 import { refreshStudentPenalties, studentCreditBalance } from '../services/fee-payments.js';
 import { ensureStudentScheduledFees, isStudentVisibleLedger } from '../services/fee-visibility.js';
 import { studentProfile } from '../services/student-profile.js';
@@ -18,6 +18,14 @@ const loginSchema = z.object({
 });
 const studentLoginSchema = z.object({
   studentId: z
+    .string()
+    .trim()
+    .min(1)
+    .transform((value) => value.toUpperCase()),
+  password: z.string().min(1),
+});
+const facultyLoginSchema = z.object({
+  employeeId: z
     .string()
     .trim()
     .min(1)
@@ -136,6 +144,83 @@ authRouter.post(
 );
 
 authRouter.post(
+  '/faculty/login',
+  asyncHandler(async (request, response) => {
+    const parsed = facultyLoginSchema.safeParse(request.body);
+    if (!parsed.success)
+      return response.status(400).json({ message: 'Enter a valid Employee ID and password.' });
+    const faculty = await db()
+      .collection('facultyApplications')
+      .findOne({ applicationCode: parsed.data.employeeId });
+    if (!faculty || faculty.status !== 'submitted' || faculty.isActive === false)
+      return response.status(401).json({ message: 'The Employee ID or password is incorrect.' });
+
+    const temporaryLogin = !faculty.passwordHash && parsed.data.password === parsed.data.employeeId;
+    const passwordMatches =
+      temporaryLogin ||
+      (faculty.passwordHash && (await argon2.verify(faculty.passwordHash, parsed.data.password)));
+    if (!passwordMatches)
+      return response.status(401).json({ message: 'The Employee ID or password is incorrect.' });
+
+    if (temporaryLogin) {
+      faculty.passwordHash = await argon2.hash(parsed.data.employeeId);
+      faculty.mustChangePassword = true;
+    }
+    faculty.employeeId = faculty.employeeId || faculty.applicationCode;
+    await db()
+      .collection('facultyApplications')
+      .updateOne(
+        { _id: faculty._id },
+        {
+          $set: {
+            employeeId: faculty.employeeId,
+            passwordHash: faculty.passwordHash,
+            mustChangePassword: faculty.mustChangePassword !== false,
+            isActive: true,
+            lastLoginAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      );
+    response.json({ token: await facultyToken(faculty), faculty: publicFaculty(faculty) });
+  }),
+);
+
+authRouter.post(
+  '/faculty/change-password',
+  requireFaculty,
+  asyncHandler(async (request, response) => {
+    const data = studentPasswordSchema.parse(request.body);
+    if (
+      request.faculty.passwordHash &&
+      (await argon2.verify(request.faculty.passwordHash, data.password))
+    )
+      return response
+        .status(422)
+        .json({ message: 'Your new password must be different from the temporary password.' });
+    await db()
+      .collection('facultyApplications')
+      .updateOne(
+        { _id: request.faculty._id },
+        {
+          $set: {
+            passwordHash: await argon2.hash(data.password),
+            mustChangePassword: false,
+            passwordUpdatedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      );
+    const faculty = { ...request.faculty, mustChangePassword: false };
+    response.json({ token: await facultyToken(faculty), faculty: publicFaculty(faculty) });
+  }),
+);
+
+authRouter.get('/faculty/profile', requireFaculty, (request, response) =>
+  response.json({ faculty: publicFaculty(request.faculty) }),
+);
+
+authRouter.post(
   '/student/change-password',
   requireStudent,
   asyncHandler(async (request, response) => {
@@ -223,4 +308,40 @@ function publicStudent(student) {
     ),
     feeFrequency: student.feeFrequency === 'semester' ? 'semester' : 'year',
   };
+}
+
+function facultyToken(faculty) {
+  return new SignJWT({ role: 'faculty', employeeId: faculty.employeeId || faculty.applicationCode })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(faculty._id.toString())
+    .setIssuer('taskly-erp')
+    .setIssuedAt()
+    .setExpirationTime(config.jwtTtl)
+    .sign(new TextEncoder().encode(config.jwtSecret));
+}
+
+function publicFaculty(faculty) {
+  return {
+    id: String(faculty._id),
+    employeeId: faculty.employeeId || faculty.applicationCode,
+    name: facultyDisplayName(faculty),
+    mustChangePassword: faculty.mustChangePassword !== false,
+    formName: faculty.formName || '',
+  };
+}
+
+function facultyDisplayName(faculty) {
+  const fields = (faculty.formSnapshot?.sections || [])
+    .flatMap((section) => section.subsections || [])
+    .flatMap((subsection) => subsection.fields || []);
+  const responseFor = (pattern) => {
+    const field = fields.find((candidate) => pattern.test(String(candidate.name || '').trim()));
+    const value = faculty.responses?.[field?.id];
+    return typeof value === 'string' ? value.trim() : '';
+  };
+  const completeName = responseFor(/^(faculty\s*)?(full\s*)?name$/i);
+  if (completeName) return completeName;
+  const firstName = responseFor(/^first\s*name$/i);
+  const lastName = responseFor(/^last\s*name$/i);
+  return [firstName, lastName].filter(Boolean).join(' ') || 'Faculty';
 }

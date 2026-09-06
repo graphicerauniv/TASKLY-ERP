@@ -1,0 +1,90 @@
+:host {
+  display: block;
+}
+.faculty-attendance-page {
+  display: grid;
+  gap: 20px;
+}
+.faculty-attendance-heading,
+.faculty-roster > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+}
+.faculty-attendance-heading h1,
+.faculty-attendance-heading p,
+.faculty-attendance-heading span,
+.faculty-roster h2,
+.faculty-roster p {
+  margin: 0;
+}
+.faculty-attendance-heading label {
+  display: grid;
+  gap: 6px;
+}
+.faculty-class-list {
+  display: grid;
+  gap: 12px;
+}
+.faculty-class-list > button {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid var(--student-border);
+  border-radius: 14px;
+  background: var(--student-surface);
+  text-align: left;
+}
+.faculty-class-list span,
+.faculty-class-list small {
+  display: block;
+}
+.faculty-class-list small {
+  margin-top: 5px;
+  color: var(--student-text-muted);
+}
+.faculty-attendance-empty,
+.faculty-roster {
+  padding: 24px;
+  border: 1px solid var(--student-border);
+  border-radius: 16px;
+  background: var(--student-surface);
+}
+.faculty-roster {
+  display: grid;
+  gap: 18px;
+}
+.faculty-roster header > div:last-child {
+  display: flex;
+  gap: 8px;
+}
+.faculty-roster button {
+  min-height: 36px;
+}
+.faculty-roster__table {
+  overflow: auto;
+}
+.faculty-roster table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.faculty-roster th,
+.faculty-roster td {
+  padding: 12px;
+  border-bottom: 1px solid var(--student-border);
+  text-align: left;
+}
+.faculty-roster footer {
+  display: flex;
+  justify-content: flex-end;
+}
+@media (max-width: 700px) {
+  .faculty-attendance-heading,
+  .faculty-roster > header,
+  .faculty-class-list > button {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

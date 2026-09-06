@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { LucideChartNoAxesCombined } from '@lucide/angular';
 import { DashboardWidgetStateComponent } from '../dashboard-widget-state/dashboard-widget-state.component';
 import {
@@ -8,7 +9,7 @@ import {
 
 @Component({
   selector: 'erp-attendance-overview-card',
-  imports: [DashboardWidgetStateComponent, LucideChartNoAxesCombined],
+  imports: [DashboardWidgetStateComponent, RouterLink, LucideChartNoAxesCombined],
   template: `
     <article class="student-operational-card student-operational-card--attendance">
       <header class="student-operational-card__header">
@@ -25,19 +26,27 @@ import {
             role="img"
             [attr.aria-label]="(attendance.percentage || 0) + '% attendance'"
           >
-            <span><strong>{{ attendance.percentage }}%</strong><small>Overall</small></span>
+            <span
+              ><strong>{{ attendance.percentage }}%</strong><small>Overall</small></span
+            >
           </div>
           <dl>
-            <div><dt>Classes attended</dt><dd>{{ attendance.attendedClasses }}</dd></div>
-            <div><dt>Classes held</dt><dd>{{ attendance.totalClasses }}</dd></div>
+            <div>
+              <dt>Classes attended</dt>
+              <dd>{{ attendance.attendedClasses }}</dd>
+            </div>
+            <div>
+              <dt>Classes held</dt>
+              <dd>{{ attendance.totalClasses }}</dd>
+            </div>
           </dl>
-          <button type="button" disabled>View attendance</button>
+          <button type="button" routerLink="/student/attendance">View attendance</button>
         </div>
       } @else {
         <erp-dashboard-widget-state
           [status]="state().status"
           title="Attendance unavailable"
-          message="Attendance data will appear after the official student endpoint is available."
+          [message]="state().errorMessage || 'Attendance has not been recorded yet.'"
         />
       }
     </article>
