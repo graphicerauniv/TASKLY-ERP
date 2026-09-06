@@ -1,10 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LucideArrowRight,
   LucideCalendarDays,
   LucideCheck,
+  LucideChevronDown,
   LucideChevronLeft,
   LucideChevronRight,
   LucideClock3,
@@ -47,6 +55,7 @@ function apiMessage(error: unknown, fallback: string): string {
     LucideArrowRight,
     LucideCalendarDays,
     LucideCheck,
+    LucideChevronDown,
     LucideChevronLeft,
     LucideChevronRight,
     LucideClock3,
@@ -78,6 +87,7 @@ export class TimetablePeriodsComponent {
   readonly periods = signal<TimetablePeriod[]>([]);
   readonly selected = signal<TimetablePeriod | null>(null);
   readonly drawer = signal<PeriodDrawer>(null);
+  readonly openScopeDropdown = signal<'master' | 'structure' | null>(null);
   readonly filter = signal<PeriodFilter>('all');
   readonly page = signal(1);
   readonly pageSize = signal(25);
@@ -151,6 +161,29 @@ export class TimetablePeriodsComponent {
     this.timetableMasterId = masterId;
     this.timetableStructureId = this.structuresForMaster()[0]?._id || '';
     this.scopeChanged();
+  }
+
+  toggleScopeDropdown(dropdown: 'master' | 'structure', event: Event): void {
+    event.stopPropagation();
+    if (dropdown === 'structure' && !this.timetableMasterId) return;
+    this.openScopeDropdown.update((current) => (current === dropdown ? null : dropdown));
+  }
+
+  selectMaster(masterId: string): void {
+    this.changeMaster(masterId);
+    this.openScopeDropdown.set(null);
+  }
+
+  selectStructure(structureId: string): void {
+    this.changeStructure(structureId);
+    this.openScopeDropdown.set(null);
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeScopeDropdown(event: MouseEvent): void {
+    if (!(event.target as HTMLElement | null)?.closest('.erp-period-picker')) {
+      this.openScopeDropdown.set(null);
+    }
   }
 
   changeStructure(structureId: string): void {

@@ -26,31 +26,72 @@
     <div>
       <svg lucideCalendarDays size="21"></svg>
       <span>Timetable</span>
-      <select
-        class="erp-control"
-        [ngModel]="timetableMasterId"
-        (ngModelChange)="changeMaster($event)"
-      >
-        <option value="">Select timetable</option>
-        @for (master of masters(); track master._id) {
-          <option [value]="master._id">{{ master.name }}</option>
+      <div class="erp-period-picker">
+        <button
+          type="button"
+          [class.is-open]="openScopeDropdown() === 'master'"
+          [attr.aria-expanded]="openScopeDropdown() === 'master'"
+          (click)="toggleScopeDropdown('master', $event)"
+        >
+          <strong>{{ masterName() }}</strong>
+          <svg lucideChevronDown size="18"></svg>
+        </button>
+        @if (openScopeDropdown() === 'master') {
+          <ul role="listbox" aria-label="Select timetable">
+            @for (master of masters(); track master._id) {
+              <li>
+                <button
+                  type="button"
+                  [class.is-selected]="master._id === timetableMasterId"
+                  (click)="selectMaster(master._id)"
+                >
+                  <svg lucideCalendarDays size="17"></svg>
+                  <span><strong>{{ master.name }}</strong><small>{{ master.academicSession }}</small></span>
+                  @if (master._id === timetableMasterId) { <svg lucideCheck size="17"></svg> }
+                </button>
+              </li>
+            } @empty {
+              <li class="erp-period-picker__empty">No timetable masters available</li>
+            }
+          </ul>
         }
-      </select>
+      </div>
     </div>
     <i></i>
     <div>
       <svg lucideLandmark size="21"></svg>
       <span>Structure</span>
-      <select
-        class="erp-control"
-        [ngModel]="timetableStructureId"
-        (ngModelChange)="changeStructure($event)"
-      >
-        <option value="">Select structure</option>
-        @for (structure of structuresForMaster(); track structure._id) {
-          <option [value]="structure._id">{{ structure.name }}</option>
+      <div class="erp-period-picker">
+        <button
+          type="button"
+          [disabled]="!timetableMasterId"
+          [class.is-open]="openScopeDropdown() === 'structure'"
+          [attr.aria-expanded]="openScopeDropdown() === 'structure'"
+          (click)="toggleScopeDropdown('structure', $event)"
+        >
+          <strong>{{ structureName() }}</strong>
+          <svg lucideChevronDown size="18"></svg>
+        </button>
+        @if (openScopeDropdown() === 'structure') {
+          <ul role="listbox" aria-label="Select structure">
+            @for (structure of structuresForMaster(); track structure._id) {
+              <li>
+                <button
+                  type="button"
+                  [class.is-selected]="structure._id === timetableStructureId"
+                  (click)="selectStructure(structure._id)"
+                >
+                  <svg lucideLandmark size="17"></svg>
+                  <span><strong>{{ structure.name }}</strong><small>{{ structure.periodCount }} periods</small></span>
+                  @if (structure._id === timetableStructureId) { <svg lucideCheck size="17"></svg> }
+                </button>
+              </li>
+            } @empty {
+              <li class="erp-period-picker__empty">No structures available</li>
+            }
+          </ul>
         }
-      </select>
+      </div>
     </div>
   </section>
 
