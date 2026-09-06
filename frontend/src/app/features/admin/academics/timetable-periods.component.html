@@ -46,8 +46,13 @@
                   (click)="selectMaster(master._id)"
                 >
                   <svg lucideCalendarDays size="17"></svg>
-                  <span><strong>{{ master.name }}</strong><small>{{ master.academicSession }}</small></span>
-                  @if (master._id === timetableMasterId) { <svg lucideCheck size="17"></svg> }
+                  <span
+                    ><strong>{{ master.name }}</strong
+                    ><small>{{ master.academicSession }}</small></span
+                  >
+                  @if (master._id === timetableMasterId) {
+                    <svg lucideCheck size="17"></svg>
+                  }
                 </button>
               </li>
             } @empty {
@@ -82,8 +87,13 @@
                   (click)="selectStructure(structure._id)"
                 >
                   <svg lucideLandmark size="17"></svg>
-                  <span><strong>{{ structure.name }}</strong><small>{{ structure.periodCount }} periods</small></span>
-                  @if (structure._id === timetableStructureId) { <svg lucideCheck size="17"></svg> }
+                  <span
+                    ><strong>{{ structure.name }}</strong
+                    ><small>{{ structure.periodCount }} periods</small></span
+                  >
+                  @if (structure._id === timetableStructureId) {
+                    <svg lucideCheck size="17"></svg>
+                  }
                 </button>
               </li>
             } @empty {

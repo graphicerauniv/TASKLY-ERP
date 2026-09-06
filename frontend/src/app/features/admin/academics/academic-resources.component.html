@@ -343,6 +343,7 @@
     ></button>
     <aside
       class="erp-drawer erp-academic-drawer"
+      [class.erp-subject-drawer]="section() === 'subjects'"
       cdkTrapFocus
       [cdkTrapFocusAutoCapture]="true"
       role="dialog"

@@ -1,7 +1,37 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, HostListener, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import {
+  LucideArrowLeftRight,
+  LucideArrowRight,
+  LucideBookOpen,
+  LucideCalendarDays,
+  LucideCheck,
+  LucideChevronDown,
+  LucideEye,
+  LucideFilter,
+  LucideGraduationCap,
+  LucideInfo,
+  LucideLandmark,
+  LucideList,
+  LucideLock,
+  LucideMaximize2,
+  LucidePlus,
+  LucideSave,
+  LucideSearch,
+  LucideSettings,
+  LucideUsersRound,
+  LucideX,
+} from '@lucide/angular';
 import { Observable } from 'rxjs';
+import { Router } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
 import {
   AcademicFaculty,
@@ -18,6 +48,7 @@ import {
   TimetableStructure,
 } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 
 interface SlotContext {
   x: number;
@@ -37,13 +68,39 @@ function apiMessage(error: unknown, fallback: string) {
 
 @Component({
   selector: 'erp-timetable-builder',
-  imports: [CommonModule, FormsModule, AdminPageComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AdminPageComponent,
+    AdminIllustrationComponent,
+    LucideArrowLeftRight,
+    LucideArrowRight,
+    LucideBookOpen,
+    LucideCalendarDays,
+    LucideCheck,
+    LucideChevronDown,
+    LucideEye,
+    LucideFilter,
+    LucideGraduationCap,
+    LucideInfo,
+    LucideLandmark,
+    LucideList,
+    LucideLock,
+    LucideMaximize2,
+    LucidePlus,
+    LucideSave,
+    LucideSearch,
+    LucideSettings,
+    LucideUsersRound,
+    LucideX,
+  ],
   templateUrl: './timetable-builder.component.html',
   styleUrl: './timetable-builder.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimetableBuilderComponent {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly gridOpen = signal(false);
@@ -68,6 +125,11 @@ export class TimetableBuilderComponent {
   readonly editingEntry = signal<AcademicTimetableEntry | null>(null);
   readonly activeDay = signal('');
   readonly activePeriod = signal<TimetablePeriod | null>(null);
+  readonly viewMode = signal<'week' | 'list'>('week');
+  readonly assignedOnly = signal(false);
+  readonly reviewOpen = signal(false);
+  readonly savedOpen = signal(false);
+  readonly savedPage = signal(1);
 
   session = '';
   semester = 1;
@@ -79,6 +141,8 @@ export class TimetableBuilderComponent {
   facultyId = '';
   roomId = '';
   classType = 'lecture';
+  scheduleSearch = '';
+  savedSearch = '';
   audienceDraft: TimetableAudience[] = [];
   readonly semesterOptions = Array.from({ length: 20 }, (_, index) => index + 1);
 
@@ -132,10 +196,72 @@ export class TimetableBuilderComponent {
   }
   periods() {
     return this.timetablePeriods()
-      .filter(
-        (item) => item.timetableStructureId === this.timetableStructureId && item.isConfigured,
-      )
+      .filter((item) => item.timetableStructureId === this.timetableStructureId)
       .sort((left, right) => left.periodNumber - right.periodNumber);
+  }
+  configuredPeriods() {
+    return this.periods().filter((item) => item.isConfigured);
+  }
+  readonly missingPeriodCount = computed(
+    () => this.periods().filter((item) => !item.isConfigured).length,
+  );
+  visibleEntries() {
+    const query = this.scheduleSearch.trim().toLowerCase();
+    if (!query) return this.entries();
+    return this.entries().filter((entry) =>
+      [entry.subjectName, entry.subjectCode, entry.facultyName, entry.roomName, entry.day].some(
+        (value) => value?.toLowerCase().includes(query),
+      ),
+    );
+  }
+  scopeComplete() {
+    return !!(
+      this.session &&
+      this.groupId &&
+      this.sectionId &&
+      this.timetableMasterId &&
+      this.timetableStructureId
+    );
+  }
+  groupName() {
+    return this.groups().find((item) => item._id === this.groupId)?.name || 'Group';
+  }
+  sectionName() {
+    return this.sections().find((item) => item._id === this.sectionId)?.name || 'Section';
+  }
+  timetableName() {
+    return this.timetableMasters().find((item) => item._id === this.timetableMasterId)?.name || '';
+  }
+  filteredSavedTimetables() {
+    const query = this.savedSearch.trim().toLowerCase();
+    return this.timetableMasters().filter((item) =>
+      [item.name, item.code, item.academicSession, item.universityName, item.collegeName].some(
+        (value) => value?.toLowerCase().includes(query),
+      ),
+    );
+  }
+  savedTimetablePage() {
+    const start = (this.savedPage() - 1) * 20;
+    return this.filteredSavedTimetables().slice(start, start + 20);
+  }
+  savedPageCount() {
+    return Math.max(1, Math.ceil(this.filteredSavedTimetables().length / 20));
+  }
+  chooseSavedTimetable(item: TimetableMaster) {
+    this.session = item.academicSession;
+    this.timetableMasterId = item._id;
+    this.groupId = '';
+    this.sectionId = '';
+    this.timetableStructureId = '';
+    this.savedOpen.set(false);
+  }
+  configurePeriods() {
+    void this.router.navigate(['/admin/academics/timetable-periods'], {
+      queryParams: {
+        masterId: this.timetableMasterId || null,
+        structureId: this.timetableStructureId || null,
+      },
+    });
   }
   workingDays() {
     return this.selectedStructure()?.workingDays || [];
@@ -164,7 +290,8 @@ export class TimetableBuilderComponent {
   availableRooms() {
     return this.rooms().filter(
       (item) =>
-        item.isActive && (!item.subjectIds.length || item.subjectIds.includes(this.subjectId)),
+        item.isActive &&
+        (!this.subjectId || !item.subjectIds.length || item.subjectIds.includes(this.subjectId)),
     );
   }
 
@@ -211,7 +338,7 @@ export class TimetableBuilderComponent {
       this.error.set('Select the session, semester, group, section, timetable and structure.');
       return;
     }
-    if (!this.periods().length) {
+    if (!this.configuredPeriods().length) {
       this.error.set('Configure the timetable periods before opening the timetable.');
       return;
     }
@@ -249,6 +376,11 @@ export class TimetableBuilderComponent {
       }) || null
     );
   }
+  visibleEntryFor(day: string, period: TimetablePeriod) {
+    const entry = this.entryFor(day, period);
+    if (!entry) return null;
+    return this.visibleEntries().some((item) => item._id === entry._id) ? entry : null;
+  }
   covered(day: string, period: TimetablePeriod) {
     return this.entries().some((entry) => {
       const ids = entry.timetablePeriodIds?.length
@@ -269,8 +401,8 @@ export class TimetableBuilderComponent {
     event.stopPropagation();
     if (period.periodType === 'break') return;
     this.context.set({
-      x: Math.min(event.clientX, window.innerWidth - 230),
-      y: Math.min(event.clientY, window.innerHeight - 440),
+      x: Math.max(12, Math.min(event.clientX, window.innerWidth - 340)),
+      y: Math.max(12, Math.min(event.clientY, window.innerHeight - 370)),
       day,
       period,
       entry: this.entryFor(day, period),
@@ -289,6 +421,27 @@ export class TimetableBuilderComponent {
     this.editorMode.set(mode);
     this.editorOpen.set(true);
     this.context.set(null);
+  }
+  openSlot(day: string, period: TimetablePeriod) {
+    if (!period.isConfigured || period.periodType === 'break') return;
+    this.context.set({ x: 0, y: 0, day, period, entry: this.entryFor(day, period) });
+    this.editSlot('all');
+  }
+  openSlotMenu(event: MouseEvent, day: string, period: TimetablePeriod) {
+    this.showContext(event, day, period);
+  }
+  editorTitle() {
+    if (this.editingEntry()) return 'Edit class';
+    if (this.editorMode() === 'subject') return 'Assign subject';
+    if (this.editorMode() === 'faculty') return 'Assign faculty';
+    if (this.editorMode() === 'room') return 'Assign room or lab';
+    return 'Add class';
+  }
+  editorValid() {
+    if (this.editorMode() === 'subject') return !!this.subjectId;
+    if (this.editorMode() === 'faculty') return !!this.facultyId;
+    if (this.editorMode() === 'room') return !!this.roomId;
+    return !!(this.subjectId && this.facultyId && this.roomId);
   }
   closeEditor() {
     this.editorOpen.set(false);
@@ -389,7 +542,7 @@ export class TimetableBuilderComponent {
       (mode === 'subject' && !this.subjectId) ||
       (mode === 'faculty' && !this.facultyId) ||
       (mode === 'room' && !this.roomId) ||
-      (mode === 'all' && (!this.subjectId || !this.facultyId))
+      (mode === 'all' && (!this.subjectId || !this.facultyId || !this.roomId))
     ) {
       this.error.set('Select the requested timetable assignment.');
       return;

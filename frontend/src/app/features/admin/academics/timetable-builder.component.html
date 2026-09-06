@@ -1,372 +1,564 @@
-<erp-admin-page title="Create timetable" variant="minimal">
+<erp-admin-page
+  [title]="gridOpen() ? 'Weekly timetable' : 'Create timetable'"
+  [description]="
+    gridOpen()
+      ? 'Build and review the weekly schedule for this academic section.'
+      : 'Build the weekly schedule for an academic section.'
+  "
+  variant="compact"
+>
+  <div page-actions class="tt-page-actions">
+    @if (gridOpen()) {
+      <button class="erp-button erp-button--secondary" type="button" (click)="configurePeriods()">
+        <svg lucideSettings size="17"></svg>Configure periods
+      </button>
+      <button
+        class="erp-button erp-button--primary"
+        type="button"
+        (click)="message.set('Draft saved.')"
+      >
+        <svg lucideSave size="17"></svg>Save draft
+      </button>
+    } @else {
+      <button class="erp-button erp-button--secondary" type="button" (click)="savedOpen.set(true)">
+        <svg lucideEye size="17"></svg>View saved timetables
+      </button>
+    }
+  </div>
+
+  <nav class="tt-steps" aria-label="Timetable creation progress">
+    <span class="is-complete" [class.is-current]="!gridOpen()"
+      ><i>
+        @if (gridOpen()) {
+          <svg lucideCheck size="15"></svg>
+        } @else {
+          1
+        }</i
+      ><b>{{ gridOpen() ? 'Scope completed' : 'Scope' }}</b></span
+    >
+    <em></em>
+    <span [class.is-current]="gridOpen() && !reviewOpen()"><i>2</i><b>Build schedule</b></span>
+    <em></em>
+    <span [class.is-current]="reviewOpen()"><i>3</i><b>Review</b></span>
+  </nav>
+
   @if (error()) {
-    <div class="erp-alert erp-alert--error" role="alert">{{ error() }}</div>
+    <div class="erp-alert erp-alert--danger" role="alert">{{ error() }}</div>
   }
   @if (message()) {
     <div class="erp-alert erp-alert--success">{{ message() }}</div>
   }
 
-  <section class="erp-card erp-card--padded">
-    <div class="erp-card__header">
-      <div>
+  @if (!gridOpen()) {
+    <section class="erp-card tt-scope-card">
+      <header>
         <h2>Open timetable workspace</h2>
         <p>Select the academic scope and configured timetable structure.</p>
-      </div>
-    </div>
-    <div class="erp-form-grid">
-      <label
-        ><span>Academic session *</span
-        ><select class="erp-control" [(ngModel)]="session" (ngModelChange)="resetAfter('session')">
-          <option value="">Select session</option>
-          @for (item of master('academic'); track item._id) {
-            <option [value]="item.name">{{ item.name }}</option>
-          }
-        </select></label
-      >
-      <label
-        ><span>Semester *</span
-        ><select
-          class="erp-control"
-          [(ngModel)]="semester"
-          (ngModelChange)="resetAfter('semester')"
-        >
-          @for (item of semesterOptions; track item) {
-            <option [ngValue]="item">Semester {{ item }}</option>
-          }
-        </select></label
-      >
-      <label
-        ><span>Group *</span
-        ><select class="erp-control" [(ngModel)]="groupId" (ngModelChange)="resetAfter('group')">
-          <option value="">Select group</option>
-          @for (item of availableGroups(); track item._id) {
-            <option [value]="item._id">{{ item.name }}</option>
-          }
-        </select></label
-      >
-      <label
-        ><span>Section *</span
-        ><select
-          class="erp-control"
-          [(ngModel)]="sectionId"
-          (ngModelChange)="resetAfter('section')"
-        >
-          <option value="">Select section</option>
-          @for (item of availableSections(); track item._id) {
-            <option [value]="item._id">{{ item.name }}</option>
-          }
-        </select></label
-      >
-      <label
-        ><span>Timetable *</span
-        ><select
-          class="erp-control"
-          [(ngModel)]="timetableMasterId"
-          (ngModelChange)="resetAfter('master')"
-        >
-          <option value="">Select timetable</option>
-          @for (item of availableTimetables(); track item._id) {
-            <option [value]="item._id">{{ item.name }}</option>
-          }
-        </select></label
-      >
-      <label
-        ><span>Structure *</span
-        ><select
-          class="erp-control"
-          [(ngModel)]="timetableStructureId"
-          (ngModelChange)="gridOpen.set(false)"
-        >
-          <option value="">Select structure</option>
-          @for (item of availableStructures(); track item._id) {
-            <option [value]="item._id">{{ item.name }}</option>
-          }
-        </select></label
-      >
-    </div>
-    <button
-      class="erp-button erp-button--primary"
-      type="button"
-      [disabled]="loading()"
-      (click)="openTimetable()"
-    >
-      {{ loading() ? 'Loading…' : 'Open timetable' }}
-    </button>
-  </section>
-
-  @if (gridOpen()) {
-    <section class="erp-card timetable-card">
-      <div class="timetable-card__header">
-        <div>
-          <h2>{{ selectedStructure()?.name }}</h2>
-          <p>Right-click any lecture slot to assign or change its timetable details.</p>
-        </div>
-        <div class="timetable-card__actions">
-          <span>
-            {{ entries().length }} assigned slot(s) ·
-            {{ hasDraftChanges() ? 'Draft changes' : 'Published' }}
-          </span>
-          <button
-            class="erp-button erp-button--primary"
-            type="button"
-            [disabled]="saving() || !entries().length"
-            (click)="publish()"
+      </header>
+      <div class="tt-scope-grid">
+        <label
+          ><span>Academic session *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="session"
+            (ngModelChange)="resetAfter('session')"
           >
-            {{ saving() ? 'Publishing…' : 'Publish timetable' }}
+            <option value="">Select session</option>
+            @for (item of master('academic'); track item._id) {
+              <option [value]="item.name">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Semester *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="semester"
+            (ngModelChange)="resetAfter('semester')"
+          >
+            @for (item of semesterOptions; track item) {
+              <option [ngValue]="item">Semester {{ item }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Group *</span
+          ><select class="erp-control" [(ngModel)]="groupId" (ngModelChange)="resetAfter('group')">
+            <option value="">Select group</option>
+            @for (item of availableGroups(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Section *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="sectionId"
+            (ngModelChange)="resetAfter('section')"
+          >
+            <option value="">Select section</option>
+            @for (item of availableSections(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Timetable *</span
+          ><select
+            class="erp-control"
+            [(ngModel)]="timetableMasterId"
+            (ngModelChange)="resetAfter('master')"
+          >
+            <option value="">Select timetable</option>
+            @for (item of availableTimetables(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+        <label
+          ><span>Structure *</span
+          ><select class="erp-control" [(ngModel)]="timetableStructureId">
+            <option value="">Select structure</option>
+            @for (item of availableStructures(); track item._id) {
+              <option [value]="item._id">{{ item.name }}</option>
+            }
+          </select></label
+        >
+      </div>
+      <footer>
+        <span><svg lucideInfo size="18"></svg>Select all fields to continue.</span>
+        <button
+          class="erp-button erp-button--primary"
+          type="button"
+          [disabled]="loading() || !scopeComplete()"
+          (click)="openTimetable()"
+        >
+          {{ loading() ? 'Loading…' : 'Open timetable' }}<svg lucideArrowRight size="18"></svg>
+        </button>
+      </footer>
+    </section>
+
+    <section class="tt-journey" aria-label="Timetable setup stages">
+      <div>
+        <i><svg lucideBookOpen size="20"></svg></i
+        ><span><b>Master</b><small>Select session, semester, group</small></span>
+      </div>
+      <svg lucideArrowRight size="18"></svg>
+      <div>
+        <i><svg lucideLandmark size="20"></svg></i
+        ><span><b>Structure</b><small>Select section, timetable, structure</small></span>
+      </div>
+      <svg lucideArrowRight size="18"></svg>
+      <div>
+        <i><svg lucideCalendarDays size="20"></svg></i
+        ><span><b>Periods</b><small>Configure teaching periods</small></span>
+      </div>
+      <svg lucideArrowRight size="18"></svg>
+      <div>
+        <i><svg lucideList size="20"></svg></i
+        ><span><b>Schedule</b><small>Build weekly timetable</small></span>
+      </div>
+    </section>
+    <div class="tt-empty-state">
+      <erp-admin-illustration kind="taskSchedule" size="compact" />
+      <strong>Your weekly timetable will appear here</strong>
+      <p>after selecting the academic scope.</p>
+    </div>
+  } @else {
+    <section class="tt-scope-strip">
+      <span><svg lucideCalendarDays size="19"></svg>{{ session }}</span
+      ><i></i><span><svg lucideGraduationCap size="19"></svg>Semester {{ semester }}</span
+      ><i></i><span><svg lucideUsersRound size="19"></svg>{{ groupName() }}</span
+      ><i></i><span><svg lucideBookOpen size="19"></svg>{{ sectionName() }}</span
+      ><i></i><span><svg lucideCalendarDays size="19"></svg>{{ timetableName() }}</span
+      ><i></i><span><svg lucideLandmark size="19"></svg>{{ selectedStructure()?.name }}</span
+      ><button type="button" (click)="gridOpen.set(false)">Change</button>
+    </section>
+    @if (missingPeriodCount()) {
+      <div class="tt-warning">
+        <strong>!</strong
+        ><span>{{ missingPeriodCount() }} periods still need timing configuration.</span
+        ><button type="button" (click)="configurePeriods()">Configure now</button>
+      </div>
+    }
+
+    <section class="erp-card tt-workspace">
+      <header class="tt-toolbar">
+        <div class="tt-view-switch" role="group" aria-label="Schedule view">
+          <button
+            type="button"
+            [class.is-active]="viewMode() === 'week'"
+            (click)="viewMode.set('week')"
+          >
+            <svg lucideCalendarDays size="17"></svg>Week view</button
+          ><button
+            type="button"
+            [class.is-active]="viewMode() === 'list'"
+            (click)="viewMode.set('list')"
+          >
+            <svg lucideList size="17"></svg>List view
           </button>
         </div>
-      </div>
-      <div class="timetable-scroll">
-        <table class="timetable-grid">
-          <thead>
-            <tr>
-              <th>Day</th>
-              @for (period of periods(); track period._id) {
-                <th>
-                  <strong>Period {{ period.periodNumber }}</strong>
-                  <small>{{ period.startTime }}–{{ period.endTime }}</small>
-                </th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (day of workingDays(); track day) {
+        <label class="tt-search"
+          ><svg lucideSearch size="19"></svg
+          ><input [(ngModel)]="scheduleSearch" placeholder="Search classes, rooms, or faculty"
+        /></label>
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          [class.is-active]="assignedOnly()"
+          (click)="assignedOnly.set(!assignedOnly())"
+        >
+          <svg lucideFilter size="17"></svg>Filters
+        </button>
+        <button class="erp-button erp-button--secondary tt-fit" type="button">
+          <svg lucideMaximize2 size="17"></svg>Fit</button
+        ><strong>{{ visibleEntries().length }} classes scheduled</strong>
+      </header>
+
+      @if (viewMode() === 'week') {
+        <div class="tt-grid-scroll">
+          <table class="tt-grid">
+            <thead>
               <tr>
-                <th>{{ day }}</th>
+                <th>Day</th>
                 @for (period of periods(); track period._id) {
-                  @if (!covered(day, period)) {
-                    @let entry = entryFor(day, period);
-                    <td
-                      [attr.colspan]="span(entry)"
-                      [class.timetable-grid__break]="period.periodType === 'break'"
-                      [class.timetable-grid__assigned]="entry"
-                      (contextmenu)="showContext($event, day, period)"
-                    >
-                      @if (period.periodType === 'break') {
-                        <strong>Break</strong>
+                  <th>
+                    <strong>Period {{ period.periodNumber }}</strong>
+                    @if (period.isConfigured) {
+                      <small>{{ period.startTime }} – {{ period.endTime }}</small>
+                    } @else {
+                      <small><svg lucideLock size="12"></svg>Not configured</small>
+                    }
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (day of workingDays(); track day) {
+                <tr>
+                  <th>{{ day }}</th>
+                  @for (period of periods(); track period._id) {
+                    @let entry = visibleEntryFor(day, period);
+                    <td [class.is-locked]="!period.isConfigured" [class.is-assigned]="entry">
+                      @if (!period.isConfigured) {
+                        <svg lucideLock size="15"></svg>
+                      } @else if (period.periodType === 'break') {
+                        <span class="tt-break">Break</span>
                       } @else if (entry) {
-                        <strong>{{ entry.subjectName }}</strong>
-                        <small>{{ entry.facultyName }}</small>
-                        <small
-                          >{{ entry.roomName ? entry.roomName + ' · ' : ''
-                          }}{{ entry.classType }}</small
+                        <button class="tt-class" type="button" (click)="openSlot(day, period)">
+                          <strong>{{ entry.subjectName }}</strong
+                          ><small>{{ entry.facultyName }}</small
+                          ><small>{{ entry.roomName }}</small>
+                        </button>
+                      } @else if (!assignedOnly()) {
+                        <button
+                          class="tt-add-slot"
+                          type="button"
+                          (click)="openSlotMenu($event, day, period)"
                         >
-                      } @else {
-                        <span>Right-click to assign</span>
+                          <svg lucidePlus size="19"></svg><span>Add class</span>
+                        </button>
                       }
                     </td>
                   }
-                }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <footer class="tt-grid-legend">
+          <span><i></i>Available slot</span><span><i class="is-locked"></i>Timing required</span
+          ><b><svg lucideArrowLeftRight size="19"></svg>Scroll horizontally to view more periods</b>
+        </footer>
+      } @else {
+        <div class="tt-list-scroll">
+          <table class="tt-list">
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th>Period</th>
+                <th>Subject</th>
+                <th>Faculty</th>
+                <th>Room or lab</th>
+                <th>Status</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              @for (entry of visibleEntries(); track entry._id) {
+                <tr>
+                  <td>{{ entry.day }}</td>
+                  <td>{{ entry.startTime }}–{{ entry.endTime }}</td>
+                  <td>
+                    <strong>{{ entry.subjectName }}</strong>
+                  </td>
+                  <td>{{ entry.facultyName }}</td>
+                  <td>{{ entry.roomName || '—' }}</td>
+                  <td>
+                    <span class="tt-status">{{ entry.status || 'draft' }}</span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="tt-list-empty">No scheduled classes match this view.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </section>
+    <footer class="tt-action-bar">
+      <span
+        ><i></i>Unsaved changes <b>{{ hasDraftChanges() ? entries().length : 0 }}</b></span
+      ><button
+        class="erp-button erp-button--primary"
+        type="button"
+        [disabled]="!entries().length"
+        (click)="reviewOpen.set(true)"
+      >
+        <svg lucideEye size="17"></svg>Preview timetable
+      </button>
+    </footer>
   }
 
   @if (context(); as menu) {
     <div
-      class="slot-context-menu"
+      class="tt-slot-menu"
       role="menu"
-      tabindex="-1"
       [style.left.px]="menu.x"
       [style.top.px]="menu.y"
       (click)="$event.stopPropagation()"
       (keydown.escape)="context.set(null)"
     >
-      <button type="button" role="menuitem" (click)="editSlot('subject')">Assign subject</button>
-      <button type="button" role="menuitem" (click)="editSlot('faculty')">Assign teacher</button>
-      <button type="button" role="menuitem" (click)="editSlot('room')">Assign room</button>
-      <button type="button" role="menuitem" (click)="openCombinedClass()">Combined class</button>
-      <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="copySlot()">
-        Copy slot
+      <header>
+        <strong>Add to this period</strong><small>Choose what you want to configure</small>
+      </header>
+      <button type="button" role="menuitem" (click)="editSlot('all')">
+        <svg lucideCalendarDays size="18"></svg
+        ><span><strong>Complete class</strong><small>Subject, faculty and room</small></span
+        ><svg lucideArrowRight size="16"></svg>
       </button>
+      <button type="button" role="menuitem" (click)="editSlot('subject')">
+        <svg lucideBookOpen size="18"></svg
+        ><span><strong>Assign subject</strong><small>Select the subject only</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button type="button" role="menuitem" (click)="editSlot('faculty')">
+        <svg lucideUsersRound size="18"></svg
+        ><span><strong>Assign faculty</strong><small>Select the teaching member</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button type="button" role="menuitem" (click)="editSlot('room')">
+        <svg lucideLandmark size="18"></svg
+        ><span><strong>Assign room or lab</strong><small>Select the teaching space</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+    </div>
+  }
+
+  @if (savedOpen()) {
+    <div class="erp-drawer-layer">
       <button
+        class="erp-drawer-backdrop"
         type="button"
-        role="menuitem"
-        [disabled]="!copiedEntry() || !!menu.entry"
-        (click)="pasteSlot()"
+        aria-label="Close saved timetables"
+        (click)="savedOpen.set(false)"
+      ></button>
+      <aside
+        class="erp-drawer tt-saved-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tt-saved-title"
       >
-        Paste slot
-      </button>
-      <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="mergeSlot()">
-        Merge column
-      </button>
-      <button
-        type="button"
-        role="menuitem"
-        [disabled]="!menu.entry || span(menu.entry) === 1"
-        (click)="splitSlot()"
-      >
-        Split column
-      </button>
-      <button
-        class="slot-context-menu__danger"
-        type="button"
-        role="menuitem"
-        [disabled]="!menu.entry"
-        (click)="removeAssignment()"
-      >
-        Remove subject and faculty
-      </button>
-      <button
-        class="slot-context-menu__danger"
-        type="button"
-        role="menuitem"
-        [disabled]="!menu.entry"
-        (click)="clearSlot()"
-      >
-        Clear complete slot
-      </button>
+        <header class="erp-drawer__header tt-drawer-head">
+          <span><svg lucideCalendarDays size="25"></svg></span>
+          <div>
+            <h2 id="tt-saved-title">Saved timetables</h2>
+            <p>Search and select from {{ timetableMasters().length }} timetable masters.</p>
+          </div>
+          <button type="button" aria-label="Close" (click)="savedOpen.set(false)">
+            <svg lucideX size="22"></svg>
+          </button>
+        </header>
+        <div class="erp-drawer__body tt-saved-body">
+          <label class="tt-search tt-saved-search"
+            ><svg lucideSearch size="19"></svg
+            ><input
+              [(ngModel)]="savedSearch"
+              (ngModelChange)="savedPage.set(1)"
+              placeholder="Search name, session, university or college"
+          /></label>
+          <div class="tt-saved-list">
+            @for (item of savedTimetablePage(); track item._id) {
+              <button type="button" (click)="chooseSavedTimetable(item)">
+                <span
+                  ><strong>{{ item.name }}</strong
+                  ><small
+                    >{{ item.academicSession }} · {{ item.universityName || 'University' }} ·
+                    {{ item.collegeName || 'College' }}</small
+                  ></span
+                >
+                <b [class.is-active]="item.isActive">{{ item.isActive ? 'Active' : 'Inactive' }}</b>
+                <svg lucideArrowRight size="18"></svg>
+              </button>
+            } @empty {
+              <div class="tt-saved-empty">
+                <erp-admin-illustration kind="noResults" size="compact" /><strong
+                  >No timetables found</strong
+                ><span>Try a different search term.</span>
+              </div>
+            }
+          </div>
+          <footer class="tt-saved-pagination">
+            <span
+              >Showing {{ savedTimetablePage().length }} of
+              {{ filteredSavedTimetables().length }}</span
+            >
+            <div>
+              <button
+                type="button"
+                [disabled]="savedPage() === 1"
+                (click)="savedPage.set(savedPage() - 1)"
+              >
+                Previous</button
+              ><b>{{ savedPage() }} / {{ savedPageCount() }}</b
+              ><button
+                type="button"
+                [disabled]="savedPage() === savedPageCount()"
+                (click)="savedPage.set(savedPage() + 1)"
+              >
+                Next
+              </button>
+            </div>
+          </footer>
+        </div>
+      </aside>
     </div>
   }
 
   @if (editorOpen()) {
-    <div class="dialog-layer">
+    <div class="erp-drawer-layer">
       <button
-        class="dialog-backdrop"
+        class="erp-drawer-backdrop"
         type="button"
-        aria-label="Close"
+        aria-label="Close add class"
         (click)="closeEditor()"
       ></button>
-      <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="slot-editor-title">
-        <header class="dialog__header">
+      <aside
+        class="erp-drawer tt-class-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tt-class-title"
+      >
+        <header class="erp-drawer__header tt-drawer-head">
+          <span><svg lucideCalendarDays size="25"></svg></span>
           <div>
-            <small>{{ activeDay() }} · Period {{ activePeriod()?.periodNumber }}</small>
-            <h2 id="slot-editor-title">
-              {{ editingEntry() ? 'Edit timetable slot' : 'Assign timetable slot' }}
-            </h2>
+            <h2 id="tt-class-title">{{ editorTitle() }}</h2>
+            <p>
+              {{ activeDay() }} · Period {{ activePeriod()?.periodNumber }} ·
+              {{ activePeriod()?.startTime }}–{{ activePeriod()?.endTime }}
+            </p>
           </div>
-          <button type="button" aria-label="Close" (click)="closeEditor()">×</button>
+          <button type="button" aria-label="Close" (click)="closeEditor()">
+            <svg lucideX size="22"></svg>
+          </button>
         </header>
-        <div class="dialog__body dialog-form">
+        <div class="erp-drawer__body tt-drawer-body">
+          <div class="tt-audience">
+            <svg lucideUsersRound size="20"></svg><strong>{{ groupName() }}</strong
+            ><i>·</i><span>{{ sectionName() }}</span>
+          </div>
           @if (editorMode() === 'subject' || editorMode() === 'all') {
             <label
-              ><span>Subject *</span
-              ><select
-                class="erp-control"
-                [(ngModel)]="subjectId"
-                (ngModelChange)="subjectChanged()"
-              >
-                <option value="">Select assigned subject</option>
-                @for (item of availableSubjects(); track item._id) {
-                  <option [value]="item._id">{{ item.code }} · {{ item.name }}</option>
-                }
-              </select></label
-            >
+              ><span>Subject *</span>
+              <div class="tt-select-wrap">
+                <svg lucideSearch size="18"></svg
+                ><select
+                  class="erp-control"
+                  [(ngModel)]="subjectId"
+                  (ngModelChange)="subjectChanged()"
+                >
+                  <option value="">Select subject</option>
+                  @for (item of availableSubjects(); track item._id) {
+                    <option [value]="item._id">{{ item.code }} · {{ item.name }}</option>
+                  }</select
+                ><svg lucideChevronDown size="17"></svg></div
+            ></label>
           }
           @if (editorMode() === 'faculty' || editorMode() === 'all') {
             <label
-              ><span>Teacher *</span
-              ><select class="erp-control" [(ngModel)]="facultyId">
-                <option value="">Select teacher</option>
-                @for (item of availableFaculty(); track item._id) {
-                  <option [value]="item._id">{{ item.name }}</option>
-                }
-              </select></label
-            >
+              ><span>Faculty *</span>
+              <div class="tt-select-wrap">
+                <svg lucideSearch size="18"></svg
+                ><select class="erp-control" [(ngModel)]="facultyId">
+                  <option value="">Select faculty</option>
+                  @for (item of availableFaculty(); track item._id) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }</select
+                ><svg lucideChevronDown size="17"></svg></div
+            ></label>
           }
           @if (editorMode() === 'room' || editorMode() === 'all') {
             <label
-              ><span>Room/lab</span
-              ><select class="erp-control" [(ngModel)]="roomId">
-                <option value="">Select room</option>
-                @for (item of availableRooms(); track item._id) {
-                  <option [value]="item._id">{{ item.name }} · capacity {{ item.capacity }}</option>
-                }
-              </select></label
-            >
-            <label
-              ><span>Class type</span
-              ><select class="erp-control" [(ngModel)]="classType">
-                <option value="lecture">Lecture</option>
-                <option value="tutorial">Tutorial</option>
-                <option value="lab">Lab</option>
-              </select></label
-            >
+              ><span>Room or lab *</span>
+              <div class="tt-select-wrap">
+                <svg lucideSearch size="18"></svg
+                ><select class="erp-control" [(ngModel)]="roomId">
+                  <option value="">Select room or lab</option>
+                  @for (item of availableRooms(); track item._id) {
+                    <option [value]="item._id">
+                      {{ item.name }} · capacity {{ item.capacity }}
+                    </option>
+                  }</select
+                ><svg lucideChevronDown size="17"></svg></div
+            ></label>
           }
-        </div>
-        <footer class="dialog__footer">
-          <button class="erp-button erp-button--secondary" type="button" (click)="closeEditor()">
-            Cancel
-          </button>
-          <button
-            class="erp-button erp-button--primary"
-            type="button"
-            [disabled]="saving()"
-            (click)="saveSlot()"
-          >
-            {{ saving() ? 'Saving…' : 'Save assignment' }}
-          </button>
-        </footer>
-      </section>
-    </div>
-  }
-
-  @if (combinedOpen()) {
-    <div class="dialog-layer">
-      <button
-        class="dialog-backdrop"
-        type="button"
-        aria-label="Close combined class"
-        (click)="combinedOpen.set(false)"
-      ></button>
-      <section class="dialog dialog--wide" role="dialog" aria-modal="true">
-        <header class="dialog__header">
-          <div>
-            <small>{{ activeDay() }} · Period {{ activePeriod()?.periodNumber }}</small>
-            <h2>Configure combined class</h2>
-            <p>Select multiple groups and their sections from this session and semester.</p>
+          <section class="tt-allocation-preview">
+            <h3>Allocation preview</h3>
+            @if (editorMode() === 'subject' || editorMode() === 'all') {
+              <div>
+                <svg lucideBookOpen size="18"></svg><span>Subject</span
+                ><b [class.is-ready]="subjectId">{{ subjectId ? 'Selected' : 'Pending' }}</b>
+              </div>
+            }
+            @if (editorMode() === 'faculty' || editorMode() === 'all') {
+              <div>
+                <svg lucideUsersRound size="18"></svg><span>Faculty</span
+                ><b [class.is-ready]="facultyId">{{ facultyId ? 'Selected' : 'Pending' }}</b>
+              </div>
+            }
+            @if (editorMode() === 'room' || editorMode() === 'all') {
+              <div>
+                <svg lucideLandmark size="18"></svg><span>Room or lab</span
+                ><b [class.is-ready]="roomId">{{ roomId ? 'Selected' : 'Pending' }}</b>
+              </div>
+            }
+          </section>
+          <p class="tt-auto-check">
+            <svg lucideInfo size="17"></svg>Availability and timetable conflicts will be checked
+            automatically.
+          </p>
+          <div class="tt-validation">
+            <svg lucideList size="18"></svg><strong>Validation results</strong
+            ><span>{{ editorValid() ? 'Ready to add' : 'Waiting for selections' }}</span
+            ><svg lucideChevronDown size="17"></svg>
           </div>
-          <button type="button" aria-label="Close" (click)="combinedOpen.set(false)">×</button>
-        </header>
-        <div class="dialog__body combined-class-list">
-          @for (group of availableGroups(); track group._id) {
-            <section class="combined-class-group">
-              <label>
-                <input
-                  type="checkbox"
-                  [checked]="!!audienceFor(group._id)"
-                  (change)="toggleAudienceGroup(group._id)"
-                />
-                <strong>{{ group.name }}</strong>
-              </label>
-              @if (audienceFor(group._id)) {
-                <div class="combined-class-sections">
-                  @for (section of sectionsForGroup(group._id); track section._id) {
-                    <label>
-                      <input
-                        type="checkbox"
-                        [checked]="audienceFor(group._id)?.sectionIds?.includes(section._id)"
-                        (change)="toggleAudienceSection(group._id, section._id)"
-                      />
-                      {{ section.name }}
-                    </label>
-                  }
-                </div>
-              }
-            </section>
-          }
+          <footer class="erp-drawer__footer">
+            <button class="erp-button erp-button--secondary" type="button" (click)="closeEditor()">
+              Cancel</button
+            ><button
+              class="erp-button erp-button--primary"
+              type="button"
+              [disabled]="saving() || !editorValid()"
+              (click)="saveSlot()"
+            >
+              {{ saving() ? 'Saving…' : editingEntry() ? 'Update class' : 'Add to timetable' }}
+            </button>
+          </footer>
         </div>
-        <footer class="dialog__footer">
-          <button
-            class="erp-button erp-button--secondary"
-            type="button"
-            (click)="combinedOpen.set(false)"
-          >
-            Cancel
-          </button>
-          <button
-            class="erp-button erp-button--primary"
-            type="button"
-            [disabled]="saving()"
-            (click)="saveCombinedClass()"
-          >
-            {{ saving() ? 'Saving…' : 'Save combined class' }}
-          </button>
-        </footer>
-      </section>
+      </aside>
     </div>
   }
 </erp-admin-page>
