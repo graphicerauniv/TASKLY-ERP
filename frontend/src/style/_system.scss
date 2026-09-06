@@ -11001,6 +11001,9 @@ erp-upload-field {
 }
 
 .erp-period-scope {
+  position: sticky;
+  z-index: 20;
+  top: 0.65rem;
   display: flex;
   min-height: 4.15rem;
   align-items: center;
@@ -11010,6 +11013,8 @@ erp-upload-field {
   border: 1px solid #bfd8f1;
   border-radius: 0.7rem;
   background: linear-gradient(90deg, #f5fbff, rgba(255, 255, 255, 0.96));
+  box-shadow: 0 8px 22px rgba(27, 80, 143, 0.08);
+  overflow: visible;
 }
 
 .erp-period-scope > div {
@@ -11035,12 +11040,139 @@ erp-upload-field {
   background: #cbddef;
 }
 
-.erp-period-scope .erp-control {
-  width: min(18rem, 30vw);
-  border: 0;
+.erp-period-picker {
+  position: relative;
+  width: clamp(14rem, 27vw, 24rem);
+  min-width: 0;
+}
+
+.erp-period-picker > button {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
   color: #102a56;
   background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.erp-period-picker > button:hover,
+.erp-period-picker > button.is-open {
+  border-color: #7db6ed;
+  background: #fff;
+}
+
+.erp-period-picker > button.is-open {
+  box-shadow: 0 0 0 3px rgba(8, 113, 220, 0.13);
+}
+
+.erp-period-picker > button:disabled {
+  color: #899bb4;
+  cursor: not-allowed;
+}
+
+.erp-period-picker > button strong {
+  min-width: 0;
+  overflow: hidden;
   font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erp-period-picker > button svg {
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.erp-period-picker > button.is-open svg {
+  transform: rotate(180deg);
+}
+
+.erp-period-picker > ul {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  left: 0;
+  max-height: min(22rem, 55vh);
+  margin: 0;
+  padding: 0.4rem;
+  overflow-y: auto;
+  border: 1px solid #b8d4ee;
+  border-radius: 0.7rem;
+  background: #fff;
+  box-shadow: 0 18px 42px rgba(20, 61, 108, 0.2);
+  list-style: none;
+  animation: erp-period-picker-enter 170ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.erp-period-picker li > button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1.7rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.7rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #27466f;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.erp-period-picker li > button:hover,
+.erp-period-picker li > button.is-selected {
+  color: #075fb9;
+  background: #eaf5ff;
+}
+
+.erp-period-picker li > button > svg {
+  color: #0871dc;
+}
+
+.erp-period-picker li > button span,
+.erp-period-picker li > button strong,
+.erp-period-picker li > button small {
+  display: block;
+  min-width: 0;
+}
+
+.erp-period-picker li > button strong {
+  overflow: hidden;
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erp-period-picker li > button small {
+  margin-top: 0.15rem;
+  color: #6a81a3;
+  font-size: 0.72rem;
+}
+
+.erp-period-picker__empty {
+  padding: 0.9rem;
+  color: #647c9f;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+@keyframes erp-period-picker-enter {
+  from {
+    transform: translateY(-7px);
+    opacity: 0;
+  }
 }
 
 .erp-period-table {
@@ -11423,7 +11555,7 @@ erp-upload-field {
     height: 1px;
   }
 
-  .erp-period-scope .erp-control {
+  .erp-period-picker {
     width: 100%;
   }
 
