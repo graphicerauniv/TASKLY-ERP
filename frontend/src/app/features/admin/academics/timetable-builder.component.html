@@ -147,7 +147,10 @@
                       } @else if (entry) {
                         <strong>{{ entry.subjectName }}</strong>
                         <small>{{ entry.facultyName }}</small>
-                        <small>{{ entry.roomName }} · {{ entry.classType }}</small>
+                        <small
+                          >{{ entry.roomName ? entry.roomName + ' · ' : ''
+                          }}{{ entry.classType }}</small
+                        >
                       } @else {
                         <span>Right-click to assign</span>
                       }
@@ -166,13 +169,27 @@
     <div
       class="slot-context-menu"
       role="menu"
+      tabindex="-1"
       [style.left.px]="menu.x"
       [style.top.px]="menu.y"
       (click)="$event.stopPropagation()"
+      (keydown.escape)="context.set(null)"
     >
-      <button type="button" role="menuitem" (click)="editSlot()">Assign subject</button>
-      <button type="button" role="menuitem" (click)="editSlot()">Assign teacher</button>
-      <button type="button" role="menuitem" (click)="editSlot()">Assign room</button>
+      <button type="button" role="menuitem" (click)="editSlot('subject')">Assign subject</button>
+      <button type="button" role="menuitem" (click)="editSlot('faculty')">Assign teacher</button>
+      <button type="button" role="menuitem" (click)="editSlot('room')">Assign room</button>
+      <button type="button" role="menuitem" (click)="openCombinedClass()">Combined class</button>
+      <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="copySlot()">
+        Copy slot
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        [disabled]="!copiedEntry() || !!menu.entry"
+        (click)="pasteSlot()"
+      >
+        Paste slot
+      </button>
       <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="mergeSlot()">
         Merge column
       </button>
@@ -224,41 +241,51 @@
           <button type="button" aria-label="Close" (click)="closeEditor()">×</button>
         </header>
         <div class="dialog__body dialog-form">
-          <label
-            ><span>Subject *</span
-            ><select class="erp-control" [(ngModel)]="subjectId" (ngModelChange)="subjectChanged()">
-              <option value="">Select assigned subject</option>
-              @for (item of availableSubjects(); track item._id) {
-                <option [value]="item._id">{{ item.code }} · {{ item.name }}</option>
-              }
-            </select></label
-          >
-          <label
-            ><span>Teacher *</span
-            ><select class="erp-control" [(ngModel)]="facultyId">
-              <option value="">Select teacher</option>
-              @for (item of availableFaculty(); track item._id) {
-                <option [value]="item._id">{{ item.name }}</option>
-              }
-            </select></label
-          >
-          <label
-            ><span>Room/lab *</span
-            ><select class="erp-control" [(ngModel)]="roomId">
-              <option value="">Select room</option>
-              @for (item of availableRooms(); track item._id) {
-                <option [value]="item._id">{{ item.name }} · capacity {{ item.capacity }}</option>
-              }
-            </select></label
-          >
-          <label
-            ><span>Class type *</span
-            ><select class="erp-control" [(ngModel)]="classType">
-              <option value="lecture">Lecture</option>
-              <option value="tutorial">Tutorial</option>
-              <option value="lab">Lab</option>
-            </select></label
-          >
+          @if (editorMode() === 'subject' || editorMode() === 'all') {
+            <label
+              ><span>Subject *</span
+              ><select
+                class="erp-control"
+                [(ngModel)]="subjectId"
+                (ngModelChange)="subjectChanged()"
+              >
+                <option value="">Select assigned subject</option>
+                @for (item of availableSubjects(); track item._id) {
+                  <option [value]="item._id">{{ item.code }} · {{ item.name }}</option>
+                }
+              </select></label
+            >
+          }
+          @if (editorMode() === 'faculty' || editorMode() === 'all') {
+            <label
+              ><span>Teacher *</span
+              ><select class="erp-control" [(ngModel)]="facultyId">
+                <option value="">Select teacher</option>
+                @for (item of availableFaculty(); track item._id) {
+                  <option [value]="item._id">{{ item.name }}</option>
+                }
+              </select></label
+            >
+          }
+          @if (editorMode() === 'room' || editorMode() === 'all') {
+            <label
+              ><span>Room/lab</span
+              ><select class="erp-control" [(ngModel)]="roomId">
+                <option value="">Select room</option>
+                @for (item of availableRooms(); track item._id) {
+                  <option [value]="item._id">{{ item.name }} · capacity {{ item.capacity }}</option>
+                }
+              </select></label
+            >
+            <label
+              ><span>Class type</span
+              ><select class="erp-control" [(ngModel)]="classType">
+                <option value="lecture">Lecture</option>
+                <option value="tutorial">Tutorial</option>
+                <option value="lab">Lab</option>
+              </select></label
+            >
+          }
         </div>
         <footer class="dialog__footer">
           <button class="erp-button erp-button--secondary" type="button" (click)="closeEditor()">
@@ -271,6 +298,72 @@
             (click)="saveSlot()"
           >
             {{ saving() ? 'Saving…' : 'Save assignment' }}
+          </button>
+        </footer>
+      </section>
+    </div>
+  }
+
+  @if (combinedOpen()) {
+    <div class="dialog-layer">
+      <button
+        class="dialog-backdrop"
+        type="button"
+        aria-label="Close combined class"
+        (click)="combinedOpen.set(false)"
+      ></button>
+      <section class="dialog dialog--wide" role="dialog" aria-modal="true">
+        <header class="dialog__header">
+          <div>
+            <small>{{ activeDay() }} · Period {{ activePeriod()?.periodNumber }}</small>
+            <h2>Configure combined class</h2>
+            <p>Select multiple groups and their sections from this session and semester.</p>
+          </div>
+          <button type="button" aria-label="Close" (click)="combinedOpen.set(false)">×</button>
+        </header>
+        <div class="dialog__body combined-class-list">
+          @for (group of availableGroups(); track group._id) {
+            <section class="combined-class-group">
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="!!audienceFor(group._id)"
+                  (change)="toggleAudienceGroup(group._id)"
+                />
+                <strong>{{ group.name }}</strong>
+              </label>
+              @if (audienceFor(group._id)) {
+                <div class="combined-class-sections">
+                  @for (section of sectionsForGroup(group._id); track section._id) {
+                    <label>
+                      <input
+                        type="checkbox"
+                        [checked]="audienceFor(group._id)?.sectionIds?.includes(section._id)"
+                        (change)="toggleAudienceSection(group._id, section._id)"
+                      />
+                      {{ section.name }}
+                    </label>
+                  }
+                </div>
+              }
+            </section>
+          }
+        </div>
+        <footer class="dialog__footer">
+          <button
+            class="erp-button erp-button--secondary"
+            type="button"
+            (click)="combinedOpen.set(false)"
+          >
+            Cancel
+          </button>
+          <button
+            class="erp-button erp-button--primary"
+            type="button"
+            [disabled]="saving()"
+            (click)="saveCombinedClass()"
+          >
+            {{ saving() ? 'Saving…' : 'Save combined class' }}
           </button>
         </footer>
       </section>

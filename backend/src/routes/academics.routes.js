@@ -43,20 +43,37 @@ const setSchema = z.object({
   sectionId: objectIdString,
   isActive: z.boolean().optional().default(true),
 });
-const subjectSchema = scopeSchema.extend({
-  name: z.string().trim().min(1).max(180),
+const subjectMarkPartSchema = z.object({
+  key: z.enum(['internal', 'external', 'midTerm', 'practical', 'internalPractical']),
+  label: z.string().trim().max(80),
+  maxMarks: z.coerce.number().min(0).max(10000).default(0),
+  passMarksEnabled: z.boolean().default(false),
+  passMarks: z.coerce.number().min(0).max(10000).default(0),
+});
+const subjectSchema = z.object({
+  name: z.string().trim().max(180).optional().default(''),
   hindiName: z.string().trim().max(180).optional().default(''),
-  code: z.string().trim().min(1).max(50),
-  departmentIds: z.array(objectIdString).min(1),
-  departmentNames: z.array(z.string().trim().min(1)).min(1),
+  code: z.string().trim().max(50).optional().default(''),
+  academicSessionId: z.string().trim().optional().default(''),
+  academicSession: z.string().trim().max(30).optional().default(''),
+  universityId: z.string().trim().optional().default(''),
+  universityName: z.string().trim().max(160).optional().default(''),
+  collegeId: z.string().trim().optional().default(''),
+  collegeName: z.string().trim().max(160).optional().default(''),
+  levelId: z.string().trim().optional().default(''),
+  levelName: z.string().trim().max(120).optional().default(''),
+  semester: z.coerce.number().int().min(0).max(20).optional().default(0),
+  departmentIds: z.array(objectIdString).default([]),
+  departmentNames: z.array(z.string().trim().min(1)).default([]),
   courseIds: z.array(objectIdString).default([]),
   courseNames: z.array(z.string().trim().min(1)).default([]),
   branchIds: z.array(objectIdString).default([]),
   branchNames: z.array(z.string().trim().min(1)).default([]),
-  subjectType: z.enum(['theory', 'practical', 'tutorial', 'project']),
-  subjectOption: z.enum(['required', 'elective']).default('required'),
-  evaluationType: z.enum(['marks', 'grade']).default('marks'),
-  credits: z.coerce.number().min(0).max(100),
+  markType: z.string().trim().max(80).optional().default(''),
+  subjectType: z.enum(['', 'theory', 'practical', 'tutorial', 'project']).default(''),
+  subjectOption: z.enum(['', 'required', 'elective']).default(''),
+  evaluationType: z.enum(['', 'marks', 'grade']).default(''),
+  credits: z.coerce.number().min(0).max(100).default(0),
   subjectCounter: z.coerce.number().int().min(0).max(100).default(0),
   lectureHours: z.coerce.number().min(0).max(100).default(0),
   tutorialHours: z.coerce.number().min(0).max(100).default(0),
@@ -66,6 +83,20 @@ const subjectSchema = scopeSchema.extend({
   internalMarks: z.coerce.number().min(0).max(10000).default(0),
   externalMarks: z.coerce.number().min(0).max(10000).default(0),
   midTermMarks: z.coerce.number().min(0).max(10000).default(0),
+  alternativeGrade: z.string().trim().max(80).optional().default(''),
+  alternativeGradePoint: z.coerce.number().min(0).max(100).default(0),
+  alternativeSubjectCredit: z.coerce.number().min(0).max(100).default(0),
+  splitType: z
+    .enum([
+      '',
+      'internal_external',
+      'internal_external_midterm',
+      'internal_external_practical',
+      'internal_external_midterm_practical',
+    ])
+    .default(''),
+  splitCategory: z.string().trim().max(100).optional().default(''),
+  markSplits: z.array(subjectMarkPartSchema).default([]),
   flags: z.record(z.string(), z.boolean()).optional().default({}),
   visibility: z.record(z.string(), z.boolean()).optional().default({}),
   isActive: z.boolean().optional().default(true),
@@ -143,6 +174,11 @@ const groupSubjectSchema = z.object({
   semester: z.coerce.number().int().min(1).max(20),
   requirement: z.enum(['required', 'elective']).default('required'),
 });
+const timetableAudienceSchema = z.object({
+  groupId: objectIdString,
+  sectionIds: z.array(objectIdString).min(1),
+  setIds: z.array(objectIdString).default([]),
+});
 const timetableSchema = z.object({
   timetableMasterId: objectIdString,
   timetableStructureId: objectIdString,
@@ -151,10 +187,11 @@ const timetableSchema = z.object({
   semester: z.coerce.number().int().min(1).max(20),
   groupId: objectIdString,
   sectionId: objectIdString,
+  audiences: z.array(timetableAudienceSchema).optional().default([]),
   setIds: z.array(objectIdString).default([]),
-  subjectId: objectIdString,
-  facultyId: objectIdString,
-  roomId: objectIdString,
+  subjectId: z.string().trim().optional().default(''),
+  facultyId: z.string().trim().optional().default(''),
+  roomId: z.string().trim().optional().default(''),
   day: z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
   classType: z.enum(['lecture', 'tutorial', 'lab']),
   effectiveFrom: z.coerce.date().optional().nullable(),
@@ -190,6 +227,7 @@ const schemas = {
 const objectIdFields = new Set([
   'universityId',
   'collegeId',
+  'academicSessionId',
   'levelId',
   'groupId',
   'sectionId',
@@ -264,6 +302,12 @@ async function masterNames(values, typeSlug) {
 }
 async function resolveAcademicMasterData(data) {
   const output = { ...data };
+  if (data.academicSessionId) {
+    const value = await activeMaster(data.academicSessionId, 'academic');
+    if (!value)
+      throw Object.assign(new Error('Selected academic session is unavailable.'), { status: 400 });
+    output.academicSession = value.name;
+  }
   if (data.universityId) {
     const value = await activeMaster(data.universityId, 'university');
     if (!value)
@@ -430,6 +474,8 @@ academicsRouter.get(
   asyncHandler(async (request, response) => {
     const collection = resourceCollection(request.params.resource);
     const filter = {};
+    const requestedGroupId = String(request.query.groupId || '');
+    const requestedSectionId = String(request.query.sectionId || '');
     for (const field of [
       'academicSession',
       'semester',
@@ -441,7 +487,14 @@ academicsRouter.get(
       'timetableStructureId',
       'status',
     ])
-      if (request.query[field] !== undefined && request.query[field] !== '')
+      if (
+        request.query[field] !== undefined &&
+        request.query[field] !== '' &&
+        !(
+          request.params.resource === 'timetables' &&
+          (field === 'groupId' || field === 'sectionId')
+        )
+      )
         filter[field] =
           field === 'semester'
             ? Number(request.query[field])
@@ -450,16 +503,21 @@ academicsRouter.get(
               : objectIdFields.has(field)
                 ? id(String(request.query[field]), field)
                 : String(request.query[field]);
-    response.json({
-      items: (
-        await db()
-          .collection(collection)
-          .find(filter)
-          .sort({ academicSession: -1, semester: 1, name: 1, day: 1, startTime: 1 })
-          .limit(1000)
-          .toArray()
-      ).map(serialize),
-    });
+    let items = await db()
+      .collection(collection)
+      .find(filter)
+      .sort({ academicSession: -1, semester: 1, name: 1, day: 1, startTime: 1 })
+      .limit(1000)
+      .toArray();
+    if (request.params.resource === 'timetables' && requestedGroupId)
+      items = items.filter((entry) =>
+        entryAudiences(entry).some(
+          (audience) =>
+            String(audience.groupId) === requestedGroupId &&
+            (!requestedSectionId || audience.sectionIds.map(String).includes(requestedSectionId)),
+        ),
+      );
+    response.json({ items: items.map(serialize) });
   }),
 );
 
@@ -469,16 +527,10 @@ academicsRouter.post(
     const type = request.params.resource;
     if (!schemas[type]) return next();
     let data = schemas[type].parse(request.body);
-    if (
-      type === 'subjects' &&
-      (Number(data.passMarks) > Number(data.maxMarks) ||
-        Number(data.internalMarks) + Number(data.externalMarks) + Number(data.midTermMarks) >
-          Number(data.maxMarks))
-    )
-      return response.status(400).json({
-        message:
-          'Passing marks and the internal/external/mid-term split must fit within maximum marks.',
-      });
+    if (type === 'subjects') {
+      const marksError = validateSubjectMarks(data);
+      if (marksError) return response.status(400).json({ message: marksError });
+    }
     data = await resolveAcademicMasterData(data);
     let timetableMaster = null;
     if (type === 'timetable-structures' || type === 'timetable-periods') {
@@ -540,7 +592,12 @@ academicsRouter.post(
                     ...(data.academicSession ? { academicSession: data.academicSession } : {}),
                     ...(data.collegeId ? { collegeId: id(data.collegeId) } : {}),
                   };
-    if (await db().collection(collection).findOne(duplicateFilter)) throw duplicateError(data.name);
+    if (
+      !(type === 'subjects' && !data.code) &&
+      (await db().collection(collection).findOne(duplicateFilter))
+    )
+      throw duplicateError(data.name || data.code || 'Record');
+    if (type === 'subjects' && !data.code) data.code = null;
     if (type === 'sets') {
       const section = await db()
         .collection('academicSections')
@@ -616,19 +673,21 @@ academicsRouter.patch(
           return response.status(409).json({
             message: 'This period is already used in a timetable and cannot be cleared.',
           });
-        await db().collection(collection).updateOne(
-          { _id: itemId },
-          {
-            $set: {
-              periodType: null,
-              startTime: null,
-              endTime: null,
-              durationMinutes: null,
-              isConfigured: false,
-              updatedAt: new Date(),
+        await db()
+          .collection(collection)
+          .updateOne(
+            { _id: itemId },
+            {
+              $set: {
+                periodType: null,
+                startTime: null,
+                endTime: null,
+                durationMinutes: null,
+                isConfigured: false,
+                updatedAt: new Date(),
+              },
             },
-          },
-        );
+          );
         return response.json({
           item: serialize(await db().collection(collection).findOne({ _id: itemId })),
         });
@@ -658,6 +717,10 @@ academicsRouter.patch(
       data = { ...data, endTime, isConfigured: true };
     } else {
       data = schema.partial().parse(request.body);
+      if (type === 'subjects') {
+        const marksError = validateSubjectMarks(data);
+        if (marksError) return response.status(400).json({ message: marksError });
+      }
       if (type === 'timetable-structures' && data.periodCount !== undefined) {
         const current = await db().collection(collection).findOne({ _id: itemId });
         if (Number(data.periodCount) !== Number(current?.periodCount))
@@ -667,6 +730,7 @@ academicsRouter.patch(
           });
       }
       data = await resolveAcademicMasterData(data);
+      if (type === 'subjects' && data.code === '') data.code = null;
     }
     const result = await db()
       .collection(collection)
@@ -676,6 +740,21 @@ academicsRouter.patch(
     response.json({ item: serialize(await db().collection(collection).findOne({ _id: itemId })) });
   }),
 );
+
+function validateSubjectMarks(data) {
+  const maxMarks = Number(data.maxMarks || 0);
+  const passMarks = Number(data.passMarks || 0);
+  if (maxMarks > 0 && passMarks > maxMarks)
+    return 'Passing marks cannot be greater than maximum marks.';
+  const parts = data.markSplits || [];
+  for (const part of parts)
+    if (part.passMarksEnabled && Number(part.passMarks || 0) > Number(part.maxMarks || 0))
+      return `${part.label || 'Split'} passing marks cannot exceed its maximum marks.`;
+  const splitTotal = parts.reduce((total, part) => total + Number(part.maxMarks || 0), 0);
+  if (maxMarks > 0 && splitTotal > maxMarks)
+    return 'The subject split total cannot be greater than maximum marks.';
+  return '';
+}
 
 academicsRouter.delete(
   '/:resource/:itemId',
@@ -712,6 +791,7 @@ academicsRouter.delete(
       ],
       faculties: [['timetableEntries', 'facultyId']],
       rooms: [['timetableEntries', 'roomId']],
+      timetables: [['attendanceSessions', 'timetableEntryId']],
     };
     for (const [referenceCollection, field] of referenceChecks[type] || [])
       if (
@@ -1043,6 +1123,150 @@ academicsRouter.post(
   }),
 );
 
+function entryAudiences(entry) {
+  if (entry.audiences?.length) return entry.audiences;
+  return entry.groupId && entry.sectionId
+    ? [
+        {
+          groupId: String(entry.groupId),
+          sectionIds: [String(entry.sectionId)],
+          setIds: (entry.setIds || []).map(String),
+        },
+      ]
+    : [];
+}
+
+function timetableAudiencesOverlap(left, right) {
+  return left.some((leftAudience) =>
+    right.some((rightAudience) => {
+      if (String(leftAudience.groupId) !== String(rightAudience.groupId)) return false;
+      const sectionOverlap = leftAudience.sectionIds.some((sectionId) =>
+        rightAudience.sectionIds.map(String).includes(String(sectionId)),
+      );
+      if (!sectionOverlap) return false;
+      if (!leftAudience.setIds.length || !rightAudience.setIds.length) return true;
+      return leftAudience.setIds.some((setId) =>
+        rightAudience.setIds.map(String).includes(String(setId)),
+      );
+    }),
+  );
+}
+
+async function resolveTimetableAssignment(data, master) {
+  const audiences = data.audiences?.length
+    ? data.audiences
+    : [{ groupId: data.groupId, sectionIds: [data.sectionId], setIds: data.setIds || [] }];
+  const groupIds = [...new Set(audiences.map((audience) => audience.groupId))];
+  const sectionIds = [...new Set(audiences.flatMap((audience) => audience.sectionIds))];
+  const [groups, sections, subject, faculty, room] = await Promise.all([
+    Promise.all(
+      groupIds.map((value) =>
+        db()
+          .collection('academicGroups')
+          .findOne({ _id: id(value), isActive: true }),
+      ),
+    ),
+    Promise.all(
+      sectionIds.map((value) =>
+        db()
+          .collection('academicSections')
+          .findOne({ _id: id(value), isActive: true }),
+      ),
+    ),
+    data.subjectId
+      ? db()
+          .collection('subjects')
+          .findOne({ _id: id(data.subjectId), isActive: true })
+      : null,
+    data.facultyId
+      ? db()
+          .collection('faculties')
+          .findOne({ _id: id(data.facultyId), isActive: true })
+      : null,
+    data.roomId
+      ? db()
+          .collection('academicRooms')
+          .findOne({ _id: id(data.roomId), isActive: true })
+      : null,
+  ]);
+  if (groups.some((value) => !value) || sections.some((value) => !value))
+    return { error: 'Select active groups and sections for this class.' };
+  if (
+    groups.some(
+      (group) =>
+        group.academicSession !== data.academicSession ||
+        Number(group.semester) !== Number(data.semester) ||
+        String(group.universityId) !== String(master.universityId) ||
+        String(group.collegeId) !== String(master.collegeId),
+    )
+  )
+    return { error: 'Every combined group must match this session, semester and institution.' };
+  for (const audience of audiences) {
+    const group = groups.find((value) => String(value._id) === String(audience.groupId));
+    for (const sectionId of audience.sectionIds) {
+      const section = sections.find((value) => String(value._id) === String(sectionId));
+      if (!section?.groupIds?.some((value) => String(value) === String(group._id)))
+        return { error: 'Every selected section must belong to its selected group.' };
+    }
+  }
+  if (data.subjectId && !subject) return { error: 'Selected subject is unavailable.' };
+  if (data.facultyId && !faculty) return { error: 'Selected faculty is unavailable.' };
+  if (data.roomId && !room) return { error: 'Selected room is unavailable.' };
+  if (
+    subject &&
+    ((subject.universityId && String(subject.universityId) !== String(master.universityId)) ||
+      (subject.collegeId && String(subject.collegeId) !== String(master.collegeId)))
+  )
+    return { error: 'Selected subject is outside this university or college.' };
+  if (
+    faculty &&
+    ((faculty.universityId && String(faculty.universityId) !== String(master.universityId)) ||
+      (faculty.collegeId && String(faculty.collegeId) !== String(master.collegeId)))
+  )
+    return { error: 'Selected faculty is outside this university or college.' };
+  if (faculty?.availableDays?.length && !faculty.availableDays.includes(data.day))
+    return { error: 'Faculty is unavailable on this day.' };
+  if (
+    subject &&
+    faculty?.subjectIds?.length &&
+    !faculty.subjectIds.some((value) => String(value) === String(subject._id))
+  )
+    return { error: 'Faculty is not mapped to this subject.' };
+  if (
+    subject &&
+    room?.subjectIds?.length &&
+    !room.subjectIds.some((value) => String(value) === String(subject._id))
+  )
+    return { error: 'Room is not configured for this subject.' };
+  if (data.classType === 'lab' && room && room.roomType !== 'lab')
+    return { error: 'A lab class requires a lab room.' };
+  return { audiences, groups, sections, subject, faculty, room };
+}
+
+async function timetableRoster(audiences, academicSession, semester) {
+  const allocations = await db()
+    .collection('studentAcademicAssignments')
+    .find({ academicSession, semester, status: 'active' })
+    .toArray();
+  const admissionIds = new Set();
+  for (const allocation of allocations) {
+    const matches = audiences.some(
+      (audience) =>
+        String(audience.groupId) === String(allocation.groupId) &&
+        audience.sectionIds.map(String).includes(String(allocation.sectionId)) &&
+        (!audience.setIds.length || audience.setIds.map(String).includes(String(allocation.setId))),
+    );
+    if (matches) admissionIds.add(String(allocation.studentAdmissionId));
+  }
+  return Promise.all(
+    [...admissionIds].map((value) =>
+      db()
+        .collection('admissions')
+        .findOne({ _id: id(value), status: 'approved', isActive: true }),
+    ),
+  ).then((students) => students.filter(Boolean));
+}
+
 academicsRouter.post(
   '/timetables',
   asyncHandler(async (request, response) => {
@@ -1051,7 +1275,7 @@ academicsRouter.post(
       return response
         .status(400)
         .json({ message: 'Effective-to date must be after effective-from date.' });
-    const [master, structure, period, group, section, subject, faculty, room] = await Promise.all([
+    const [master, structure, period] = await Promise.all([
       db()
         .collection('timetableMasters')
         .findOne({
@@ -1073,21 +1297,6 @@ academicsRouter.post(
           timetableStructureId: id(data.timetableStructureId),
           isConfigured: true,
         }),
-      db()
-        .collection('academicGroups')
-        .findOne({ _id: id(data.groupId), isActive: true }),
-      db()
-        .collection('academicSections')
-        .findOne({ _id: id(data.sectionId), isActive: true }),
-      db()
-        .collection('subjects')
-        .findOne({ _id: id(data.subjectId), isActive: true }),
-      db()
-        .collection('faculties')
-        .findOne({ _id: id(data.facultyId), isActive: true }),
-      db()
-        .collection('academicRooms')
-        .findOne({ _id: id(data.roomId), isActive: true }),
     ]);
     if (!master || !structure || !period)
       return response.status(400).json({
@@ -1100,60 +1309,9 @@ academicsRouter.post(
     if (master.academicSession !== data.academicSession)
       return response.status(400).json({ message: 'Timetable session does not match the class.' });
     data = { ...data, startTime: period.startTime, endTime: period.endTime };
-    if (!group || !section || !subject || !faculty || !room)
-      return response
-        .status(400)
-        .json({ message: 'Select active group, section, subject, faculty and room records.' });
-    if (
-      group.academicSession !== data.academicSession ||
-      Number(group.semester) !== Number(data.semester) ||
-      String(group.universityId) !== String(master.universityId) ||
-      String(group.collegeId) !== String(master.collegeId)
-    )
-      return response.status(400).json({
-        message: 'The selected group is outside this timetable session or institution.',
-      });
-    if (!section.groupIds.some((value) => String(value) === String(group._id)))
-      return response.status(400).json({ message: 'Section is not mapped to this group.' });
-    const mapping = await db().collection('groupSubjectAssignments').findOne({
-      groupId: group._id,
-      subjectId: subject._id,
-      academicSession: data.academicSession,
-      semester: data.semester,
-      status: 'active',
-    });
-    if (!mapping)
-      return response.status(400).json({ message: 'Subject is not assigned to this group.' });
-    if (
-      group.departmentIds?.length &&
-      subject.departmentIds?.length &&
-      !group.departmentIds.some((groupDepartment) =>
-        subject.departmentIds.some(
-          (subjectDepartment) => String(groupDepartment) === String(subjectDepartment),
-        ),
-      )
-    )
-      return response
-        .status(400)
-        .json({ message: 'Subject department is incompatible with this group.' });
-    if (
-      faculty.subjectIds?.length &&
-      !faculty.subjectIds.some((value) => String(value) === String(subject._id))
-    )
-      return response.status(400).json({ message: 'Faculty is not mapped to this subject.' });
-    if (faculty.availableDays?.length && !faculty.availableDays.includes(data.day))
-      return response
-        .status(400)
-        .json({ message: 'Faculty is not available on the selected day.' });
-    if (
-      room.subjectIds?.length &&
-      !room.subjectIds.some((value) => String(value) === String(subject._id))
-    )
-      return response
-        .status(400)
-        .json({ message: 'This room/lab is not configured for the selected subject.' });
-    if (data.classType === 'lab' && room.roomType !== 'lab')
-      return response.status(400).json({ message: 'A lab timetable period requires a lab room.' });
+    const resolved = await resolveTimetableAssignment(data, master);
+    if (resolved.error) return response.status(400).json({ message: resolved.error });
+    const { audiences, groups, sections, subject, faculty, room } = resolved;
     const sameDay = await db()
       .collection('timetableEntries')
       .find({
@@ -1166,13 +1324,9 @@ academicsRouter.post(
     const conflict = sameDay.find(
       (entry) =>
         overlap(data.startTime, data.endTime, entry.startTime, entry.endTime) &&
-        (String(entry.facultyId) === String(faculty._id) ||
-          String(entry.roomId) === String(room._id) ||
-          String(entry.groupId) === String(group._id) ||
-          String(entry.sectionId) === String(section._id) ||
-          data.setIds.some((setId) =>
-            (entry.setIds || []).some((value) => String(value) === setId),
-          )),
+        ((faculty && String(entry.facultyId) === String(faculty._id)) ||
+          (room && String(entry.roomId) === String(room._id)) ||
+          timetableAudiencesOverlap(audiences, entryAudiences(entry))),
     );
     if (conflict)
       return response.status(409).json({
@@ -1180,30 +1334,18 @@ academicsRouter.post(
           'This period conflicts with an existing faculty, room, group, section or set timetable entry.',
         conflict: serialize(conflict),
       });
-    const allocationFilter = {
-      academicSession: data.academicSession,
-      semester: data.semester,
-      groupId: group._id,
-      sectionId: section._id,
-      status: 'active',
-    };
-    const allocations = await db()
-      .collection('studentAcademicAssignments')
-      .find(allocationFilter)
-      .toArray();
-    const expectedStudents = data.setIds.length
-      ? allocations.filter((allocation) =>
-          data.setIds.some((value) => String(allocation.setId) === value),
-        ).length
-      : allocations.length;
-    if (expectedStudents > Number(room.capacity || 0))
+    const expectedStudents = (await timetableRoster(audiences, data.academicSession, data.semester))
+      .length;
+    if (room && expectedStudents > Number(room.capacity || 0))
       return response.status(409).json({
         message: `Room capacity is ${room.capacity}, but this class contains ${expectedStudents} allocated students.`,
       });
-    const facultyPeriods = await db()
-      .collection('timetableEntries')
-      .find({ academicSession: data.academicSession, facultyId: faculty._id, isActive: true })
-      .toArray();
+    const facultyPeriods = faculty
+      ? await db()
+          .collection('timetableEntries')
+          .find({ academicSession: data.academicSession, facultyId: faculty._id, isActive: true })
+          .toArray()
+      : [];
     const weeklyHours = facultyPeriods.reduce((sum, entry) => {
       const [startHour, startMinute] = entry.startTime.split(':').map(Number);
       const [endHour, endMinute] = entry.endTime.split(':').map(Number);
@@ -1213,7 +1355,7 @@ academicsRouter.post(
     const [endHour, endMinute] = data.endTime.split(':').map(Number);
     if (
       weeklyHours + (endHour * 60 + endMinute - startHour * 60 - startMinute) / 60 >
-      Number(faculty.weeklyLimit || 40)
+      Number(faculty?.weeklyLimit || 40)
     )
       return response
         .status(409)
@@ -1221,14 +1363,20 @@ academicsRouter.post(
     const now = new Date();
     const document = {
       ...documentData(data),
+      audiences,
+      groupIds: groups.map((value) => value._id),
+      sectionIds: sections.map((value) => value._id),
       timetablePeriodIds: [period._id],
       status: 'draft',
-      groupName: group.name,
-      sectionName: section.name,
-      subjectName: subject.name,
-      subjectCode: subject.code,
-      facultyName: faculty.name,
-      roomName: room.name,
+      groupName: groups.map((value) => value.name).join(', '),
+      sectionName: sections.map((value) => value.name).join(', '),
+      subjectId: subject?._id || null,
+      subjectName: subject?.name || '',
+      subjectCode: subject?.code || '',
+      facultyId: faculty?._id || null,
+      facultyName: faculty?.name || '',
+      roomId: room?._id || null,
+      roomName: room?.name || '',
       createdAt: now,
       updatedAt: now,
       createdBy: id(request.admin._id),
@@ -1244,54 +1392,44 @@ academicsRouter.post(
     const entryId = id(request.params.entryId, 'entryId');
     const changes = z
       .object({
-        subjectId: objectIdString,
-        facultyId: objectIdString,
-        roomId: objectIdString,
-        classType: z.enum(['lecture', 'tutorial', 'lab']),
+        subjectId: z.string().trim().optional(),
+        facultyId: z.string().trim().optional(),
+        roomId: z.string().trim().optional(),
+        classType: z.enum(['lecture', 'tutorial', 'lab']).optional(),
+        audiences: z.array(timetableAudienceSchema).optional(),
       })
       .parse(request.body);
     const entry = await db()
       .collection('timetableEntries')
       .findOne({ _id: entryId, isActive: true });
     if (!entry) return response.status(404).json({ message: 'Timetable slot was not found.' });
-    const [subject, faculty, room, mapping] = await Promise.all([
-      db()
-        .collection('subjects')
-        .findOne({ _id: id(changes.subjectId), isActive: true }),
-      db()
-        .collection('faculties')
-        .findOne({ _id: id(changes.facultyId), isActive: true }),
-      db()
-        .collection('academicRooms')
-        .findOne({ _id: id(changes.roomId), isActive: true }),
-      db()
-        .collection('groupSubjectAssignments')
-        .findOne({
-          groupId: entry.groupId,
-          subjectId: id(changes.subjectId),
-          academicSession: entry.academicSession,
-          semester: entry.semester,
-          status: 'active',
-        }),
-    ]);
-    if (!subject || !faculty || !room || !mapping)
-      return response.status(400).json({
-        message: 'Select an assigned subject and compatible active faculty and room.',
+    if (
+      (changes.subjectId !== undefined ||
+        changes.facultyId !== undefined ||
+        changes.audiences !== undefined) &&
+      (await db().collection('attendanceSessions').findOne({ timetableEntryId: entryId }))
+    )
+      return response.status(409).json({
+        message:
+          'Subject, faculty and combined-class audience cannot change after attendance is recorded.',
       });
-    if (
-      faculty.subjectIds?.length &&
-      !faculty.subjectIds.some((value) => String(value) === String(subject._id))
-    )
-      return response.status(400).json({ message: 'Faculty is not mapped to this subject.' });
-    if (faculty.availableDays?.length && !faculty.availableDays.includes(entry.day))
-      return response.status(400).json({ message: 'Faculty is unavailable on this day.' });
-    if (
-      room.subjectIds?.length &&
-      !room.subjectIds.some((value) => String(value) === String(subject._id))
-    )
-      return response.status(400).json({ message: 'Room is not configured for this subject.' });
-    if (changes.classType === 'lab' && room.roomType !== 'lab')
-      return response.status(400).json({ message: 'A lab class requires a lab room.' });
+    const master = await db()
+      .collection('timetableMasters')
+      .findOne({ _id: entry.timetableMasterId, isActive: true });
+    if (!master) return response.status(400).json({ message: 'Timetable is unavailable.' });
+    const merged = {
+      ...entry,
+      ...changes,
+      subjectId:
+        changes.subjectId === undefined ? String(entry.subjectId || '') : changes.subjectId,
+      facultyId:
+        changes.facultyId === undefined ? String(entry.facultyId || '') : changes.facultyId,
+      roomId: changes.roomId === undefined ? String(entry.roomId || '') : changes.roomId,
+      audiences: changes.audiences || entryAudiences(entry),
+    };
+    const resolved = await resolveTimetableAssignment(merged, master);
+    if (resolved.error) return response.status(400).json({ message: resolved.error });
+    const { audiences, groups, sections, subject, faculty, room } = resolved;
     const sameDay = await db()
       .collection('timetableEntries')
       .find({
@@ -1305,28 +1443,18 @@ academicsRouter.post(
       (other) =>
         String(other._id) !== String(entryId) &&
         overlap(entry.startTime, entry.endTime, other.startTime, other.endTime) &&
-        (String(other.facultyId) === String(faculty._id) ||
-          String(other.roomId) === String(room._id) ||
-          String(other.groupId) === String(entry.groupId) ||
-          String(other.sectionId) === String(entry.sectionId)),
+        ((faculty && String(other.facultyId) === String(faculty._id)) ||
+          (room && String(other.roomId) === String(room._id)) ||
+          timetableAudiencesOverlap(audiences, entryAudiences(other))),
     );
     if (conflict)
       return response.status(409).json({
         message: 'The updated faculty, room or class conflicts with another timetable slot.',
       });
-    const allocations = await db()
-      .collection('studentAcademicAssignments')
-      .find({
-        academicSession: entry.academicSession,
-        semester: entry.semester,
-        groupId: entry.groupId,
-        sectionId: entry.sectionId,
-        status: 'active',
-      })
-      .toArray();
-    if (allocations.length > Number(room.capacity || 0))
+    const roster = await timetableRoster(audiences, entry.academicSession, entry.semester);
+    if (room && roster.length > Number(room.capacity || 0))
       return response.status(409).json({
-        message: `Room capacity is ${room.capacity}, but this section contains ${allocations.length} students.`,
+        message: `Room capacity is ${room.capacity}, but this class contains ${roster.length} students.`,
       });
     await db()
       .collection('timetableEntries')
@@ -1334,14 +1462,19 @@ academicsRouter.post(
         { _id: entryId },
         {
           $set: {
-            subjectId: subject._id,
-            subjectName: subject.name,
-            subjectCode: subject.code,
-            facultyId: faculty._id,
-            facultyName: faculty.name,
-            roomId: room._id,
-            roomName: room.name,
-            classType: changes.classType,
+            audiences,
+            groupIds: groups.map((value) => value._id),
+            sectionIds: sections.map((value) => value._id),
+            groupName: groups.map((value) => value.name).join(', '),
+            sectionName: sections.map((value) => value.name).join(', '),
+            subjectId: subject?._id || null,
+            subjectName: subject?.name || '',
+            subjectCode: subject?.code || '',
+            facultyId: faculty?._id || null,
+            facultyName: faculty?.name || '',
+            roomId: room?._id || null,
+            roomName: room?.name || '',
+            classType: changes.classType || entry.classType || 'lecture',
             status: 'draft',
             updatedAt: new Date(),
           },
@@ -1394,10 +1527,9 @@ academicsRouter.post(
       (other) =>
         String(other._id) !== String(entryId) &&
         overlap(entry.startTime, nextPeriod.endTime, other.startTime, other.endTime) &&
-        (String(other.facultyId) === String(entry.facultyId) ||
-          String(other.roomId) === String(entry.roomId) ||
-          String(other.groupId) === String(entry.groupId) ||
-          String(other.sectionId) === String(entry.sectionId)),
+        ((entry.facultyId && String(other.facultyId) === String(entry.facultyId)) ||
+          (entry.roomId && String(other.roomId) === String(entry.roomId)) ||
+          timetableAudiencesOverlap(entryAudiences(entry), entryAudiences(other))),
     );
     if (conflict)
       return response
@@ -1504,12 +1636,10 @@ academicsRouter.post(
       .toArray();
     if (!entries.length)
       return response.status(409).json({ message: 'Assign at least one timetable slot first.' });
-    const incomplete = entries.find(
-      (entry) => !entry.subjectId || !entry.facultyId || !entry.roomId,
-    );
+    const incomplete = entries.find((entry) => !entry.subjectId || !entry.facultyId);
     if (incomplete)
       return response.status(409).json({
-        message: `${incomplete.day} ${incomplete.startTime} is incomplete. Assign its subject, teacher and room before publishing.`,
+        message: `${incomplete.day} ${incomplete.startTime} is incomplete. Assign its subject and teacher before publishing.`,
       });
     const now = new Date();
     await db()
@@ -1549,35 +1679,38 @@ studentAcademicsRouter.get(
         status: 'active',
       });
     if (!assignment) return response.json({ assignment: null, subjects: [], items: [] });
-    const subjectMappings = await db()
-      .collection('groupSubjectAssignments')
-      .find({
-        groupId: assignment.groupId,
-        academicSession: assignment.academicSession,
-        semester: assignment.semester,
-        status: 'active',
-      })
-      .toArray();
-    const assignedSubjects = (
-      await Promise.all(
-        subjectMappings.map((mapping) =>
-          db().collection('subjects').findOne({ _id: mapping.subjectId, isActive: true }),
-        ),
-      )
-    ).filter(Boolean);
     const entries = await db()
       .collection('timetableEntries')
       .find({
         academicSession: assignment.academicSession,
         semester: assignment.semester,
-        groupId: assignment.groupId,
-        sectionId: assignment.sectionId,
         isActive: true,
       })
       .sort({ day: 1, startTime: 1 })
       .toArray();
-    const publishedEntries = entries.filter((entry) => entry.status === 'published');
-    const timetableStructureId = publishedEntries[0]?.timetableStructureId;
+    const visibleEntries = entries.filter(
+      (entry) =>
+        entry.subjectId &&
+        entry.facultyId &&
+        entryAudiences(entry).some(
+          (audience) =>
+            String(audience.groupId) === String(assignment.groupId) &&
+            audience.sectionIds.map(String).includes(String(assignment.sectionId)) &&
+            (!audience.setIds.length ||
+              audience.setIds.map(String).includes(String(assignment.setId))),
+        ),
+    );
+    const subjectIds = [...new Set(visibleEntries.map((entry) => String(entry.subjectId)))];
+    const assignedSubjects = (
+      await Promise.all(
+        subjectIds.map((subjectId) =>
+          db()
+            .collection('subjects')
+            .findOne({ _id: id(subjectId), isActive: true }),
+        ),
+      )
+    ).filter(Boolean);
+    const timetableStructureId = visibleEntries[0]?.timetableStructureId;
     const [structure, periods] = timetableStructureId
       ? await Promise.all([
           db().collection('timetableStructures').findOne({ _id: timetableStructureId }),
@@ -1593,13 +1726,7 @@ studentAcademicsRouter.get(
       subjects: assignedSubjects.map(serialize),
       structure: structure ? serialize(structure) : null,
       periods: periods.map(serialize),
-      items: publishedEntries
-        .filter(
-          (entry) =>
-            !entry.setIds?.length ||
-            entry.setIds.some((value) => String(value) === String(assignment.setId)),
-        )
-        .map(serialize),
+      items: visibleEntries.map(serialize),
     });
   }),
 );

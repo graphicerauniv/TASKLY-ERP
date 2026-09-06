@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import express from 'express';
+import argon2 from 'argon2';
 import multer from 'multer';
 import { config } from '../config.js';
 import { db, id, serialize } from '../db.js';
@@ -130,7 +131,7 @@ formsRouter.get(
       .sort((left, right) => new Date(right.submittedAt) - new Date(left.submittedAt));
     response.json({
       section: { id: sectionId, name: forms[0].destination.databaseSectionName },
-      items: items.map(serialize),
+      items: items.map(publicSubmission),
     });
   }),
 );
@@ -144,7 +145,7 @@ formsRouter.get(
       .collection(collection)
       .findOne({ _id: id(request.params.submissionId) });
     if (!item) return response.status(404).json({ message: 'Submitted record not found.' });
-    response.json({ item: serialize(item) });
+    response.json({ item: publicSubmission(item) });
   }),
 );
 
@@ -181,7 +182,7 @@ formsRouter.patch(
         },
         { returnDocument: 'after' },
       );
-    response.json({ item: serialize(item) });
+    response.json({ item: publicSubmission(item) });
   }),
 );
 
@@ -266,15 +267,70 @@ formsRouter.post(
       responses,
       repeatableResponses,
       status: 'submitted',
+      ...(form.purpose === 'faculty'
+        ? {
+            employeeId: applicationCode,
+            passwordHash: await argon2.hash(applicationCode),
+            mustChangePassword: true,
+            isActive: true,
+          }
+        : {}),
       createdBy: id(request.admin._id),
       createdAt: now,
       submittedAt: now,
       updatedAt: now,
     };
     const result = await db().collection(collection).insertOne(document);
-    response.status(201).json({ item: serialize({ ...document, _id: result.insertedId }) });
+    if (form.purpose === 'faculty') {
+      const facultyName =
+        submissionText(snapshot, responses, /^(faculty\s*)?(full\s*)?name$/i) ||
+        [
+          submissionText(snapshot, responses, /^first\s*name$/i),
+          submissionText(snapshot, responses, /^last\s*name$/i),
+        ]
+          .filter(Boolean)
+          .join(' ') ||
+        `Faculty ${applicationCode}`;
+      const email = submissionText(snapshot, responses, /e-?mail/i);
+      const academicFaculty = {
+        facultyApplicationId: result.insertedId,
+        code: applicationCode,
+        name: facultyName,
+        email,
+        universityId: form.audience?.universityIds?.[0] ? id(form.audience.universityIds[0]) : null,
+        collegeId: form.audience?.collegeIds?.[0] ? id(form.audience.collegeIds[0]) : null,
+        departmentIds: (form.audience?.departmentIds || []).map((value) => id(value)),
+        subjectIds: [],
+        weeklyLimit: 40,
+        availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        isActive: true,
+        updatedAt: now,
+      };
+      await db()
+        .collection('faculties')
+        .updateOne(
+          { code: applicationCode },
+          {
+            $set: academicFaculty,
+            $setOnInsert: { createdAt: now, createdBy: id(request.admin._id) },
+          },
+          { upsert: true },
+        );
+    }
+    response.status(201).json({
+      item: publicSubmission({ ...document, _id: result.insertedId }),
+    });
   }),
 );
+
+function submissionText(form, responses, pattern) {
+  const fields = (form.sections || [])
+    .flatMap((section) => section.subsections || [])
+    .flatMap((subsection) => subsection.fields || []);
+  const field = fields.find((candidate) => pattern.test(String(candidate.name || '').trim()));
+  const value = field ? responses[field.id] : '';
+  return typeof value === 'string' ? value.trim() : '';
+}
 
 formsRouter.get(
   '/submissions/:purpose/:formId',
@@ -296,7 +352,7 @@ formsRouter.get(
       .sort({ submittedAt: -1 })
       .limit(1000)
       .toArray();
-    response.json({ items: items.map(serialize), form: serialize(form) });
+    response.json({ items: items.map(publicSubmission), form: serialize(form) });
   }),
 );
 
@@ -478,4 +534,12 @@ function destinationKey(destination = {}) {
     databaseSectionId: destination.databaseSectionId,
     databaseSectionName: destination.databaseSectionName,
   });
+}
+
+function publicSubmission(document) {
+  const value = serialize(document);
+  if (!value) return value;
+  const { passwordHash, ...safe } = value;
+  void passwordHash;
+  return safe;
 }

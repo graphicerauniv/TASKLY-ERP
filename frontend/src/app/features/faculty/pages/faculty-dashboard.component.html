@@ -1,0 +1,26 @@
+<div class="student-dashboard" aria-label="Faculty dashboard">
+  <section class="student-dashboard-hero" aria-labelledby="faculty-dashboard-greeting">
+    <div class="student-dashboard-hero__copy">
+      <h2 id="faculty-dashboard-greeting">
+        Ready for your day
+        @if (session.firstName(); as firstName) {
+          , <span>{{ firstName }}</span>
+        }
+        ?
+      </h2>
+      <p>Your faculty workspace starts with <strong>attendance and examinations</strong>.</p>
+    </div>
+    <img
+      class="student-dashboard-hero__art"
+      src="/assets/student/dashboard/hero/day-illustration.webp"
+      alt=""
+      width="1774"
+      height="887"
+      decoding="async"
+    />
+  </section>
+  <section class="student-dashboard-modules-section" aria-labelledby="faculty-modules-title">
+    <h2 id="faculty-modules-title">Faculty services</h2>
+    <erp-dashboard-module-grid [modules]="modules" />
+  </section>
+</div>

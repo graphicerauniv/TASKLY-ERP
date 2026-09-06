@@ -54,7 +54,7 @@ export const STUDENT_NAVIGATION: readonly StudentNavigationItem[] = [
     icon: 'calendar-check',
     route: '/student/attendance',
     ariaLabel: 'Open attendance',
-    enabled: false,
+    enabled: true,
     order: 3,
   },
   {

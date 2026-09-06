@@ -87,7 +87,10 @@
                         } @else if (entry) {
                           <strong>{{ entry.subjectName }}</strong>
                           <small>{{ entry.facultyName }}</small>
-                          <small>{{ entry.roomName }} · {{ entry.classType }}</small>
+                          <small
+                            >{{ entry.roomName ? entry.roomName + ' · ' : ''
+                            }}{{ entry.classType }}</small
+                          >
                         } @else {
                           <span>—</span>
                         }

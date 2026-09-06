@@ -28,6 +28,11 @@ export const appRoutes: Routes = [
       ...STUDENT_ROUTES,
     ],
   },
+  {
+    path: 'faculty',
+    loadChildren: () =>
+      import('./features/faculty/faculty.routes').then((routes) => routes.FACULTY_ROUTES),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
 ];

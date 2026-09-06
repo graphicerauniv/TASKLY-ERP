@@ -44,3 +44,28 @@ export const requireStudent = asyncHandler(async (request, response, next) => {
     response.status(401).json({ message: 'Your student session is invalid or expired.' });
   }
 });
+
+export const requireFaculty = asyncHandler(async (request, response, next) => {
+  const token = request.headers.authorization?.replace(/^Bearer\s+/i, '');
+  if (!token) return response.status(401).json({ message: 'Faculty authentication required.' });
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(config.jwtSecret), {
+      issuer: 'taskly-erp',
+    });
+    if (payload.role !== 'faculty') throw new Error('Invalid role');
+    const faculty = await db()
+      .collection('facultyApplications')
+      .findOne({ _id: id(payload.sub) });
+    if (!faculty || faculty.status !== 'submitted' || faculty.isActive === false)
+      return response.status(401).json({ message: 'Faculty account is unavailable.' });
+    if (
+      faculty.mustChangePassword !== false &&
+      !request.originalUrl.endsWith('/auth/faculty/change-password')
+    )
+      return response.status(403).json({ message: 'Change your temporary password to continue.' });
+    request.faculty = faculty;
+    next();
+  } catch {
+    response.status(401).json({ message: 'Your faculty session is invalid or expired.' });
+  }
+});

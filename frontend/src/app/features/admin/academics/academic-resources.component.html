@@ -198,7 +198,7 @@
           @for (item of pagedRecords(); track item._id) {
             <tr>
               <td>
-                <strong>{{ item.name }}</strong
+                <strong>{{ item.name || 'Unnamed subject' }}</strong
                 ><small>{{ item.code || '—' }}</small>
               </td>
               @if (showDetailOne()) {
@@ -381,75 +381,29 @@
               <svg lucideClipboardList size="17"></svg> Subject sections
             </button>
             <div class="erp-subject-workflow__heading">
-              <span>Step {{ subjectStep() + 1 }} of 6</span>
+              <span>Step {{ subjectStep() + 1 }} of 4</span>
               <h3>{{ subjectSections()[subjectStep()].title }}</h3>
             </div>
             @switch (subjectStep()) {
               @case (0) {
                 <fieldset class="erp-academic-form-section">
-                  <legend><svg lucideFileText size="20"></svg> Basic information</legend>
+                  <legend><svg lucideBuilding2 size="20"></svg> Course Details</legend>
                   <div class="erp-academic-form-grid">
                     <label
-                      ><span>Subject name *</span
-                      ><input
-                        class="erp-control"
-                        [(ngModel)]="name"
-                        placeholder="e.g. Data Structures"
-                    /></label>
-                    <label
-                      ><span>Code *</span
-                      ><input class="erp-control" [(ngModel)]="code" placeholder="e.g. CS201"
-                    /></label>
-                    <label class="erp-academic-field--wide"
-                      ><span>Subject name in Hindi</span
-                      ><input class="erp-control" [(ngModel)]="hindiName"
-                    /></label>
-                    <label
-                      ><span>Subject type *</span
-                      ><select class="erp-control" [(ngModel)]="subjectType">
-                        <option value="theory">Theory</option>
-                        <option value="practical">Practical</option>
-                        <option value="tutorial">Tutorial</option>
-                        <option value="project">Project</option>
+                      ><span>Session</span
+                      ><select class="erp-control" [(ngModel)]="sessionId">
+                        <option value="">Select session</option>
+                        @for (item of master('academic'); track item._id) {
+                          <option [value]="item._id">{{ item.name }}</option>
+                        }
                       </select></label
                     >
                     <label
-                      ><span>Subject option</span
-                      ><select class="erp-control" [(ngModel)]="subjectOption">
-                        <option value="required">Required</option>
-                        <option value="elective">Elective</option>
-                      </select></label
-                    >
-                    <label class="erp-academic-field--wide"
-                      ><span>Evaluation</span
-                      ><select class="erp-control" [(ngModel)]="evaluationType">
-                        <option value="marks">Marks</option>
-                        <option value="grade">Grade</option>
-                      </select></label
-                    >
-                  </div>
-                </fieldset>
-              }
-              @case (1) {
-                <fieldset class="erp-academic-form-section">
-                  <legend><svg lucideBuilding2 size="20"></svg> Academic mapping</legend>
-                  <div class="erp-academic-form-grid">
-                    <label
-                      ><span>Academic session *</span
-                      ><input
-                        class="erp-control"
-                        [(ngModel)]="session"
-                        placeholder="2026–2027" /></label
-                    ><label
-                      ><span>Semester *</span
-                      ><input class="erp-control" type="number" min="1" [(ngModel)]="semester"
-                    /></label>
-                    <label
-                      ><span>University *</span
+                      ><span>University</span
                       ><select
                         class="erp-control"
-                        [(ngModel)]="universityId"
-                        (ngModelChange)="collegeId = ''"
+                        [ngModel]="universityId"
+                        (ngModelChange)="selectUniversity($event)"
                       >
                         <option value="">Select university</option>
                         @for (item of master('university'); track item._id) {
@@ -458,66 +412,132 @@
                       </select></label
                     >
                     <label
-                      ><span>College *</span
-                      ><select class="erp-control" [(ngModel)]="collegeId">
+                      ><span>College</span
+                      ><select
+                        class="erp-control"
+                        [ngModel]="collegeId"
+                        (ngModelChange)="selectCollege($event)"
+                      >
                         <option value="">Select college</option>
-                        @for (item of scopedMaster('college', [universityId]); track item._id) {
+                        @for (
+                          item of scopedMaster('college', universityId ? [universityId] : []);
+                          track item._id
+                        ) {
                           <option [value]="item._id">{{ item.name }}</option>
                         }
                       </select></label
                     >
-                    <div class="erp-field-stack">
-                      <span>Departments *</span
-                      ><erp-multi-select-dropdown
-                        [options]="options(master('department'))"
-                        [value]="departmentIds"
-                        placeholder="Select departments"
-                        (valueChange)="departmentIds = $event"
-                      />
-                    </div>
                     <label
-                      ><span>Level / course type</span
-                      ><select class="erp-control" [(ngModel)]="levelId">
-                        <option value="">Select level</option>
-                        @for (item of master('level'); track item._id) {
+                      ><span>Department</span
+                      ><select
+                        class="erp-control"
+                        [ngModel]="singleDepartmentId()"
+                        (ngModelChange)="selectDepartment($event)"
+                      >
+                        <option value="">Select department</option>
+                        @for (item of departmentOptions(); track item._id) {
                           <option [value]="item._id">{{ item.name }}</option>
                         }
                       </select></label
                     >
-                    <div class="erp-field-stack">
-                      <span>Courses</span
-                      ><erp-multi-select-dropdown
-                        [options]="options(master('course'))"
-                        [value]="courseIds"
-                        placeholder="Select courses"
-                        (valueChange)="courseIds = $event"
-                      />
-                    </div>
-                    <div class="erp-field-stack">
-                      <span>Branches</span
-                      ><erp-multi-select-dropdown
-                        [options]="options(master('branch'))"
-                        [value]="branchIds"
-                        placeholder="Select branches"
-                        (valueChange)="branchIds = $event"
-                      />
-                    </div>
+                    <label
+                      ><span>Level</span
+                      ><select
+                        class="erp-control"
+                        [ngModel]="levelId"
+                        (ngModelChange)="selectLevel($event)"
+                      >
+                        <option value="">Select level</option>
+                        @for (item of levelOptions(); track item._id) {
+                          <option [value]="item._id">{{ item.name }}</option>
+                        }
+                      </select></label
+                    >
+                    <label
+                      ><span>Course</span
+                      ><select
+                        class="erp-control"
+                        [ngModel]="singleCourseId()"
+                        (ngModelChange)="courseIds = $event ? [$event] : []"
+                      >
+                        <option value="">Select course</option>
+                        @for (item of courseOptions(); track item._id) {
+                          <option [value]="item._id">{{ item.name }}</option>
+                        }
+                      </select></label
+                    >
+                    <label
+                      ><span>Semester</span
+                      ><select class="erp-control" [(ngModel)]="semester">
+                        <option [ngValue]="0">Select semester</option>
+                        @for (item of semesterOptions; track item) {
+                          <option [ngValue]="item">Semester {{ item }}</option>
+                        }
+                      </select></label
+                    >
                   </div>
                 </fieldset>
               }
-              @case (2) {
+              @case (1) {
                 <fieldset class="erp-academic-form-section">
-                  <legend><svg lucideDatabase size="20"></svg> Teaching load & credits</legend>
+                  <legend><svg lucideFileText size="20"></svg> Subject Details</legend>
                   <div class="erp-academic-form-grid erp-academic-form-grid--three">
                     <label
-                      ><span>Credits</span
+                      ><span>Mark Type</span
+                      ><select class="erp-control" [(ngModel)]="markType">
+                        <option value="">Select mark type</option>
+                        <option value="theory">Theory</option>
+                        <option value="practical">Practical</option>
+                        <option value="project">Project</option>
+                        <option value="audit">Audit</option>
+                      </select></label
+                    >
+                    <label
+                      ><span>Subject Option</span
+                      ><select class="erp-control" [(ngModel)]="subjectOption">
+                        <option value="">Select subject option</option>
+                        <option value="required">Required</option>
+                        <option value="elective">Elective</option>
+                      </select></label
+                    >
+                    <label
+                      ><span>Subject Type</span
+                      ><select class="erp-control" [(ngModel)]="subjectType">
+                        <option value="">Select subject type</option>
+                        <option value="theory">Theory</option>
+                        <option value="practical">Practical</option>
+                        <option value="tutorial">Tutorial</option>
+                        <option value="project">Project</option>
+                      </select></label
+                    >
+                    <label
+                      ><span>Evaluation Type</span
+                      ><select class="erp-control" [(ngModel)]="evaluationType">
+                        <option value="">Select evaluation type</option>
+                        <option value="marks">Marks</option>
+                        <option value="grade">Grade</option>
+                      </select></label
+                    >
+                    <label
+                      ><span>Subject Name (In English)</span
                       ><input
                         class="erp-control"
-                        type="number"
-                        min="0"
-                        [(ngModel)]="credits" /></label
-                    ><label
-                      ><span>Subject counter</span
+                        [(ngModel)]="name"
+                        placeholder="Enter subject name"
+                    /></label>
+                    <label
+                      ><span>Subject Name (In Hindi)</span
+                      ><input
+                        class="erp-control"
+                        [(ngModel)]="hindiName"
+                        placeholder="Enter Hindi subject name"
+                    /></label>
+                    <label
+                      ><span>Credit Earned</span
+                      ><input class="erp-control" type="number" min="0" [(ngModel)]="credits"
+                    /></label>
+                    <label
+                      ><span>Subject Counter</span
                       ><input
                         class="erp-control"
                         type="number"
@@ -525,145 +545,211 @@
                         [(ngModel)]="subjectCounter"
                     /></label>
                     <label
-                      ><span>Lecture hours</span
+                      ><span>Subject Code</span
                       ><input
                         class="erp-control"
-                        type="number"
-                        min="0"
-                        [(ngModel)]="lectureHours" /></label
-                    ><label
-                      ><span>Tutorial hours</span
-                      ><input
-                        class="erp-control"
-                        type="number"
-                        min="0"
-                        [(ngModel)]="tutorialHours" /></label
-                    ><label
-                      ><span>Practical / lab hours</span
+                        [(ngModel)]="code"
+                        placeholder="Enter subject code"
+                    /></label>
+                    <label
+                      ><span>Lecture</span
+                      ><input class="erp-control" type="number" min="0" [(ngModel)]="lectureHours"
+                    /></label>
+                    <label
+                      ><span>Tutorial</span
+                      ><input class="erp-control" type="number" min="0" [(ngModel)]="tutorialHours"
+                    /></label>
+                    <label
+                      ><span>Lab</span
                       ><input class="erp-control" type="number" min="0" [(ngModel)]="labHours"
                     /></label>
+                    <label
+                      ><span>Max. Marks</span
+                      ><input class="erp-control" type="number" min="0" [(ngModel)]="maxMarks"
+                    /></label>
+                    <div class="erp-subject-pass-control">
+                      <label class="erp-academic-check erp-academic-check--compact"
+                        ><input type="checkbox" [(ngModel)]="passMarksEnabled" /><span
+                          ><strong>Pass Marks</strong></span
+                        ></label
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="passMarks"
+                        [disabled]="!passMarksEnabled"
+                      />
+                    </div>
+                  </div>
+                  <div class="erp-academic-check-grid erp-subject-flags">
+                    <label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="isPaper" /><span
+                        ><strong>Is Paper Exist</strong></span
+                      ></label
+                    >
+                    <label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="isOpenElective" /><span
+                        ><strong>Is Open Elective</strong></span
+                      ></label
+                    >
+                    <label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="isGroupSubject" /><span
+                        ><strong>Is Group Exist</strong></span
+                      ></label
+                    >
+                    <label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="isFoundation" /><span
+                        ><strong>Is Foundation</strong></span
+                      ></label
+                    >
+                    <label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="allowMidMarksEntry" /><span
+                        ><strong>Allow MID Marks Entry By Faculty?</strong></span
+                      ></label
+                    >
+                    <label class="erp-academic-check"
+                      ><input type="checkbox" [(ngModel)]="allowExternalMarksEntry" /><span
+                        ><strong>Allow Ext Marks Entry By Faculty?</strong></span
+                      ></label
+                    >
+                  </div>
+                </fieldset>
+              }
+              @case (2) {
+                <fieldset class="erp-academic-form-section">
+                  <legend><svg lucideEye size="20"></svg> Marks Visibility</legend>
+                  <div class="erp-subject-visibility-grid">
+                    <div class="erp-subject-visibility-option">
+                      <label
+                        ><input type="checkbox" [(ngModel)]="showAlternativeGrade" /> Show
+                        Alternative Grade</label
+                      ><input
+                        class="erp-control"
+                        [(ngModel)]="alternativeGrade"
+                        [disabled]="!showAlternativeGrade"
+                        placeholder="Enter alternative grade"
+                      />
+                    </div>
+                    <div class="erp-subject-visibility-option">
+                      <label
+                        ><input type="checkbox" [(ngModel)]="showAlternativeGradePoint" /> Show
+                        Alternative Grade Point</label
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="alternativeGradePoint"
+                        [disabled]="!showAlternativeGradePoint"
+                        placeholder="Enter grade point"
+                      />
+                    </div>
+                    <div class="erp-subject-visibility-option">
+                      <label
+                        ><input type="checkbox" [(ngModel)]="showAlternativeSubjectCredit" /> Show
+                        Alternative Subject Credit</label
+                      ><input
+                        class="erp-control"
+                        type="number"
+                        min="0"
+                        [(ngModel)]="alternativeSubjectCredit"
+                        [disabled]="!showAlternativeSubjectCredit"
+                        placeholder="Enter subject credit"
+                      />
+                    </div>
+                    <label class="erp-subject-visibility-check"
+                      ><input type="checkbox" [(ngModel)]="hideInternalMarks" /> Do Not Show IA
+                      Marks</label
+                    >
+                    <label class="erp-subject-visibility-check"
+                      ><input type="checkbox" [(ngModel)]="hideExternalMarks" /> Do Not Show ESE
+                      Marks</label
+                    >
+                    <label class="erp-subject-visibility-check"
+                      ><input type="checkbox" [(ngModel)]="hideMidTermMarks" /> Do Not Show Mid
+                      Marks</label
+                    >
+                    <label class="erp-subject-visibility-check"
+                      ><input type="checkbox" [(ngModel)]="hideTotalMarks" /> Do Not Show Total
+                      Marks</label
+                    >
+                    <label class="erp-subject-visibility-check"
+                      ><input type="checkbox" [(ngModel)]="hideExternalMarksToStudent" /> Do Not
+                      Show ESE Marks To Student</label
+                    >
+                    <label class="erp-subject-visibility-check"
+                      ><input type="checkbox" [(ngModel)]="hideTotalMarksToStudent" /> Do Not Show
+                      Total Marks To Student</label
+                    >
                   </div>
                 </fieldset>
               }
               @case (3) {
                 <fieldset class="erp-academic-form-section">
-                  <legend><svg lucideClipboardList size="20"></svg> Evaluation & marks</legend>
-                  <div class="erp-academic-form-grid erp-academic-form-grid--three">
+                  <legend><svg lucideColumns3 size="20"></svg> Subject Split</legend>
+                  <div class="erp-academic-form-grid">
                     <label
-                      ><span>Maximum marks</span
-                      ><input
-                        class="erp-control"
-                        type="number"
-                        min="0"
-                        [(ngModel)]="maxMarks" /></label
-                    ><label
-                      ><span>Pass marks</span
-                      ><input
-                        class="erp-control"
-                        type="number"
-                        min="0"
-                        [(ngModel)]="passMarks" /></label
-                    ><label
-                      ><span>Internal marks</span
-                      ><input
-                        class="erp-control"
-                        type="number"
-                        min="0"
-                        [(ngModel)]="internalMarks" /></label
-                    ><label
-                      ><span>External marks</span
-                      ><input
-                        class="erp-control"
-                        type="number"
-                        min="0"
-                        [(ngModel)]="externalMarks" /></label
-                    ><label
-                      ><span>Mid-term marks</span
-                      ><input class="erp-control" type="number" min="0" [(ngModel)]="midTermMarks"
-                    /></label>
-                  </div>
-                  <label class="erp-academic-check"
-                    ><input type="checkbox" [(ngModel)]="isPaper" /><span
-                      ><strong>Question paper required</strong
-                      ><small>Include paper configuration for this subject.</small></span
-                    ></label
-                  >
-                </fieldset>
-              }
-              @case (4) {
-                <fieldset class="erp-academic-form-section">
-                  <legend><svg lucideUsersRound size="20"></svg> Faculty permissions</legend>
-                  <div class="erp-academic-check-grid">
-                    <label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="allowMidMarksEntry" /><span
-                        ><strong>Enter mid-term marks</strong
-                        ><small>Allow assigned faculty to enter mid-term marks.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="allowExternalMarksEntry" /><span
-                        ><strong>Enter external marks</strong
-                        ><small>Allow assigned faculty to enter external marks.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="isOpenElective" /><span
-                        ><strong>Open elective</strong
-                        ><small>Offer across eligible programmes.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="isFoundation" /><span
-                        ><strong>Foundation subject</strong
-                        ><small>Mark as a foundation curriculum subject.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="isGroupSubject" /><span
-                        ><strong>Group subject</strong
-                        ><small>Allow group-level subject assignment.</small></span
-                      ></label
+                      ><span>Split</span
+                      ><select class="erp-control" [(ngModel)]="splitType">
+                        <option value="">Select split</option>
+                        <option value="internal_external">INT / EXT</option>
+                        <option value="internal_external_midterm">INT / EXT / MidTerm</option>
+                        <option value="internal_external_practical">INT / EXT / Practical</option>
+                        <option value="internal_external_midterm_practical">
+                          INT / EXT / MidTerm / Practical
+                        </option>
+                      </select></label
+                    >
+                    <label
+                      ><span>Category</span
+                      ><select class="erp-control" [(ngModel)]="splitCategory">
+                        <option value="">Select category</option>
+                        <option value="regular">Regular</option>
+                        <option value="audit">Audit</option>
+                        <option value="qualifying">Qualifying</option>
+                        <option value="non-credit">Non-credit</option>
+                      </select></label
                     >
                   </div>
-                </fieldset>
-              }
-              @default {
-                <fieldset class="erp-academic-form-section">
-                  <legend><svg lucideEye size="20"></svg> Student visibility</legend>
-                  <div class="erp-academic-check-grid">
-                    <label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="showAlternativeGrade" /><span
-                        ><strong>Alternative grade</strong
-                        ><small>Show the alternative grade to students.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="showAlternativeGradePoint" /><span
-                        ><strong>Alternative grade point</strong
-                        ><small>Show the alternate grade point.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="showAlternativeSubjectCredit" /><span
-                        ><strong>Alternative credit</strong
-                        ><small>Show alternate subject credit.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="hideInternalMarks" /><span
-                        ><strong>Hide internal marks</strong
-                        ><small>Keep internal marks private.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="hideExternalMarks" /><span
-                        ><strong>Hide external marks</strong
-                        ><small>Keep external marks private.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="hideMidTermMarks" /><span
-                        ><strong>Hide mid-term marks</strong
-                        ><small>Keep mid-term marks private.</small></span
-                      ></label
-                    ><label class="erp-academic-check"
-                      ><input type="checkbox" [(ngModel)]="hideTotalMarks" /><span
-                        ><strong>Hide total marks</strong
-                        ><small>Keep the calculated total private.</small></span
-                      ></label
-                    >
-                  </div>
+                  @if (activeMarkSplits().length) {
+                    <div class="erp-subject-split-grid">
+                      @for (part of activeMarkSplits(); track part.key) {
+                        <section class="erp-subject-split-card">
+                          <h4>{{ part.label }}</h4>
+                          <div>
+                            <label
+                              ><span>Max Marks</span
+                              ><input
+                                class="erp-control"
+                                type="number"
+                                min="0"
+                                [(ngModel)]="part.maxMarks"
+                            /></label>
+                            <div class="erp-subject-pass-control">
+                              <label class="erp-academic-check erp-academic-check--compact"
+                                ><input type="checkbox" [(ngModel)]="part.passMarksEnabled" /><span
+                                  ><strong>Pass Marks</strong></span
+                                ></label
+                              ><input
+                                class="erp-control"
+                                type="number"
+                                min="0"
+                                [(ngModel)]="part.passMarks"
+                                [disabled]="!part.passMarksEnabled"
+                              />
+                            </div>
+                          </div>
+                        </section>
+                      }
+                    </div>
+                  } @else {
+                    <p class="erp-form-hint">Choose a split to configure its marks components.</p>
+                  }
+                  @if (!subjectMarksValid()) {
+                    <div class="erp-alert erp-alert--danger">
+                      Pass marks must fit within their component, and the split total cannot exceed
+                      Max. Marks.
+                    </div>
+                  }
                 </fieldset>
               }
             }
@@ -673,13 +759,10 @@
           [showBack]="subjectStep() > 0"
           [showSaveDraft]="false"
           [saving]="saving()"
-          [primaryDisabled]="
-            (subjectStep() === 0 && (!name.trim() || !code.trim())) ||
-            (subjectStep() === 5 && !formValid())
-          "
+          [primaryDisabled]="subjectStep() === 3 && !formValid()"
           saveStatus=""
           [primaryLabel]="
-            subjectStep() === 5 ? (editingId() ? 'Save changes' : 'Create subject') : 'Continue'
+            subjectStep() === 3 ? (editingId() ? 'Save changes' : 'Create subject') : 'Continue'
           "
           (back)="subjectStep.update((v) => v - 1)"
           (primary)="nextSubjectStep()"

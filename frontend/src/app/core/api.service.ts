@@ -45,6 +45,10 @@ import {
   TimetableStructure,
   TimetablePeriod,
   FormSubmission,
+  FacultySession,
+  FacultyAttendanceClass,
+  AttendanceStudent,
+  StudentAttendanceSubject,
 } from './models';
 import type { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
@@ -186,14 +190,53 @@ export class ApiService {
       body,
     );
   }
-  studentTimetable() {
+  studentTimetable(token?: string | null) {
     return this.http.get<{
       assignment: unknown;
       subjects?: AcademicSubject[];
       structure?: TimetableStructure | null;
       periods?: TimetablePeriod[];
       items: AcademicTimetableEntry[];
-    }>(`${API_BASE_URL}/student-academics/timetable`);
+    }>(`${API_BASE_URL}/student-academics/timetable`, {
+      ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+    });
+  }
+  facultyAttendanceClasses(token: string, date: string) {
+    return this.http.get<{ facultyMapped: boolean; date: string; items: FacultyAttendanceClass[] }>(
+      `${API_BASE_URL}/faculty-attendance/classes`,
+      { params: { date }, headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  facultyAttendanceRoster(token: string, entryId: string, date: string) {
+    return this.http.get<{ item: AcademicTimetableEntry; students: AttendanceStudent[] }>(
+      `${API_BASE_URL}/faculty-attendance/classes/${entryId}`,
+      { params: { date }, headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  saveFacultyAttendance(
+    token: string,
+    entryId: string,
+    date: string,
+    rows: Array<{ studentAdmissionId: string; status: 'present' | 'absent' }>,
+  ) {
+    return this.http.put<{ saved: number; sessionId: string }>(
+      `${API_BASE_URL}/faculty-attendance/classes/${entryId}`,
+      { date, rows },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  studentAttendance(token: string) {
+    return this.http.get<{
+      subjects: StudentAttendanceSubject[];
+      overall: {
+        totalLectures: number;
+        presentLectures: number;
+        absentLectures: number;
+        attendancePercentage: number;
+      };
+    }>(`${API_BASE_URL}/student-attendance`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }
   masterTypes() {
     return this.http.get<{ items: MasterType[] }>(`${API_BASE_URL}/master-data/types`);
@@ -390,6 +433,24 @@ export class ApiService {
       `${API_BASE_URL}/auth/student/login`,
       { studentId, password },
     );
+  }
+  facultyLogin(employeeId: string, password: string) {
+    return this.http.post<{ token: string; faculty: FacultySession }>(
+      `${API_BASE_URL}/auth/faculty/login`,
+      { employeeId, password },
+    );
+  }
+  changeFacultyPassword(token: string, password: string) {
+    return this.http.post<{ token: string; faculty: FacultySession }>(
+      `${API_BASE_URL}/auth/faculty/change-password`,
+      { password },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  facultyProfile(token: string) {
+    return this.http.get<{ faculty: FacultySession }>(`${API_BASE_URL}/auth/faculty/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }
   changeStudentPassword(token: string, password: string) {
     return this.http.post<{ token: string; student: StudentSession }>(

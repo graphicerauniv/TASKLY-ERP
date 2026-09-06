@@ -1,0 +1,48 @@
+:host {
+  display: contents;
+}
+.faculty-sidebar:hover {
+  width: var(--student-sidebar-expanded-width);
+}
+.faculty-sidebar:hover .student-sidebar__brand-copy,
+.faculty-sidebar:hover .student-navigation__label,
+.faculty-sidebar:hover .student-sidebar__profile-copy,
+.faculty-sidebar:hover .student-sidebar__profile-actions {
+  opacity: 1;
+  visibility: visible;
+}
+.faculty-profile-summary {
+  cursor: default;
+}
+.faculty-mobile-links {
+  display: none;
+}
+.student-sidebar__profile-actions button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--student-space-2);
+  padding: var(--student-space-2);
+  border: 0;
+  color: var(--student-color-danger);
+  background: transparent;
+  cursor: pointer;
+}
+@media (max-width: 1023px) {
+  .faculty-mobile-links {
+    display: flex;
+    gap: 4px;
+  }
+  .faculty-mobile-links a {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--student-color-primary-pressed);
+    background: var(--student-color-primary-subtle);
+  }
+  .faculty-header {
+    grid-template-columns: minmax(0, 1fr) auto auto !important;
+  }
+}

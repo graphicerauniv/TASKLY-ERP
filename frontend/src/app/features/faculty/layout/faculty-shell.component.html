@@ -1,0 +1,105 @@
+<div class="student-shell faculty-shell" data-portal="student">
+  <aside class="student-sidebar faculty-sidebar" aria-label="Faculty portal navigation">
+    <div class="student-sidebar__decoration" aria-hidden="true"></div>
+    <a
+      class="student-sidebar__brand"
+      routerLink="/faculty/dashboard"
+      aria-label="GEU ERP faculty portal"
+    >
+      <img
+        src="/assets/images/brand/graphic-era-mark.png"
+        width="44"
+        height="44"
+        alt="Graphic Era University"
+      />
+      <span class="student-sidebar__brand-copy"
+        ><strong>GEU ERP</strong><small>Faculty Portal</small></span
+      >
+    </a>
+    <nav class="student-navigation" aria-label="Primary faculty navigation">
+      <ul>
+        <li>
+          <a
+            class="student-navigation__item"
+            routerLink="/faculty/dashboard"
+            routerLinkActive="student-navigation__item--active"
+            ><span class="student-navigation__icon"
+              ><svg lucideLayoutDashboard size="21" aria-hidden="true"></svg></span
+            ><span class="student-navigation__label">Dashboard</span></a
+          >
+        </li>
+        <li>
+          <a
+            class="student-navigation__item"
+            routerLink="/faculty/attendance"
+            routerLinkActive="student-navigation__item--active"
+            ><span class="student-navigation__icon"
+              ><svg lucideCalendarCheck size="21" aria-hidden="true"></svg></span
+            ><span class="student-navigation__label">Attendance</span></a
+          >
+        </li>
+        <li>
+          <a
+            class="student-navigation__item"
+            routerLink="/faculty/exams"
+            routerLinkActive="student-navigation__item--active"
+            ><span class="student-navigation__icon"
+              ><svg lucideClipboardCheck size="21" aria-hidden="true"></svg></span
+            ><span class="student-navigation__label">Exams</span></a
+          >
+        </li>
+      </ul>
+    </nav>
+    <div class="student-sidebar__profile">
+      <div class="student-sidebar__profile-summary">
+        <span class="student-avatar">{{ session.initials() }}</span>
+        <span class="student-sidebar__profile-copy"
+          ><strong>{{ session.profile()?.name || 'Faculty' }}</strong
+          ><small>Employee ID {{ session.profile()?.employeeId }}</small></span
+        >
+      </div>
+      <div class="student-sidebar__profile-actions">
+        <button type="button" (click)="signOut()">
+          <svg lucideLogOut size="17" aria-hidden="true"></svg><span>Sign out</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <header class="student-header faculty-header">
+    <div class="student-header__mobile-brand">
+      <img
+        src="/assets/images/brand/graphic-era-mark.png"
+        width="38"
+        height="38"
+        alt="Graphic Era University"
+      />
+      <span>Faculty Portal</span>
+    </div>
+    <h1 class="student-header__title">{{ pageTitle() }}</h1>
+    <div class="faculty-mobile-links">
+      <a routerLink="/faculty/dashboard" aria-label="Dashboard"
+        ><svg lucideLayoutDashboard size="20"></svg
+      ></a>
+      <a routerLink="/faculty/attendance" aria-label="Attendance"
+        ><svg lucideCalendarCheck size="20"></svg
+      ></a>
+      <a routerLink="/faculty/exams" aria-label="Exams"
+        ><svg lucideClipboardCheck size="20"></svg
+      ></a>
+    </div>
+    <div class="student-header__actions">
+      <div class="student-header__profile-trigger faculty-profile-summary">
+        <span class="student-avatar">{{ session.initials() }}</span>
+        <span class="student-header__profile-name">{{ session.profile()?.name || 'Faculty' }}</span>
+      </div>
+      <button class="student-icon-button" type="button" aria-label="Sign out" (click)="signOut()">
+        <svg lucideLogOut size="20"></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="faculty-main-content" class="student-page" tabindex="-1">
+    <div class="student-page__container"><router-outlet /></div>
+  </main>
+</div>

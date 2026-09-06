@@ -52,99 +52,189 @@
     </div>
 
     <section class="admin-auth-panel">
-      <form class="admin-auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <form
+        class="admin-auth-form"
+        [formGroup]="changeRequired() ? changeForm : form"
+        (ngSubmit)="changeRequired() ? changePassword() : submit()"
+        novalidate
+      >
         <div class="admin-auth-form__heading">
           <div class="admin-auth-form__shield" aria-hidden="true">
             <svg lucideShieldCheck [size]="34" [strokeWidth]="1.6"></svg>
           </div>
 
           <div class="admin-auth-form__title-row">
-            <h1 id="admin-login-title">Admin access</h1>
-            <span>Authorised staff only</span>
+            <h1 id="admin-login-title">
+              {{
+                changeRequired()
+                  ? 'Create password'
+                  : mode() === 'faculty'
+                    ? 'Faculty access'
+                    : 'Admin access'
+              }}
+            </h1>
+            <span>{{ mode() === 'faculty' ? 'Faculty portal' : 'Authorised staff only' }}</span>
           </div>
-          <p>Secure sign-in for authorised staff only.</p>
+          <p>
+            {{
+              changeRequired()
+                ? 'Create a secure password before entering the faculty portal.'
+                : mode() === 'faculty'
+                  ? 'Sign in using your generated Employee ID.'
+                  : 'Secure sign-in for authorised staff only.'
+            }}
+          </p>
         </div>
+
+        @if (!changeRequired()) {
+          <div class="admin-auth-form__role-switch" aria-label="Choose account type">
+            <button type="button" [class.is-active]="mode() === 'admin'" (click)="setMode('admin')">
+              Admin
+            </button>
+            <button
+              type="button"
+              [class.is-active]="mode() === 'faculty'"
+              (click)="setMode('faculty')"
+            >
+              Faculty
+            </button>
+          </div>
+        }
 
         @if (error()) {
           <div class="admin-auth-form__alert" role="alert">{{ error() }}</div>
         }
 
-        <div class="admin-auth-form__field">
-          <label for="admin-email">Official email</label>
-          <div
-            class="admin-auth-form__control"
-            [class.admin-auth-form__control--invalid]="
-              form.controls.email.touched && form.controls.email.invalid
-            "
-          >
-            <svg lucideMail [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
-            <input
-              id="admin-email"
-              type="email"
-              formControlName="email"
-              autocomplete="username"
-              inputmode="email"
-              placeholder="admin@geu.ac.in"
-              aria-describedby="admin-email-error"
-            />
-          </div>
-          @if (form.controls.email.touched && form.controls.email.invalid) {
-            <p id="admin-email-error" class="admin-auth-form__error">
-              Enter a valid official email.
-            </p>
-          }
-        </div>
-
-        <div class="admin-auth-form__field">
-          <label for="admin-password">Password</label>
-          <div
-            class="admin-auth-form__control"
-            [class.admin-auth-form__control--invalid]="
-              form.controls.password.touched && form.controls.password.invalid
-            "
-          >
-            <svg lucideLockKeyhole [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
-            <input
-              id="admin-password"
-              [type]="showPassword() ? 'text' : 'password'"
-              formControlName="password"
-              autocomplete="current-password"
-              placeholder="Enter your password"
-              aria-describedby="admin-password-error"
-            />
-            <button
-              class="admin-auth-form__password-toggle"
-              type="button"
-              (click)="togglePassword()"
-              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        @if (!changeRequired()) {
+          <div class="admin-auth-form__field">
+            <label for="admin-identifier">{{
+              mode() === 'faculty' ? 'Employee ID' : 'Official email'
+            }}</label>
+            <div
+              class="admin-auth-form__control"
+              [class.admin-auth-form__control--invalid]="
+                form.controls.identifier.touched && form.controls.identifier.invalid
+              "
             >
-              @if (showPassword()) {
-                <svg lucideEyeOff [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
+              @if (mode() === 'faculty') {
+                <svg lucideUserRound [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
               } @else {
-                <svg lucideEye [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
+                <svg lucideMail [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
               }
-            </button>
+              <input
+                id="admin-identifier"
+                [type]="mode() === 'faculty' ? 'text' : 'email'"
+                formControlName="identifier"
+                autocomplete="username"
+                [attr.inputmode]="mode() === 'faculty' ? null : 'email'"
+                [placeholder]="mode() === 'faculty' ? 'Enter Employee ID' : 'admin@geu.ac.in'"
+                aria-describedby="admin-identifier-error"
+              />
+            </div>
+            @if (form.controls.identifier.touched && form.controls.identifier.invalid) {
+              <p id="admin-identifier-error" class="admin-auth-form__error">
+                {{
+                  mode() === 'faculty' ? 'Employee ID is required.' : 'Official email is required.'
+                }}
+              </p>
+            }
           </div>
-          @if (form.controls.password.touched && form.controls.password.invalid) {
-            <p id="admin-password-error" class="admin-auth-form__error">Password is required.</p>
-          }
-        </div>
 
-        <div class="admin-auth-form__options">
-          <label class="admin-auth-form__remember">
-            <input type="checkbox" formControlName="rememberMe" />
-            <span>Keep me signed in</span>
-          </label>
-          <a href="mailto:support@geu.ac.in?subject=Admin%20password%20reset">Reset password</a>
-        </div>
+          <div class="admin-auth-form__field">
+            <label for="admin-password">Password</label>
+            <div
+              class="admin-auth-form__control"
+              [class.admin-auth-form__control--invalid]="
+                form.controls.password.touched && form.controls.password.invalid
+              "
+            >
+              <svg lucideLockKeyhole [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
+              <input
+                id="admin-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+                aria-describedby="admin-password-error"
+              />
+              <button
+                class="admin-auth-form__password-toggle"
+                type="button"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                @if (showPassword()) {
+                  <svg lucideEyeOff [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
+                } @else {
+                  <svg lucideEye [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
+                }
+              </button>
+            </div>
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <p id="admin-password-error" class="admin-auth-form__error">Password is required.</p>
+            }
+          </div>
+
+          <div class="admin-auth-form__options">
+            <label class="admin-auth-form__remember">
+              <input type="checkbox" formControlName="rememberMe" />
+              <span>Keep me signed in</span>
+            </label>
+            <a href="mailto:support@geu.ac.in?subject=ERP%20password%20reset">Reset password</a>
+          </div>
+        } @else {
+          <div class="admin-auth-form__field">
+            <label for="faculty-new-password">New password</label>
+            <div class="admin-auth-form__control">
+              <svg lucideLockKeyhole [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
+              <input
+                id="faculty-new-password"
+                [type]="showNewPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+                placeholder="Create a strong password"
+              />
+              <button
+                class="admin-auth-form__password-toggle"
+                type="button"
+                (click)="toggleNewPassword()"
+                [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'"
+              >
+                @if (showNewPassword()) {
+                  <svg lucideEyeOff [size]="21" aria-hidden="true"></svg>
+                } @else {
+                  <svg lucideEye [size]="21" aria-hidden="true"></svg>
+                }
+              </button>
+            </div>
+            @if (changeForm.controls.password.touched && changeForm.controls.password.invalid) {
+              <p class="admin-auth-form__error">
+                Use at least 8 characters with uppercase, lowercase, and a symbol.
+              </p>
+            }
+          </div>
+          <div class="admin-auth-form__field">
+            <label for="faculty-confirm-password">Confirm password</label>
+            <div class="admin-auth-form__control">
+              <svg lucideLockKeyhole [size]="21" [strokeWidth]="1.7" aria-hidden="true"></svg>
+              <input
+                id="faculty-confirm-password"
+                type="password"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+                placeholder="Repeat your password"
+              />
+            </div>
+          </div>
+        }
 
         <button class="admin-auth-form__submit" type="submit" [disabled]="loading()">
           @if (loading()) {
             <span class="admin-auth-form__spinner" aria-hidden="true"></span>
-            Signing in…
+            {{ changeRequired() ? 'Saving password…' : 'Signing in…' }}
           } @else {
             <svg lucideShieldCheck [size]="20" [strokeWidth]="1.8" aria-hidden="true"></svg>
-            Continue securely
+            {{ changeRequired() ? 'Save and open dashboard' : 'Continue securely' }}
           }
         </button>
 
