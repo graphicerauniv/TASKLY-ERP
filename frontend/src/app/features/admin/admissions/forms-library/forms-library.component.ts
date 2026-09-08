@@ -1,3 +1,4 @@
+import { AdminIllustrationComponent } from '../../../../shared/ui/admin-illustration/admin-illustration.component';
 import { AdminDrawerComponent } from '../../../../shared/ui/admin-drawer/admin-drawer.component';
 import {
   ChangeDetectionStrategy,
@@ -11,9 +12,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
-  LucideCircleAlert,
-  LucideFilePlus2,
-  LucideInbox,
   LucideLayoutTemplate,
   LucidePlus,
   LucideRefreshCw,
@@ -30,13 +28,12 @@ import {
 
 @Component({
   selector: 'erp-forms-library',
-  imports: [AdminDrawerComponent,
+  imports: [
+    AdminIllustrationComponent,
+    AdminDrawerComponent,
     AdminPageComponent,
     CompactActionMenuComponent,
     FormsModule,
-    LucideCircleAlert,
-    LucideFilePlus2,
-    LucideInbox,
     LucideLayoutTemplate,
     LucidePlus,
     LucideRefreshCw,

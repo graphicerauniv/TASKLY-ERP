@@ -1,3 +1,4 @@
+import { AdminIllustrationComponent } from '../../../../shared/ui/admin-illustration/admin-illustration.component';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -50,6 +51,7 @@ import { UnsavedChangesAware } from './unsaved-changes.guard';
 @Component({
   selector: 'erp-application-editor',
   imports: [
+    AdminIllustrationComponent,
     AdminPageComponent,
     CdkTrapFocus,
     DynamicFieldRendererComponent,

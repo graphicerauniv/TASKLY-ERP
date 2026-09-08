@@ -204,7 +204,10 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="erp-empty-state erp-empty-state--compact"><erp-admin-illustration kind="noResults" size="compact" /><p>No hostels match the current filters.</p></td>
+                  <td colspan="6" class="erp-empty-state erp-empty-state--compact">
+                    <erp-admin-illustration kind="noResults" size="compact" />
+                    <p>No hostels match the current filters.</p>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -422,7 +425,10 @@
                   ><small>{{ roomsForFloor(floor) }} rooms</small>
                 </button>
               } @empty {
-                <div class="erp-empty-state erp-empty-state--compact"><erp-admin-illustration kind="applicationForm" size="compact" /><p>No floor definitions yet.</p></div>
+                <div class="erp-empty-state erp-empty-state--compact">
+                  <erp-admin-illustration kind="applicationForm" size="compact" />
+                  <p>No floor definitions yet.</p>
+                </div>
               }
             </section>
           } @else if (selectedFloor(); as floor) {
@@ -800,7 +806,10 @@
                   <td
                     [attr.colspan]="section() === 'capacity' ? 8 : 7"
                     class="erp-empty-state erp-empty-state--compact"
-                  ><erp-admin-illustration kind="noResults" size="compact" /><p>No rooms match the current search and filters.</p></td>
+                  >
+                    <erp-admin-illustration kind="noResults" size="compact" />
+                    <p>No rooms match the current search and filters.</p>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -1089,7 +1098,10 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="erp-empty-state"><erp-admin-illustration kind="roomUnavailable" size="compact" /><p>No active hostel capacity available.</p></td>
+                  <td colspan="7" class="erp-empty-state">
+                    <erp-admin-illustration kind="roomUnavailable" size="compact" />
+                    <p>No active hostel capacity available.</p>
+                  </td>
                 </tr>
               }
             </tbody>

@@ -50,9 +50,7 @@
     </section>
   } @else if (error()) {
     <section class="erp-card erp-empty-panel" role="alert">
-      <span class="erp-empty-panel__icon"
-        ><svg lucideCircleAlert size="21" aria-hidden="true"></svg
-      ></span>
+      <erp-admin-illustration kind="applicationForm" />
       <h2>Application record unavailable</h2>
       <p>{{ error() }}</p>
       <button class="erp-button erp-button--secondary" type="button" (click)="load()">
@@ -304,9 +302,7 @@
             </div>
           } @else {
             <div class="erp-empty-panel">
-              <span class="erp-empty-panel__icon"
-                ><svg lucideFileText size="20" aria-hidden="true"></svg
-              ></span>
+              <erp-admin-illustration kind="applicationForm" />
               <h2>No application snapshot</h2>
               <p>This record does not contain a saved form structure to display.</p>
             </div>

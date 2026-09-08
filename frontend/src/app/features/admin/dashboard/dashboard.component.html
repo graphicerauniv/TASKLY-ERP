@@ -1,9 +1,12 @@
 <erp-admin-page
   eyebrow="Overview"
-  title="Admin Dashboard"
-  description="Manage master data, admission forms, and student applications."
-  variant="module"
+  title="Administration overview"
+  description="Your admissions, student records and campus operations in one workspace."
+  variant="compact"
 >
+  <a page-actions class="erp-button erp-button--primary" routerLink="/admin/admission/student"
+    >New application</a
+  >
   @if (error()) {
     <div class="erp-notice erp-notice--error" role="alert">
       {{ error() }}
@@ -18,47 +21,93 @@
   }
   <section class="erp-kpi-grid">
     <article class="erp-kpi-card">
-      <span class="erp-kpi-card__icon"
-        ><svg lucideDatabase size="20" aria-hidden="true"></svg
-      ></span>
+      <erp-admin-illustration kind="dataConfiguration" size="compact" />
       <div>
-        <small>Master values</small><strong>{{ stats()['masterValues'] }}</strong>
+        <small>Master values</small><strong>{{ loading() ? '…' : stats()['masterValues'] }}</strong>
       </div>
     </article>
     <article class="erp-kpi-card">
-      <span class="erp-kpi-card__icon erp-kpi-card__icon--purple"
-        ><svg lucideFileText size="20" aria-hidden="true"></svg
-      ></span>
+      <erp-admin-illustration kind="applicationForm" size="compact" />
       <div>
-        <small>Admission forms</small><strong>{{ stats()['forms'] }}</strong>
+        <small>Admission forms</small><strong>{{ loading() ? '…' : stats()['forms'] }}</strong>
       </div>
     </article>
     <article class="erp-kpi-card">
-      <span class="erp-kpi-card__icon erp-kpi-card__icon--orange"
-        ><svg lucideClock3 size="20" aria-hidden="true"></svg
-      ></span>
+      <erp-admin-illustration kind="activityHistory" size="compact" />
       <div>
-        <small>Draft applications</small><strong>{{ stats()['drafts'] }}</strong>
+        <small>Draft applications</small><strong>{{ loading() ? '…' : stats()['drafts'] }}</strong>
       </div>
     </article>
     <article class="erp-kpi-card">
-      <span class="erp-kpi-card__icon erp-kpi-card__icon--green"
-        ><svg lucideCircleCheck size="20" aria-hidden="true"></svg
-      ></span>
+      <erp-admin-illustration kind="pendingReview" size="compact" />
       <div>
-        <small>Submitted</small><strong>{{ stats()['submitted'] }}</strong>
+        <small>Submitted</small><strong>{{ loading() ? '…' : stats()['submitted'] }}</strong>
       </div>
     </article>
   </section>
-  <section class="welcome">
+  <section class="erp-card erp-card--padded">
+    <header class="erp-card__header">
+      <div>
+        <h2>Continue your work</h2>
+        <p>Open a directory to review records and manage the next action.</p>
+      </div>
+    </header>
+    <nav class="erp-crm-workspace-links" aria-label="Administrative workspaces">
+      <a routerLink="/admin/admissions/not-approved">
+        <erp-admin-illustration kind="pendingReview" size="compact" />
+        <span
+          ><strong>Admission reviews</strong
+          ><small>Review submitted applications and approve students</small></span
+        >
+      </a>
+      <a routerLink="/admin/database/students">
+        <erp-admin-illustration kind="addStudent" size="compact" />
+        <span
+          ><strong>Student directory</strong
+          ><small>Find approved students and open their records</small></span
+        >
+      </a>
+      <a routerLink="/admin/admissions/forms">
+        <erp-admin-illustration kind="applicationForm" size="compact" />
+        <span
+          ><strong>Admission forms</strong
+          ><small>Configure forms and manage publishing</small></span
+        >
+      </a>
+      <a routerLink="/admin/master-data/custom/view">
+        <erp-admin-illustration kind="dataConfiguration" size="compact" />
+        <span
+          ><strong>Master data</strong
+          ><small>Maintain the records used across your institution</small></span
+        >
+      </a>
+      <a routerLink="/admin/accounts">
+        <erp-admin-illustration kind="feeWallet" size="compact" />
+        <span
+          ><strong>Payments &amp; accounts</strong
+          ><small>Inspect transactions, allocations and receipts</small></span
+        >
+      </a>
+      <a routerLink="/admin/master-data/hostel/overview">
+        <erp-admin-illustration kind="roomUnavailable" size="compact" />
+        <span
+          ><strong>Hostel operations</strong
+          ><small>Review capacity, rooms and student allocations</small></span
+        >
+      </a>
+    </nav>
+  </section>
+  <section class="erp-crm-guidance">
+    <erp-admin-illustration kind="pendingReview" size="compact" />
     <div>
-      <span>Database-driven admission</span>
-      <h2>Your complete form is controlled from one workspace.</h2>
+      <h2>Keep admissions moving</h2>
       <p>
-        Update master values, arrange fields, publish a form, and students see it
-        immediately—without changing frontend code.
+        Start with applications awaiting review, then use the student directory for approved
+        records.
       </p>
     </div>
-    <div class="flow">Master Data <b>→</b> Form Builder <b>→</b> Student Admission</div>
+    <a class="erp-button erp-button--secondary" routerLink="/admin/admissions/applications"
+      >Open applications</a
+    >
   </section>
 </erp-admin-page>

@@ -41,7 +41,7 @@
   text-align: center;
 }
 
-.fee-context-gate img {
+.fee-context-gate erp-admin-illustration {
   width: 64px;
   height: 64px;
   margin-bottom: var(--erp-space-2);
@@ -73,14 +73,14 @@
   grid-template-columns: 44px minmax(0, 1fr) auto;
 }
 
-.fee-working-context > img,
-.fee-course-explorer > img {
+.fee-working-context > erp-admin-illustration,
+.fee-course-explorer > erp-admin-illustration {
   width: 38px;
   height: 38px;
   object-fit: contain;
 }
 
-.fee-course-explorer > img {
+.fee-course-explorer > erp-admin-illustration {
   width: 44px;
   height: 44px;
 }
@@ -124,7 +124,7 @@
   background: transparent;
 }
 
-.fee-view-filter-drawer__icon img {
+.fee-view-filter-drawer__icon erp-admin-illustration {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -136,7 +136,7 @@
 
 .fee-form-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--erp-space-3);
 }
 

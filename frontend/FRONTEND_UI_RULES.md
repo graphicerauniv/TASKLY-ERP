@@ -470,10 +470,44 @@ Not allowed:
 
 ## 15. Final Verification
 
+### Admin CRM workspace and drawers
+
+The approved Academics workflow is the visual reference. `AdminShellComponent`
+applies `erp-crm-workspace` to non-Academics content only. Keep Academics routes,
+templates, and existing academic style rules unchanged during other module redesigns.
+The shared scope consumes the existing `--erp-academic-*` tokens for tables,
+headers, controls, metric surfaces, and drawers; it must not affect the Student Portal.
+
+Use `shared/ui/admin-drawer` for focused create/edit forms and
+`shared/ui/record-drawer` for record details. Both preserve the underlying list.
+Pass actual record fields and wire actions to the feature's existing handlers.
+Use `[drawer-actions]` for footer actions, `[busy]` during saves, and `(closed)`
+to clear the selection. The shared shell handles focus trapping, Escape, scroll
+locking, and responsive drawer sizing. Keep destructive confirmation dialogs
+separate. Long admission editors retain their section navigator workflow.
+
+Do not replace data with sample metrics during visual work. Directory counts,
+filters, status labels, previews, and downloads must retain their live bindings.
+
+All non-Academics admin routes use the shared illustrated workspace bar in
+`shared/ui/admin-workspace`. Maintain its semantic route registry when adding
+subpages; use existing router links and preserve record IDs. Do not add another
+module banner or a hardcoded icon family in feature templates. The old
+`assets/admin/finance-icons` set is retired from product UI; use the generated
+semantic WebP catalogue. See `ADMIN_UI_ROLLOUT.md` for the audited scope.
+
+Sidebar navigation and sidebar module summaries must use Lucide line icons,
+not image illustrations. Keep generated artwork inside page content and states.
+Finance collections are separate routes (`accounts/overview`, `accounts/payments`,
+`accounts/credits`, `accounts/discounts`), not multiple tables on one page.
+These growing directories use SQL-backed pagination and database summary totals;
+never restore the old combined 2,000-record accounts response in the new UI.
+
 Before handoff run:
 
 ```text
 npm run check:ui
+npm run check:admin-workspaces
 npm run build
 ```
 

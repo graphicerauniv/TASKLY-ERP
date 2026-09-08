@@ -222,7 +222,10 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="8" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No fee ledger has been generated for this student.</p></td>
+                    <td colspan="8" class="erp-empty-state">
+                      <erp-admin-illustration kind="feeWallet" size="compact" />
+                      <p>No fee ledger has been generated for this student.</p>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -1056,7 +1059,10 @@
                               <td
                                 [attr.colspan]="6 + assignments().length + discounts().length"
                                 class="erp-empty-state"
-                              ><erp-admin-illustration kind="feeWallet" size="compact" /><p>No fee-head entries exist for this period.</p></td>
+                              >
+                                <erp-admin-illustration kind="feeWallet" size="compact" />
+                                <p>No fee-head entries exist for this period.</p>
+                              </td>
                             </tr>
                           }
                         </tbody>

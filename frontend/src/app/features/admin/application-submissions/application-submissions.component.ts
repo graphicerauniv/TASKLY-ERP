@@ -15,7 +15,14 @@ import {
 
 @Component({
   selector: 'erp-application-submissions',
-  imports: [CommonModule, FormsModule, AdminPageComponent, CompactActionMenuComponent, RecordDrawerComponent, AdminIllustrationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AdminPageComponent,
+    CompactActionMenuComponent,
+    RecordDrawerComponent,
+    AdminIllustrationComponent,
+  ],
   templateUrl: './application-submissions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

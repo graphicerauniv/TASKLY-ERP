@@ -1,3 +1,4 @@
+import { AdminIllustrationComponent } from '../../../../shared/ui/admin-illustration/admin-illustration.component';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -55,6 +56,7 @@ interface DocumentEvidence {
 @Component({
   selector: 'erp-application-review',
   imports: [
+    AdminIllustrationComponent,
     AdminPageComponent,
     CdkTrapFocus,
     FormsModule,

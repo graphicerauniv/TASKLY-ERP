@@ -1,4 +1,4 @@
-import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
@@ -119,7 +119,8 @@ interface ConfirmDialogState {
 
 @Component({
   selector: 'erp-fee-management',
-imports: [AdminIllustrationComponent,
+  imports: [
+    AdminIllustrationComponent,
     AdminPageComponent,
     CdkTrapFocus,
     CompactActionMenuComponent,

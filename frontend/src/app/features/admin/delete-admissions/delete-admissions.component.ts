@@ -1,9 +1,12 @@
-import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { RecordDrawerComponent, RecordDetailField } from '../../../shared/ui/record-drawer/record-drawer.component';
+import {
+  RecordDrawerComponent,
+  RecordDetailField,
+} from '../../../shared/ui/record-drawer/record-drawer.component';
 import { LucideSearch, LucideTriangleAlert } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
 import { ERP_PAGINATION } from '../../../core/config/data-view.constants';
@@ -17,7 +20,8 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
 
 @Component({
   selector: 'erp-delete-admissions',
-imports: [AdminIllustrationComponent,
+  imports: [
+    AdminIllustrationComponent,
     RecordDrawerComponent,
     RouterLink,
     AdminPageComponent,

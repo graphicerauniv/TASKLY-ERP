@@ -2,15 +2,24 @@
   eyebrow="Fee Management"
   title="Next Semester / Year Fee"
   description="Prepare the next hidden fee period for eligible students. Publication and fines are controlled by Fee change & publication."
-variant="compact"
+  variant="compact"
   layout="collection"
 >
   <div page-actions class="erp-table-toolbar__actions">
+    <button
+      class="erp-button erp-button--secondary"
+      type="button"
+      [disabled]="loading() || saving()"
+      (click)="load()"
+    >
+      Refresh eligibility
+    </button>
     <button
       class="erp-button"
       [class.erp-button--primary]="mode === 'semester'"
       [class.erp-button--secondary]="mode !== 'semester'"
       type="button"
+      [disabled]="saving()"
       (click)="changeMode('semester')"
     >
       Semester-wise students
@@ -20,6 +29,7 @@ variant="compact"
       [class.erp-button--primary]="mode === 'year'"
       [class.erp-button--secondary]="mode !== 'year'"
       type="button"
+      [disabled]="saving()"
       (click)="changeMode('year')"
     >
       Full-year students
@@ -34,6 +44,30 @@ variant="compact"
   }
 
   <section class="erp-card erp-table-shell">
+    @if (saving()) {
+      <div class="erp-finance-progress" role="status" aria-live="polite">
+        <div>
+          <strong>Preparing selected fees</strong>
+          <p>
+            {{ batchProgress().completed }} of {{ batchProgress().total }} students completed.
+            Navigation is paused while a batch is running.
+          </p>
+          <progress
+            [value]="batchProgress().completed"
+            [max]="batchProgress().total"
+            aria-label="Fee preparation progress"
+          ></progress>
+        </div>
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          [disabled]="stopRequested()"
+          (click)="stopRequested.set(true)"
+        >
+          {{ stopRequested() ? 'Stopping after this batch…' : 'Stop after current batch' }}
+        </button>
+      </div>
+    }
     <div class="erp-table-toolbar">
       <div>
         <h2>
@@ -45,16 +79,10 @@ variant="compact"
       <button
         class="erp-button erp-button--primary"
         type="button"
-        [disabled]="saving()"
-        (click)="createFees()"
+        [disabled]="saving() || loading() || !selected().size"
+        (click)="confirmOpen.set(true)"
       >
-        {{
-          saving()
-            ? 'Creating…'
-            : mode === 'semester'
-              ? 'Create next semester for selected'
-              : 'Create next year for selected'
-        }}
+        {{ saving() ? 'Preparing fees…' : 'Review ' + selected().size + ' selected' }}
       </button>
     </div>
     <div class="erp-table-shell__scroll">
@@ -65,6 +93,7 @@ variant="compact"
               <input
                 type="checkbox"
                 aria-label="Select all"
+                [disabled]="saving() || loading()"
                 [checked]="items().length > 0 && selected().size === items().length"
                 (change)="toggleAll($any($event.target).checked)"
               />
@@ -84,6 +113,7 @@ variant="compact"
               <td>
                 <input
                   type="checkbox"
+                  [disabled]="saving()"
                   [checked]="selected().has(item._id)"
                   [attr.aria-label]="'Select ' + item.studentName"
                   (change)="toggle(item._id, $any($event.target).checked)"
@@ -106,12 +136,18 @@ variant="compact"
               </td>
               <td>{{ item.academicSession }}</td>
               <td>
-                <erp-compact-action-menu [items]="rowActions" (selected)="preview.set(item)" />
+                <erp-compact-action-menu
+                  [items]="rowActions"
+                  (selected)="!saving() && preview.set(item)"
+                />
               </td>
             </tr>
           } @empty {
             <tr>
               <td colspan="8" class="erp-empty-state">
+                @if (!loading()) {
+                  <erp-admin-illustration kind="addStudent" size="compact" />
+                }
                 {{
                   loading()
                     ? 'Loading eligible students…'
@@ -126,9 +162,41 @@ variant="compact"
   </section>
 </erp-admin-page>
 
+<erp-confirm-dialog
+  [open]="confirmOpen()"
+  eyebrow="Bulk fee preparation"
+  title="Prepare the selected student fees?"
+  [message]="
+    selected().size +
+    ' students will be processed sequentially in batches of up to 100. This prepares hidden fee ledgers; it does not collect payments or publish fees. Keep this page open until processing ends.'
+  "
+  confirmLabel="Prepare fees"
+  (confirmed)="confirmOpen.set(false); createFees()"
+  (cancelled)="confirmOpen.set(false)"
+/>
+
 @if (preview(); as item) {
-  <erp-record-drawer [open]="true" [title]="item.studentName || 'Student fee period'" description="Review the next fee period before preparing it." [fields]="detailFields(item)" [busy]="saving()" illustration="feeConfiguration" guidance="Preparing fees creates the next fee ledger. Publication controls when it becomes visible to the student." (closed)="preview.set(null)">
-    @if (error()) { <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p> }
-    <button drawer-actions class="erp-button erp-button--primary" type="button" [disabled]="saving()" (click)="createFor(item)">{{ saving() ? 'Preparing…' : 'Create ' + item.nextPeriodLabel }}</button>
+  <erp-record-drawer
+    [open]="true"
+    [title]="item.studentName || 'Student fee period'"
+    description="Review the next fee period before preparing it."
+    [fields]="detailFields(item)"
+    [busy]="saving()"
+    illustration="feeConfiguration"
+    guidance="Preparing fees creates the next fee ledger. Publication controls when it becomes visible to the student."
+    (closed)="preview.set(null)"
+  >
+    @if (error()) {
+      <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+    }
+    <button
+      drawer-actions
+      class="erp-button erp-button--primary"
+      type="button"
+      [disabled]="saving()"
+      (click)="createFor(item)"
+    >
+      {{ saving() ? 'Preparing…' : 'Create ' + item.nextPeriodLabel }}
+    </button>
   </erp-record-drawer>
 }

@@ -1,4 +1,4 @@
-import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -68,7 +68,8 @@ type DeleteTarget =
 
 @Component({
   selector: 'erp-hostel-management',
-  imports: [AdminIllustrationComponent,
+  imports: [
+    AdminIllustrationComponent,
     AdminPageComponent,
     CompactActionMenuComponent,
     FormsModule,
@@ -805,11 +806,11 @@ export class HostelManagementComponent {
       return this.error.set('Enter a room number.');
     if (
       this.roomMode === 'automatic' &&
-      (this.roomStartNumber < 1 ||
-        this.roomGenerationCount < 1 ||
-        this.roomGenerationCount > 500)
+      (this.roomStartNumber < 1 || this.roomGenerationCount < 1 || this.roomGenerationCount > 500)
     ) {
-      return this.error.set('Start number must be positive and room count must be between 1 and 500.');
+      return this.error.set(
+        'Start number must be positive and room count must be between 1 and 500.',
+      );
     }
     if (
       this.roomMode === 'automatic' &&
@@ -870,15 +871,13 @@ export class HostelManagementComponent {
         },
       });
     } else if (action === 'toggle') {
-      this.api
-        .updateHostelRoomDetails(room._id, { isActive: !room.isActive })
-        .subscribe({
-          next: () => {
-            this.message.set(room.isActive ? 'Room disabled.' : 'Room enabled.');
-            this.loadRooms();
-          },
-          error: (error) => this.fail(error),
-        });
+      this.api.updateHostelRoomDetails(room._id, { isActive: !room.isActive }).subscribe({
+        next: () => {
+          this.message.set(room.isActive ? 'Room disabled.' : 'Room enabled.');
+          this.loadRooms();
+        },
+        error: (error) => this.fail(error),
+      });
     } else if (action === 'delete') {
       this.deleteTarget.set({ kind: 'room', item: room });
     }
@@ -887,15 +886,13 @@ export class HostelManagementComponent {
   handleCapacityAction(action: string, room: HostelRoom) {
     if (action === 'capacity') this.openCapacity(room);
     else if (action === 'toggle') {
-      this.api
-        .updateHostelRoomDetails(room._id, { isActive: !room.isActive })
-        .subscribe({
-          next: () => {
-            this.message.set(room.isActive ? 'Room disabled.' : 'Room enabled.');
-            this.loadRooms();
-          },
-          error: (error) => this.fail(error),
-        });
+      this.api.updateHostelRoomDetails(room._id, { isActive: !room.isActive }).subscribe({
+        next: () => {
+          this.message.set(room.isActive ? 'Room disabled.' : 'Room enabled.');
+          this.loadRooms();
+        },
+        error: (error) => this.fail(error),
+      });
     }
   }
 
@@ -1030,7 +1027,8 @@ export class HostelManagementComponent {
 
   previousAllocationStage() {
     const stage = this.allocationStage();
-    if (stage > 1 && !this.transferTarget()) this.allocationStage.set((stage - 1) as AllocationStage);
+    if (stage > 1 && !this.transferTarget())
+      this.allocationStage.set((stage - 1) as AllocationStage);
     else if (stage === 3 && this.transferTarget()) this.allocationStage.set(2);
     this.error.set('');
   }
@@ -1142,12 +1140,10 @@ export class HostelManagementComponent {
   }
 
   loadEligibilityAllocations() {
-    this.api
-      .hostelAllocations({ session: this.academicSession, status: 'active' })
-      .subscribe({
-        next: ({ items }) => this.eligibilityAllocations.set(items),
-        error: (error) => this.fail(error),
-      });
+    this.api.hostelAllocations({ session: this.academicSession, status: 'active' }).subscribe({
+      next: ({ items }) => this.eligibilityAllocations.set(items),
+      error: (error) => this.fail(error),
+    });
   }
 
   private resetAllocationDestination() {
@@ -1227,9 +1223,7 @@ export class HostelManagementComponent {
     this.api.vacateHostelAllocation(target._id, this.vacateReason).subscribe({
       next: () => {
         this.vacateTarget.set(null);
-        this.message.set(
-          `Room ${target.roomNumber}, Bed ${target.bedNumber} is now available.`,
-        );
+        this.message.set(`Room ${target.roomNumber}, Bed ${target.bedNumber} is now available.`);
         this.loadAllocations();
         this.loadEligibilityAllocations();
         this.saving.set(false);

@@ -9,7 +9,8 @@
     "config": "node scripts/write-runtime-config.js",
     "start": "npm run config && ng serve",
     "check:ui": "node scripts/check-ui-rules.js",
-    "build": "npm run config && npm run check:ui && ng build",
+    "check:admin-workspaces": "node scripts/check-admin-workspaces.cjs",
+    "build": "npm run config && npm run check:ui && npm run check:admin-workspaces && ng build",
     "test": "ng test",
     "e2e": "playwright test"
   },

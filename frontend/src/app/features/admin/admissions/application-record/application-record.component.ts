@@ -1,3 +1,4 @@
+import { AdminIllustrationComponent } from '../../../../shared/ui/admin-illustration/admin-illustration.component';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -11,7 +12,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   LucideArrowLeft,
   LucideBadgeCheck,
-  LucideCircleAlert,
   LucideClipboardList,
   LucideFileText,
   LucidePencil,
@@ -34,10 +34,10 @@ type RecordTab = 'overview' | 'application';
 @Component({
   selector: 'erp-application-record',
   imports: [
+    AdminIllustrationComponent,
     AdminPageComponent,
     LucideArrowLeft,
     LucideBadgeCheck,
-    LucideCircleAlert,
     LucideClipboardList,
     LucideFileText,
     LucidePencil,

@@ -2,7 +2,7 @@
   [eyebrow]="section() ? 'Database' : purposeLabel(form()?.purpose || '') + ' applications'"
   [title]="section()?.name || form()?.name || 'Application submissions'"
   description="Search, review and edit submitted records."
-variant="compact"
+  variant="compact"
   layout="collection"
 >
   @if (error()) {
@@ -19,7 +19,8 @@ variant="compact"
       <input
         class="erp-control"
         type="search"
-        [ngModel]="search()" (ngModelChange)="search.set($event)"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
         placeholder="Search name, code or response"
       />
     </div>
@@ -73,8 +74,29 @@ variant="compact"
 </erp-admin-page>
 
 @if (selected(); as item) {
-  <erp-record-drawer [open]="true" [title]="item.formName" [description]="item.applicationCode || purposeLabel(item.purpose) + ' application'" [fields]="responseRows(item)" (closed)="selected.set(null)">
-    @if (!responseRows(item).length) { <div class="erp-empty-panel"><erp-admin-illustration kind="applicationForm" /><h3>No submitted responses</h3><p>This record does not contain any response values.</p></div> }
-    @if (section()) { <button drawer-actions class="erp-button erp-button--primary" type="button" (click)="handleAction('edit', item)">Edit record</button> }
+  <erp-record-drawer
+    [open]="true"
+    [title]="item.formName"
+    [description]="item.applicationCode || purposeLabel(item.purpose) + ' application'"
+    [fields]="responseRows(item)"
+    (closed)="selected.set(null)"
+  >
+    @if (!responseRows(item).length) {
+      <div class="erp-empty-panel">
+        <erp-admin-illustration kind="applicationForm" />
+        <h3>No submitted responses</h3>
+        <p>This record does not contain any response values.</p>
+      </div>
+    }
+    @if (section()) {
+      <button
+        drawer-actions
+        class="erp-button erp-button--primary"
+        type="button"
+        (click)="handleAction('edit', item)"
+      >
+        Edit record
+      </button>
+    }
   </erp-record-drawer>
 }

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { requireAdmin, requireStudent } from '../middleware/auth.js';
+import { readFinanceDirectory, readFinanceSummary } from '../services/finance-directory.js';
 import {
   completePayment,
   createOfflinePayment,
@@ -18,6 +19,13 @@ import {
 } from '../services/fee-payments.js';
 
 export const paymentsRouter = express.Router();
+paymentsRouter.get('/admin/accounts/directory', requireAdmin, asyncHandler(async (request, response) => {
+  const result = await readFinanceDirectory(db(), request.query);
+  response.json({ ...result, items: result.items.map(serialize) });
+}));
+paymentsRouter.get('/admin/accounts/summary', requireAdmin, asyncHandler(async (_request, response) => {
+  response.json(await readFinanceSummary(db()));
+}));
 const orderSchema = z.object({
   amount: z.coerce.number().positive().max(10_000_000),
   ledgerId: z.string().min(1).nullable().optional(),

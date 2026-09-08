@@ -92,16 +92,18 @@
                   <strong>{{ item.name }}</strong
                   ><small>Reusable tuition concession</small>
                 </td>
-                <td>{{ item.valueMode === 'custom' ? 'Custom at assignment' : 'Preconfigured' }}</td>
+                <td>
+                  {{ item.valueMode === 'custom' ? 'Custom at assignment' : 'Preconfigured' }}
+                </td>
                 <td>
                   {{
                     item.valueMode === 'custom'
                       ? 'Selected at assignment'
                       : !item.type
-                      ? 'Needs configuration'
-                      : item.type === 'percentage'
-                        ? 'Percentage'
-                        : 'Fixed amount'
+                        ? 'Needs configuration'
+                        : item.type === 'percentage'
+                          ? 'Percentage'
+                          : 'Fixed amount'
                   }}
                 </td>
                 <td>
@@ -110,10 +112,10 @@
                       item.valueMode === 'custom'
                         ? 'Entered at assignment'
                         : !item.value
-                        ? '—'
-                        : item.type === 'percentage'
-                        ? item.value + '%'
-                        : (item.value | currency: 'INR' : 'symbol' : '1.0-2')
+                          ? '—'
+                          : item.type === 'percentage'
+                            ? item.value + '%'
+                            : (item.value | currency: 'INR' : 'symbol' : '1.0-2')
                     }}
                   </strong>
                 </td>
@@ -154,7 +156,9 @@
         <div class="erp-card__header">
           <div>
             <h2>Scheme definition</h2>
-            <p>Choose whether this scheme uses a saved value or a custom value during assignment.</p>
+            <p>
+              Choose whether this scheme uses a saved value or a custom value during assignment.
+            </p>
           </div>
         </div>
         <div class="erp-form-grid">
@@ -229,7 +233,10 @@
           </div>
           <div>
             <dt>Calculation</dt>
-            <dd>Preconfigured schemes reuse their saved value. Custom schemes ask for a value during assignment.</dd>
+            <dd>
+              Preconfigured schemes reuse their saved value. Custom schemes ask for a value during
+              assignment.
+            </dd>
           </div>
           <div>
             <dt>Frequency</dt>

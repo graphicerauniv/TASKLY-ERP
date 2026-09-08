@@ -39,6 +39,7 @@ import { filter, forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/auth.service';
 import { ApiService } from '../../../core/api.service';
 import { Admission, AdmissionForm, MasterValue } from '../../../core/models';
+import { AdminWorkspaceNavigationComponent } from '../../../shared/ui/admin-workspace/admin-workspace-navigation.component';
 import {
   ADMIN_NAVIGATION,
   AdminNavigationEntry,
@@ -66,6 +67,7 @@ interface GlobalSearchResult {
     NgTemplateOutlet,
     RouterLink,
     RouterOutlet,
+    AdminWorkspaceNavigationComponent,
     LucideChevronDown,
     LucideChevronLeft,
     LucideChevronRight,

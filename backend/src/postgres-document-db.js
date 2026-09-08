@@ -894,6 +894,40 @@ class PostgresCollection {
     return result.rows[0].count;
   }
 
+  /** Bounded directory reads: unlike the compatibility cursor, paging happens in SQL. */
+  async readPage(filter = {}, { page = 1, pageSize = 25 } = {}) {
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100)
+      throw new Error('Invalid directory pagination.');
+    const total = await this.countDocuments(filter);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const parameters = [];
+    const where = compileFilter(filter, parameters);
+    parameters.push(pageSize, (currentPage - 1) * pageSize);
+    const result = await this.pool.query(
+      `select document from ${this.table}${where ? ` where ${where}` : ''}
+       order by document->>'createdAt' desc nulls last, id desc
+       limit $${parameters.length - 1} offset $${parameters.length}`,
+      parameters,
+    );
+    return { items: result.rows.map((row) => hydrateDocument(row.document)), pagination: { page: currentPage, pageSize, total, totalPages } };
+  }
+
+  /** Aggregate totals in PostgreSQL, never from a truncated page of transactions. */
+  async numericSummary(field, filter = {}) {
+    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(field)) throw new Error('Invalid summary field.');
+    const parameters = [];
+    const where = compileFilter(filter, parameters);
+    const result = await this.pool.query(
+      `select count(*)::integer as count,
+       coalesce(sum(case when jsonb_typeof(document->'${field}') = 'number'
+         then (document->>'${field}')::numeric else 0 end), 0) as total
+       from ${this.table}${where ? ` where ${where}` : ''}`,
+      parameters,
+    );
+    return { count: Number(result.rows[0].count), total: Number(result.rows[0].total) };
+  }
+
   async distinct(field, filter = {}) {
     const documents = await selectDocuments(this.pool, this.name, filter);
     return [

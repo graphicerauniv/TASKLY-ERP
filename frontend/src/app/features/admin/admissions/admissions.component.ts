@@ -16,7 +16,6 @@ import {
   LucideChevronLeft,
   LucideChevronRight,
   LucideCircleAlert,
-  LucideInbox,
   LucidePlus,
   LucideRefreshCw,
   LucideSearch,
@@ -135,7 +134,6 @@ const FILTER_FIELDS: readonly FilterPopoverField[] = [
     LucideChevronLeft,
     LucideChevronRight,
     LucideCircleAlert,
-    LucideInbox,
     LucidePlus,
     LucideRefreshCw,
     LucideSearch,
@@ -836,7 +834,10 @@ export class AdmissionsComponent {
       courses: this.api.masterValues('course', { active: true }),
       sessions: this.api.masterValues('academic', { active: true }),
     })
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((result) => {
         if (!result) return;
         const options = (items: readonly { _id: string; name: string }[]) =>
@@ -847,13 +848,21 @@ export class AdmissionsComponent {
               ? { ...field, type: 'select' as const, options: options(result.universities.items) }
               : field.id === 'college'
                 ? { ...field, type: 'select' as const, options: options(result.colleges.items) }
-              : field.id === 'branch'
-                ? { ...field, type: 'select' as const, options: options(result.departments.items) }
-                : field.id === 'course'
-                  ? { ...field, type: 'select' as const, options: options(result.courses.items) }
-                : field.id === 'session'
-                  ? { ...field, type: 'select' as const, options: options(result.sessions.items) }
-                  : field,
+                : field.id === 'branch'
+                  ? {
+                      ...field,
+                      type: 'select' as const,
+                      options: options(result.departments.items),
+                    }
+                  : field.id === 'course'
+                    ? { ...field, type: 'select' as const, options: options(result.courses.items) }
+                    : field.id === 'session'
+                      ? {
+                          ...field,
+                          type: 'select' as const,
+                          options: options(result.sessions.items),
+                        }
+                      : field,
           ),
         );
       });

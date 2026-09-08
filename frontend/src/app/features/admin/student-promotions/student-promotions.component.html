@@ -169,13 +169,19 @@
                     (selected)="handleRowAction($event, item)"
                   />
                 } @else {
-                  <erp-compact-action-menu [items]="previewActions" (selected)="handleRowAction($event, item)" />
+                  <erp-compact-action-menu
+                    [items]="previewActions"
+                    (selected)="handleRowAction($event, item)"
+                  />
                 }
               </td>
             </tr>
           } @empty {
             <tr>
               <td colspan="8" class="erp-empty-state">
+                @if (!loading()) {
+                  <erp-admin-illustration kind="addStudent" size="compact" />
+                }
                 {{ loading() ? 'Loading student promotions…' : 'No matching student promotions.' }}
               </td>
             </tr>
@@ -187,10 +193,29 @@
 </erp-admin-page>
 
 @if (preview(); as item) {
-  <erp-record-drawer [open]="true" [title]="item.studentName" description="Review the student’s academic progression." [fields]="detailFields(item)" [busy]="saving()" illustration="addStudent" guidance="Promotion moves the student into the prepared semester or academic year. Review the current and target periods before continuing." (closed)="preview.set(null)">
-    @if (error()) { <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p> }
+  <erp-record-drawer
+    [open]="true"
+    [title]="item.studentName"
+    description="Review the student’s academic progression."
+    [fields]="detailFields(item)"
+    [busy]="saving()"
+    illustration="addStudent"
+    guidance="Promotion moves the student into the prepared semester or academic year. Review the current and target periods before continuing."
+    (closed)="preview.set(null)"
+  >
+    @if (error()) {
+      <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+    }
     @if (item.status === 'pending') {
-      <button drawer-actions class="erp-button erp-button--primary" type="button" [disabled]="saving()" (click)="promoteOne(item)">{{ saving() ? 'Promoting…' : 'Promote student' }}</button>
+      <button
+        drawer-actions
+        class="erp-button erp-button--primary"
+        type="button"
+        [disabled]="saving()"
+        (click)="promoteOne(item)"
+      >
+        {{ saving() ? 'Promoting…' : 'Promote student' }}
+      </button>
     }
   </erp-record-drawer>
 }

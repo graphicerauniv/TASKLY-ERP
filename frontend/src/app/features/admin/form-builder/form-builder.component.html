@@ -6,12 +6,17 @@
         Forms library
       </a>
       @if (form()) {
-        <button class="secondary" type="button" (click)="save()" [disabled]="saving()">
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="save()"
+          [disabled]="saving()"
+        >
           <svg lucideSave size="16" aria-hidden="true"></svg>
           {{ form()?.status === 'published' ? 'Save live changes' : 'Save draft' }}
         </button>
         <button
-          class="primary"
+          class="erp-button erp-button--primary"
           type="button"
           (click)="openPublishChecklist()"
           [disabled]="saving()"
@@ -186,7 +191,11 @@
     </section>
 
     <div class="builder-mobile-actions">
-      <button class="secondary" type="button" (click)="structureVisible.set(true)">
+      <button
+        class="erp-button erp-button--secondary"
+        type="button"
+        (click)="structureVisible.set(true)"
+      >
         <svg lucideListTree size="17" aria-hidden="true"></svg> Form structure
       </button>
     </div>
@@ -487,9 +496,15 @@
                   </button>
                 }
                 <span class="inspector-actions__spacer"></span>
-                <button class="secondary" type="button" (click)="closeFieldDialog()">Cancel</button>
                 <button
-                  class="primary"
+                  class="erp-button erp-button--secondary"
+                  type="button"
+                  (click)="closeFieldDialog()"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="erp-button erp-button--primary"
                   type="button"
                   [disabled]="!selected.name.trim()"
                   (click)="saveFieldDialog()"
@@ -589,7 +604,11 @@
                 <svg lucideTrash2 size="15" aria-hidden="true"></svg> Delete
               </button>
               <span class="inspector-actions__spacer"></span>
-              <button class="primary" type="button" (click)="closeInspector()">
+              <button
+                class="erp-button erp-button--primary"
+                type="button"
+                (click)="closeInspector()"
+              >
                 <svg lucideCheck size="16" aria-hidden="true"></svg> Done
               </button>
             </div>
@@ -620,7 +639,11 @@
                 <svg lucideTrash2 size="15" aria-hidden="true"></svg> Delete
               </button>
               <span class="inspector-actions__spacer"></span>
-              <button class="primary" type="button" (click)="closeInspector()">
+              <button
+                class="erp-button erp-button--primary"
+                type="button"
+                (click)="closeInspector()"
+              >
                 <svg lucideCheck size="16" aria-hidden="true"></svg> Done
               </button>
             </div>
@@ -742,9 +765,15 @@
             Publishing makes this structure available to new application flows.
           }
         </p>
-        <button class="secondary" type="button" (click)="closePublishChecklist()">Cancel</button>
         <button
-          class="primary"
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="closePublishChecklist()"
+        >
+          Cancel
+        </button>
+        <button
+          class="erp-button erp-button--primary"
           type="button"
           [disabled]="publishBlockers().length || saving()"
           (click)="confirmPublish()"
@@ -803,8 +832,18 @@
         }
       </div>
       <footer class="dialog__footer">
-        <button class="secondary" type="button" (click)="closeCreateFormDialog()">Cancel</button>
-        <button class="primary" type="submit" [disabled]="!newFormName.trim() || creatingForm()">
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="closeCreateFormDialog()"
+        >
+          Cancel
+        </button>
+        <button
+          class="erp-button erp-button--primary"
+          type="submit"
+          [disabled]="!newFormName.trim() || creatingForm()"
+        >
           {{ creatingForm() ? 'Creating…' : 'Create form' }}
         </button>
       </footer>
@@ -842,9 +881,14 @@
         </label>
       </div>
       <footer class="dialog__footer">
-        <button class="secondary" type="button" (click)="nameDialog.set(null)">Cancel</button
+        <button
+          class="erp-button erp-button--secondary"
+          type="button"
+          (click)="nameDialog.set(null)"
+        >
+          Cancel</button
         ><button
-          class="primary"
+          class="erp-button erp-button--primary"
           type="button"
           [disabled]="!dialogName.trim()"
           (click)="saveNameDialog()"
@@ -880,7 +924,7 @@
       </div>
       <footer class="dialog__footer">
         <button
-          class="secondary"
+          class="erp-button erp-button--secondary"
           type="button"
           [disabled]="deleting()"
           (click)="deleteDialog.set(null); deleteError.set('')"

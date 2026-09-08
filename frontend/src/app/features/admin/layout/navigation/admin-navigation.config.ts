@@ -339,12 +339,49 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
     activeWhen: [branch('/admin/fees'), branch('/admin/accounts')],
     children: [
       {
+        id: 'finance-overview',
+        label: 'Finance overview',
+        description: 'Open a focused finance workspace',
+        route: '/admin/fees/overview',
+        icon: 'finance',
+        activeWhen: [exact('/admin/fees/overview')],
+      },
+      {
         id: 'accounts',
         label: 'Accounts & payments',
         description: 'Track collections and payment activity',
-        route: '/admin/accounts',
         icon: 'finance',
         activeWhen: [branch('/admin/accounts')],
+        children: [
+          {
+            id: 'collection-overview',
+            label: 'Collections overview',
+            route: '/admin/accounts/overview',
+            icon: 'finance',
+            activeWhen: [exact('/admin/accounts/overview')],
+          },
+          {
+            id: 'payment-directory',
+            label: 'Student payments',
+            route: '/admin/accounts/payments',
+            icon: 'fees',
+            activeWhen: [exact('/admin/accounts/payments')],
+          },
+          {
+            id: 'credit-directory',
+            label: 'Excess credits',
+            route: '/admin/accounts/credits',
+            icon: 'finance',
+            activeWhen: [exact('/admin/accounts/credits')],
+          },
+          {
+            id: 'discount-directory',
+            label: 'Discount audit',
+            route: '/admin/accounts/discounts',
+            icon: 'scholarship',
+            activeWhen: [exact('/admin/accounts/discounts')],
+          },
+        ],
       },
       {
         id: 'fee-progression',

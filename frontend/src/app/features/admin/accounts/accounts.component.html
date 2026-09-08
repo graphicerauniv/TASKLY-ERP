@@ -1,259 +1,376 @@
 <erp-admin-page
-  eyebrow="Accounts"
-  title="Student Payments"
-  description="Review online and offline payments, allocation details, balances and receipts."
-variant="compact"
-  layout="collection"
+  [title]="title()"
+  [description]="description()"
+  variant="compact"
+  [layout]="section() === 'overview' ? 'default' : 'collection'"
 >
+  <div page-actions>
+    <button
+      class="erp-button erp-button--secondary"
+      type="button"
+      [disabled]="loading()"
+      (click)="load()"
+    >
+      <svg lucideRefreshCw size="16" aria-hidden="true"></svg> Refresh
+    </button>
+  </div>
   @if (error()) {
-    <p class="erp-notice erp-notice--error">{{ error() }}</p>
-  }
-  <section class="erp-metric-strip" aria-label="Payments summary">
-    <article class="erp-metric-strip__item">
-      <span class="erp-metric-strip__icon erp-metric-strip__icon--image"
-        ><img src="assets/admin/finance-icons/accounts-payments.png" alt="" aria-hidden="true"
-      /></span>
-      <div>
-        <small>Total collected</small>
-        <strong>{{ summary().collectedAmount | currency: 'INR' }}</strong>
-      </div>
-    </article>
-    <article class="erp-metric-strip__item">
-      <div>
-        <small>Available excess credit</small
-        ><strong>{{ summary().availableCredit | currency: 'INR' }}</strong>
-      </div>
-    </article>
-    <article class="erp-metric-strip__item">
-      <div>
-        <small>Successful payments</small>
-        <strong>{{ summary().successfulPayments }}</strong>
-      </div>
-    </article>
-    <article class="erp-metric-strip__item">
-      <div>
-        <small>Pending orders</small>
-        <strong>{{ summary().pendingPayments }}</strong>
-      </div>
-    </article>
-  </section>
-  <section class="erp-card erp-table-shell">
-    <div class="erp-table-toolbar">
-      <div>
-        <h2>
-          Student excess credit <small>{{ credits().length }}</small>
-        </h2>
-        <p>Unallocated offline receipts retained for matching future fees.</p>
-      </div>
-    </div>
-    <div class="erp-table-shell__scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Fee type</th>
-            <th>Source receipt</th>
-            <th>Original excess</th>
-            <th>Available credit</th>
-            <th>Status</th>
-            <th>Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (credit of credits(); track credit._id) {
-            <tr>
-              <td>
-                <strong>{{ credit.studentName }}</strong
-                ><small>{{ credit.studentId }}</small>
-              </td>
-              <td>{{ credit.kind === 'academic' ? 'Academic Fee' : 'Hostel Fee' }}</td>
-              <td>{{ credit.sourceReceiptNumber || '—' }}</td>
-              <td>{{ credit.originalAmount | currency: 'INR' }}</td>
-              <td>
-                <strong>{{ credit.remainingAmount | currency: 'INR' }}</strong>
-              </td>
-              <td>
-                <span class="erp-status">{{ credit.status }}</span>
-              </td>
-              <td>{{ credit.createdAt | date: 'medium' }}</td>
-            </tr>
-          } @empty {
-            <tr>
-<td colspan="7" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No excess-credit records found.</p></td>
-            </tr>
+    <section class="erp-notice erp-notice--error" role="alert">
+      <p>{{ error() }}</p>
+      <button class="erp-button erp-button--secondary" type="button" (click)="load()">Retry</button>
+    </section>
+  } @else if (section() === 'overview') {
+    <section
+      class="erp-metric-strip"
+      aria-label="All-time collection summary"
+      [attr.aria-busy]="loading()"
+    >
+      <article class="erp-metric-strip__item">
+        <div>
+          <small>Total collected</small
+          ><strong>{{ loading() ? '…' : (summary().collectedAmount | currency: 'INR') }}</strong>
+        </div>
+      </article>
+      <article class="erp-metric-strip__item">
+        <div>
+          <small>Available credit</small
+          ><strong>{{ loading() ? '…' : (summary().availableCredit | currency: 'INR') }}</strong>
+        </div>
+      </article>
+      <article class="erp-metric-strip__item">
+        <div>
+          <small>Successful payments</small
+          ><strong>{{ loading() ? '…' : summary().successfulPayments }}</strong>
+        </div>
+      </article>
+      <article class="erp-metric-strip__item">
+        <div>
+          <small>Pending orders</small
+          ><strong>{{ loading() ? '…' : summary().pendingPayments }}</strong>
+        </div>
+      </article>
+    </section>
+    <section class="erp-card erp-card--padded">
+      <header class="erp-card__header">
+        <div>
+          <h2>Collection workspaces</h2>
+          <p>Each directory has its own filters, pagination and record details.</p>
+        </div>
+      </header>
+      <nav class="erp-crm-workspace-links" aria-label="Collection directories">
+        <a routerLink="/admin/accounts/payments"
+          ><erp-admin-illustration kind="feeWallet" size="compact" /><span
+            ><strong>Student payments</strong
+            ><small>Online, offline and credit-adjusted transactions</small></span
+          ></a
+        >
+        <a routerLink="/admin/accounts/credits"
+          ><erp-admin-illustration kind="feeConfiguration" size="compact" /><span
+            ><strong>Excess credits</strong
+            ><small>Available, consumed and refunded balances</small></span
+          ></a
+        >
+        <a routerLink="/admin/accounts/discounts"
+          ><erp-admin-illustration kind="discountTicket" size="compact" /><span
+            ><strong>Discount audit</strong
+            ><small>One-time concessions and internal remarks</small></span
+          ></a
+        >
+        <a routerLink="/admin/fees/overview"
+          ><erp-admin-illustration kind="dataConfiguration" size="compact" /><span
+            ><strong>Finance operations</strong
+            ><small>Fee setup, imports, generation and publication</small></span
+          ></a
+        >
+      </nav>
+    </section>
+  } @else {
+    <section class="erp-card erp-table-shell erp-finance-directory">
+      <form class="erp-table-toolbar" (ngSubmit)="navigate()">
+        <label class="erp-search-control">
+          <svg lucideSearch size="17" aria-hidden="true"></svg>
+          <input
+            type="search"
+            name="search"
+            [(ngModel)]="search"
+            maxlength="120"
+            [attr.aria-label]="'Search ' + title()"
+            placeholder="Search student, receipt or reference…"
+          />
+        </label>
+        <div class="erp-table-toolbar__actions">
+          <select class="erp-control" name="status" aria-label="Record status" [(ngModel)]="status">
+            <option value="">All statuses</option>
+            @for (value of statuses(); track value) {
+              <option [value]="value">{{ value === 'created' ? 'Pending' : value }}</option>
+            }
+          </select>
+          @if (section() === 'payments') {
+            <select
+              class="erp-control"
+              name="channel"
+              aria-label="Payment channel"
+              [(ngModel)]="channel"
+            >
+              <option value="">All channels</option>
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+              <option value="credit">Excess credit</option>
+            </select>
           }
-        </tbody>
-      </table>
-    </div>
-  </section>
-  <section class="erp-card erp-table-shell">
-    <div class="erp-table-toolbar">
-      <div>
-        <h2>
-          Payment records <small>{{ items().length }}</small>
-        </h2>
-        <p>Search by student, receipt, online payment ID or offline reference.</p>
-      </div>
-      <div class="erp-table-toolbar__actions">
-        <input
-          class="erp-control"
-          type="search"
-          [(ngModel)]="search"
-          placeholder="Search payments"
-          (keyup.enter)="load()"
-        /><erp-filter-popover
-          label="Status filters"
-          resetValue=""
-          [options]="statusFilterOptions"
-          [value]="status"
-          (valueChange)="status = $event; load()"
-        /><button class="erp-button erp-button--secondary" type="button" (click)="load()">
-          Search
-        </button>
-      </div>
-    </div>
-    <div class="erp-table-shell__scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Receipt</th>
-            <th>Student</th>
-            <th>Channel / reference</th>
-            <th>Amount</th>
-            <th>Fee period</th>
-            <th>Allocation</th>
-            <th>Outstanding</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (payment of items(); track payment._id) {
+          <button class="erp-button erp-button--primary" type="submit" [disabled]="loading()">
+            Apply filters
+          </button>
+          @if (search || status || channel) {
+            <button class="erp-button erp-button--secondary" type="button" (click)="clearFilters()">
+              Clear
+            </button>
+          }
+        </div>
+      </form>
+      <div class="erp-table-shell__scroll" tabindex="0" [attr.aria-label]="title() + ' table'">
+        <table [attr.aria-busy]="loading()">
+          <caption class="erp-sr-only">
+            {{
+              title()
+            }}. Newest records first. Open the action menu for details.
+          </caption>
+          <thead>
             <tr>
-              <td>
-                <strong>{{ payment.receiptNumber || 'Pending' }}</strong>
-              </td>
-              <td>
-                <strong>{{ payment.studentName }}</strong
-                ><small>{{ payment.studentId }}</small>
-              </td>
-              <td>
-                <strong>{{
-                  payment.paymentChannel === 'offline'
-                    ? 'Offline'
-                    : payment.paymentChannel === 'credit'
-                      ? 'Excess credit'
-                      : 'Online · Razorpay'
-                }}</strong
-                ><small>{{
-                  payment.paymentReference || payment.razorpayPaymentId || payment.razorpayOrderId
-                }}</small>
-                @if (payment.paymentChannel === 'offline' && payment.acceptedByName) {
-                  <small>Received by {{ payment.acceptedByName }}</small>
+              @switch (section()) {
+                @case ('payments') {
+                  <th scope="col">Receipt</th>
+                  <th scope="col">Student</th>
+                  <th scope="col">Channel</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Date</th>
                 }
-                @if (payment.paymentChannel === 'offline' && payment.internalRemark) {
-                  <small>{{ payment.internalRemark }}</small>
+                @case ('credits') {
+                  <th scope="col">Student</th>
+                  <th scope="col">Source receipt</th>
+                  <th scope="col">Fee type</th>
+                  <th scope="col">Original credit</th>
+                  <th scope="col">Remaining</th>
                 }
-              </td>
-              <td>{{ payment.amount | currency: 'INR' }}</td>
-              <td>{{ payment.targetPeriodLabel || 'Legacy payment' }}</td>
-              <td>
-                @for (
-                  allocation of payment.allocations || [];
-                  track allocation.feeHeadId + allocation.ledgerId
-                ) {
-                  <small
-                    >{{ allocation.periodLabel ? allocation.periodLabel + ' · ' : ''
-                    }}{{ allocation.feeHeadName }}: {{ allocation.amount | currency: 'INR' }}</small
-                  >
+                @case ('discounts') {
+                  <th scope="col">Student</th>
+                  <th scope="col">Discount</th>
+                  <th scope="col">Value</th>
+                  <th scope="col">Fee period</th>
+                  <th scope="col">Created</th>
                 }
-              </td>
-              <td>{{ payment.outstandingBalance || 0 | currency: 'INR' }}</td>
-              <td>{{ payment.paidAt || payment.createdAt | date: 'medium' }}</td>
-              <td>
-                <span class="erp-status">{{ payment.status }}</span>
-              </td>
-              <td>
-                  <erp-compact-action-menu
-                    [items]="payment.status === 'paid' ? paymentActions : previewActions"
-                    (selected)="handlePaymentAction($event, payment)"
+              }
+              <th scope="col">Status</th>
+              <th scope="col" class="erp-table-shell__actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loading()) {
+              <tr>
+                <td colspan="7" class="erp-empty-state">
+                  <span class="erp-spinner" aria-hidden="true"></span>
+                  <p role="status">Loading {{ title() }}…</p>
+                </td>
+              </tr>
+            } @else if (!pagination().total) {
+              <tr>
+                <td colspan="7" class="erp-empty-state">
+                  <erp-admin-illustration
+                    [kind]="search || status || channel ? 'noResults' : 'feeWallet'"
+                    size="compact"
                   />
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="10" class="erp-empty-state">
-                {{ loading() ? 'Loading payments…' : 'No payment records found.' }}
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
-  <section class="erp-card erp-table-shell">
-    <div class="erp-table-toolbar">
-      <div>
-        <h2>
-          One-time discount audit <small>{{ discounts().length }}</small>
-        </h2>
-        <p>Internal remarks are restricted to administrators and Accounts.</p>
+                  <h3>
+                    {{ search || status || channel ? 'No matching records' : 'No records yet' }}
+                  </h3>
+                  <p>
+                    {{
+                      search || status || channel
+                        ? 'Change or clear your filters to try again.'
+                        : 'New records will appear here when finance activity is recorded.'
+                    }}
+                  </p>
+                </td>
+              </tr>
+            } @else {
+              @switch (section()) {
+                @case ('payments') {
+                  @for (item of payments(); track item._id) {
+                    <tr>
+                      <td>
+                        <strong>{{ item.receiptNumber || 'Not issued' }}</strong>
+                      </td>
+                      <td>
+                        <strong>{{ item.studentName }}</strong
+                        ><small>{{ item.studentId }}</small>
+                      </td>
+                      <td>
+                        {{ item.paymentChannel || 'online'
+                        }}<small>{{
+                          item.paymentReference || item.razorpayPaymentId || item.razorpayOrderId
+                        }}</small>
+                      </td>
+                      <td class="erp-tabular">{{ item.amount | currency: 'INR' }}</td>
+                      <td>{{ item.paidAt || item.createdAt | date: 'mediumDate' }}</td>
+                      <td>
+                        <span
+                          class="erp-status"
+                          [class.erp-status--paid]="item.status === 'paid'"
+                          >{{ item.status === 'created' ? 'Pending' : item.status }}</span
+                        >
+                      </td>
+                      <td class="erp-table-shell__actions">
+                        <erp-compact-action-menu [items]="rowActions" (selected)="open(item)" />
+                      </td>
+                    </tr>
+                  }
+                }
+                @case ('credits') {
+                  @for (item of credits(); track item._id) {
+                    <tr>
+                      <td>
+                        <strong>{{ item.studentName }}</strong
+                        ><small>{{ item.studentId }}</small>
+                      </td>
+                      <td>{{ item.sourceReceiptNumber || '—' }}</td>
+                      <td>{{ item.kind === 'academic' ? 'Academic' : 'Hostel' }}</td>
+                      <td class="erp-tabular">{{ item.originalAmount | currency: 'INR' }}</td>
+                      <td class="erp-tabular">
+                        <strong>{{ item.remainingAmount | currency: 'INR' }}</strong>
+                      </td>
+                      <td>
+                        <span class="erp-status">{{ item.status }}</span>
+                      </td>
+                      <td class="erp-table-shell__actions">
+                        <erp-compact-action-menu [items]="rowActions" (selected)="open(item)" />
+                      </td>
+                    </tr>
+                  }
+                }
+                @case ('discounts') {
+                  @for (item of discounts(); track item._id) {
+                    <tr>
+                      <td>
+                        <strong>{{ item.studentName }}</strong
+                        ><small>{{ item.studentId }}</small>
+                      </td>
+                      <td>{{ item.name }}</td>
+                      <td class="erp-tabular">
+                        {{
+                          item.type === 'percentage'
+                            ? item.value + '%'
+                            : (item.value | currency: 'INR')
+                        }}
+                      </td>
+                      <td>{{ item.targetPeriodLabel }}</td>
+                      <td>{{ item.createdAt | date: 'mediumDate' }}</td>
+                      <td>
+                        <span class="erp-status">{{ item.status }}</span>
+                      </td>
+                      <td class="erp-table-shell__actions">
+                        <erp-compact-action-menu [items]="rowActions" (selected)="open(item)" />
+                      </td>
+                    </tr>
+                  }
+                }
+              }
+            }
+          </tbody>
+        </table>
       </div>
-    </div>
-    <div class="erp-table-shell__scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Discount</th>
-            <th>Type</th>
-            <th>Value</th>
-            <th>Fee period</th>
-            <th>Internal remark</th>
-            <th>Date</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (discount of discounts(); track discount._id) {
-            <tr>
-              <td>
-                <strong>{{ discount.studentName }}</strong
-                ><small>{{ discount.studentId }}</small>
-              </td>
-              <td>{{ discount.name }}</td>
-              <td>{{ discount.type === 'percentage' ? 'Percentage' : 'Fixed amount' }}</td>
-              <td>
-                {{
-                  discount.type === 'percentage'
-                    ? discount.value + '%'
-                    : (discount.value | currency: 'INR')
-                }}
-              </td>
-              <td>{{ discount.targetPeriodLabel }}</td>
-              <td>{{ discount.internalRemark }}</td>
-              <td>{{ discount.createdAt | date: 'medium' }}</td>
-              <td>
-                <span class="erp-status">{{ discount.status }}</span>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-<td colspan="8" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No one-time discount records found.</p></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
+      <footer class="erp-pagination" aria-label="Directory pagination">
+        <span aria-live="polite">{{
+          loading()
+            ? 'Loading results…'
+            : start() + '–' + end() + ' of ' + pagination().total + ' records'
+        }}</span>
+        <div class="erp-table-toolbar__actions">
+          <label class="erp-finance-page-size"
+            ><span>Rows</span
+            ><select
+              class="erp-control"
+              aria-label="Rows per page"
+              [(ngModel)]="pageSize"
+              (ngModelChange)="navigate()"
+              [disabled]="loading()"
+            >
+              @for (size of pageSizes; track size) {
+                <option [ngValue]="size">{{ size }}</option>
+              }
+            </select></label
+          >
+          <button
+            class="erp-icon-button"
+            type="button"
+            aria-label="Previous page"
+            [disabled]="loading() || pagination().page <= 1"
+            (click)="navigate(pagination().page - 1)"
+          >
+            <svg lucideChevronLeft size="18" />
+          </button>
+          <span>Page {{ pagination().page }} of {{ pagination().totalPages }}</span>
+          <button
+            class="erp-icon-button"
+            type="button"
+            aria-label="Next page"
+            [disabled]="loading() || pagination().page >= pagination().totalPages"
+            (click)="navigate(pagination().page + 1)"
+          >
+            <svg lucideChevronRight size="18" />
+          </button>
+        </div>
+      </footer>
+    </section>
+  }
 </erp-admin-page>
 
-@if (preview(); as payment) {
-  <erp-record-drawer [open]="true" [title]="payment.studentName || 'Payment details'" description="Payment reference, receipt and fee allocation." [fields]="detailFields(payment)" (closed)="preview.set(null)">
-    @if (payment.allocations?.length) {
-      <section><h3>Fee allocation</h3><dl class="erp-crm-detail-list">@for (allocation of payment.allocations; track $index) { <div><dt>{{ allocation.feeHeadName }}</dt><dd>{{ allocation.amount | currency: 'INR' }}</dd></div> }</dl></section>
+@if (preview(); as record) {
+  <erp-record-drawer
+    [open]="true"
+    [title]="record.studentName || 'Record details'"
+    [description]="title()"
+    [fields]="detailFields(record)"
+    [illustration]="section() === 'discounts' ? 'discountTicket' : 'feeWallet'"
+    [busy]="downloading()"
+    (closed)="preview.set(null)"
+  >
+    @if (payment(record); as item) {
+      @if (item.allocations?.length) {
+        <section>
+          <h3>Fee allocations</h3>
+          <dl class="erp-crm-detail-list">
+            @for (allocation of item.allocations; track $index) {
+              <div>
+                <dt>
+                  {{ allocation.feeHeadName }}<small>{{ allocation.periodLabel }}</small>
+                </dt>
+                <dd>{{ allocation.amount | currency: 'INR' }}</dd>
+              </div>
+            }
+          </dl>
+        </section>
+      }
+      @if (downloadError()) {
+        <p class="erp-notice erp-notice--error" role="alert">{{ downloadError() }}</p>
+      }
     }
-    @if (payment.status === 'paid') { <button drawer-actions class="erp-button erp-button--primary" type="button" (click)="receipt(payment)">Download receipt</button> }
+    <div drawer-actions class="erp-finance-record-actions">
+      <a
+        class="erp-button erp-button--secondary"
+        [routerLink]="['/admin/admissions/applications', record.studentAdmissionId]"
+        >Student record</a
+      >
+      @if (payment(record); as item) {
+        @if (item.status === 'paid') {
+          <button
+            class="erp-button erp-button--primary"
+            type="button"
+            [disabled]="downloading()"
+            (click)="receipt(item)"
+          >
+            {{ downloading() ? 'Downloading…' : 'Download receipt' }}
+          </button>
+        }
+      }
+    </div>
   </erp-record-drawer>
 }

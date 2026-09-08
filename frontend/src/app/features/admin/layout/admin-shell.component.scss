@@ -660,7 +660,8 @@ a {
 }
 
 .admin-main:has(erp-dynamic-admission.embedded) {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .admin-drawer-backdrop {

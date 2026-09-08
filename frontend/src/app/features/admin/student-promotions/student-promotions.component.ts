@@ -1,6 +1,10 @@
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RecordDrawerComponent, RecordDetailField } from '../../../shared/ui/record-drawer/record-drawer.component';
+import {
+  RecordDrawerComponent,
+  RecordDetailField,
+} from '../../../shared/ui/record-drawer/record-drawer.component';
 import { ApiService } from '../../../core/api.service';
 import { MasterValue, StudentPromotion } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
@@ -12,6 +16,7 @@ import {
 @Component({
   selector: 'erp-student-promotions',
   imports: [
+    AdminIllustrationComponent,
     RecordDrawerComponent,
     AdminPageComponent,
     CompactActionMenuComponent,
@@ -33,7 +38,9 @@ export class StudentPromotionsComponent {
     { id: 'preview', label: 'View promotion details', icon: 'view' },
     { id: 'promote', label: 'Promote student', icon: 'transfer' },
   ];
-  readonly previewActions: CompactActionItem[] = [{ id: 'preview', label: 'View promotion details', icon: 'view' }];
+  readonly previewActions: CompactActionItem[] = [
+    { id: 'preview', label: 'View promotion details', icon: 'view' },
+  ];
   readonly preview = signal<StudentPromotion | null>(null);
   detailFields(item: StudentPromotion): RecordDetailField[] {
     return [
@@ -151,7 +158,10 @@ export class StudentPromotionsComponent {
           );
         else this.error.set(failures.join(' ') || 'No students were promoted.');
         this.saving.set(false);
-        if (promoted) { this.preview.set(null); this.load(); }
+        if (promoted) {
+          this.preview.set(null);
+          this.load();
+        }
       },
       error: (error) => {
         this.error.set(error.error?.message || 'Could not promote the selected students.');

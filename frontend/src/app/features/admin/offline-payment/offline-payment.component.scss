@@ -43,9 +43,9 @@
 }
 
 .offline-tabs button.is-active {
-  color: white;
-  border-color: var(--erp-blue-700);
-  background: var(--erp-blue-700);
+  color: var(--erp-academic-accent);
+  border-color: var(--erp-academic-border);
+  background: var(--erp-blue-50);
 }
 
 .offline-ledger {

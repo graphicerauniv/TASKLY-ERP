@@ -1,4 +1,4 @@
-import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -40,7 +40,8 @@ interface ConfirmDialogState {
 
 @Component({
   selector: 'erp-master-data',
-  imports: [AdminIllustrationComponent,
+  imports: [
+    AdminIllustrationComponent,
     AdminPageComponent,
     CompactActionMenuComponent,
     ConfirmDialogComponent,

@@ -783,6 +783,30 @@ export class ApiService {
       };
     }>(`${API_BASE_URL}/payments/admin/accounts`, { params });
   }
+  financeDirectory(
+    section: 'payments' | 'credits' | 'discounts',
+    options: {
+      page: number;
+      pageSize: number;
+      search: string;
+      status: string;
+      channel: string;
+    },
+  ) {
+    const params = new HttpParams({ fromObject: { section, ...options } });
+    return this.http.get<{
+      items: Array<FeePayment | FeeCredit | StudentDiscount>;
+      pagination: { page: number; pageSize: number; total: number; totalPages: number };
+    }>(`${API_BASE_URL}/payments/admin/accounts/directory`, { params });
+  }
+  financeSummary() {
+    return this.http.get<{
+      successfulPayments: number;
+      collectedAmount: number;
+      pendingPayments: number;
+      availableCredit: number;
+    }>(`${API_BASE_URL}/payments/admin/accounts/summary`);
+  }
   downloadAdminReceipt(paymentId: string) {
     return this.http.get(`${API_BASE_URL}/payments/admin/accounts/${paymentId}/receipt`, {
       responseType: 'blob',

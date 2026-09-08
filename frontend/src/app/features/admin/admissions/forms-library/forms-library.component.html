@@ -89,9 +89,7 @@
             <tr>
               <td colspan="7">
                 <div class="forms-library__state" role="alert">
-                  <span class="erp-empty-panel__icon">
-                    <svg lucideCircleAlert size="20" aria-hidden="true"></svg>
-                  </span>
+                  <erp-admin-illustration [kind]="search() ? 'noResults' : 'applicationForm'" />
                   <h3>Forms could not be loaded</h3>
                   <p>{{ error() }}</p>
                   <button
@@ -164,13 +162,7 @@
               <tr>
                 <td colspan="7">
                   <div class="forms-library__state">
-                    <span class="erp-empty-panel__icon">
-                      @if (search()) {
-                        <svg lucideInbox size="20" aria-hidden="true"></svg>
-                      } @else {
-                        <svg lucideFilePlus2 size="20" aria-hidden="true"></svg>
-                      }
-                    </span>
+                    <erp-admin-illustration [kind]="search() ? 'noResults' : 'applicationForm'" />
                     <h3>{{ search() ? 'No matching forms' : 'No admission forms yet' }}</h3>
                     <p>
                       {{
@@ -208,33 +200,48 @@
   </section>
 </erp-admin-page>
 
-<erp-admin-drawer [open]="createOpen()" title="Create form" eyebrow="Form configuration" description="Start with a draft, then configure its sections in the form builder." [busy]="creating()" (closed)="closeCreate()">
-<div class="forms-library__dialog-body">
-        <label>
-          <span>Form name</span>
-          <input
-            class="erp-control"
-            type="text"
-            [(ngModel)]="newFormName"
-            maxlength="120"
-            autocomplete="off"
-            placeholder="Example: Undergraduate admission 2026"
-            (keyup.enter)="createForm()"
-          />
-        </label>
-        <label>
-          <span>Form purpose</span>
-          <select class="erp-control" [(ngModel)]="newFormPurpose">
-            <option value="admission">Student admission</option>
-            <option value="faculty">Faculty application</option>
-            <option value="employee">Employee application</option>
-            <option value="general">General/custom form</option>
-          </select>
-        </label>
-        @if (createError()) {
-          <p class="erp-notice erp-notice--error" role="alert">{{ createError() }}</p>
-        }
-      </div>
-      
-<button drawer-actions class="erp-button erp-button--primary" type="button" [disabled]="creating() || !newFormName.trim()" (click)="createForm()">{{ creating() ? 'Creating…' : 'Create and open builder' }}</button>
+<erp-admin-drawer
+  [open]="createOpen()"
+  title="Create form"
+  eyebrow="Form configuration"
+  description="Start with a draft, then configure its sections in the form builder."
+  [busy]="creating()"
+  (closed)="closeCreate()"
+>
+  <div class="forms-library__dialog-body">
+    <label>
+      <span>Form name</span>
+      <input
+        class="erp-control"
+        type="text"
+        [(ngModel)]="newFormName"
+        maxlength="120"
+        autocomplete="off"
+        placeholder="Example: Undergraduate admission 2026"
+        (keyup.enter)="createForm()"
+      />
+    </label>
+    <label>
+      <span>Form purpose</span>
+      <select class="erp-control" [(ngModel)]="newFormPurpose">
+        <option value="admission">Student admission</option>
+        <option value="faculty">Faculty application</option>
+        <option value="employee">Employee application</option>
+        <option value="general">General/custom form</option>
+      </select>
+    </label>
+    @if (createError()) {
+      <p class="erp-notice erp-notice--error" role="alert">{{ createError() }}</p>
+    }
+  </div>
+
+  <button
+    drawer-actions
+    class="erp-button erp-button--primary"
+    type="button"
+    [disabled]="creating() || !newFormName.trim()"
+    (click)="createForm()"
+  >
+    {{ creating() ? 'Creating…' : 'Create and open builder' }}
+  </button>
 </erp-admin-drawer>

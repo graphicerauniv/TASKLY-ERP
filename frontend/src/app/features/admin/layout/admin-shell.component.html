@@ -357,7 +357,13 @@
     </div>
   </header>
 
-  <main id="admin-main" class="content admin-main" [class.erp-crm-workspace]="!currentUrl().startsWith('/admin/academics')" tabindex="-1">
+  <main
+    id="admin-main"
+    class="content admin-main"
+    [class.erp-crm-workspace]="!currentUrl().startsWith('/admin/academics')"
+    tabindex="-1"
+  >
+    <erp-admin-workspace-navigation [url]="currentUrl()" />
     <router-outlet />
   </main>
 </div>

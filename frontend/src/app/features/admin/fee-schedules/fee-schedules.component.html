@@ -5,7 +5,9 @@
   variant="compact"
   layout="collection"
 >
-  <button page-actions class="erp-button erp-button--primary" type="button" (click)="openCreate()">Create schedule</button>
+  <button page-actions class="erp-button erp-button--primary" type="button" (click)="openCreate()">
+    Create schedule
+  </button>
   @if (message()) {
     <p class="erp-notice erp-notice--success">{{ message() }}</p>
   }
@@ -57,11 +59,19 @@
               <td>
                 <span class="erp-status">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
               </td>
-              <td class="erp-table-shell__actions"><erp-compact-action-menu [items]="rowActions(item)" (selected)="handleRowAction($event, item)" /></td>
+              <td class="erp-table-shell__actions">
+                <erp-compact-action-menu
+                  [items]="rowActions(item)"
+                  (selected)="handleRowAction($event, item)"
+                />
+              </td>
             </tr>
           } @empty {
             <tr>
-<td colspan="8" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No fee publication schedules configured.</p></td>
+              <td colspan="8" class="erp-empty-state">
+                <erp-admin-illustration kind="feeWallet" size="compact" />
+                <p>No fee publication schedules configured.</p>
+              </td>
             </tr>
           }
         </tbody>
@@ -80,8 +90,18 @@
   (confirmed)="deleteSchedule()"
   (cancelled)="deleteTarget.set(null)"
 />
-<erp-admin-drawer [open]="drawerOpen()" [title]="editingId() ? 'Edit publication schedule' : 'Create publication schedule'" eyebrow="Fee publication" description="Set the publication time, deadline and fine rules." [busy]="saving()" (closed)="closeDrawer()">
-@if (error()) { <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p> }
+<erp-admin-drawer
+  [open]="drawerOpen()"
+  [title]="editingId() ? 'Edit publication schedule' : 'Create publication schedule'"
+  eyebrow="Fee publication"
+  description="Set the publication time, deadline and fine rules."
+  illustration="taskSchedule"
+  [busy]="saving()"
+  (closed)="closeDrawer()"
+>
+  @if (error()) {
+    <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+  }
   <section class="erp-card erp-card--padded">
     <div class="erp-card__header">
       <div>
@@ -147,5 +167,13 @@
     </div>
   </section>
 
-<button drawer-actions class="erp-button erp-button--primary" type="button" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save schedule' }}</button>
+  <button
+    drawer-actions
+    class="erp-button erp-button--primary"
+    type="button"
+    [disabled]="saving()"
+    (click)="save()"
+  >
+    {{ saving() ? 'Saving…' : 'Save schedule' }}
+  </button>
 </erp-admin-drawer>
