@@ -5,6 +5,8 @@
   "type": "module",
   "description": "Taskly ERP Angular frontend foundation",
   "scripts": {
+    "generate:admin-page": "node scripts/generate-admin-page.js",
+    "test:admin-generator": "node --test scripts/generate-admin-page.test.js",
     "ng": "ng",
     "config": "node scripts/write-runtime-config.js",
     "start": "npm run config && ng serve",

@@ -42,8 +42,13 @@ workflow pattern documented in `FRONTEND_UI_RULES.md`:
 - mobile bottom-sheet section navigator
 - sticky action bar
 
-Only Auth/Login and Dashboard may be lazy loaded. Admin feature routes belong in
-`src/app/features/admin/admin.routes.ts` and are normally imported components.
+Admin feature routes belong in `src/app/features/admin/admin.routes.ts` and use
+`loadComponent` or `loadChildren`, as specified in FRONTEND_UI_RULES.md.
+
+Start new admin route pages with `npm run generate:admin-page -- <page-name>`.
+This provides the shared page frame without a local stylesheet. Register the
+lazy route and its workspace navigation, then connect real data and actions.
+Never introduce another theme or image icons in the sidebar.
 
 New Angular components do not generate a stylesheet by default. A local feature
 SCSS file is allowed only for a unique layout exception and must begin with an

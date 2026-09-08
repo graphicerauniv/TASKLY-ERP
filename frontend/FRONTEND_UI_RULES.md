@@ -199,6 +199,22 @@ names such as `.brand`, `.field`, `.card`, `.actions`, or `.sidebar`.
 
 ## 7. Shared UI Rule
 
+### Default for future pages
+
+Run `npm run generate:admin-page -- purchase-orders` (replace the name). Use
+`--dry-run` to preview. The generator refuses existing feature directories and
+creates only an OnPush component and template, using `erp-admin-page` and the
+shared illustration registry. No feature stylesheet or sample records are added.
+
+Register the page with `loadComponent` inside AdminShell and add its subpage links
+to `admin-workspace.registry.ts`. The shell automatically applies the existing
+Academics-inspired CRM theme outside the protected Academics routes. Use shared
+cards, controls, tables, compact row actions, drawers and confirmations; do not
+copy Finance CSS into new modules. For directories set `layout="collection"`.
+Split create/view/import workflows, wire real APIs and design all data states
+before exposing the new route. Styling is inherited; business functionality is
+not generated. Sidebar icons remain Lucide line icons.
+
 Do not duplicate sidebar, topbar, page header, card, button, table, form control,
 status, empty state, modal, workflow navigation, upload, or action-bar markup in feature pages.
 
