@@ -2,7 +2,7 @@
   [eyebrow]="section() ? 'Database' : purposeLabel(form()?.purpose || '') + ' applications'"
   [title]="section()?.name || form()?.name || 'Application submissions'"
   description="Search, review and edit submitted records."
-  variant="minimal"
+variant="compact"
   layout="collection"
 >
   @if (error()) {
@@ -19,7 +19,7 @@
       <input
         class="erp-control"
         type="search"
-        [(ngModel)]="search"
+        [ngModel]="search()" (ngModelChange)="search.set($event)"
         placeholder="Search name, code or response"
       />
     </div>
@@ -52,7 +52,7 @@
               </td>
               <td class="erp-table-shell__actions">
                 <erp-compact-action-menu
-                  [items]="actions"
+                  [items]="section() ? actions : [actions[0]]"
                   (selected)="handleAction($event, item)"
                 />
               </td>
@@ -73,49 +73,8 @@
 </erp-admin-page>
 
 @if (selected(); as item) {
-  <div class="dialog-layer">
-    <button
-      class="dialog-backdrop"
-      type="button"
-      aria-label="Close"
-      (click)="selected.set(null)"
-    ></button>
-    <section
-      class="dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="application-response-title"
-    >
-      <header class="dialog__header">
-        <div>
-          <small>{{ item.applicationCode || purposeLabel(item.purpose) + ' application' }}</small>
-          <h2 id="application-response-title">{{ item.formName }}</h2>
-        </div>
-        <button type="button" aria-label="Close" (click)="selected.set(null)">×</button>
-      </header>
-      <div class="dialog__body">
-        <div class="erp-table-shell__scroll">
-          <table>
-            <tbody>
-              @for (row of responseRows(item); track row.label) {
-                <tr>
-                  <th>{{ row.label }}</th>
-                  <td>{{ row.value }}</td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td>No response values were submitted.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <footer class="dialog__footer">
-        <button class="erp-button erp-button--secondary" type="button" (click)="selected.set(null)">
-          Close
-        </button>
-      </footer>
-    </section>
-  </div>
+  <erp-record-drawer [open]="true" [title]="item.formName" [description]="item.applicationCode || purposeLabel(item.purpose) + ' application'" [fields]="responseRows(item)" (closed)="selected.set(null)">
+    @if (!responseRows(item).length) { <div class="erp-empty-panel"><erp-admin-illustration kind="applicationForm" /><h3>No submitted responses</h3><p>This record does not contain any response values.</p></div> }
+    @if (section()) { <button drawer-actions class="erp-button erp-button--primary" type="button" (click)="handleAction('edit', item)">Edit record</button> }
+  </erp-record-drawer>
 }

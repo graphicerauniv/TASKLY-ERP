@@ -2,7 +2,7 @@
   eyebrow="Accounts"
   title="Student Payments"
   description="Review online and offline payments, allocation details, balances and receipts."
-  variant="minimal"
+variant="compact"
   layout="collection"
 >
   @if (error()) {
@@ -79,7 +79,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="erp-empty-state">No excess-credit records found.</td>
+<td colspan="7" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No excess-credit records found.</p></td>
             </tr>
           }
         </tbody>
@@ -175,12 +175,10 @@
                 <span class="erp-status">{{ payment.status }}</span>
               </td>
               <td>
-                @if (payment.status === 'paid') {
                   <erp-compact-action-menu
-                    [items]="paymentActions"
+                    [items]="payment.status === 'paid' ? paymentActions : previewActions"
                     (selected)="handlePaymentAction($event, payment)"
                   />
-                }
               </td>
             </tr>
           } @empty {
@@ -242,7 +240,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="erp-empty-state">No one-time discount records found.</td>
+<td colspan="8" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No one-time discount records found.</p></td>
             </tr>
           }
         </tbody>
@@ -250,3 +248,12 @@
     </div>
   </section>
 </erp-admin-page>
+
+@if (preview(); as payment) {
+  <erp-record-drawer [open]="true" [title]="payment.studentName || 'Payment details'" description="Payment reference, receipt and fee allocation." [fields]="detailFields(payment)" (closed)="preview.set(null)">
+    @if (payment.allocations?.length) {
+      <section><h3>Fee allocation</h3><dl class="erp-crm-detail-list">@for (allocation of payment.allocations; track $index) { <div><dt>{{ allocation.feeHeadName }}</dt><dd>{{ allocation.amount | currency: 'INR' }}</dd></div> }</dl></section>
+    }
+    @if (payment.status === 'paid') { <button drawer-actions class="erp-button erp-button--primary" type="button" (click)="receipt(payment)">Download receipt</button> }
+  </erp-record-drawer>
+}

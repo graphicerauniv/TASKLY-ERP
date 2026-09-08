@@ -343,7 +343,24 @@ export interface AcademicTimetableEntry {
   endTime: string;
   classType: string;
   status?: 'draft' | 'published';
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
   isActive: boolean;
+}
+export interface StudentTimetableReminder {
+  _id: string;
+  timetableEntryId: string;
+  minutesBefore: number;
+  isActive: boolean;
+  updatedAt: string;
+}
+export interface StudentTimetablePreferences {
+  defaultView: 'auto' | 'today' | 'week';
+  showFaculty: boolean;
+  showRooms: boolean;
+  compactMode: boolean;
+  reminderMinutes: number;
+  updatedAt?: string;
 }
 export interface TimetableAudience {
   groupId: string;

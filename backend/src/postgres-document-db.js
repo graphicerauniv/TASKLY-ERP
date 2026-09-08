@@ -471,6 +471,21 @@ const DOMAIN_TABLES = Object.freeze({
       'entryCount',
     ],
   },
+  studentTimetableReminders: {
+    table: 'student_timetable_reminders',
+    columns: ['studentAdmissionId', 'timetableEntryId', 'minutesBefore', 'isActive'],
+  },
+  studentTimetablePreferences: {
+    table: 'student_timetable_preferences',
+    columns: [
+      'studentAdmissionId',
+      'defaultView',
+      'showFaculty',
+      'showRooms',
+      'compactMode',
+      'reminderMinutes',
+    ],
+  },
   timetableMasters: {
     table: 'timetable_masters',
     columns: ['name', 'academicSession', 'universityId', 'collegeId', 'isActive'],
@@ -669,6 +684,7 @@ function snakeCase(value) {
 
 export class PostgresDocumentDatabase {
   constructor(connectionString) {
+    this.closing = false;
     this.pool = new pg.Pool({
       connectionString: secureConnectionString(connectionString),
       max: 10,
@@ -677,6 +693,9 @@ export class PostgresDocumentDatabase {
       idleTimeoutMillis: 300_000,
       keepAlive: true,
       keepAliveInitialDelayMillis: 10_000,
+    });
+    this.pool.on('error', (error) => {
+      if (!this.closing) console.error('Unexpected PostgreSQL pool error:', error.message);
     });
   }
 
@@ -720,6 +739,7 @@ export class PostgresDocumentDatabase {
   }
 
   async close() {
+    this.closing = true;
     await this.pool.end();
   }
 }

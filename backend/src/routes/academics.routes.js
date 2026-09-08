@@ -1,4 +1,5 @@
 import express from 'express';
+import PDFDocument from 'pdfkit';
 import { z } from 'zod';
 import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
@@ -1686,67 +1687,394 @@ academicsRouter.post(
   }),
 );
 
+const defaultStudentTimetablePreferences = Object.freeze({
+  defaultView: 'auto',
+  showFaculty: true,
+  showRooms: true,
+  compactMode: false,
+  reminderMinutes: 15,
+});
+
+const studentTimetablePreferencesSchema = z.object({
+  defaultView: z.enum(['auto', 'today', 'week']),
+  showFaculty: z.boolean(),
+  showRooms: z.boolean(),
+  compactMode: z.boolean(),
+  reminderMinutes: z.coerce.number().int().min(5).max(1440),
+});
+
+function publicStudentTimetablePreferences(value = {}) {
+  return {
+    defaultView: value.defaultView || defaultStudentTimetablePreferences.defaultView,
+    showFaculty: value.showFaculty ?? defaultStudentTimetablePreferences.showFaculty,
+    showRooms: value.showRooms ?? defaultStudentTimetablePreferences.showRooms,
+    compactMode: value.compactMode ?? defaultStudentTimetablePreferences.compactMode,
+    reminderMinutes: value.reminderMinutes ?? defaultStudentTimetablePreferences.reminderMinutes,
+    ...(value.updatedAt ? { updatedAt: serialize(value.updatedAt) } : {}),
+  };
+}
+
+async function timetableForStudent(student) {
+  const savedPreferences = await db()
+    .collection('studentTimetablePreferences')
+    .findOne({ studentAdmissionId: student._id });
+  const preferences = publicStudentTimetablePreferences(savedPreferences);
+  const assignment = await db()
+    .collection('studentAcademicAssignments')
+    .findOne({
+      studentAdmissionId: student._id,
+      academicSession: student.academicSession,
+      semester: Number(student.currentSemester || 1),
+      status: 'active',
+    });
+  if (!assignment)
+    return {
+      assignment: null,
+      subjects: [],
+      structure: null,
+      periods: [],
+      items: [],
+      reminders: [],
+      preferences,
+      publishedAt: null,
+    };
+  const entries = await db()
+    .collection('timetableEntries')
+    .find({
+      academicSession: assignment.academicSession,
+      semester: assignment.semester,
+      status: 'published',
+      isActive: true,
+    })
+    .sort({ day: 1, startTime: 1 })
+    .toArray();
+  const visibleEntries = entries.filter(
+    (entry) =>
+      entry.subjectId &&
+      entry.facultyId &&
+      entryAudiences(entry).some(
+        (audience) =>
+          String(audience.groupId) === String(assignment.groupId) &&
+          audience.sectionIds.map(String).includes(String(assignment.sectionId)) &&
+          (!audience.setIds.length ||
+            audience.setIds.map(String).includes(String(assignment.setId))),
+      ),
+  );
+  const subjectIds = [...new Set(visibleEntries.map((entry) => String(entry.subjectId)))];
+  const assignedSubjects = (
+    await Promise.all(
+      subjectIds.map((subjectId) =>
+        db()
+          .collection('subjects')
+          .findOne({ _id: id(subjectId), isActive: true }),
+      ),
+    )
+  ).filter(Boolean);
+  const timetableStructureId = visibleEntries[0]?.timetableStructureId;
+  const [structure, periods, reminders] = timetableStructureId
+    ? await Promise.all([
+        db().collection('timetableStructures').findOne({ _id: timetableStructureId }),
+        db()
+          .collection('timetablePeriods')
+          .find({ timetableStructureId, isConfigured: true })
+          .sort({ periodNumber: 1 })
+          .toArray(),
+        db()
+          .collection('studentTimetableReminders')
+          .find({ studentAdmissionId: student._id, isActive: true })
+          .toArray(),
+      ])
+    : [null, [], []];
+  const publishedAt = visibleEntries.reduce(
+    (latest, entry) =>
+      !latest || (entry.publishedAt && entry.publishedAt > latest) ? entry.publishedAt : latest,
+    null,
+  );
+  return {
+    assignment: serialize(assignment),
+    subjects: assignedSubjects.map(serialize),
+    structure: structure ? serialize(structure) : null,
+    periods: periods.map(serialize),
+    items: visibleEntries.map(serialize),
+    reminders: reminders.map(serialize),
+    preferences,
+    publishedAt,
+  };
+}
+
+export function timetablePdf(student, timetable, weekStart, includeDetails = true) {
+  return new Promise((resolve, reject) => {
+    const document = new PDFDocument({
+      size: 'A4',
+      layout: 'landscape',
+      margin: 30,
+      info: { Title: 'Student timetable', Author: 'Graphic Era University' },
+    });
+    const chunks = [];
+    document.on('data', (chunk) => chunks.push(chunk));
+    document.on('end', () => resolve(Buffer.concat(chunks)));
+    document.on('error', reject);
+
+    const navy = '#071b53';
+    const blue = '#087cf0';
+    const border = '#cbdcf0';
+    const muted = '#5b6f9d';
+    const soft = '#f1f7ff';
+    const weekDayNames = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    const configuredDays = timetable.structure?.workingDays?.filter((day) =>
+      weekDayNames.includes(day),
+    );
+    const days = configuredDays?.length ? configuredDays : weekDayNames.slice(0, 6);
+    const periods = timetable.periods;
+    const start = new Date(`${weekStart}T00:00:00Z`);
+    const end = new Date(start);
+    end.setUTCDate(
+      start.getUTCDate() + Math.max(...days.map((day) => weekDayNames.indexOf(day)), 0),
+    );
+    const shortDate = (date) =>
+      date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+    document.fillColor(navy).font('Helvetica-Bold').fontSize(22).text('GEU');
+    document.fontSize(17).text('Student Timetable', 85, 31);
+    document
+      .fillColor(muted)
+      .font('Helvetica')
+      .fontSize(9)
+      .text(
+        `${student.studentName || student.name || 'Student'}  |  ${student.studentId || ''}`,
+        85,
+        53,
+      )
+      .text(
+        `Semester ${student.currentSemester || 1}  |  ${shortDate(start)} - ${shortDate(end)}`,
+        85,
+        67,
+      );
+    document
+      .fillColor(navy)
+      .font('Helvetica-Bold')
+      .text(student.academicSession || '', 660, 36, { width: 150, align: 'right' });
+    document
+      .fillColor(muted)
+      .font('Helvetica')
+      .text(`Generated ${new Date().toLocaleString('en-IN')}`, 620, 53, {
+        width: 190,
+        align: 'right',
+      });
+
+    const tableX = 30;
+    const tableY = 92;
+    const tableWidth = 782;
+    const timeWidth = 92;
+    const dayWidth = (tableWidth - timeWidth) / Math.max(days.length, 1);
+    const headerHeight = 44;
+    const rowHeight = Math.min(62, Math.max(40, 420 / Math.max(periods.length, 1)));
+    document.roundedRect(tableX, tableY, tableWidth, headerHeight, 6).fill(navy);
+    document
+      .fillColor('#ffffff')
+      .font('Helvetica-Bold')
+      .fontSize(9)
+      .text('TIME', tableX, tableY + 17, { width: timeWidth, align: 'center' });
+    days.forEach((day, index) => {
+      const date = new Date(start);
+      date.setUTCDate(start.getUTCDate() + Math.max(weekDayNames.indexOf(day), 0));
+      document.text(
+        `${day.toUpperCase()}\n${shortDate(date).toUpperCase()}`,
+        tableX + timeWidth + index * dayWidth,
+        tableY + 10,
+        { width: dayWidth, align: 'center' },
+      );
+    });
+    periods.forEach((period, rowIndex) => {
+      const y = tableY + headerHeight + rowIndex * rowHeight;
+      document
+        .rect(tableX, y, tableWidth, rowHeight)
+        .fillAndStroke(period.periodType === 'break' ? soft : '#ffffff', border);
+      document
+        .fillColor(navy)
+        .font('Helvetica-Bold')
+        .fontSize(8)
+        .text(
+          `${period.startTime || ''} - ${period.endTime || ''}`,
+          tableX + 5,
+          y + rowHeight / 2 - 5,
+          { width: timeWidth - 10, align: 'center' },
+        );
+      days.forEach((day, columnIndex) => {
+        const x = tableX + timeWidth + columnIndex * dayWidth;
+        document
+          .moveTo(x, y)
+          .lineTo(x, y + rowHeight)
+          .stroke(border);
+        const entry = timetable.items.find(
+          (item) =>
+            item.day === day &&
+            (item.timetablePeriodIds?.[0] || item.timetablePeriodId) === period._id,
+        );
+        if (period.periodType === 'break') {
+          document
+            .fillColor(muted)
+            .font('Helvetica-Bold')
+            .fontSize(8)
+            .text('BREAK', x + 4, y + rowHeight / 2 - 5, { width: dayWidth - 8, align: 'center' });
+        } else if (entry) {
+          document
+            .fillColor(blue)
+            .rect(x + 5, y + 7, 3, rowHeight - 14)
+            .fill();
+          document
+            .fillColor(navy)
+            .font('Helvetica-Bold')
+            .fontSize(8)
+            .text(entry.subjectName, x + 13, y + 9, {
+              width: dayWidth - 18,
+              height: 20,
+              ellipsis: true,
+            });
+          if (includeDetails)
+            document
+              .fillColor(muted)
+              .font('Helvetica')
+              .fontSize(7)
+              .text(
+                `${entry.subjectCode || ''}${entry.roomName ? `  |  ${entry.roomName}` : ''}`,
+                x + 13,
+                y + 30,
+                { width: dayWidth - 18, ellipsis: true },
+              )
+              .text(entry.facultyName || '', x + 13, y + 41, {
+                width: dayWidth - 18,
+                ellipsis: true,
+              });
+        } else {
+          document
+            .fillColor(muted)
+            .font('Helvetica')
+            .fontSize(9)
+            .text('-', x, y + rowHeight / 2 - 5, { width: dayWidth, align: 'center' });
+        }
+      });
+    });
+    document
+      .fillColor(muted)
+      .font('Helvetica')
+      .fontSize(8)
+      .text('Generated from the latest timetable published by the academic office.', 30, 550, {
+        width: 782,
+        align: 'center',
+      });
+    document.end();
+  });
+}
+
+studentAcademicsRouter.get(
+  '/timetable.pdf',
+  asyncHandler(async (request, response) => {
+    const weekStart = z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .parse(request.query.weekStart);
+    const includeDetails = request.query.includeDetails !== 'false';
+    const timetable = await timetableForStudent(request.student);
+    if (!timetable.items.length)
+      return response.status(404).json({ message: 'No published timetable is available.' });
+    const file = await timetablePdf(request.student, timetable, weekStart, includeDetails);
+    response
+      .status(200)
+      .set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="GEU_Timetable_Sem${request.student.currentSemester || 1}.pdf"`,
+        'Content-Length': String(file.length),
+      })
+      .send(file);
+  }),
+);
+
+studentAcademicsRouter.put(
+  '/timetable/preferences',
+  asyncHandler(async (request, response) => {
+    const input = studentTimetablePreferencesSchema.parse(request.body || {});
+    const now = new Date();
+    await db()
+      .collection('studentTimetablePreferences')
+      .updateOne(
+        { studentAdmissionId: request.student._id },
+        {
+          $set: { ...input, updatedAt: now },
+          $setOnInsert: { createdAt: now },
+        },
+        { upsert: true },
+      );
+    response.json({
+      preferences: publicStudentTimetablePreferences(
+        await db()
+          .collection('studentTimetablePreferences')
+          .findOne({ studentAdmissionId: request.student._id }),
+      ),
+    });
+  }),
+);
+
+studentAcademicsRouter.put(
+  '/timetable/reminders/:entryId',
+  asyncHandler(async (request, response) => {
+    const entryId = id(request.params.entryId, 'entryId');
+    const input = z
+      .object({ minutesBefore: z.coerce.number().int().min(5).max(1440).default(15) })
+      .parse(request.body || {});
+    const timetable = await timetableForStudent(request.student);
+    if (!timetable.items.some((entry) => String(entry._id) === String(entryId)))
+      return response.status(404).json({ message: 'Published class was not found.' });
+    const now = new Date();
+    await db()
+      .collection('studentTimetableReminders')
+      .updateOne(
+        { studentAdmissionId: request.student._id, timetableEntryId: entryId },
+        {
+          $set: { minutesBefore: input.minutesBefore, isActive: true, updatedAt: now },
+          $setOnInsert: { createdAt: now },
+        },
+        { upsert: true },
+      );
+    response.json({
+      reminder: serialize(
+        await db()
+          .collection('studentTimetableReminders')
+          .findOne({ studentAdmissionId: request.student._id, timetableEntryId: entryId }),
+      ),
+    });
+  }),
+);
+
+studentAcademicsRouter.delete(
+  '/timetable/reminders/:entryId',
+  asyncHandler(async (request, response) => {
+    const entryId = id(request.params.entryId, 'entryId');
+    await db()
+      .collection('studentTimetableReminders')
+      .updateOne(
+        { studentAdmissionId: request.student._id, timetableEntryId: entryId },
+        { $set: { isActive: false, updatedAt: new Date() } },
+      );
+    response.status(204).end();
+  }),
+);
+
 studentAcademicsRouter.get(
   '/timetable',
   asyncHandler(async (request, response) => {
-    const student = request.student;
-    const assignment = await db()
-      .collection('studentAcademicAssignments')
-      .findOne({
-        studentAdmissionId: student._id,
-        academicSession: student.academicSession,
-        semester: Number(student.currentSemester || 1),
-        status: 'active',
-      });
-    if (!assignment) return response.json({ assignment: null, subjects: [], items: [] });
-    const entries = await db()
-      .collection('timetableEntries')
-      .find({
-        academicSession: assignment.academicSession,
-        semester: assignment.semester,
-        isActive: true,
-      })
-      .sort({ day: 1, startTime: 1 })
-      .toArray();
-    const visibleEntries = entries.filter(
-      (entry) =>
-        entry.subjectId &&
-        entry.facultyId &&
-        entryAudiences(entry).some(
-          (audience) =>
-            String(audience.groupId) === String(assignment.groupId) &&
-            audience.sectionIds.map(String).includes(String(assignment.sectionId)) &&
-            (!audience.setIds.length ||
-              audience.setIds.map(String).includes(String(assignment.setId))),
-        ),
-    );
-    const subjectIds = [...new Set(visibleEntries.map((entry) => String(entry.subjectId)))];
-    const assignedSubjects = (
-      await Promise.all(
-        subjectIds.map((subjectId) =>
-          db()
-            .collection('subjects')
-            .findOne({ _id: id(subjectId), isActive: true }),
-        ),
-      )
-    ).filter(Boolean);
-    const timetableStructureId = visibleEntries[0]?.timetableStructureId;
-    const [structure, periods] = timetableStructureId
-      ? await Promise.all([
-          db().collection('timetableStructures').findOne({ _id: timetableStructureId }),
-          db()
-            .collection('timetablePeriods')
-            .find({ timetableStructureId, isConfigured: true })
-            .sort({ periodNumber: 1 })
-            .toArray(),
-        ])
-      : [null, []];
+    const timetable = await timetableForStudent(request.student);
     response.json({
-      assignment: serialize(assignment),
-      subjects: assignedSubjects.map(serialize),
-      structure: structure ? serialize(structure) : null,
-      periods: periods.map(serialize),
-      items: visibleEntries.map(serialize),
+      ...timetable,
+      serverTime: new Date().toISOString(),
     });
   }),
 );

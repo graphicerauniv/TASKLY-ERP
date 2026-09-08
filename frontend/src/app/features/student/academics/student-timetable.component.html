@@ -1,108 +1,590 @@
-<div class="student-fees-page" aria-label="Student timetable">
-  <header class="student-fees-heading">
-    <div class="student-fees-heading__copy">
-      <nav aria-label="Breadcrumb"><span>Academics</span><b>/</b><strong>Timetable</strong></nav>
-      <h1>My Timetable</h1>
-      <p>Your timetable is based on your current group, section, set and semester.</p>
+<main
+  class="timetable-page"
+  [class.compact-view]="preferences().compactMode"
+  aria-labelledby="timetable-title"
+>
+  <header class="timetable-heading">
+    <div>
+      <nav aria-label="Breadcrumb">
+        <a routerLink="/student/academics">Academics</a><span>/</span><strong>Timetable</strong>
+      </nav>
+      <a class="mobile-back" routerLink="/student/academics" aria-label="Back to Academics"
+        ><svg lucideArrowLeft></svg
+      ></a>
+      <h1 id="timetable-title">My Timetable</h1>
+      <p>
+        Your timetable is based on your current group, section, set and semester.
+        <span class="sync-status" [class.refreshing]="refreshing()"
+          ><svg lucideRefreshCw></svg>{{ lastSyncedLabel() }}</span
+        >
+      </p>
     </div>
+    <img
+      src="/assets/student/academics/timetable.png"
+      width="320"
+      height="320"
+      alt=""
+      aria-hidden="true"
+    />
+    <button
+      class="mobile-download"
+      type="button"
+      [disabled]="!items().length"
+      (click)="downloadOpen.set(true)"
+    >
+      <svg lucideDownload></svg>Download PDF
+    </button>
   </header>
+
   @if (loading()) {
-    <section class="student-fees-message"><strong>Loading timetable…</strong></section>
-  } @else if (error()) {
-    <section class="student-fees-message" role="alert">
-      <strong>{{ error() }}</strong>
+    <section class="timetable-state">
+      <span></span><strong>Loading your published timetable...</strong>
     </section>
-  } @else if (!items().length && !subjects().length) {
-    <section class="student-fees-message">
-      <strong>No timetable has been published for your current allocation.</strong>
+  } @else if (error()) {
+    <section class="timetable-state" role="alert">
+      <strong>{{ error() }}</strong
+      ><button type="button" (click)="load()">Try again</button>
+    </section>
+  } @else if (!items().length) {
+    <section class="timetable-state">
+      <svg lucideCalendarCheck></svg><strong>No published timetable is available</strong>
+      <p>Your schedule will appear here after the academic office publishes it.</p>
     </section>
   } @else {
-    @if (subjects().length) {
-      <section class="student-fee-ledger">
-        <header>
-          <div><h2>My Subjects</h2></div>
-        </header>
-        <div class="student-fee-ledger__table">
+    <section class="timetable-board">
+      <section class="week-toolbar">
+        <div class="view-switch" aria-label="Timetable view">
+          <button type="button" [class.active]="view() === 'today'" (click)="view.set('today')">
+            Today</button
+          ><button type="button" [class.active]="view() === 'week'" (click)="view.set('week')">
+            Week
+          </button>
+        </div>
+        <div class="week-navigation">
+          <button type="button" aria-label="Previous week" (click)="changeWeek(-1)">
+            <svg lucideChevronLeft></svg></button
+          ><strong>{{ weekLabel() }}</strong
+          ><button type="button" aria-label="Next week" (click)="changeWeek(1)">
+            <svg lucideChevronRight></svg></button
+          ><button
+            class="current-week"
+            type="button"
+            [disabled]="isCurrentWeek()"
+            (click)="goToCurrentWeek()"
+          >
+            Current week
+          </button>
+        </div>
+        <div class="toolbar-actions">
+          ><button
+            class="refresh-action"
+            type="button"
+            [disabled]="refreshing()"
+            aria-label="Refresh timetable"
+            title="Refresh timetable"
+            (click)="load(true)"
+          >
+            <svg lucideRefreshCw></svg></button
+          ><button type="button" (click)="openCustomize()">
+            <svg lucideSlidersHorizontal></svg>Customize</button
+          ><button type="button" (click)="openSubjects()"><svg lucideBookOpen></svg>Subjects</button
+          ><button type="button" (click)="downloadOpen.set(true)">
+            <svg lucideDownload></svg>Download PDF
+          </button>
+        </div>
+      </section>
+
+      <section class="desktop-grid" [class.today-view]="view() === 'today'">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              @for (day of gridDays(); track day.name) {
+                <th [class.current]="isToday(day.date)">
+                  <strong>{{ day.name }}</strong
+                  ><span>{{ dayNumber(day.date) }} {{ monthShort(day.date) }}</span>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (period of periods(); track period._id) {
+              <tr>
+                <th>{{ period.startTime }} - {{ period.endTime }}</th>
+                @for (day of gridDays(); track day.name) {
+                  @if (!covered(day, period)) {
+                    @let entry = entryFor(day, period);
+                    <td
+                      [attr.rowspan]="span(entry)"
+                      [class.break]="period.periodType === 'break'"
+                      [class.next-cell]="isNext(entry)"
+                      [class.live-cell]="isLive(entry, day)"
+                    >
+                      @if (period.periodType === 'break') {
+                        <span class="break-label"><svg lucideCoffee></svg>Break</span>
+                      } @else if (entry) {
+                        <button class="class-card" type="button" (click)="openClass(entry)">
+                          <span
+                            ><strong>{{ entry.subjectName }}</strong
+                            ><b>{{ entry.subjectCode || '' }}</b></span
+                          >
+                          @if (preferences().showFaculty) {
+                            <small><svg lucideUserRound></svg>{{ entry.facultyName }}</small>
+                          }
+                          @if (preferences().showRooms && entry.roomName) {
+                            <small><svg lucideMapPin></svg>{{ entry.roomName }}</small>
+                          }
+                          @if (isLive(entry, day)) {
+                            <i class="live">Now</i>
+                          } @else if (isNext(entry)) {
+                            <i>Next</i>
+                          }
+                          @if (hasReminder(entry)) {
+                            <em><svg lucideBell></svg></em>
+                          }
+                        </button>
+                      } @else {
+                        <span class="free-slot">-</span>
+                      }
+                    </td>
+                  }
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <div class="mobile-week-summary">
+      <svg lucideCalendarCheck></svg><strong>{{ weekLabel() }}</strong
+      ><span>{{ isCurrentWeek() ? 'Current week' : 'Selected week' }}</span
+      ><button type="button" aria-label="Customize timetable" (click)="openCustomize()">
+        <svg lucideSlidersHorizontal></svg>
+      </button>
+    </div>
+    <div class="mobile-view-switch view-switch">
+      <button type="button" [class.active]="view() === 'today'" (click)="view.set('today')">
+        Today</button
+      ><button type="button" [class.active]="view() === 'week'" (click)="view.set('week')">
+        Week
+      </button>
+    </div>
+
+    <nav class="day-tabs" aria-label="Select timetable day">
+      @for (day of weekDays(); track day.name) {
+        <button
+          type="button"
+          [class.active]="selectedDay().name === day.name"
+          (click)="selectDay(day)"
+        >
+          <span>{{ day.short }}</span
+          ><strong>{{ dayNumber(day.date) }}</strong>
+        </button>
+      }
+    </nav>
+
+    @if (view() === 'today') {
+      <section class="mobile-day-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Subject &amp; faculty</th>
+              <th>Room</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (period of periods(); track period._id) {
+              @let day = selectedDay() || weekDays()[0];
+              @let entry = entryFor(day, period);
+              <tr
+                [class.break]="period.periodType === 'break'"
+                [class.next-row]="isNext(entry)"
+                (click)="entry ? openClass(entry) : null"
+              >
+                <th>{{ period.startTime }} - {{ period.endTime }}</th>
+                @if (period.periodType === 'break') {
+                  <td>
+                    <span class="break-label"><svg lucideCoffee></svg>Break</span>
+                  </td>
+                  <td>-</td>
+                } @else if (entry) {
+                  <td>
+                    <span class="mobile-subject"
+                      ><strong>{{ entry.subjectName }}</strong
+                      ><small>{{ entry.subjectCode || '' }}</small>
+                      @if (preferences().showFaculty) {
+                        <small>{{ entry.facultyName }}</small>
+                      }
+                      @if (isNext(entry)) {
+                        <i>Next</i>
+                      }
+                    </span>
+                  </td>
+                  <td>
+                    <span class="room"
+                      ><svg lucideMapPin></svg
+                      >{{
+                        preferences().showRooms
+                          ? entry.roomName || 'Not assigned'
+                          : (entry.classType | titlecase)
+                      }}</span
+                    >
+                  </td>
+                } @else {
+                  <td><span class="free-period">Free period</span></td>
+                  <td>-</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    } @else {
+      <section class="mobile-week-list">
+        @for (day of weekDays(); track day.name) {
+          <article>
+            <header>
+              <strong>{{ day.short }}</strong
+              ><span>{{ dayNumber(day.date) }}</span>
+            </header>
+            <div>
+              @for (period of periods(); track period._id) {
+                @let entry = entryFor(day, period);
+                @if (entry) {
+                  <button type="button" [class.next]="isNext(entry)" (click)="openClass(entry)">
+                    <time>{{ entry.startTime }}</time
+                    ><span
+                      ><strong>{{ entry.subjectName }}</strong
+                      ><small
+                        >{{ entry.subjectCode }}
+                        @if (preferences().showRooms) {
+                          · {{ entry.roomName || 'Room not assigned' }}
+                        }
+                      </small></span
+                    ><svg lucideChevronRight></svg>
+                  </button>
+                }
+              }
+              @if (!hasClasses(day)) {
+                <p>No classes</p>
+              }
+            </div>
+          </article>
+        }
+      </section>
+    }
+
+    <footer class="timetable-legend">
+      <span><i class="lecture"></i>Lecture</span><span><i class="break-key"></i>Break</span
+      ><span><i class="next-key"></i>Next class</span>
+      <p><svg lucideInfo></svg>Tap a class to view details.</p>
+    </footer>
+  }
+
+  @if (actionMessage()) {
+    <div class="timetable-toast" role="status">
+      {{ actionMessage()
+      }}<button type="button" aria-label="Dismiss" (click)="actionMessage.set('')">
+        <svg lucideX></svg>
+      </button>
+    </div>
+  }
+
+  @if (selectedEntry(); as entry) {
+    <button
+      class="sheet-backdrop"
+      type="button"
+      aria-label="Close class details"
+      (click)="selectedEntry.set(null)"
+    ></button>
+    <aside class="detail-sheet" aria-label="Class details">
+      <header>
+        <span><svg lucideBookOpen></svg></span>
+        <div>
+          <h2>{{ entry.subjectName }}</h2>
+          <small>{{ entry.subjectCode || 'Subject' }}</small>
+        </div>
+        <button type="button" aria-label="Close" (click)="selectedEntry.set(null)">
+          <svg lucideX></svg>
+        </button>
+      </header>
+      <div class="class-time">
+        <svg lucideCalendarCheck></svg
+        ><strong>{{ entry.day }} · {{ entry.startTime }} - {{ entry.endTime }}</strong>
+        @if (isNext(entry)) {
+          <i>Next</i>
+        }
+      </div>
+      <dl>
+        <div>
+          <dt><svg lucideUserRound></svg>Faculty</dt>
+          <dd>{{ entry.facultyName }}</dd>
+        </div>
+        <div>
+          <dt><svg lucideMapPin></svg>Room</dt>
+          <dd>{{ entry.roomName || 'Not assigned' }}</dd>
+        </div>
+        <div>
+          <dt><svg lucideGraduationCap></svg>Class type</dt>
+          <dd>{{ entry.classType | titlecase }}</dd>
+        </div>
+        <div>
+          <dt><svg lucideClock3></svg>Repeats</dt>
+          <dd>Every {{ entry.day }}</dd>
+        </div>
+      </dl>
+      <a class="subject-link" href="javascript:void(0)" (click)="viewRelatedSubject(entry)"
+        ><svg lucideBookOpen></svg>View subject details</a
+      >
+      <footer>
+        <button type="button" (click)="selectedEntry.set(null)">Close</button
+        ><button class="primary" type="button" (click)="toggleReminder(entry)">
+          <svg lucideBell></svg>{{ hasReminder(entry) ? 'Remove reminder' : 'Add reminder' }}
+        </button>
+      </footer>
+    </aside>
+  }
+
+  @if (subjectsOpen()) {
+    <button
+      class="sheet-backdrop"
+      type="button"
+      aria-label="Close subjects"
+      (click)="subjectsOpen.set(false)"
+    ></button>
+    <aside class="detail-sheet subjects-sheet" aria-label="My subjects">
+      <header>
+        <span><svg lucideBookOpen></svg></span>
+        <div>
+          <h2>My Subjects</h2>
+          <small>{{ subjects().length }} subjects in this timetable</small>
+        </div>
+        <button type="button" aria-label="Close" (click)="subjectsOpen.set(false)">
+          <svg lucideX></svg>
+        </button>
+      </header>
+      <label class="subject-search"
+        ><svg lucideSearch></svg
+        ><input
+          type="search"
+          placeholder="Search subjects..."
+          [ngModel]="subjectSearch()"
+          (ngModelChange)="subjectSearch.set($event)"
+      /></label>
+      <div class="subject-list">
+        <div class="subject-list-head"><span>Subject</span><span>Credits</span></div>
+        @for (subject of filteredSubjects(); track subject._id) {
+          <article>
+            <svg lucideBookOpen></svg>
+            <div>
+              <strong>{{ subject.name }}</strong
+              ><small>{{ subject.code }} · {{ subject.subjectType | titlecase }}</small
+              ><small>{{ subjectFaculty(subject) }}</small>
+            </div>
+            <b>{{ subject.credits }}</b
+            ><svg lucideChevronRight></svg>
+          </article>
+        } @empty {
+          <p>No matching subjects found.</p>
+        }
+      </div>
+      <footer><button type="button" (click)="subjectsOpen.set(false)">Close</button></footer>
+    </aside>
+  }
+
+  @if (customizeOpen()) {
+    <button
+      class="sheet-backdrop"
+      type="button"
+      aria-label="Close timetable customization"
+      (click)="customizeOpen.set(false)"
+    ></button>
+    <aside class="detail-sheet customize-sheet" aria-label="Customize timetable">
+      <header>
+        <span><svg lucideSlidersHorizontal></svg></span>
+        <div>
+          <h2>Customize timetable</h2>
+          <small>Choose how your schedule is displayed</small>
+        </div>
+        <button type="button" aria-label="Close" (click)="customizeOpen.set(false)">
+          <svg lucideX></svg>
+        </button>
+      </header>
+
+      <div class="preference-list">
+        <section>
+          <div>
+            <strong>Default view</strong><small>Open the timetable in your preferred view</small>
+          </div>
+          <div class="preference-segment">
+            <button
+              type="button"
+              [class.active]="preferencesDraft().defaultView === 'auto'"
+              (click)="updatePreference('defaultView', 'auto')"
+            >
+              Auto
+            </button>
+            <button
+              type="button"
+              [class.active]="preferencesDraft().defaultView === 'today'"
+              (click)="updatePreference('defaultView', 'today')"
+            >
+              Today</button
+            ><button
+              type="button"
+              [class.active]="preferencesDraft().defaultView === 'week'"
+              (click)="updatePreference('defaultView', 'week')"
+            >
+              Week
+            </button>
+          </div>
+        </section>
+
+        <label>
+          <span
+            ><strong>Show faculty</strong
+            ><small>Display the faculty name on class cards</small></span
+          >
+          <input
+            type="checkbox"
+            [checked]="preferencesDraft().showFaculty"
+            (change)="updatePreference('showFaculty', $any($event.target).checked)"
+          />
+        </label>
+        <label>
+          <span><strong>Show rooms</strong><small>Display classroom and lab locations</small></span>
+          <input
+            type="checkbox"
+            [checked]="preferencesDraft().showRooms"
+            (change)="updatePreference('showRooms', $any($event.target).checked)"
+          />
+        </label>
+        <label>
+          <span
+            ><strong>Compact schedule</strong><small>Fit more periods on the screen</small></span
+          >
+          <input
+            type="checkbox"
+            [checked]="preferencesDraft().compactMode"
+            (change)="updatePreference('compactMode', $any($event.target).checked)"
+          />
+        </label>
+        <label class="reminder-preference">
+          <span
+            ><strong>Reminder time</strong><small>Used when you add a class reminder</small></span
+          >
+          <select
+            [value]="preferencesDraft().reminderMinutes"
+            (change)="updatePreference('reminderMinutes', +$any($event.target).value)"
+          >
+            @for (minutes of reminderMinuteOptions; track minutes) {
+              <option [value]="minutes">{{ minutes }} minutes before</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <footer>
+        <button type="button" (click)="customizeOpen.set(false)">Cancel</button
+        ><button
+          class="primary"
+          type="button"
+          [disabled]="savingPreferences()"
+          (click)="savePreferences()"
+        >
+          {{ savingPreferences() ? 'Saving...' : 'Save preferences' }}
+        </button>
+      </footer>
+    </aside>
+  }
+
+  @if (downloadOpen()) {
+    <button
+      class="sheet-backdrop"
+      type="button"
+      aria-label="Close download preview"
+      (click)="downloadOpen.set(false)"
+    ></button>
+    <section class="download-dialog" aria-label="Download timetable">
+      <header>
+        <span><svg lucideDownload></svg></span>
+        <div>
+          <h2>Download timetable</h2>
+          <small>Review your print-ready timetable</small>
+        </div>
+        <button type="button" aria-label="Close" (click)="downloadOpen.set(false)">
+          <svg lucideX></svg>
+        </button>
+      </header>
+      <div class="download-layout">
+        <div class="pdf-preview">
+          <div class="pdf-head">
+            <strong>GEU · Student Timetable</strong><small>{{ weekLabel() }}</small>
+          </div>
           <table>
             <thead>
               <tr>
-                <th>Code</th>
-                <th>Subject</th>
-                <th>Type</th>
-                <th>Credits</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (subject of subjects(); track subject._id) {
-                <tr>
-                  <td>{{ subject.code }}</td>
-                  <td>{{ subject.name }}</td>
-                  <td>{{ subject.subjectType }}</td>
-                  <td>{{ subject.credits }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
-    }
-    @if (!items().length) {
-      <section class="student-fees-message">
-        <strong>No timetable has been published yet.</strong>
-      </section>
-    }
-    @if (items().length && periods().length) {
-      <section class="student-fee-ledger student-timetable-card">
-        <header>
-          <div>
-            <h2>{{ structure()?.name || 'Weekly timetable' }}</h2>
-          </div>
-        </header>
-        <div class="student-timetable-scroll">
-          <table class="student-timetable-grid">
-            <thead>
-              <tr>
-                <th>Day</th>
-                @for (period of periods(); track period._id) {
-                  <th>
-                    <strong>Period {{ period.periodNumber }}</strong>
-                    <small>{{ period.startTime }}–{{ period.endTime }}</small>
-                  </th>
+                <th>Time</th>
+                @for (day of weekDays(); track day.name) {
+                  <th>{{ day.short }}</th>
                 }
               </tr>
             </thead>
             <tbody>
-              @for (day of workingDays(); track day) {
+              @for (period of periods(); track period._id) {
                 <tr>
-                  <th>{{ day }}</th>
-                  @for (period of periods(); track period._id) {
-                    @if (!covered(day, period)) {
-                      @let entry = entryFor(day, period);
-                      <td
-                        [attr.colspan]="span(entry)"
-                        [class.student-timetable-grid__break]="period.periodType === 'break'"
-                      >
-                        @if (period.periodType === 'break') {
-                          <strong>Break</strong>
-                        } @else if (entry) {
-                          <strong>{{ entry.subjectName }}</strong>
-                          <small>{{ entry.facultyName }}</small>
-                          <small
-                            >{{ entry.roomName ? entry.roomName + ' · ' : ''
-                            }}{{ entry.classType }}</small
-                          >
-                        } @else {
-                          <span>—</span>
-                        }
-                      </td>
-                    }
+                  <th>{{ period.startTime }}</th>
+                  @for (day of weekDays(); track day.name) {
+                    @let entry = entryFor(day, period);
+                    <td>
+                      {{ period.periodType === 'break' ? 'Break' : entry?.subjectCode || '-' }}
+                    </td>
                   }
                 </tr>
               }
             </tbody>
           </table>
         </div>
-      </section>
-    }
+        <aside>
+          <div class="file-icon"><svg lucideDownload></svg></div>
+          <h3>GEU_Timetable_Sem{{ session.profile()?.currentSemester || 1 }}.pdf</h3>
+          <p>PDF · A4 landscape</p>
+          <dl>
+            <div>
+              <dt>Week</dt>
+              <dd>{{ weekLabel() }}</dd>
+            </div>
+            <div>
+              <dt>Periods</dt>
+              <dd>{{ periods().length }}</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>Ready to download</dd>
+            </div>
+            <div>
+              <dt>Updated</dt>
+              <dd>{{ updatedLabel() }}</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+      <label class="include-details"
+        ><input
+          type="checkbox"
+          [checked]="includeDetails()"
+          (change)="includeDetails.set($any($event.target).checked)"
+        />Include subject codes, faculty and rooms</label
+      >
+      <footer>
+        <button type="button" (click)="downloadOpen.set(false)">Cancel</button
+        ><button class="primary" type="button" [disabled]="downloadBusy()" (click)="downloadPdf()">
+          <svg lucideDownload></svg>{{ downloadBusy() ? 'Generating...' : 'Download PDF' }}
+        </button>
+      </footer>
+    </section>
   }
-</div>
+</main>
+<erp-student-mobile-bottom-nav />

@@ -1,0 +1,129 @@
+<main class="academic-service-page">
+  <a class="back-link" routerLink="/student/academics"
+    ><svg lucideArrowLeft></svg>Back to Academics</a
+  >
+
+  <header class="service-hero">
+    <div class="service-copy">
+      <small>{{ service().eyebrow }}</small>
+      <h1>{{ service().title }}</h1>
+      <p>{{ service().description }}</p>
+      <span><svg lucideCalendarDays></svg>{{ period() }}</span>
+    </div>
+    <img [src]="service().icon" width="320" height="320" alt="" aria-hidden="true" />
+  </header>
+
+  <section class="service-workspace">
+    <div class="service-panel">
+      @if (submitted()) {
+        <div class="success-state">
+          <span><svg lucideCheck></svg></span>
+          <h2>Request submitted</h2>
+          <p>Your {{ service().title.toLowerCase() }} request has been recorded successfully.</p>
+          <button type="button" (click)="submitted.set(false)">Create another</button>
+        </div>
+      } @else if (service().mode === 'download') {
+        <h2>Available documents</h2>
+        <p class="section-copy">Choose a document to generate and download.</p>
+        <div class="document-list">
+          @for (option of service().options; track option) {
+            <article>
+              <span><svg lucideFileText></svg></span>
+              <div>
+                <strong>{{ option }}</strong
+                ><small>Updated for {{ period() }}</small>
+              </div>
+              <button type="button" (click)="download(option)">
+                <svg lucideDownload></svg>Download
+              </button>
+            </article>
+          }
+        </div>
+      } @else {
+        <h2>{{ service().mode === 'catalog' ? 'Select an option' : 'Request details' }}</h2>
+        <p class="section-copy">Complete the information below to continue.</p>
+
+        @if (service().mode === 'catalog') {
+          <div class="option-grid">
+            @for (option of service().options; track option) {
+              <button
+                type="button"
+                [class.selected]="selectedOption() === option"
+                (click)="selectedOption.set(option)"
+              >
+                <span>{{ option }}</span
+                ><i><svg lucideCheck></svg></i>
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="field-grid">
+            <label
+              ><span>{{
+                service().mode === 'identity' ? 'ABC account number' : 'Request title'
+              }}</span
+              ><input
+                [placeholder]="
+                  service().mode === 'identity' ? 'Enter 12-digit ABC ID' : 'Enter request title'
+                "
+                [ngModel]="reference()"
+                (ngModelChange)="reference.set($event)"
+            /></label>
+            <label
+              ><span>Student</span><input [value]="session.profile()?.name || 'Student'" readonly
+            /></label>
+          </div>
+          <label class="notes"
+            ><span>Additional details</span
+            ><textarea
+              rows="5"
+              placeholder="Add any information the academic office should know..."
+              [ngModel]="note()"
+              (ngModelChange)="note.set($event)"
+            ></textarea>
+          </label>
+        }
+
+        @if (service().mode === 'upload') {
+          <label class="upload-box"
+            ><input
+              type="file"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              (change)="selectFile($event)"
+            /><svg lucideUpload></svg><strong>{{ fileName() || 'Choose a file to upload' }}</strong
+            ><small>{{ service().helper }}</small></label
+          >
+        }
+
+        @if (service().title === 'Current Subjects') {
+          <a class="primary-action" routerLink="/student/academics/timetable"
+            >View timetable <svg lucideCalendarDays></svg
+          ></a>
+        } @else {
+          <button class="primary-action" type="button" (click)="submit()">
+            {{ service().action }} <svg lucideSend></svg>
+          </button>
+        }
+      }
+    </div>
+
+    <aside>
+      <h2>Before you continue</h2>
+      <p><svg lucideInfo></svg>{{ service().helper }}</p>
+      <dl>
+        <div>
+          <dt>Student ID</dt>
+          <dd>{{ session.profile()?.studentId || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Academic period</dt>
+          <dd>{{ period() }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>Available</dd>
+        </div>
+      </dl>
+    </aside>
+  </section>
+</main>

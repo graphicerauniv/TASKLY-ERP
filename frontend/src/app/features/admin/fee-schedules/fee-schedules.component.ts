@@ -1,3 +1,6 @@
+import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
+import { AdminDrawerComponent } from '../../../shared/ui/admin-drawer/admin-drawer.component';
+import { CompactActionItem, CompactActionMenuComponent } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -9,12 +12,29 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
 
 @Component({
   selector: 'erp-fee-schedules',
-  imports: [AdminPageComponent, ConfirmDialogComponent, CurrencyPipe, DatePipe, FormsModule],
+  imports: [AdminIllustrationComponent,AdminDrawerComponent, CompactActionMenuComponent, AdminPageComponent, ConfirmDialogComponent, CurrencyPipe, DatePipe, FormsModule],
   templateUrl: './fee-schedules.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeeSchedulesComponent {
   private readonly api = inject(ApiService);
+  readonly drawerOpen = signal(false);
+  openCreate() { this.resetForm(); this.error.set(''); this.drawerOpen.set(true); }
+  closeDrawer() { if (!this.saving()) { this.drawerOpen.set(false); this.resetForm(); } }
+  rowActions(item: FeeSchedule): CompactActionItem[] {
+    return [
+      { id: 'edit', label: 'Edit schedule', icon: 'edit' },
+      { id: 'toggle', label: item.isActive ? 'Disable schedule' : 'Enable schedule', icon: 'check', disabled: !!this.publishingId() || this.saving() },
+      ...(item.mode === 'year' && item.isActive ? [{ id: 'publish', label: 'Change year & show fee', icon: 'transfer' as const, disabled: !!this.publishingId() || this.saving() }] : []),
+      { id: 'delete', label: 'Delete schedule', icon: 'delete', destructive: true, disabled: this.saving() },
+    ];
+  }
+  handleRowAction(action: string, item: FeeSchedule) {
+    if (action === 'edit') this.edit(item);
+    else if (action === 'toggle') this.toggle(item);
+    else if (action === 'publish') this.publish(item, true);
+    else if (action === 'delete') this.requestDelete(item);
+  }
   readonly items = signal<FeeSchedule[]>([]);
   readonly universities = signal<MasterValue[]>([]);
   readonly colleges = signal<MasterValue[]>([]);
@@ -103,6 +123,7 @@ export class FeeSchedulesComponent {
             : 'Fee publication schedule created.',
         );
         this.saving.set(false);
+        this.drawerOpen.set(false);
         this.resetForm();
         this.load();
       },
@@ -114,6 +135,7 @@ export class FeeSchedulesComponent {
   }
 
   edit(item: FeeSchedule) {
+    this.drawerOpen.set(true);
     this.editingId.set(item._id);
     this.universityId = item.universityId;
     this.collegeId = item.collegeId;

@@ -1,4 +1,4 @@
-import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { AdminDrawerComponent } from '../../../../shared/ui/admin-drawer/admin-drawer.component';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -30,9 +30,8 @@ import {
 
 @Component({
   selector: 'erp-forms-library',
-  imports: [
+  imports: [AdminDrawerComponent,
     AdminPageComponent,
-    CdkTrapFocus,
     CompactActionMenuComponent,
     FormsModule,
     LucideCircleAlert,

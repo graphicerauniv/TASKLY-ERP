@@ -3,7 +3,7 @@
   eyebrow="Fee Management"
   [title]="pageTitle()"
   [description]="pageDescription()"
-  variant="minimal"
+variant="compact"
 >
   <div page-actions class="fee-page-actions">
     @if (isViewPage() || isDraftPage()) {
@@ -907,9 +907,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td [attr.colspan]="courseFeePeriods().length + 2" class="erp-empty-state">
-                      No active fee heads found for this book. Create fee heads first.
-                    </td>
+<td [attr.colspan]="courseFeePeriods().length + 2" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No active fee heads found for this book. Create fee heads first.</p></td>
                   </tr>
                 }
               </tbody>
@@ -933,17 +931,11 @@
           </div>
         </div>
       } @else if (!courseId) {
-        <div class="erp-empty-state fee-section-gap">
-          Select a course to load the fee-head matrix.
-        </div>
+<div class="erp-empty-state fee-section-gap"><erp-admin-illustration kind="feeWallet" size="compact" /><p>Select a course to load the fee-head matrix.</p></div>
       } @else if (!courseFeeTypeId) {
-        <div class="erp-empty-state fee-section-gap">
-          Select Fee Type to generate Yearly or Semester columns.
-        </div>
+<div class="erp-empty-state fee-section-gap"><erp-admin-illustration kind="feeWallet" size="compact" /><p>Select Fee Type to generate Yearly or Semester columns.</p></div>
       } @else {
-        <div class="erp-empty-state fee-section-gap">
-          The selected Fee Type is not configured as Yearly or Semester.
-        </div>
+<div class="erp-empty-state fee-section-gap"><erp-admin-illustration kind="feeWallet" size="compact" /><p>The selected Fee Type is not configured as Yearly or Semester.</p></div>
       }
     </section>
   }
@@ -1171,7 +1163,7 @@
               </div>
             </article>
           } @empty {
-            <div class="erp-empty-state">No sheets match the selected filter.</div>
+<div class="erp-empty-state"><erp-admin-illustration kind="noResults" size="compact" /><p>No sheets match the selected filter.</p></div>
           }
         </div>
         <div class="erp-pagination fee-pagination">
@@ -1708,9 +1700,7 @@
           </div>
           <div class="fee-book-picker__results" aria-live="polite">
             @if (!bookPickerUniversityId || !bookPickerCollegeId || !bookPickerSession) {
-              <div class="erp-empty-state">
-                Select university, college and academic session to view available fee books.
-              </div>
+<div class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>Select university, college and academic session to view available fee books.</p></div>
             } @else {
               @for (book of bookPickerBooks(); track book._id) {
                 <button
@@ -1731,9 +1721,7 @@
                   >
                 </button>
               } @empty {
-                <div class="erp-empty-state">
-                  No fee book exists for this college and academic session.
-                </div>
+<div class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No fee book exists for this college and academic session.</p></div>
               }
             }
           </div>
@@ -1829,7 +1817,7 @@
               >
             </button>
           } @empty {
-            <div class="erp-empty-state">No active fee heads found for this book.</div>
+<div class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No active fee heads found for this book.</p></div>
           }
         </div>
         <footer class="dialog__footer">

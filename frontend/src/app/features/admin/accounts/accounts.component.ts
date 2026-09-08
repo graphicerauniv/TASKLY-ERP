@@ -1,9 +1,11 @@
+import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { FeeCredit, FeePayment, StudentDiscount } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { RecordDrawerComponent, RecordDetailField } from '../../../shared/ui/record-drawer/record-drawer.component';
 import {
   FilterPopoverComponent,
   FilterPopoverOption,
@@ -15,7 +17,7 @@ import {
 
 @Component({
   selector: 'erp-accounts',
-  imports: [
+imports: [AdminIllustrationComponent, RecordDrawerComponent,
     AdminPageComponent,
     CompactActionMenuComponent,
     FilterPopoverComponent,
@@ -47,8 +49,24 @@ export class AccountsComponent {
     { label: 'Refunded', value: 'refunded' },
   ];
   readonly paymentActions: readonly CompactActionItem[] = [
+    { id: 'preview', label: 'View payment details', icon: 'view' },
     { id: 'receipt', label: 'Download receipt', icon: 'download' },
   ];
+  readonly preview = signal<FeePayment | null>(null);
+  readonly previewActions: readonly CompactActionItem[] = [{ id: 'preview', label: 'View payment details', icon: 'view' }];
+  detailFields(payment: FeePayment): RecordDetailField[] {
+    const money = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+    return [
+      { label: 'Student ID', value: payment.studentId },
+      { label: 'Receipt', value: payment.receiptNumber || 'Not issued' },
+      { label: 'Payment status', value: payment.status },
+      { label: 'Amount', value: money(payment.amount) },
+      { label: 'Fee period', value: payment.targetPeriodLabel || 'Legacy payment' },
+      { label: 'Channel', value: payment.paymentChannel || 'online' },
+      { label: 'Reference', value: payment.paymentReference || payment.razorpayPaymentId || payment.razorpayOrderId },
+      { label: 'Received by', value: payment.acceptedByName || '—' },
+    ];
+  }
   search = '';
   status = '';
 
@@ -80,6 +98,7 @@ export class AccountsComponent {
   }
 
   handlePaymentAction(action: string, payment: FeePayment): void {
+    if (action === 'preview') this.preview.set(payment);
     if (action === 'receipt') this.receipt(payment);
   }
 }

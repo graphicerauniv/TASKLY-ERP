@@ -1,3 +1,4 @@
+import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
 import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -67,7 +68,7 @@ type DeleteTarget =
 
 @Component({
   selector: 'erp-hostel-management',
-  imports: [
+  imports: [AdminIllustrationComponent,
     AdminPageComponent,
     CompactActionMenuComponent,
     FormsModule,

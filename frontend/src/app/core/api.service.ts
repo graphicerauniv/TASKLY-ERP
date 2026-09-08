@@ -44,6 +44,8 @@ import {
   TimetableMaster,
   TimetableStructure,
   TimetablePeriod,
+  StudentTimetableReminder,
+  StudentTimetablePreferences,
   FormSubmission,
   FacultySession,
   FacultyAttendanceClass,
@@ -209,9 +211,39 @@ export class ApiService {
       structure?: TimetableStructure | null;
       periods?: TimetablePeriod[];
       items: AcademicTimetableEntry[];
+      reminders?: StudentTimetableReminder[];
+      preferences?: StudentTimetablePreferences;
+      publishedAt?: string | null;
+      serverTime?: string;
     }>(`${API_BASE_URL}/student-academics/timetable`, {
       ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
     });
+  }
+  studentTimetablePdf(token: string, weekStart: string, includeDetails = true) {
+    return this.http.get(`${API_BASE_URL}/student-academics/timetable.pdf`, {
+      params: { weekStart, includeDetails },
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'blob',
+    });
+  }
+  saveStudentTimetableReminder(token: string, entryId: string, minutesBefore = 15) {
+    return this.http.put<{ reminder: StudentTimetableReminder }>(
+      `${API_BASE_URL}/student-academics/timetable/reminders/${entryId}`,
+      { minutesBefore },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  deleteStudentTimetableReminder(token: string, entryId: string) {
+    return this.http.delete(`${API_BASE_URL}/student-academics/timetable/reminders/${entryId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+  saveStudentTimetablePreferences(token: string, preferences: StudentTimetablePreferences) {
+    return this.http.put<{ preferences: StudentTimetablePreferences }>(
+      `${API_BASE_URL}/student-academics/timetable/preferences`,
+      preferences,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
   }
   facultyAttendanceClasses(token: string, date: string) {
     return this.http.get<{ facultyMapped: boolean; date: string; items: FacultyAttendanceClass[] }>(

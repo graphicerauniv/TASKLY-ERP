@@ -2,7 +2,7 @@
   eyebrow="Admissions"
   title="Student Promotion"
   description="Promote students only after their next semester or year fee period has been prepared."
-  variant="minimal"
+  variant="compact"
   layout="collection"
 >
   <div page-actions class="erp-table-toolbar__actions">
@@ -169,7 +169,7 @@
                     (selected)="handleRowAction($event, item)"
                   />
                 } @else {
-                  —
+                  <erp-compact-action-menu [items]="previewActions" (selected)="handleRowAction($event, item)" />
                 }
               </td>
             </tr>
@@ -185,3 +185,12 @@
     </div>
   </section>
 </erp-admin-page>
+
+@if (preview(); as item) {
+  <erp-record-drawer [open]="true" [title]="item.studentName" description="Review the student’s academic progression." [fields]="detailFields(item)" [busy]="saving()" illustration="addStudent" guidance="Promotion moves the student into the prepared semester or academic year. Review the current and target periods before continuing." (closed)="preview.set(null)">
+    @if (error()) { <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p> }
+    @if (item.status === 'pending') {
+      <button drawer-actions class="erp-button erp-button--primary" type="button" [disabled]="saving()" (click)="promoteOne(item)">{{ saving() ? 'Promoting…' : 'Promote student' }}</button>
+    }
+  </erp-record-drawer>
+}

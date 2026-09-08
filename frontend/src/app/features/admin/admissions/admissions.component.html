@@ -19,6 +19,17 @@
     </div>
   }
 
+  @if (!databaseMode()) {
+    <section class="erp-academic-metric-strip erp-academic-metric-strip--four" aria-label="All application stages">
+      @for (stage of savedViews; track stage.id) {
+        <div class="erp-academic-metric">
+          <span class="erp-academic-metric__icon"><svg lucideUserRound size="20" aria-hidden="true"></svg></span>
+          <span><small>{{ stage.pageTitle }}</small><strong>{{ viewTotal(stage.id) }}</strong></span>
+        </div>
+      }
+    </section>
+  }
+
   <div class="applications-feedback" aria-live="polite">
     @if (message()) {
       <div class="erp-notice erp-notice--success">
@@ -261,9 +272,7 @@
               <tr>
                 <td [attr.colspan]="visibleTableColumnCount()">
                   <div class="applications-state">
-                    <span class="erp-empty-panel__icon"
-                      ><svg lucideInbox size="20" aria-hidden="true"></svg
-                    ></span>
+                    <erp-admin-illustration [kind]="appliedSearch() ? 'noResults' : 'applicationForm'" />
                     <h3>{{ emptyTitle() }}</h3>
                     <p>{{ emptyDescription() }}</p>
                     @if (appliedSearch() || view() !== 'all') {

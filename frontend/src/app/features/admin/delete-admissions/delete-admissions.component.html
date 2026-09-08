@@ -2,7 +2,7 @@
   eyebrow="Admission management"
   title="Delete Admission"
   description="Find and permanently remove an incorrect or unwanted admission record."
-  variant="minimal"
+variant="compact"
   layout="collection"
 >
   <section class="erp-warning-panel">
@@ -83,7 +83,7 @@
               </tr>
             } @empty {
               <tr>
-                <td class="erp-empty-state" colspan="4">No admission records match your search.</td>
+<td class="erp-empty-state" colspan="4"><erp-admin-illustration kind="noResults" size="compact" /><p>No admission records match your search.</p></td>
               </tr>
             }
           </tbody>
@@ -135,6 +135,12 @@
     }
   </section>
 </erp-admin-page>
+
+@if (preview(); as item) {
+  <erp-record-drawer [open]="true" [title]="item.studentName || 'Admission record'" description="Verify the student and application before taking action." [fields]="detailFields(item)" illustration="applicationForm" guidance="Open the complete application to review submitted information and documents." (closed)="preview.set(null)">
+    <a drawer-actions class="erp-button erp-button--primary" [routerLink]="['/admin/admissions/applications', item._id]">Open application</a>
+  </erp-record-drawer>
+}
 
 @if (deleteTarget(); as item) {
   <erp-confirm-dialog

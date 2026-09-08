@@ -49,18 +49,20 @@
       [style.--student-attendance-progress]="percentage() + '%'"
       aria-labelledby="attendance-overall-heading"
     >
-      <div
-        class="student-attendance-page__ring"
-        role="img"
-        [attr.aria-label]="
-          formatPercentage(percentage()) + '% overall attendance, ' + statusLabel()
-        "
-      >
-        <span>
-          <strong>{{ formatPercentage(percentage()) }}%</strong>
-          <small>Overall attendance</small>
-          <em>{{ statusLabel() }}</em>
-        </span>
+      <div class="student-attendance-ring-group">
+        <div
+          class="student-attendance-page__ring"
+          role="img"
+          [attr.aria-label]="
+            formatPercentage(percentage()) + '% overall attendance, ' + statusLabel()
+          "
+        >
+          <span>
+            <strong>{{ formatPercentage(percentage()) }}%</strong>
+            <small>Overall attendance</small>
+          </span>
+        </div>
+        <em class="student-attendance-ring-status">{{ statusLabel() }}</em>
       </div>
 
       <div class="student-attendance-hero__summary">

@@ -1,14 +1,22 @@
 <nav class="student-mobile-bottom-nav" aria-label="Student dashboard shortcuts">
-  <a routerLink="/student/dashboard" routerLinkActive="student-mobile-bottom-nav__item--active" [routerLinkActiveOptions]="{ exact: true }">
+  <a
+    routerLink="/student/dashboard"
+    routerLinkActive="student-mobile-bottom-nav__item--active"
+    [routerLinkActiveOptions]="{ exact: true }"
+  >
     <svg lucideHome size="22" aria-hidden="true"></svg><span>Home</span>
   </a>
-  <button type="button" disabled aria-label="Academics — coming soon">
+  <a routerLink="/student/academics" routerLinkActive="student-mobile-bottom-nav__item--active">
     <svg lucideBookOpen size="22" aria-hidden="true"></svg><span>Academics</span>
-  </button>
+  </a>
   <a routerLink="/student/fees" routerLinkActive="student-mobile-bottom-nav__item--active">
     <svg lucideLayoutGrid size="22" aria-hidden="true"></svg><span>Services</span>
   </a>
-  <a routerLink="/student/profile" routerLinkActive="student-mobile-bottom-nav__item--active" aria-label="Open student profile">
+  <a
+    routerLink="/student/profile"
+    routerLinkActive="student-mobile-bottom-nav__item--active"
+    aria-label="Open student profile"
+  >
     <svg lucideUserRound size="22" aria-hidden="true"></svg><span>Profile</span>
   </a>
 </nav>

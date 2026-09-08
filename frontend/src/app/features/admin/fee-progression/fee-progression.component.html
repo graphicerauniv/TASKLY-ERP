@@ -2,7 +2,7 @@
   eyebrow="Fee Management"
   title="Next Semester / Year Fee"
   description="Prepare the next hidden fee period for eligible students. Publication and fines are controlled by Fee change & publication."
-  variant="minimal"
+variant="compact"
   layout="collection"
 >
   <div page-actions class="erp-table-toolbar__actions">
@@ -106,14 +106,7 @@
               </td>
               <td>{{ item.academicSession }}</td>
               <td>
-                <button
-                  class="erp-button erp-button--primary"
-                  type="button"
-                  [disabled]="saving()"
-                  (click)="createFor(item)"
-                >
-                  Create {{ item.nextPeriodLabel }}
-                </button>
+                <erp-compact-action-menu [items]="rowActions" (selected)="preview.set(item)" />
               </td>
             </tr>
           } @empty {
@@ -132,3 +125,10 @@
     </div>
   </section>
 </erp-admin-page>
+
+@if (preview(); as item) {
+  <erp-record-drawer [open]="true" [title]="item.studentName || 'Student fee period'" description="Review the next fee period before preparing it." [fields]="detailFields(item)" [busy]="saving()" illustration="feeConfiguration" guidance="Preparing fees creates the next fee ledger. Publication controls when it becomes visible to the student." (closed)="preview.set(null)">
+    @if (error()) { <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p> }
+    <button drawer-actions class="erp-button erp-button--primary" type="button" [disabled]="saving()" (click)="createFor(item)">{{ saving() ? 'Preparing…' : 'Create ' + item.nextPeriodLabel }}</button>
+  </erp-record-drawer>
+}

@@ -1,3 +1,4 @@
+import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -11,7 +12,7 @@ type OfflineMethod =
 
 @Component({
   selector: 'erp-offline-payment',
-  imports: [AdminPageComponent, CurrencyPipe, DatePipe, FormsModule, RouterLink],
+  imports: [AdminIllustrationComponent,AdminPageComponent, CurrencyPipe, DatePipe, FormsModule, RouterLink],
   templateUrl: './offline-payment.component.html',
   styleUrl: './offline-payment.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

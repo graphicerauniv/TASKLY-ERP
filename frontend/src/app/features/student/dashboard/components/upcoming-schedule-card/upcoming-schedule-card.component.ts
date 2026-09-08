@@ -22,7 +22,7 @@ import {
         <span
           ><svg lucideCalendarDays size="18" aria-hidden="true"></svg><strong>Up next</strong></span
         >
-        <button type="button" routerLink="/student/academics" aria-label="View timetable">
+        <button type="button" routerLink="/student/academics/timetable" aria-label="View timetable">
           View timetable
         </button>
       </header>
@@ -51,7 +51,11 @@ import {
                 ><span>Completed</span>
               </div>
             </div>
-            <button type="button" routerLink="/student/academics" aria-label="Open timetable">
+            <button
+              type="button"
+              routerLink="/student/academics/timetable"
+              aria-label="Open timetable"
+            >
               <svg lucideChevronRight size="22" aria-hidden="true"></svg>
             </button>
           </div>
@@ -68,7 +72,9 @@ import {
                 <small class="student-schedule-row__relative">{{ item.relativeLabel }}</small>
               </div>
             }
-            <button type="button" routerLink="/student/academics">View full schedule</button>
+            <button type="button" routerLink="/student/academics/timetable">
+              View full schedule
+            </button>
           </div>
         } @else {
           <erp-dashboard-widget-state

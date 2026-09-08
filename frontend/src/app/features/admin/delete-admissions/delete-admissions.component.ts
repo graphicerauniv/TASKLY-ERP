@@ -1,6 +1,9 @@
+import { AdminIllustrationComponent } from "../../../shared/ui/admin-illustration/admin-illustration.component";
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { RecordDrawerComponent, RecordDetailField } from '../../../shared/ui/record-drawer/record-drawer.component';
 import { LucideSearch, LucideTriangleAlert } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
 import { ERP_PAGINATION } from '../../../core/config/data-view.constants';
@@ -14,7 +17,9 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
 
 @Component({
   selector: 'erp-delete-admissions',
-  imports: [
+imports: [AdminIllustrationComponent,
+    RecordDrawerComponent,
+    RouterLink,
     AdminPageComponent,
     CompactActionMenuComponent,
     ConfirmDialogComponent,
@@ -36,8 +41,19 @@ export class DeleteAdmissionsComponent {
   readonly message = signal('');
   readonly error = signal('');
   readonly rowActions: CompactActionItem[] = [
+    { id: 'preview', label: 'Review record', icon: 'view' },
     { id: 'delete', label: 'Delete record', icon: 'delete', destructive: true },
   ];
+  readonly preview = signal<Admission | null>(null);
+  detailFields(item: Admission): RecordDetailField[] {
+    return [
+      { label: 'Student ID', value: item.studentId || 'Not assigned' },
+      { label: 'Student name', value: item.studentName },
+      { label: 'Programme', value: item.courseName },
+      { label: 'Academic session', value: item.academicSession },
+      { label: 'Application status', value: item.status },
+    ];
+  }
   readonly total = signal(0);
   readonly pages = signal(1);
   readonly pageSizeOptions = ERP_PAGINATION.pageSizeOptions;
@@ -93,6 +109,7 @@ export class DeleteAdmissionsComponent {
   }
 
   handleRowAction(action: string, item: Admission) {
+    if (action === 'preview') this.preview.set(item);
     if (action === 'delete') this.requestDelete(item);
   }
 

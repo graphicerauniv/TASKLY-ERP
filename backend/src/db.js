@@ -6,8 +6,8 @@ import { syncActiveStudent } from './services/active-student.js';
 import { syncAdmissionIdentity } from './services/admission-identity.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-08-v25';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-08-v25';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-08-v27';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-08-v27';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -305,6 +305,14 @@ async function ensureIndexes(databaseInstance) {
         },
         { unique: true },
       ),
+    () =>
+      databaseInstance
+        .collection('studentTimetableReminders')
+        .createIndex({ studentAdmissionId: 1, timetableEntryId: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('studentTimetablePreferences')
+        .createIndex({ studentAdmissionId: 1 }, { unique: true }),
     () =>
       databaseInstance
         .collection('attendanceSessions')

@@ -2,7 +2,7 @@
   eyebrow="Accounts"
   title="Make Offline Payment"
   description="Record money received offline and adjust it against the student's published fee balance."
-  variant="minimal"
+  variant="compact"
 >
   <div page-actions>
     <a class="erp-button erp-button--secondary" routerLink="/admin/admissions"
@@ -266,7 +266,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="7" class="erp-empty-state">No completed payments found.</td>
+                <td colspan="7" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No completed payments found.</p></td>
               </tr>
             }
           </tbody>

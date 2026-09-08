@@ -2,16 +2,29 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ApiService } from '../../../core/api.service';
 import { FeeProgressionCandidate } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { RecordDrawerComponent, RecordDetailField } from '../../../shared/ui/record-drawer/record-drawer.component';
+import { CompactActionMenuComponent, CompactActionItem } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 
 @Component({
   selector: 'erp-fee-progression',
-  imports: [AdminPageComponent],
+  imports: [AdminPageComponent, RecordDrawerComponent, CompactActionMenuComponent],
   templateUrl: './fee-progression.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeeProgressionComponent {
   private readonly api = inject(ApiService);
   readonly items = signal<FeeProgressionCandidate[]>([]);
+  readonly preview = signal<FeeProgressionCandidate | null>(null);
+  readonly rowActions: CompactActionItem[] = [{ id: 'preview', label: 'Review next fee period', icon: 'view' }];
+  detailFields(item: FeeProgressionCandidate): RecordDetailField[] {
+    return [
+      { label: 'Student ID', value: item.studentId },
+      { label: 'Programme', value: item.courseName },
+      { label: 'Academic session', value: item.academicSession },
+      { label: 'Current period', value: this.mode === 'semester' ? 'Semester ' + item.currentSemester : 'Year ' + item.currentAcademicYear },
+      { label: 'Next fee period', value: item.nextPeriodLabel },
+    ];
+  }
   readonly selected = signal(new Set<string>());
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -85,7 +98,7 @@ export class FeeProgressionComponent {
           if (created || promotionsCreated) this.message.set(resultMessage);
           else this.error.set(resultMessage);
           this.saving.set(false);
-          if (created || promotionsCreated) this.load();
+          if (created || promotionsCreated) { this.preview.set(null); this.load(); }
         },
         error: (error) => {
           this.error.set(error.error?.message || 'Could not create the next-period fees.');

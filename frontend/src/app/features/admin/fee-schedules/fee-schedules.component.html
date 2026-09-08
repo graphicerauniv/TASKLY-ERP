@@ -2,14 +2,86 @@
   eyebrow="Fee Management"
   title="Fee Change & Publication"
   description="Publish upcoming fees without changing the student's academic semester or year."
-  variant="minimal"
+  variant="compact"
+  layout="collection"
 >
+  <button page-actions class="erp-button erp-button--primary" type="button" (click)="openCreate()">Create schedule</button>
   @if (message()) {
     <p class="erp-notice erp-notice--success">{{ message() }}</p>
   }
   @if (error()) {
     <p class="erp-notice erp-notice--error">{{ error() }}</p>
   }
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>
+          Publication schedules <small>{{ items().length }}</small>
+        </h2>
+        <p>
+          Publication prepares the next ledger, reveals it at the visibility time, and applies its
+          fine rule after the next-fee deadline.
+        </p>
+      </div>
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>University / College</th>
+            <th>Session</th>
+            <th>Target</th>
+            <th>Visible from</th>
+            <th>Previous deadline</th>
+            <th>Fine</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td>
+                <strong>{{ item.collegeName }}</strong
+                ><small>{{ item.universityName }}</small>
+              </td>
+              <td>{{ item.academicSession }}</td>
+              <td>{{ item.mode === 'semester' ? 'Next semester' : 'Next academic year' }}</td>
+              <td>{{ item.publishAt | date: 'medium' }}</td>
+              <td>{{ item.nextPeriodDeadline | date: 'medium' }}</td>
+              <td>
+                {{ item.dailyFineAmount | currency: 'INR' }} / day<small
+                  >Cap {{ item.maxFineAmount | currency: 'INR' }}</small
+                >
+              </td>
+              <td>
+                <span class="erp-status">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+              </td>
+              <td class="erp-table-shell__actions"><erp-compact-action-menu [items]="rowActions(item)" (selected)="handleRowAction($event, item)" /></td>
+            </tr>
+          } @empty {
+            <tr>
+<td colspan="8" class="erp-empty-state"><erp-admin-illustration kind="feeWallet" size="compact" /><p>No fee publication schedules configured.</p></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</erp-admin-page>
+
+<erp-confirm-dialog
+  [open]="!!deleteTarget()"
+  eyebrow="Fee publication"
+  title="Delete this publication schedule?"
+  [message]="'This removes the schedule rule. Existing ledgers, payments and receipts will be preserved.'"
+  confirmLabel="Delete schedule"
+  [destructive]="true"
+  (confirmed)="deleteSchedule()"
+  (cancelled)="deleteTarget.set(null)"
+/>
+<erp-admin-drawer [open]="drawerOpen()" [title]="editingId() ? 'Edit publication schedule' : 'Create publication schedule'" eyebrow="Fee publication" description="Set the publication time, deadline and fine rules." [busy]="saving()" (closed)="closeDrawer()">
+@if (error()) { <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p> }
   <section class="erp-card erp-card--padded">
     <div class="erp-card__header">
       <div>
@@ -73,119 +145,7 @@
         ><input class="erp-control" type="number" min="0" [(ngModel)]="maxFineAmount"
       /></label>
     </div>
-    <div class="erp-form-actions">
-      <button
-        class="erp-button erp-button--primary"
-        type="button"
-        [disabled]="saving()"
-        (click)="save()"
-      >
-        {{ saving() ? 'Saving…' : editingId() ? 'Save schedule' : 'Create schedule' }}
-      </button>
-      @if (editingId()) {
-        <button
-          class="erp-button erp-button--secondary"
-          type="button"
-          [disabled]="saving()"
-          (click)="resetForm()"
-        >
-          Cancel
-        </button>
-      }
-    </div>
   </section>
-  <section class="erp-card erp-table-shell">
-    <div class="erp-table-toolbar">
-      <div>
-        <h2>
-          Publication schedules <small>{{ items().length }}</small>
-        </h2>
-        <p>
-          Publication prepares the next ledger, reveals it at the visibility time, and applies its
-          fine rule after the next-fee deadline.
-        </p>
-      </div>
-    </div>
-    <div class="erp-table-shell__scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>University / College</th>
-            <th>Session</th>
-            <th>Target</th>
-            <th>Visible from</th>
-            <th>Previous deadline</th>
-            <th>Fine</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of items(); track item._id) {
-            <tr>
-              <td>
-                <strong>{{ item.collegeName }}</strong
-                ><small>{{ item.universityName }}</small>
-              </td>
-              <td>{{ item.academicSession }}</td>
-              <td>{{ item.mode === 'semester' ? 'Next semester' : 'Next academic year' }}</td>
-              <td>{{ item.publishAt | date: 'medium' }}</td>
-              <td>{{ item.nextPeriodDeadline | date: 'medium' }}</td>
-              <td>
-                {{ item.dailyFineAmount | currency: 'INR' }} / day<small
-                  >Cap {{ item.maxFineAmount | currency: 'INR' }}</small
-                >
-              </td>
-              <td>
-                <span class="erp-status">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
-              </td>
-              <td>
-                <button class="erp-button erp-button--secondary" type="button" (click)="edit(item)">
-                  Edit</button
-                ><button
-                  class="erp-button erp-button--secondary"
-                  type="button"
-                  (click)="toggle(item)"
-                >
-                  {{ item.isActive ? 'Disable' : 'Enable' }}
-                </button>
-                <button
-                  class="erp-button erp-button--danger"
-                  type="button"
-                  (click)="requestDelete(item)"
-                >
-                  Delete schedule
-                </button>
-                @if (item.mode === 'year' && item.isActive) {
-                  <button
-                    class="erp-button erp-button--primary"
-                    type="button"
-                    [disabled]="publishingId()"
-                    (click)="publish(item, true)"
-                  >
-                    Change year & show fee
-                  </button>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" class="erp-empty-state">No fee publication schedules configured.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
-</erp-admin-page>
 
-<erp-confirm-dialog
-  [open]="!!deleteTarget()"
-  eyebrow="Fee publication"
-  title="Delete this publication schedule?"
-  [message]="'This removes the schedule rule. Existing ledgers, payments and receipts will be preserved.'"
-  confirmLabel="Delete schedule"
-  [destructive]="true"
-  (confirmed)="deleteSchedule()"
-  (cancelled)="deleteTarget.set(null)"
-/>
+<button drawer-actions class="erp-button erp-button--primary" type="button" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save schedule' }}</button>
+</erp-admin-drawer>

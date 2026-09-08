@@ -208,37 +208,8 @@
   </section>
 </erp-admin-page>
 
-@if (createOpen()) {
-  <div class="modal-backdrop forms-library__dialog-layer">
-    <button
-      class="backdrop-close"
-      type="button"
-      tabindex="-1"
-      aria-label="Close new form dialog"
-      (click)="closeCreate()"
-    ></button>
-    <section
-      class="modal forms-library__dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="new-form-dialog-title"
-      cdkTrapFocus
-      [cdkTrapFocusAutoCapture]="true"
-    >
-      <header class="forms-library__dialog-header">
-        <span class="forms-library__dialog-icon">
-          <svg lucideFilePlus2 size="19" aria-hidden="true"></svg>
-        </span>
-        <div>
-          <small>Form configuration</small>
-          <h2 id="new-form-dialog-title">Create form</h2>
-          <p>Start with an empty draft and continue in the builder.</p>
-        </div>
-        <button type="button" aria-label="Close new form dialog" (click)="closeCreate()">
-          <svg lucideX size="16" aria-hidden="true"></svg>
-        </button>
-      </header>
-      <div class="forms-library__dialog-body">
+<erp-admin-drawer [open]="createOpen()" title="Create form" eyebrow="Form configuration" description="Start with a draft, then configure its sections in the form builder." [busy]="creating()" (closed)="closeCreate()">
+<div class="forms-library__dialog-body">
         <label>
           <span>Form name</span>
           <input
@@ -264,24 +235,6 @@
           <p class="erp-notice erp-notice--error" role="alert">{{ createError() }}</p>
         }
       </div>
-      <footer class="forms-library__dialog-footer">
-        <button
-          class="erp-button erp-button--secondary"
-          type="button"
-          [disabled]="creating()"
-          (click)="closeCreate()"
-        >
-          Cancel
-        </button>
-        <button
-          class="erp-button erp-button--primary"
-          type="button"
-          [disabled]="creating() || !newFormName.trim()"
-          (click)="createForm()"
-        >
-          {{ creating() ? 'Creating…' : 'Create and open builder' }}
-        </button>
-      </footer>
-    </section>
-  </div>
-}
+      
+<button drawer-actions class="erp-button erp-button--primary" type="button" [disabled]="creating() || !newFormName.trim()" (click)="createForm()">{{ creating() ? 'Creating…' : 'Create and open builder' }}</button>
+</erp-admin-drawer>

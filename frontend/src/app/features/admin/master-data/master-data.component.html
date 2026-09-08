@@ -3,7 +3,7 @@
     eyebrow="Master Data"
     [title]="pageTitle()"
     description="Create reusable data sources for dynamic dropdowns."
-    variant="minimal"
+    variant="compact"
     [layout]="isViewPage() ? 'collection' : 'default'"
   >
     <div page-actions class="master-page-actions">
@@ -88,7 +88,7 @@
                   }
                 } @empty {
                   <tr>
-                    <td colspan="4" class="erp-empty-state">No custom masters created.</td>
+                    <td colspan="4" class="erp-empty-state"><erp-admin-illustration kind="dataConfiguration" size="compact" /><p>No custom masters created.</p></td>
                   </tr>
                 }
               </tbody>
@@ -103,7 +103,7 @@
     eyebrow="Master Data"
     [title]="pageTitle()"
     description="Add, edit, activate, import, and organize database values."
-    variant="minimal"
+    variant="compact"
     [layout]="isViewPage() ? 'collection' : 'default'"
   >
     <div page-actions class="master-page-actions">

@@ -174,14 +174,21 @@
   left: -60px;
 }
 
-.student-attendance-page__ring {
+.student-attendance-ring-group {
   position: relative;
   z-index: 1;
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: var(--student-space-2);
+}
+
+.student-attendance-page__ring {
+  position: relative;
   display: grid;
   width: 144px;
   height: 144px;
   place-items: center;
-  justify-self: center;
   border-radius: var(--student-radius-pill);
   background: conic-gradient(
     var(--student-color-primary) var(--student-attendance-progress),
@@ -217,12 +224,26 @@
   font-size: var(--student-text-caption);
 }
 
-.student-attendance-page__ring em {
+.student-attendance-ring-status {
   display: none;
   color: var(--student-color-success);
-  font-size: var(--student-text-label);
+  font-size: var(--student-text-caption);
   font-style: normal;
   font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.student-attendance-hero--warning .student-attendance-ring-status {
+  color: var(--student-color-warning);
+}
+
+.student-attendance-hero--critical .student-attendance-ring-status {
+  color: var(--student-color-danger);
+}
+
+.student-attendance-hero--unknown .student-attendance-ring-status {
+  color: var(--student-color-text-muted);
 }
 
 .student-attendance-hero__summary {
@@ -800,8 +821,8 @@
   }
 
   .student-attendance-hero {
-    min-height: 164px;
-    grid-template-columns: minmax(100px, 118px) minmax(120px, 1fr) 68px;
+    min-height: 190px;
+    grid-template-columns: minmax(104px, 128px) minmax(0, 1fr);
     grid-template-rows: 1fr;
     align-items: center;
     gap: var(--student-space-3);
@@ -823,10 +844,14 @@
     height: 100px;
   }
 
-  .student-attendance-page__ring {
-    width: min(30vw, 116px);
-    height: min(30vw, 116px);
+  .student-attendance-ring-group {
     grid-column: 1;
+    gap: 6px;
+  }
+
+  .student-attendance-page__ring {
+    width: clamp(104px, 25vw, 128px);
+    height: clamp(104px, 25vw, 128px);
     transform: none;
   }
 
@@ -842,9 +867,16 @@
     display: none;
   }
 
-  .student-attendance-page__ring em {
+  .student-attendance-ring-status {
     display: block;
-    font-size: var(--student-text-caption);
+    max-width: 100%;
+    padding: 4px var(--student-space-2);
+    overflow: hidden;
+    border: 1px solid currentColor;
+    border-radius: var(--student-radius-pill);
+    background: var(--student-color-surface-raised);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .student-attendance-hero__desktop-copy {
@@ -929,21 +961,6 @@
   }
 
   .student-attendance-hero__visual {
-    position: relative;
-    top: auto;
-    right: auto;
-    grid-column: 3;
-    align-self: start;
-    margin-top: var(--student-space-1);
-  }
-
-  .student-attendance-hero__visual img {
-    width: 66px;
-    height: 66px;
-    opacity: 1;
-  }
-
-  .student-attendance-hero__visual strong {
     display: none;
   }
 
@@ -1091,11 +1108,7 @@
 
 @media (max-width: 460px) {
   .student-attendance-hero {
-    grid-template-columns: minmax(96px, 112px) minmax(0, 1fr);
-  }
-
-  .student-attendance-hero__visual {
-    display: none;
+    grid-template-columns: minmax(104px, 112px) minmax(0, 1fr);
   }
 
   .student-attendance-tool {

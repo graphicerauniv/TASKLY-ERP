@@ -6,6 +6,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
 import { AdmissionForm, FormSubmission } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { RecordDrawerComponent } from '../../../shared/ui/record-drawer/record-drawer.component';
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import {
   CompactActionItem,
   CompactActionMenuComponent,
@@ -13,7 +15,7 @@ import {
 
 @Component({
   selector: 'erp-application-submissions',
-  imports: [CommonModule, FormsModule, AdminPageComponent, CompactActionMenuComponent],
+  imports: [CommonModule, FormsModule, AdminPageComponent, CompactActionMenuComponent, RecordDrawerComponent, AdminIllustrationComponent],
   templateUrl: './application-submissions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -31,9 +33,9 @@ export class ApplicationSubmissionsComponent {
     { id: 'view', label: 'View', icon: 'view' },
     { id: 'edit', label: 'Edit', icon: 'edit' },
   ];
-  search = '';
+  readonly search = signal('');
   readonly filtered = computed(() => {
-    const query = this.search.trim().toLowerCase();
+    const query = this.search().trim().toLowerCase();
     return this.items().filter(
       (item) => !query || JSON.stringify(item).toLowerCase().includes(query),
     );

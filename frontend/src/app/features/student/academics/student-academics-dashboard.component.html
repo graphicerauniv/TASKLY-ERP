@@ -1,0 +1,73 @@
+<main class="academics-page">
+  <header class="academics-hero">
+    <div>
+      <small>Academics</small>
+      <h1>Academics</h1>
+      <p>Your courses, registrations and academic records.</p>
+    </div>
+    <img
+      src="/assets/student/academics/academics-hero.png"
+      width="560"
+      height="467"
+      alt="Academic books, graduation cap and certificate"
+    />
+  </header>
+
+  <nav class="academics-tabs" aria-label="Academic categories">
+    @for (group of groups; track group.id) {
+      <button
+        type="button"
+        [class.active]="activeCategory() === group.id"
+        (click)="activeCategory.set(group.id)"
+      >
+        {{ group.shortTitle }}<b>{{ group.items.length }}</b>
+      </button>
+    }
+  </nav>
+
+  <label class="academics-search"
+    ><svg lucideSearch></svg
+    ><input
+      type="search"
+      placeholder="Search academics"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+  /></label>
+
+  <div class="academics-groups">
+    @for (group of visibleGroups(); track group.id) {
+      <section
+        class="academics-group"
+        [attr.data-group]="group.id"
+        [class.mobile-active]="activeCategory() === group.id"
+      >
+        <header>
+          <h2>{{ group.title }}</h2>
+          <p>{{ group.description }}</p>
+        </header>
+        <div class="academics-list">
+          @for (item of group.items; track item.id) {
+            <a [routerLink]="item.route">
+              <span class="academics-icon"
+                ><img [src]="item.icon" width="320" height="320" alt="" aria-hidden="true"
+              /></span>
+              <span
+                ><strong>{{ item.title }}</strong
+                ><small>{{ item.description }}</small></span
+              >
+              <i aria-hidden="true">→</i>
+            </a>
+          } @empty {
+            <div class="academics-empty">No matching services in this category.</div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+  <div class="academics-pages" aria-hidden="true">
+    @for (group of groups; track group.id) {
+      <i [class.active]="activeCategory() === group.id"></i>
+    }
+  </div>
+  <p class="academics-swipe">Choose a category above to explore more services</p>
+</main>

@@ -28,6 +28,7 @@ import { ApiService } from '../../../core/api.service';
 import { ERP_PAGINATION } from '../../../core/config/data-view.constants';
 import { Admission } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import {
   ColumnVisibilityOption,
   ColumnVisibilityPopoverComponent,
@@ -123,6 +124,7 @@ const FILTER_FIELDS: readonly FilterPopoverField[] = [
 @Component({
   selector: 'erp-admissions',
   imports: [
+    AdminIllustrationComponent,
     AdminPageComponent,
     CdkTrapFocus,
     ColumnVisibilityPopoverComponent,

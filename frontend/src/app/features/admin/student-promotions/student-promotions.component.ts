@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RecordDrawerComponent, RecordDetailField } from '../../../shared/ui/record-drawer/record-drawer.component';
 import { ApiService } from '../../../core/api.service';
 import { MasterValue, StudentPromotion } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
@@ -11,6 +12,7 @@ import {
 @Component({
   selector: 'erp-student-promotions',
   imports: [
+    RecordDrawerComponent,
     AdminPageComponent,
     CompactActionMenuComponent,
     FormsModule,
@@ -28,8 +30,21 @@ export class StudentPromotionsComponent {
   readonly message = signal('');
   readonly error = signal('');
   readonly pendingActions: CompactActionItem[] = [
+    { id: 'preview', label: 'View promotion details', icon: 'view' },
     { id: 'promote', label: 'Promote student', icon: 'transfer' },
   ];
+  readonly previewActions: CompactActionItem[] = [{ id: 'preview', label: 'View promotion details', icon: 'view' }];
+  readonly preview = signal<StudentPromotion | null>(null);
+  detailFields(item: StudentPromotion): RecordDetailField[] {
+    return [
+      { label: 'Student ID', value: item.studentId },
+      { label: 'Course', value: item.courseName },
+      { label: 'Academic session', value: item.academicSession },
+      { label: 'Current period', value: this.currentPeriod(item) },
+      { label: 'Prepared fee period', value: item.targetPeriodLabel },
+      { label: 'Promotion status', value: item.status },
+    ];
+  }
   mode: 'semester' | 'year' = 'semester';
   status = 'pending';
   search = '';
@@ -106,7 +121,7 @@ export class StudentPromotionsComponent {
   }
 
   handleRowAction(action: string, item: StudentPromotion) {
-    if (action === 'promote') this.promoteOne(item);
+    if (action === 'preview' || action === 'promote') this.preview.set(item);
   }
 
   promoteSelected() {
@@ -136,7 +151,7 @@ export class StudentPromotionsComponent {
           );
         else this.error.set(failures.join(' ') || 'No students were promoted.');
         this.saving.set(false);
-        if (promoted) this.load();
+        if (promoted) { this.preview.set(null); this.load(); }
       },
       error: (error) => {
         this.error.set(error.error?.message || 'Could not promote the selected students.');
