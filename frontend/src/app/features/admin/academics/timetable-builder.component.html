@@ -241,25 +241,31 @@
                   <th>{{ day }}</th>
                   @for (period of periods(); track period._id) {
                     @let entry = visibleEntryFor(day, period);
-                    <td [class.is-locked]="!period.isConfigured" [class.is-assigned]="entry">
+                    <td
+                      [class.is-locked]="!period.isConfigured"
+                      [class.is-assigned]="entry"
+                      [attr.tabindex]="
+                        period.isConfigured && period.periodType !== 'break' ? 0 : null
+                      "
+                      [attr.title]="
+                        period.isConfigured && period.periodType !== 'break'
+                          ? 'Right-click to manage this period'
+                          : null
+                      "
+                      (contextmenu)="showContext($event, day, period)"
+                    >
                       @if (!period.isConfigured) {
                         <svg lucideLock size="15"></svg>
                       } @else if (period.periodType === 'break') {
                         <span class="tt-break">Break</span>
                       } @else if (entry) {
-                        <button class="tt-class" type="button" (click)="openSlot(day, period)">
+                        <div class="tt-class">
                           <strong>{{ entry.subjectName }}</strong
                           ><small>{{ entry.facultyName }}</small
                           ><small>{{ entry.roomName }}</small>
-                        </button>
+                        </div>
                       } @else if (!assignedOnly()) {
-                        <button
-                          class="tt-add-slot"
-                          type="button"
-                          (click)="openSlotMenu($event, day, period)"
-                        >
-                          <svg lucidePlus size="19"></svg><span>Add class</span>
-                        </button>
+                        <span class="tt-empty-slot" aria-hidden="true"></span>
                       }
                     </td>
                   }
@@ -327,19 +333,16 @@
     <div
       class="tt-slot-menu"
       role="menu"
+      tabindex="-1"
       [style.left.px]="menu.x"
       [style.top.px]="menu.y"
       (click)="$event.stopPropagation()"
       (keydown.escape)="context.set(null)"
     >
       <header>
-        <strong>Add to this period</strong><small>Choose what you want to configure</small>
+        <strong>{{ menu.entry ? 'Manage this period' : 'Add to this period' }}</strong
+        ><small>Choose one timetable action</small>
       </header>
-      <button type="button" role="menuitem" (click)="editSlot('all')">
-        <svg lucideCalendarDays size="18"></svg
-        ><span><strong>Complete class</strong><small>Subject, faculty and room</small></span
-        ><svg lucideArrowRight size="16"></svg>
-      </button>
       <button type="button" role="menuitem" (click)="editSlot('subject')">
         <svg lucideBookOpen size="18"></svg
         ><span><strong>Assign subject</strong><small>Select the subject only</small></span
@@ -347,12 +350,59 @@
       </button>
       <button type="button" role="menuitem" (click)="editSlot('faculty')">
         <svg lucideUsersRound size="18"></svg
-        ><span><strong>Assign faculty</strong><small>Select the teaching member</small></span
+        ><span><strong>Assign teacher</strong><small>Select the teaching faculty</small></span
         ><svg lucideArrowRight size="16"></svg>
       </button>
       <button type="button" role="menuitem" (click)="editSlot('room')">
         <svg lucideLandmark size="18"></svg
         ><span><strong>Assign room or lab</strong><small>Select the teaching space</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button type="button" role="menuitem" (click)="openCombinedClass()">
+        <svg lucideUsersRound size="18"></svg
+        ><span
+          ><strong>Combined class</strong
+          ><small>Select multiple groups, sections or sets</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="copySlot()">
+        <svg lucideArrowLeftRight size="18"></svg
+        ><span><strong>Copy slot</strong><small>Copy all class details</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        [disabled]="!copiedEntry() || !!menu.entry"
+        (click)="pasteSlot()"
+      >
+        <svg lucideArrowLeftRight size="18"></svg
+        ><span><strong>Paste slot</strong><small>Paste the copied class here</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="mergeSlot()">
+        <svg lucideMaximize2 size="18"></svg
+        ><span><strong>Merge column</strong><small>Continue into the next period</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        [disabled]="!menu.entry || span(menu.entry) === 1"
+        (click)="splitSlot()"
+      >
+        <svg lucideArrowLeftRight size="18"></svg
+        ><span><strong>Split column</strong><small>Return to one period</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="removeAssignment()">
+        <svg lucideX size="18"></svg
+        ><span><strong>Remove subject & faculty</strong><small>Keep the slot and room</small></span
+        ><svg lucideArrowRight size="16"></svg>
+      </button>
+      <button type="button" role="menuitem" [disabled]="!menu.entry" (click)="clearSlot()">
+        <svg lucideX size="18"></svg
+        ><span><strong>Clear slot</strong><small>Delete all details from this period</small></span
         ><svg lucideArrowRight size="16"></svg>
       </button>
     </div>
@@ -470,7 +520,7 @@
             <svg lucideUsersRound size="20"></svg><strong>{{ groupName() }}</strong
             ><i>·</i><span>{{ sectionName() }}</span>
           </div>
-          @if (editorMode() === 'subject' || editorMode() === 'all') {
+          @if (editorMode() === 'subject') {
             <label
               ><span>Subject *</span>
               <div class="tt-select-wrap">
@@ -487,7 +537,7 @@
                 ><svg lucideChevronDown size="17"></svg></div
             ></label>
           }
-          @if (editorMode() === 'faculty' || editorMode() === 'all') {
+          @if (editorMode() === 'faculty') {
             <label
               ><span>Faculty *</span>
               <div class="tt-select-wrap">
@@ -500,7 +550,7 @@
                 ><svg lucideChevronDown size="17"></svg></div
             ></label>
           }
-          @if (editorMode() === 'room' || editorMode() === 'all') {
+          @if (editorMode() === 'room') {
             <label
               ><span>Room or lab *</span>
               <div class="tt-select-wrap">
@@ -517,19 +567,19 @@
           }
           <section class="tt-allocation-preview">
             <h3>Allocation preview</h3>
-            @if (editorMode() === 'subject' || editorMode() === 'all') {
+            @if (editorMode() === 'subject') {
               <div>
                 <svg lucideBookOpen size="18"></svg><span>Subject</span
                 ><b [class.is-ready]="subjectId">{{ subjectId ? 'Selected' : 'Pending' }}</b>
               </div>
             }
-            @if (editorMode() === 'faculty' || editorMode() === 'all') {
+            @if (editorMode() === 'faculty') {
               <div>
                 <svg lucideUsersRound size="18"></svg><span>Faculty</span
                 ><b [class.is-ready]="facultyId">{{ facultyId ? 'Selected' : 'Pending' }}</b>
               </div>
             }
-            @if (editorMode() === 'room' || editorMode() === 'all') {
+            @if (editorMode() === 'room') {
               <div>
                 <svg lucideLandmark size="18"></svg><span>Room or lab</span
                 ><b [class.is-ready]="roomId">{{ roomId ? 'Selected' : 'Pending' }}</b>
@@ -554,7 +604,90 @@
               [disabled]="saving() || !editorValid()"
               (click)="saveSlot()"
             >
-              {{ saving() ? 'Saving…' : editingEntry() ? 'Update class' : 'Add to timetable' }}
+              {{ saving() ? 'Saving…' : editingEntry() ? 'Save assignment' : 'Add to timetable' }}
+            </button>
+          </footer>
+        </div>
+      </aside>
+    </div>
+  }
+
+  @if (combinedOpen()) {
+    <div class="erp-drawer-layer">
+      <button
+        class="erp-drawer-backdrop"
+        type="button"
+        aria-label="Close combined class"
+        (click)="combinedOpen.set(false)"
+      ></button>
+      <aside class="erp-drawer tt-class-drawer" role="dialog" aria-modal="true">
+        <header class="erp-drawer__header tt-drawer-head">
+          <span><svg lucideUsersRound size="25"></svg></span>
+          <div>
+            <h2>Configure combined class</h2>
+            <p>{{ activeDay() }} · Period {{ activePeriod()?.periodNumber }}</p>
+          </div>
+          <button type="button" aria-label="Close" (click)="combinedOpen.set(false)">
+            <svg lucideX size="22"></svg>
+          </button>
+        </header>
+        <div class="erp-drawer__body tt-drawer-body tt-combined-body">
+          <p>Select every group and section attending together. Selecting sets is optional.</p>
+          @for (group of availableGroups(); track group._id) {
+            <section class="tt-audience-option">
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="!!audienceFor(group._id)"
+                  (change)="toggleAudienceGroup(group._id)"
+                />
+                <strong>{{ group.name }}</strong>
+              </label>
+              @if (audienceFor(group._id)) {
+                <div>
+                  <span>Sections *</span>
+                  @for (section of sectionsForGroup(group._id); track section._id) {
+                    <label>
+                      <input
+                        type="checkbox"
+                        [checked]="audienceFor(group._id)?.sectionIds?.includes(section._id)"
+                        (change)="toggleAudienceSection(group._id, section._id)"
+                      />{{ section.name }}
+                    </label>
+                  }
+                </div>
+                @if (setsForAudience(group._id).length) {
+                  <div>
+                    <span>Sets (optional)</span>
+                    @for (set of setsForAudience(group._id); track set._id) {
+                      <label>
+                        <input
+                          type="checkbox"
+                          [checked]="audienceFor(group._id)?.setIds?.includes(set._id)"
+                          (change)="toggleAudienceSet(group._id, set._id)"
+                        />{{ set.name }}
+                      </label>
+                    }
+                  </div>
+                }
+              }
+            </section>
+          }
+          <footer class="erp-drawer__footer">
+            <button
+              class="erp-button erp-button--secondary"
+              type="button"
+              (click)="combinedOpen.set(false)"
+            >
+              Cancel
+            </button>
+            <button
+              class="erp-button erp-button--primary"
+              type="button"
+              [disabled]="saving()"
+              (click)="saveCombinedClass()"
+            >
+              {{ saving() ? 'Saving…' : 'Save combined class' }}
             </button>
           </footer>
         </div>

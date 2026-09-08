@@ -6104,7 +6104,8 @@ erp-admin-login {
   position: fixed;
   z-index: var(--erp-z-popover);
   width: min(20rem, calc(100vw - 1.5rem));
-  overflow: hidden;
+  max-height: calc(100vh - 1.5rem);
+  overflow-y: auto;
   border: 1px solid #b9d5ee;
   border-radius: 0.7rem;
   background: #fff;
@@ -6162,6 +6163,11 @@ erp-admin-login {
   color: #0765c4;
   background: #edf7ff;
   outline: 0;
+}
+
+.tt-slot-menu > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .tt-slot-menu > button > svg:first-child {

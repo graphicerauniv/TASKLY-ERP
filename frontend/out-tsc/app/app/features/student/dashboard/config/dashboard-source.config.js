@@ -6,8 +6,8 @@
 export const STUDENT_DASHBOARD_SOURCE_CONFIG = Object.freeze({
     profile: 'backend',
     notifications: 'hidden',
-    timetable: 'preview',
-    attendance: 'preview',
+    timetable: 'backend',
+    attendance: 'backend',
     fees: 'preview',
     examinations: 'preview',
     hostel: 'hidden',

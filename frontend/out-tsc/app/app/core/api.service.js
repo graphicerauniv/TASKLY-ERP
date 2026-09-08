@@ -38,14 +38,41 @@ export class ApiService {
     previewAcademicAllocations(rows) {
         return this.http.post(`${API_BASE_URL}/academics/allocations/preview`, { rows });
     }
+    eligibleAcademicStudents(options) {
+        return this.http.get(`${API_BASE_URL}/academics/allocations/students`, { params: { ...options } });
+    }
+    resolveAcademicStudents(studentIds) {
+        return this.http.post(`${API_BASE_URL}/academics/allocations/resolve-students`, { studentIds });
+    }
+    assignableAcademicSubjects(options) {
+        return this.http.get(`${API_BASE_URL}/academics/subject-assignments/subjects`, {
+            params: { ...options },
+        });
+    }
     bulkAcademicAllocations(rows) {
         return this.http.post(`${API_BASE_URL}/academics/allocations/bulk`, { rows });
     }
     bulkAssignSubjects(body) {
         return this.http.post(`${API_BASE_URL}/academics/group-subjects/bulk`, body);
     }
-    studentTimetable() {
-        return this.http.get(`${API_BASE_URL}/student-academics/timetable`);
+    studentTimetable(token) {
+        return this.http.get(`${API_BASE_URL}/student-academics/timetable`, {
+            ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+        });
+    }
+    facultyAttendanceClasses(token, date) {
+        return this.http.get(`${API_BASE_URL}/faculty-attendance/classes`, { params: { date }, headers: { Authorization: `Bearer ${token}` } });
+    }
+    facultyAttendanceRoster(token, entryId, date) {
+        return this.http.get(`${API_BASE_URL}/faculty-attendance/classes/${entryId}`, { params: { date }, headers: { Authorization: `Bearer ${token}` } });
+    }
+    saveFacultyAttendance(token, entryId, date, rows) {
+        return this.http.put(`${API_BASE_URL}/faculty-attendance/classes/${entryId}`, { date, rows }, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentAttendance(token) {
+        return this.http.get(`${API_BASE_URL}/student-attendance`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
     }
     masterTypes() {
         return this.http.get(`${API_BASE_URL}/master-data/types`);
@@ -152,6 +179,17 @@ export class ApiService {
     }
     studentLogin(studentId, password) {
         return this.http.post(`${API_BASE_URL}/auth/student/login`, { studentId, password });
+    }
+    facultyLogin(employeeId, password) {
+        return this.http.post(`${API_BASE_URL}/auth/faculty/login`, { employeeId, password });
+    }
+    changeFacultyPassword(token, password) {
+        return this.http.post(`${API_BASE_URL}/auth/faculty/change-password`, { password }, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    facultyProfile(token) {
+        return this.http.get(`${API_BASE_URL}/auth/faculty/profile`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
     }
     changeStudentPassword(token, password) {
         return this.http.post(`${API_BASE_URL}/auth/student/change-password`, { password }, { headers: { Authorization: `Bearer ${token}` } });

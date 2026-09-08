@@ -1,22 +1,47 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { finalize, map, shareReplay, tap, throwError } from 'rxjs';
+import { API_BASE_URL } from './runtime-config';
 import * as i0 from "@angular/core";
 export class AuthService {
+    http = inject(HttpClient);
     tokenState = signal(readStorage('taskly_admin_token'), ...(ngDevMode ? [{ debugName: "tokenState" }] : /* istanbul ignore next */ []));
+    refreshTokenState = signal(readStorage('taskly_admin_refresh_token'), ...(ngDevMode ? [{ debugName: "refreshTokenState" }] : /* istanbul ignore next */ []));
+    refreshRequest = null;
     admin = signal(readAdminIdentity(), ...(ngDevMode ? [{ debugName: "admin" }] : /* istanbul ignore next */ []));
     isAuthenticated = computed(() => Boolean(this.tokenState()), ...(ngDevMode ? [{ debugName: "isAuthenticated" }] : /* istanbul ignore next */ []));
     token() {
         return this.tokenState();
     }
-    save(token, admin) {
+    save(token, admin, refreshToken) {
         writeStorage('taskly_admin_token', token);
         writeStorage('taskly_admin', JSON.stringify(admin));
+        if (refreshToken) {
+            writeStorage('taskly_admin_refresh_token', refreshToken);
+            this.refreshTokenState.set(refreshToken);
+        }
         this.tokenState.set(token);
         this.admin.set(admin);
     }
+    refreshAccessToken() {
+        const refreshToken = this.refreshTokenState();
+        if (!refreshToken)
+            return throwError(() => new Error('No renewable admin session exists.'));
+        if (this.refreshRequest)
+            return this.refreshRequest;
+        this.refreshRequest = this.http
+            .post(`${API_BASE_URL}/auth/refresh`, { refreshToken })
+            .pipe(tap((session) => this.save(session.token, session.admin, session.refreshToken)), map((session) => session.token), finalize(() => {
+            this.refreshRequest = null;
+        }), shareReplay({ bufferSize: 1, refCount: false }));
+        return this.refreshRequest;
+    }
     clear() {
         removeStorage('taskly_admin_token');
+        removeStorage('taskly_admin_refresh_token');
         removeStorage('taskly_admin');
         this.tokenState.set(null);
+        this.refreshTokenState.set(null);
         this.admin.set(null);
     }
     static ɵfac = function AuthService_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || AuthService)(); };

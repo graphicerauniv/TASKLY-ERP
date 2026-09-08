@@ -39,7 +39,7 @@ export const STUDENT_NAVIGATION = [
         icon: 'calendar-check',
         route: '/student/attendance',
         ariaLabel: 'Open attendance',
-        enabled: false,
+        enabled: true,
         order: 3,
     },
     {

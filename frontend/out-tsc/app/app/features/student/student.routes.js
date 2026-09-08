@@ -31,6 +31,11 @@ export const STUDENT_ROUTES = [
                 loadComponent: () => import('./academics/student-timetable.component').then((component) => component.StudentTimetableComponent),
             },
             {
+                path: 'attendance',
+                title: 'My Attendance | GEU ERP',
+                loadComponent: () => import('./academics/student-attendance.component').then((component) => component.StudentAttendanceComponent),
+            },
+            {
                 path: 'fees/pay',
                 title: 'Pay Fees | GEU ERP',
                 component: PayFeesComponent,

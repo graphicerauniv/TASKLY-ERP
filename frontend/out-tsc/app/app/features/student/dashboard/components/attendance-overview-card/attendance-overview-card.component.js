@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { LucideChartNoAxesCombined } from '@lucide/angular';
 import { DashboardWidgetStateComponent } from '../dashboard-widget-state/dashboard-widget-state.component';
 import * as i0 from "@angular/core";
@@ -40,12 +41,12 @@ function AttendanceOverviewCardComponent_Conditional_7_Template(rf, ctx) { if (r
     i0.ɵɵelement(0, "erp-dashboard-widget-state", 4);
 } if (rf & 2) {
     const ctx_r1 = i0.ɵɵnextContext();
-    i0.ɵɵproperty("status", ctx_r1.state().status);
+    i0.ɵɵproperty("status", ctx_r1.state().status)("message", ctx_r1.state().errorMessage || "Attendance has not been recorded yet.");
 } }
 export class AttendanceOverviewCardComponent {
     state = input.required(...(ngDevMode ? [{ debugName: "state" }] : /* istanbul ignore next */ []));
     static ɵfac = function AttendanceOverviewCardComponent_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || AttendanceOverviewCardComponent)(); };
-    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: AttendanceOverviewCardComponent, selectors: [["erp-attendance-overview-card"]], inputs: { state: [1, "state"] }, decls: 8, vars: 1, consts: [[1, "student-operational-card", "student-operational-card--attendance"], [1, "student-operational-card__header"], ["lucideChartNoAxesCombined", "", "size", "18", "aria-hidden", "true"], [1, "student-attendance-summary"], ["title", "Attendance unavailable", "message", "Attendance data will appear after the official student endpoint is available.", 3, "status"], ["role", "img", 1, "student-attendance-ring"], ["type", "button", "disabled", ""]], template: function AttendanceOverviewCardComponent_Template(rf, ctx) { if (rf & 1) {
+    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: AttendanceOverviewCardComponent, selectors: [["erp-attendance-overview-card"]], inputs: { state: [1, "state"] }, decls: 8, vars: 1, consts: [[1, "student-operational-card", "student-operational-card--attendance"], [1, "student-operational-card__header"], ["lucideChartNoAxesCombined", "", "size", "18", "aria-hidden", "true"], [1, "student-attendance-summary"], ["title", "Attendance unavailable", 3, "status", "message"], ["role", "img", 1, "student-attendance-ring"], ["type", "button", "routerLink", "/student/attendance"]], template: function AttendanceOverviewCardComponent_Template(rf, ctx) { if (rf & 1) {
             i0.ɵɵelementStart(0, "article", 0)(1, "header", 1)(2, "span");
             i0.ɵɵnamespaceSVG();
             i0.ɵɵelement(3, "svg", 2);
@@ -53,19 +54,19 @@ export class AttendanceOverviewCardComponent {
             i0.ɵɵelementStart(4, "strong");
             i0.ɵɵtext(5, "Attendance");
             i0.ɵɵelementEnd()()();
-            i0.ɵɵconditionalCreate(6, AttendanceOverviewCardComponent_Conditional_6_Template, 20, 6, "div", 3)(7, AttendanceOverviewCardComponent_Conditional_7_Template, 1, 1, "erp-dashboard-widget-state", 4);
+            i0.ɵɵconditionalCreate(6, AttendanceOverviewCardComponent_Conditional_6_Template, 20, 6, "div", 3)(7, AttendanceOverviewCardComponent_Conditional_7_Template, 1, 2, "erp-dashboard-widget-state", 4);
             i0.ɵɵelementEnd();
         } if (rf & 2) {
             let tmp_0_0;
             i0.ɵɵadvance(6);
             i0.ɵɵconditional((tmp_0_0 = ctx.state().data) ? 6 : 7, tmp_0_0);
-        } }, dependencies: [DashboardWidgetStateComponent, LucideChartNoAxesCombined], encapsulation: 2, changeDetection: 0 });
+        } }, dependencies: [DashboardWidgetStateComponent, RouterLink, LucideChartNoAxesCombined], encapsulation: 2, changeDetection: 0 });
 }
 (() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassMetadata(AttendanceOverviewCardComponent, [{
         type: Component,
         args: [{
                 selector: 'erp-attendance-overview-card',
-                imports: [DashboardWidgetStateComponent, LucideChartNoAxesCombined],
+                imports: [DashboardWidgetStateComponent, RouterLink, LucideChartNoAxesCombined],
                 template: `
     <article class="student-operational-card student-operational-card--attendance">
       <header class="student-operational-card__header">
@@ -82,19 +83,27 @@ export class AttendanceOverviewCardComponent {
             role="img"
             [attr.aria-label]="(attendance.percentage || 0) + '% attendance'"
           >
-            <span><strong>{{ attendance.percentage }}%</strong><small>Overall</small></span>
+            <span
+              ><strong>{{ attendance.percentage }}%</strong><small>Overall</small></span
+            >
           </div>
           <dl>
-            <div><dt>Classes attended</dt><dd>{{ attendance.attendedClasses }}</dd></div>
-            <div><dt>Classes held</dt><dd>{{ attendance.totalClasses }}</dd></div>
+            <div>
+              <dt>Classes attended</dt>
+              <dd>{{ attendance.attendedClasses }}</dd>
+            </div>
+            <div>
+              <dt>Classes held</dt>
+              <dd>{{ attendance.totalClasses }}</dd>
+            </div>
           </dl>
-          <button type="button" disabled>View attendance</button>
+          <button type="button" routerLink="/student/attendance">View attendance</button>
         </div>
       } @else {
         <erp-dashboard-widget-state
           [status]="state().status"
           title="Attendance unavailable"
-          message="Attendance data will appear after the official student endpoint is available."
+          [message]="state().errorMessage || 'Attendance has not been recorded yet.'"
         />
       }
     </article>
@@ -102,4 +111,4 @@ export class AttendanceOverviewCardComponent {
                 changeDetection: ChangeDetectionStrategy.OnPush,
             }]
     }], null, { state: [{ type: i0.Input, args: [{ isSignal: true, alias: "state", required: true }] }] }); })();
-(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(AttendanceOverviewCardComponent, { className: "AttendanceOverviewCardComponent", filePath: "frontend/src/app/features/student/dashboard/components/attendance-overview-card/attendance-overview-card.component.ts", lineNumber: 47 }); })();
+(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(AttendanceOverviewCardComponent, { className: "AttendanceOverviewCardComponent", filePath: "frontend/src/app/features/student/dashboard/components/attendance-overview-card/attendance-overview-card.component.ts", lineNumber: 56 }); })();

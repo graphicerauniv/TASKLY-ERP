@@ -2,3 +2,34 @@
   display: block;
   min-width: 0;
 }
+
+.tt-combined-body > p {
+  margin: 0;
+  color: var(--erp-text-muted);
+}
+
+.tt-audience-option {
+  padding: 0.9rem;
+  border: 1px solid var(--erp-border-subtle);
+  border-radius: 0.65rem;
+  background: var(--erp-surface-detail-soft);
+}
+
+.tt-audience-option label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.25rem 0.8rem 0.25rem 0;
+}
+
+.tt-audience-option > div {
+  margin: 0.65rem 0 0 1.45rem;
+}
+
+.tt-audience-option > div > span {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--erp-text-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+}

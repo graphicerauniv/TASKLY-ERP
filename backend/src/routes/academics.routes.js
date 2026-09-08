@@ -1158,7 +1158,8 @@ async function resolveTimetableAssignment(data, master) {
     : [{ groupId: data.groupId, sectionIds: [data.sectionId], setIds: data.setIds || [] }];
   const groupIds = [...new Set(audiences.map((audience) => audience.groupId))];
   const sectionIds = [...new Set(audiences.flatMap((audience) => audience.sectionIds))];
-  const [groups, sections, subject, faculty, room] = await Promise.all([
+  const setIds = [...new Set(audiences.flatMap((audience) => audience.setIds || []))];
+  const [groups, sections, sets, subject, faculty, room] = await Promise.all([
     Promise.all(
       groupIds.map((value) =>
         db()
@@ -1170,6 +1171,13 @@ async function resolveTimetableAssignment(data, master) {
       sectionIds.map((value) =>
         db()
           .collection('academicSections')
+          .findOne({ _id: id(value), isActive: true }),
+      ),
+    ),
+    Promise.all(
+      setIds.map((value) =>
+        db()
+          .collection('academicSets')
           .findOne({ _id: id(value), isActive: true }),
       ),
     ),
@@ -1191,6 +1199,8 @@ async function resolveTimetableAssignment(data, master) {
   ]);
   if (groups.some((value) => !value) || sections.some((value) => !value))
     return { error: 'Select active groups and sections for this class.' };
+  if (sets.some((value) => !value))
+    return { error: 'Select only active sets for this combined class.' };
   if (
     groups.some(
       (group) =>
@@ -1207,6 +1217,16 @@ async function resolveTimetableAssignment(data, master) {
       const section = sections.find((value) => String(value._id) === String(sectionId));
       if (!section?.groupIds?.some((value) => String(value) === String(group._id)))
         return { error: 'Every selected section must belong to its selected group.' };
+    }
+    for (const setId of audience.setIds || []) {
+      const set = sets.find((value) => String(value._id) === String(setId));
+      if (
+        String(set?.groupId) !== String(group._id) ||
+        !audience.sectionIds.map(String).includes(String(set?.sectionId)) ||
+        set?.academicSession !== data.academicSession ||
+        Number(set?.semester) !== Number(data.semester)
+      )
+        return { error: 'Every selected set must belong to its selected group and section.' };
     }
   }
   if (data.subjectId && !subject) return { error: 'Selected subject is unavailable.' };

@@ -23,17 +23,38 @@ export const ADMIN_ROUTES = [
                 ['groups', 'groups'],
                 ['sections', 'sections'],
                 ['sets', 'sets'],
+            ].map(([path, section]) => ({
+                path: `academics/${path}`,
+                loadComponent: () => import('./academics/academic-structure.component').then((component) => component.AcademicStructureComponent),
+                data: { section },
+            })),
+            ...[
                 ['subjects', 'subjects'],
                 ['faculties', 'faculties'],
                 ['rooms', 'rooms'],
-                ['student-allocation', 'allocations'],
-                ['subject-assignment', 'subject-assignments'],
-                ['timetable-masters', 'timetable-masters'],
-                ['timetable-structures', 'timetable-structures'],
-                ['timetable-periods', 'timetable-periods'],
             ].map(([path, section]) => ({
                 path: `academics/${path}`,
-                loadComponent: () => import('./academics/academic-workspace.component').then((component) => component.AcademicWorkspaceComponent),
+                loadComponent: () => import('./academics/academic-resources.component').then((component) => component.AcademicResourcesComponent),
+                data: { section },
+            })),
+            {
+                path: 'academics/timetable-periods',
+                loadComponent: () => import('./academics/timetable-periods.component').then((component) => component.TimetablePeriodsComponent),
+            },
+            {
+                path: 'academics/student-allocation',
+                loadComponent: () => import('./academics/student-allocation.component').then((component) => component.StudentAllocationComponent),
+            },
+            {
+                path: 'academics/subject-assignment',
+                loadComponent: () => import('./academics/subject-assignment.component').then((component) => component.SubjectAssignmentComponent),
+            },
+            ...[
+                ['timetable-masters', 'timetable-masters'],
+                ['timetable-structures', 'timetable-structures'],
+            ].map(([path, section]) => ({
+                path: `academics/${path}`,
+                loadComponent: () => import('./academics/timetable-setup.component').then((component) => component.TimetableSetupComponent),
                 data: { section },
             })),
             {

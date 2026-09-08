@@ -20,36 +20,45 @@ function ApplicationSubmissionsComponent_Conditional_1_Template(rf, ctx) { if (r
     i0.ɵɵadvance();
     i0.ɵɵtextInterpolate(ctx_r0.error());
 } }
+function ApplicationSubmissionsComponent_For_30_Conditional_4_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "small");
+    i0.ɵɵtext(1, "Employee ID \u00B7 initial password is the same ID");
+    i0.ɵɵelementEnd();
+} }
 function ApplicationSubmissionsComponent_For_30_Template(rf, ctx) { if (rf & 1) {
     const _r2 = i0.ɵɵgetCurrentView();
     i0.ɵɵelementStart(0, "tr")(1, "td")(2, "strong");
     i0.ɵɵtext(3);
+    i0.ɵɵelementEnd();
+    i0.ɵɵconditionalCreate(4, ApplicationSubmissionsComponent_For_30_Conditional_4_Template, 2, 0, "small");
+    i0.ɵɵelementEnd();
+    i0.ɵɵelementStart(5, "td");
+    i0.ɵɵtext(6);
+    i0.ɵɵelementEnd();
+    i0.ɵɵelementStart(7, "td");
+    i0.ɵɵtext(8);
+    i0.ɵɵpipe(9, "date");
+    i0.ɵɵelementEnd();
+    i0.ɵɵelementStart(10, "td");
+    i0.ɵɵtext(11);
+    i0.ɵɵelementEnd();
+    i0.ɵɵelementStart(12, "td")(13, "span", 8);
+    i0.ɵɵtext(14);
     i0.ɵɵelementEnd()();
-    i0.ɵɵelementStart(4, "td");
-    i0.ɵɵtext(5);
-    i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(6, "td");
-    i0.ɵɵtext(7);
-    i0.ɵɵpipe(8, "date");
-    i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(9, "td");
-    i0.ɵɵtext(10);
-    i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(11, "td")(12, "span", 8);
-    i0.ɵɵtext(13);
-    i0.ɵɵelementEnd()();
-    i0.ɵɵelementStart(14, "td", 6)(15, "erp-compact-action-menu", 9);
-    i0.ɵɵlistener("selected", function ApplicationSubmissionsComponent_For_30_Template_erp_compact_action_menu_selected_15_listener($event) { const item_r3 = i0.ɵɵrestoreView(_r2).$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.handleAction($event, item_r3)); });
+    i0.ɵɵelementStart(15, "td", 6)(16, "erp-compact-action-menu", 9);
+    i0.ɵɵlistener("selected", function ApplicationSubmissionsComponent_For_30_Template_erp_compact_action_menu_selected_16_listener($event) { const item_r3 = i0.ɵɵrestoreView(_r2).$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.handleAction($event, item_r3)); });
     i0.ɵɵelementEnd()()();
 } if (rf & 2) {
     const item_r3 = ctx.$implicit;
     const ctx_r0 = i0.ɵɵnextContext();
     i0.ɵɵadvance(3);
     i0.ɵɵtextInterpolate(item_r3.applicationCode || "Not generated");
+    i0.ɵɵadvance();
+    i0.ɵɵconditional(item_r3.purpose === "faculty" ? 4 : -1);
     i0.ɵɵadvance(2);
     i0.ɵɵtextInterpolate(item_r3.formName);
     i0.ɵɵadvance(2);
-    i0.ɵɵtextInterpolate(i0.ɵɵpipeBind2(8, 6, item_r3.submittedAt, "medium"));
+    i0.ɵɵtextInterpolate(i0.ɵɵpipeBind2(9, 7, item_r3.submittedAt, "medium"));
     i0.ɵɵadvance(3);
     i0.ɵɵtextInterpolate1("v", item_r3.formVersion);
     i0.ɵɵadvance(3);
@@ -234,7 +243,7 @@ export class ApplicationSubmissionsComponent {
             i0.ɵɵtwoWayListener("ngModelChange", function ApplicationSubmissionsComponent_Template_input_ngModelChange_11_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.search, $event) || (ctx.search = $event); return $event; });
             i0.ɵɵelementEnd()();
             i0.ɵɵelementStart(12, "div", 5)(13, "table")(14, "thead")(15, "tr")(16, "th");
-            i0.ɵɵtext(17, "Unique code");
+            i0.ɵɵtext(17, "Record ID");
             i0.ɵɵelementEnd();
             i0.ɵɵelementStart(18, "th");
             i0.ɵɵtext(19, "Source form");
@@ -252,7 +261,7 @@ export class ApplicationSubmissionsComponent {
             i0.ɵɵtext(27, "Actions");
             i0.ɵɵelementEnd()()();
             i0.ɵɵelementStart(28, "tbody");
-            i0.ɵɵrepeaterCreate(29, ApplicationSubmissionsComponent_For_30_Template, 16, 9, "tr", null, _forTrack0, false, ApplicationSubmissionsComponent_ForEmpty_31_Template, 3, 1, "tr");
+            i0.ɵɵrepeaterCreate(29, ApplicationSubmissionsComponent_For_30_Template, 17, 10, "tr", null, _forTrack0, false, ApplicationSubmissionsComponent_ForEmpty_31_Template, 3, 1, "tr");
             i0.ɵɵelementEnd()()()()();
             i0.ɵɵconditionalCreate(32, ApplicationSubmissionsComponent_Conditional_32_Template, 21, 3, "div", 7);
         } if (rf & 2) {
@@ -274,6 +283,6 @@ export class ApplicationSubmissionsComponent {
 }
 (() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassMetadata(ApplicationSubmissionsComponent, [{
         type: Component,
-        args: [{ selector: 'erp-application-submissions', imports: [CommonModule, FormsModule, AdminPageComponent, CompactActionMenuComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: "<erp-admin-page\n  [eyebrow]=\"section() ? 'Database' : purposeLabel(form()?.purpose || '') + ' applications'\"\n  [title]=\"section()?.name || form()?.name || 'Application submissions'\"\n  description=\"Search, review and edit submitted records.\"\n  variant=\"minimal\"\n  layout=\"collection\"\n>\n  @if (error()) {\n    <div class=\"erp-alert erp-alert--error\" role=\"alert\">{{ error() }}</div>\n  }\n  <section class=\"erp-card erp-table-shell\">\n    <div class=\"erp-table-toolbar\">\n      <div>\n        <h2>\n          Saved records <small>{{ filtered().length }}</small>\n        </h2>\n        <p>Every record remains connected to its source form and published version.</p>\n      </div>\n      <input\n        class=\"erp-control\"\n        type=\"search\"\n        [(ngModel)]=\"search\"\n        placeholder=\"Search name, code or response\"\n      />\n    </div>\n    <div class=\"erp-table-shell__scroll\">\n      <table>\n        <thead>\n          <tr>\n            <th>Unique code</th>\n            <th>Source form</th>\n            <th>Submitted</th>\n            <th>Form version</th>\n            <th>Status</th>\n            <th class=\"erp-table-shell__actions\">Actions</th>\n          </tr>\n        </thead>\n        <tbody>\n          @for (item of filtered(); track item._id) {\n            <tr>\n              <td>\n                <strong>{{ item.applicationCode || 'Not generated' }}</strong>\n              </td>\n              <td>{{ item.formName }}</td>\n              <td>{{ item.submittedAt | date: 'medium' }}</td>\n              <td>v{{ item.formVersion }}</td>\n              <td>\n                <span class=\"erp-status\">{{ item.status }}</span>\n              </td>\n              <td class=\"erp-table-shell__actions\">\n                <erp-compact-action-menu\n                  [items]=\"actions\"\n                  (selected)=\"handleAction($event, item)\"\n                />\n              </td>\n            </tr>\n          } @empty {\n            <tr>\n              <td colspan=\"6\" class=\"erp-empty-state\">\n                {{\n                  loading() ? 'Loading applications\u2026' : 'No applications submitted for this form.'\n                }}\n              </td>\n            </tr>\n          }\n        </tbody>\n      </table>\n    </div>\n  </section>\n</erp-admin-page>\n\n@if (selected(); as item) {\n  <div class=\"dialog-layer\">\n    <button\n      class=\"dialog-backdrop\"\n      type=\"button\"\n      aria-label=\"Close\"\n      (click)=\"selected.set(null)\"\n    ></button>\n    <section\n      class=\"dialog\"\n      role=\"dialog\"\n      aria-modal=\"true\"\n      aria-labelledby=\"application-response-title\"\n    >\n      <header class=\"dialog__header\">\n        <div>\n          <small>{{ item.applicationCode || purposeLabel(item.purpose) + ' application' }}</small>\n          <h2 id=\"application-response-title\">{{ item.formName }}</h2>\n        </div>\n        <button type=\"button\" aria-label=\"Close\" (click)=\"selected.set(null)\">\u00D7</button>\n      </header>\n      <div class=\"dialog__body\">\n        <div class=\"erp-table-shell__scroll\">\n          <table>\n            <tbody>\n              @for (row of responseRows(item); track row.label) {\n                <tr>\n                  <th>{{ row.label }}</th>\n                  <td>{{ row.value }}</td>\n                </tr>\n              } @empty {\n                <tr>\n                  <td>No response values were submitted.</td>\n                </tr>\n              }\n            </tbody>\n          </table>\n        </div>\n      </div>\n      <footer class=\"dialog__footer\">\n        <button class=\"erp-button erp-button--secondary\" type=\"button\" (click)=\"selected.set(null)\">\n          Close\n        </button>\n      </footer>\n    </section>\n  </div>\n}\n" }]
+        args: [{ selector: 'erp-application-submissions', imports: [CommonModule, FormsModule, AdminPageComponent, CompactActionMenuComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: "<erp-admin-page\n  [eyebrow]=\"section() ? 'Database' : purposeLabel(form()?.purpose || '') + ' applications'\"\n  [title]=\"section()?.name || form()?.name || 'Application submissions'\"\n  description=\"Search, review and edit submitted records.\"\n  variant=\"minimal\"\n  layout=\"collection\"\n>\n  @if (error()) {\n    <div class=\"erp-alert erp-alert--error\" role=\"alert\">{{ error() }}</div>\n  }\n  <section class=\"erp-card erp-table-shell\">\n    <div class=\"erp-table-toolbar\">\n      <div>\n        <h2>\n          Saved records <small>{{ filtered().length }}</small>\n        </h2>\n        <p>Every record remains connected to its source form and published version.</p>\n      </div>\n      <input\n        class=\"erp-control\"\n        type=\"search\"\n        [(ngModel)]=\"search\"\n        placeholder=\"Search name, code or response\"\n      />\n    </div>\n    <div class=\"erp-table-shell__scroll\">\n      <table>\n        <thead>\n          <tr>\n            <th>Record ID</th>\n            <th>Source form</th>\n            <th>Submitted</th>\n            <th>Form version</th>\n            <th>Status</th>\n            <th class=\"erp-table-shell__actions\">Actions</th>\n          </tr>\n        </thead>\n        <tbody>\n          @for (item of filtered(); track item._id) {\n            <tr>\n              <td>\n                <strong>{{ item.applicationCode || 'Not generated' }}</strong>\n                @if (item.purpose === 'faculty') {\n                  <small>Employee ID \u00B7 initial password is the same ID</small>\n                }\n              </td>\n              <td>{{ item.formName }}</td>\n              <td>{{ item.submittedAt | date: 'medium' }}</td>\n              <td>v{{ item.formVersion }}</td>\n              <td>\n                <span class=\"erp-status\">{{ item.status }}</span>\n              </td>\n              <td class=\"erp-table-shell__actions\">\n                <erp-compact-action-menu\n                  [items]=\"actions\"\n                  (selected)=\"handleAction($event, item)\"\n                />\n              </td>\n            </tr>\n          } @empty {\n            <tr>\n              <td colspan=\"6\" class=\"erp-empty-state\">\n                {{\n                  loading() ? 'Loading applications\u2026' : 'No applications submitted for this form.'\n                }}\n              </td>\n            </tr>\n          }\n        </tbody>\n      </table>\n    </div>\n  </section>\n</erp-admin-page>\n\n@if (selected(); as item) {\n  <div class=\"dialog-layer\">\n    <button\n      class=\"dialog-backdrop\"\n      type=\"button\"\n      aria-label=\"Close\"\n      (click)=\"selected.set(null)\"\n    ></button>\n    <section\n      class=\"dialog\"\n      role=\"dialog\"\n      aria-modal=\"true\"\n      aria-labelledby=\"application-response-title\"\n    >\n      <header class=\"dialog__header\">\n        <div>\n          <small>{{ item.applicationCode || purposeLabel(item.purpose) + ' application' }}</small>\n          <h2 id=\"application-response-title\">{{ item.formName }}</h2>\n        </div>\n        <button type=\"button\" aria-label=\"Close\" (click)=\"selected.set(null)\">\u00D7</button>\n      </header>\n      <div class=\"dialog__body\">\n        <div class=\"erp-table-shell__scroll\">\n          <table>\n            <tbody>\n              @for (row of responseRows(item); track row.label) {\n                <tr>\n                  <th>{{ row.label }}</th>\n                  <td>{{ row.value }}</td>\n                </tr>\n              } @empty {\n                <tr>\n                  <td>No response values were submitted.</td>\n                </tr>\n              }\n            </tbody>\n          </table>\n        </div>\n      </div>\n      <footer class=\"dialog__footer\">\n        <button class=\"erp-button erp-button--secondary\" type=\"button\" (click)=\"selected.set(null)\">\n          Close\n        </button>\n      </footer>\n    </section>\n  </div>\n}\n" }]
     }], () => [], null); })();
 (() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(ApplicationSubmissionsComponent, { className: "ApplicationSubmissionsComponent", filePath: "frontend/src/app/features/admin/application-submissions/application-submissions.component.ts", lineNumber: 20 }); })();

@@ -23,7 +23,6 @@ import {
   LucideList,
   LucideLock,
   LucideMaximize2,
-  LucidePlus,
   LucideSave,
   LucideSearch,
   LucideSettings,
@@ -39,6 +38,7 @@ import {
   AcademicGroupSubject,
   AcademicRoom,
   AcademicSection,
+  AcademicSet,
   AcademicSubject,
   AcademicTimetableEntry,
   MasterValue,
@@ -87,7 +87,6 @@ function apiMessage(error: unknown, fallback: string) {
     LucideList,
     LucideLock,
     LucideMaximize2,
-    LucidePlus,
     LucideSave,
     LucideSearch,
     LucideSettings,
@@ -109,6 +108,7 @@ export class TimetableBuilderComponent {
   readonly masters = signal<Array<MasterValue & { typeSlug: string }>>([]);
   readonly groups = signal<AcademicGroup[]>([]);
   readonly sections = signal<AcademicSection[]>([]);
+  readonly sets = signal<AcademicSet[]>([]);
   readonly subjects = signal<AcademicSubject[]>([]);
   readonly faculties = signal<AcademicFaculty[]>([]);
   readonly rooms = signal<AcademicRoom[]>([]);
@@ -119,7 +119,7 @@ export class TimetableBuilderComponent {
   readonly entries = signal<AcademicTimetableEntry[]>([]);
   readonly context = signal<SlotContext | null>(null);
   readonly editorOpen = signal(false);
-  readonly editorMode = signal<'subject' | 'faculty' | 'room' | 'all'>('all');
+  readonly editorMode = signal<'subject' | 'faculty' | 'room'>('subject');
   readonly combinedOpen = signal(false);
   readonly copiedEntry = signal<AcademicTimetableEntry | null>(null);
   readonly editingEntry = signal<AcademicTimetableEntry | null>(null);
@@ -311,6 +311,7 @@ export class TimetableBuilderComponent {
         this.masters.set(data.masters);
         this.groups.set(data.groups);
         this.sections.set(data.sections);
+        this.sets.set(data.sets);
         this.subjects.set(data.subjects);
         this.faculties.set(data.faculties);
         this.rooms.set(data.rooms);
@@ -400,15 +401,16 @@ export class TimetableBuilderComponent {
     event.preventDefault();
     event.stopPropagation();
     if (period.periodType === 'break') return;
+    const menuHeight = Math.min(680, window.innerHeight - 24);
     this.context.set({
       x: Math.max(12, Math.min(event.clientX, window.innerWidth - 340)),
-      y: Math.max(12, Math.min(event.clientY, window.innerHeight - 370)),
+      y: Math.max(12, Math.min(event.clientY, window.innerHeight - menuHeight - 12)),
       day,
       period,
       entry: this.entryFor(day, period),
     });
   }
-  editSlot(mode: 'subject' | 'faculty' | 'room' | 'all' = 'all') {
+  editSlot(mode: 'subject' | 'faculty' | 'room') {
     const context = this.context();
     if (!context) return;
     this.editingEntry.set(context.entry);
@@ -422,26 +424,17 @@ export class TimetableBuilderComponent {
     this.editorOpen.set(true);
     this.context.set(null);
   }
-  openSlot(day: string, period: TimetablePeriod) {
-    if (!period.isConfigured || period.periodType === 'break') return;
-    this.context.set({ x: 0, y: 0, day, period, entry: this.entryFor(day, period) });
-    this.editSlot('all');
-  }
-  openSlotMenu(event: MouseEvent, day: string, period: TimetablePeriod) {
-    this.showContext(event, day, period);
-  }
   editorTitle() {
-    if (this.editingEntry()) return 'Edit class';
     if (this.editorMode() === 'subject') return 'Assign subject';
     if (this.editorMode() === 'faculty') return 'Assign faculty';
     if (this.editorMode() === 'room') return 'Assign room or lab';
-    return 'Add class';
+    return 'Assign timetable detail';
   }
   editorValid() {
     if (this.editorMode() === 'subject') return !!this.subjectId;
     if (this.editorMode() === 'faculty') return !!this.facultyId;
     if (this.editorMode() === 'room') return !!this.roomId;
-    return !!(this.subjectId && this.facultyId && this.roomId);
+    return false;
   }
   closeEditor() {
     this.editorOpen.set(false);
@@ -482,9 +475,36 @@ export class TimetableBuilderComponent {
   toggleAudienceSection(groupId: string, sectionId: string) {
     const audience = this.audienceFor(groupId);
     if (!audience) return;
-    audience.sectionIds = audience.sectionIds.includes(sectionId)
-      ? audience.sectionIds.filter((value) => value !== sectionId)
-      : [...audience.sectionIds, sectionId];
+    if (audience.sectionIds.includes(sectionId)) {
+      const removedSetIds = new Set(
+        this.sets()
+          .filter((item) => item.groupId === groupId && item.sectionId === sectionId)
+          .map((item) => item._id),
+      );
+      audience.sectionIds = audience.sectionIds.filter((value) => value !== sectionId);
+      audience.setIds = audience.setIds.filter((value) => !removedSetIds.has(value));
+    } else {
+      audience.sectionIds = [...audience.sectionIds, sectionId];
+    }
+    this.audienceDraft = [...this.audienceDraft];
+  }
+  setsForAudience(groupId: string) {
+    const audience = this.audienceFor(groupId);
+    return this.sets().filter(
+      (item) =>
+        item.isActive &&
+        item.groupId === groupId &&
+        !!audience?.sectionIds.includes(item.sectionId) &&
+        item.academicSession === this.session &&
+        item.semester === Number(this.semester),
+    );
+  }
+  toggleAudienceSet(groupId: string, setId: string) {
+    const audience = this.audienceFor(groupId);
+    if (!audience) return;
+    audience.setIds = audience.setIds.includes(setId)
+      ? audience.setIds.filter((value) => value !== setId)
+      : [...audience.setIds, setId];
     this.audienceDraft = [...this.audienceDraft];
   }
   saveCombinedClass() {
@@ -541,8 +561,7 @@ export class TimetableBuilderComponent {
       !period ||
       (mode === 'subject' && !this.subjectId) ||
       (mode === 'faculty' && !this.facultyId) ||
-      (mode === 'room' && !this.roomId) ||
-      (mode === 'all' && (!this.subjectId || !this.facultyId || !this.roomId))
+      (mode === 'room' && !this.roomId)
     ) {
       this.error.set('Select the requested timetable assignment.');
       return;
@@ -550,13 +569,14 @@ export class TimetableBuilderComponent {
     this.saving.set(true);
     this.error.set('');
     const current = this.editingEntry();
+    const changes =
+      mode === 'subject'
+        ? { subjectId: this.subjectId }
+        : mode === 'faculty'
+          ? { facultyId: this.facultyId }
+          : { roomId: this.roomId, classType: this.classType };
     const request = current
-      ? this.api.timetableAction<AcademicTimetableEntry>(current._id, 'update', {
-          subjectId: this.subjectId,
-          facultyId: this.facultyId,
-          roomId: this.roomId,
-          classType: this.classType,
-        })
+      ? this.api.timetableAction<AcademicTimetableEntry>(current._id, 'update', changes)
       : this.api.createAcademicRecord<AcademicTimetableEntry>('timetables', {
           academicSession: this.session,
           semester: Number(this.semester),
