@@ -543,6 +543,28 @@ const DOMAIN_TABLES = Object.freeze({
       'active',
     ],
   },
+  studentNotificationStates: {
+    table: 'student_notification_states',
+    columns: ['studentAdmissionId'],
+  },
+  studentNotificationPreferences: {
+    table: 'student_notification_preferences',
+    columns: ['studentAdmissionId'],
+  },
+  attendanceReports: {
+    table: 'attendance_reports',
+    columns: [
+      'reportNumber',
+      'studentAdmissionId',
+      'studentId',
+      'academicSession',
+      'semester',
+      'reportType',
+      'format',
+      'status',
+      'expiresAt',
+    ],
+  },
 });
 
 async function createRuntimeMigrationsTable(pool) {

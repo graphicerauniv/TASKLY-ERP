@@ -30,6 +30,7 @@ export const requireStudent = asyncHandler(async (request, response, next) => {
       issuer: 'taskly-erp',
     });
     if (payload.role !== 'student') throw new Error('Invalid role');
+    if (payload.tokenUse === 'refresh') throw new Error('Refresh tokens cannot access APIs');
     const student = await db()
       .collection('admissions')
       .findOne({

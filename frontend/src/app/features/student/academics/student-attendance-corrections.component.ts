@@ -1,12 +1,6 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   LucideArrowLeft,
@@ -206,6 +200,12 @@ export class StudentAttendanceCorrectionsComponent {
     this.responseMessage.set(value.slice(0, 1000));
   }
 
+  scrollToResponse(): void {
+    document
+      .querySelector('.response-box')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   chooseAttachment(event: Event, response = false): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] || null;
@@ -268,7 +268,9 @@ export class StudentAttendanceCorrectionsComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);
-        this.formError.set(error.error?.message || 'The correction request could not be submitted.');
+        this.formError.set(
+          error.error?.message || 'The correction request could not be submitted.',
+        );
       },
     });
   }
@@ -320,6 +322,24 @@ export class StudentAttendanceCorrectionsComponent {
     });
   }
 
+  openAttachment(requestId: string, key: string, name: string): void {
+    const token = this.session.token();
+    if (!token) return;
+    this.api.studentAttendanceCorrectionAttachment(token, requestId, key).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.download = name;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+      error: () => this.formError.set('The proof file could not be opened.'),
+    });
+  }
+
   statusLabel(status: AttendanceCorrectionStatus): string {
     return {
       submitted: 'Submitted',
@@ -344,7 +364,9 @@ export class StudentAttendanceCorrectionsComponent {
   }
 
   formatBytes(bytes: number): string {
-    return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    return bytes < 1024 * 1024
+      ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+      : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
   private load(showLoading = true): void {

@@ -6,54 +6,129 @@
       <p>Report an incorrect attendance record and track every update.</p>
     </div>
     <div class="corrections-actions">
-      <button class="icon-button" type="button" aria-label="Search requests"><svg lucideSearch size="21"></svg></button>
-      <button class="icon-button" type="button" aria-label="Filter requests"><svg lucideFilter size="21"></svg></button>
-      <button class="primary-button" type="button" (click)="openCreate()"><svg lucidePlus size="21"></svg>New request</button>
+      <button class="icon-button" type="button" aria-label="Search requests">
+        <svg lucideSearch size="21"></svg>
+      </button>
+      <button class="icon-button" type="button" aria-label="Filter requests">
+        <svg lucideFilter size="21"></svg>
+      </button>
+      <button class="primary-button" type="button" (click)="openCreate()">
+        <svg lucidePlus size="21"></svg>New request
+      </button>
     </div>
   </header>
 
   @if (successMessage()) {
-    <div class="page-message page-message--success"><svg lucideCheck size="18"></svg>{{ successMessage() }}</div>
+    <div class="page-message page-message--success">
+      <svg lucideCheck size="18"></svg>{{ successMessage() }}
+    </div>
   }
 
   @if (loading()) {
     <div class="page-state">Loading correction requests…</div>
   } @else if (error()) {
-    <div class="page-state page-state--error"><svg lucideCircleAlert size="26"></svg>{{ error() }}</div>
+    <div class="page-state page-state--error">
+      <svg lucideCircleAlert size="26"></svg>{{ error() }}
+    </div>
   } @else if (feed(); as data) {
     <section class="status-tabs" aria-label="Correction request status">
-      <button type="button" [class.is-active]="filter() === 'all'" (click)="setFilter('all')"><svg lucideFileText size="21"></svg><span>All</span><b>{{ data.counts.all }}</b></button>
-      <button type="button" [class.is-active]="filter() === 'open'" (click)="setFilter('open')"><svg lucideFolderOpen size="21"></svg><span>Open</span><b>{{ data.counts.open }}</b></button>
-      <button type="button" data-tone="warning" [class.is-active]="filter() === 'needs-reply'" (click)="setFilter('needs-reply')"><svg lucideClock3 size="21"></svg><span>Needs reply</span><b>{{ data.counts.needsReply }}</b></button>
-      <button type="button" data-tone="success" [class.is-active]="filter() === 'approved'" (click)="setFilter('approved')"><svg lucideCheck size="21"></svg><span>Approved</span><b>{{ data.counts.approved }}</b></button>
-      <button type="button" data-tone="danger" [class.is-active]="filter() === 'rejected'" (click)="setFilter('rejected')"><svg lucideX size="21"></svg><span>Rejected</span><b>{{ data.counts.rejected }}</b></button>
+      <button type="button" [class.is-active]="filter() === 'all'" (click)="setFilter('all')">
+        <svg lucideFileText size="21"></svg><span>All</span><b>{{ data.counts.all }}</b>
+      </button>
+      <button type="button" [class.is-active]="filter() === 'open'" (click)="setFilter('open')">
+        <svg lucideFolderOpen size="21"></svg><span>Open</span><b>{{ data.counts.open }}</b>
+      </button>
+      <button
+        type="button"
+        data-tone="warning"
+        [class.is-active]="filter() === 'needs-reply'"
+        (click)="setFilter('needs-reply')"
+      >
+        <svg lucideClock3 size="21"></svg><span>Needs reply</span
+        ><b>{{ data.counts.needsReply }}</b>
+      </button>
+      <button
+        type="button"
+        data-tone="success"
+        [class.is-active]="filter() === 'approved'"
+        (click)="setFilter('approved')"
+      >
+        <svg lucideCheck size="21"></svg><span>Approved</span><b>{{ data.counts.approved }}</b>
+      </button>
+      <button
+        type="button"
+        data-tone="danger"
+        [class.is-active]="filter() === 'rejected'"
+        (click)="setFilter('rejected')"
+      >
+        <svg lucideX size="21"></svg><span>Rejected</span><b>{{ data.counts.rejected }}</b>
+      </button>
     </section>
 
     <section class="requests-card">
       <div class="requests-toolbar">
-        <label><svg lucideSearch size="20"></svg><input #requestSearch type="search" placeholder="Search ID or subject…" (input)="setSearch(requestSearch.value)" /></label>
-        <div><button type="button">All statuses <svg lucideChevronRight size="16"></svg></button><button type="button"><svg lucideCalendarDays size="17"></svg>All dates</button><button type="button">Newest first</button></div>
+        <label
+          ><svg lucideSearch size="20"></svg
+          ><input
+            #requestSearch
+            type="search"
+            placeholder="Search ID or subject…"
+            (input)="setSearch(requestSearch.value)"
+        /></label>
+        <div>
+          <button type="button">All statuses <svg lucideChevronRight size="16"></svg></button
+          ><button type="button"><svg lucideCalendarDays size="17"></svg>All dates</button
+          ><button type="button">Newest first</button>
+        </div>
       </div>
 
       <div class="request-table" role="table" aria-label="Correction requests">
-        <div class="request-table__head" role="row"><span>Request</span><span>Lecture</span><span>Correction</span><span>Submitted</span><span>Status</span><span></span></div>
+        <div class="request-table__head" role="row">
+          <span>Request</span><span>Lecture</span><span>Correction</span><span>Submitted</span
+          ><span>Status</span><span></span>
+        </div>
         @for (request of filteredRequests(); track request._id) {
           <button class="request-row" type="button" role="row" (click)="openRequest(request)">
-            <span class="request-number"><i><svg lucideFileText size="19"></svg></i><strong>{{ request.requestNumber }}</strong></span>
-            <span class="request-subject"><strong>{{ request.subjectName }}</strong><small>{{ request.attendanceDate | date: 'dd MMM' }} · {{ request.startTime || 'Time unavailable' }}</small></span>
-            <span class="status-change"><em [attr.data-status]="request.recordedStatus">{{ request.recordedStatus === 'present' ? 'P' : 'A' }}</em><svg lucideArrowRight size="17"></svg><em [attr.data-status]="request.requestedStatus">{{ request.requestedStatus === 'present' ? 'P' : 'A' }}</em></span>
+            <span class="request-number"
+              ><i><svg lucideFileText size="19"></svg></i
+              ><strong>{{ request.requestNumber }}</strong></span
+            >
+            <span class="request-subject"
+              ><strong>{{ request.subjectName }}</strong
+              ><small
+                >{{ request.attendanceDate | date: 'dd MMM' }} ·
+                {{ request.startTime || 'Time unavailable' }}</small
+              ></span
+            >
+            <span class="status-change"
+              ><em [attr.data-status]="request.recordedStatus">{{
+                request.recordedStatus === 'present' ? 'P' : 'A'
+              }}</em
+              ><svg lucideArrowRight size="17"></svg
+              ><em [attr.data-status]="request.requestedStatus">{{
+                request.requestedStatus === 'present' ? 'P' : 'A'
+              }}</em></span
+            >
             <span class="submitted-date">{{ request.createdAt | date: 'dd MMM yyyy' }}</span>
             <span class="status-pill" [attr.data-status]="request.status">
-              @if (request.status === 'approved') { <svg lucideCheck size="16"></svg> }
-              @else if (request.status === 'rejected') { <svg lucideX size="16"></svg> }
-              @else if (request.status === 'needs-reply') { <svg lucideCircleAlert size="16"></svg> }
-              @else { <svg lucideClock3 size="16"></svg> }
+              @if (request.status === 'approved') {
+                <svg lucideCheck size="16"></svg>
+              } @else if (request.status === 'rejected') {
+                <svg lucideX size="16"></svg>
+              } @else if (request.status === 'needs-reply') {
+                <svg lucideCircleAlert size="16"></svg>
+              } @else {
+                <svg lucideClock3 size="16"></svg>
+              }
               {{ statusLabel(request.status) }}
             </span>
             <svg lucideChevronRight size="19"></svg>
           </button>
         } @empty {
-          <div class="requests-empty"><svg lucideFileText size="30"></svg><strong>No correction requests found</strong><p>Change the filter or create a new request.</p></div>
+          <div class="requests-empty">
+            <svg lucideFileText size="30"></svg><strong>No correction requests found</strong>
+            <p>Change the filter or create a new request.</p>
+          </div>
         }
       </div>
       <footer>Showing {{ filteredRequests().length }} of {{ data.counts.all }} requests</footer>
@@ -62,94 +137,412 @@
 </div>
 
 @if (drawer()) {
-  <div class="drawer-backdrop" (click)="closeDrawer()"></div>
-  <aside class="correction-drawer" [class.correction-drawer--detail]="drawer() === 'detail'" role="dialog" aria-modal="true" [attr.aria-label]="drawer() === 'create' ? 'New correction request' : 'Correction request details'">
+  <button
+    class="drawer-backdrop"
+    type="button"
+    aria-label="Close correction request panel"
+    (click)="closeDrawer()"
+  ></button>
+  <aside
+    class="correction-drawer"
+    [class.correction-drawer--detail]="drawer() === 'detail'"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="
+      drawer() === 'create' ? 'New correction request' : 'Correction request details'
+    "
+  >
     @if (drawer() === 'create') {
       <header class="drawer-header">
-        <button type="button" (click)="closeDrawer()" aria-label="Close"><svg lucideX size="24"></svg></button>
+        <button type="button" (click)="closeDrawer()" aria-label="Close">
+          <svg lucideX size="24"></svg>
+        </button>
         <h2>New correction request</h2>
         <span>{{ step() }} of 3</span>
       </header>
       <div class="step-rail">
-        <div [class.is-done]="step() > 1" [class.is-active]="step() === 1"><i>@if (step() > 1) { <svg lucideCheck size="18"></svg> } @else { 1 }</i><span>Select</span></div>
-        <div [class.is-done]="step() > 2" [class.is-active]="step() === 2"><i>@if (step() > 2) { <svg lucideCheck size="18"></svg> } @else { 2 }</i><span>Explain</span></div>
+        <div [class.is-done]="step() > 1" [class.is-active]="step() === 1">
+          <i>
+            @if (step() > 1) {
+              <svg lucideCheck size="18"></svg>
+            } @else {
+              1
+            }</i
+          ><span>Select</span>
+        </div>
+        <div [class.is-done]="step() > 2" [class.is-active]="step() === 2">
+          <i>
+            @if (step() > 2) {
+              <svg lucideCheck size="18"></svg>
+            } @else {
+              2
+            }</i
+          ><span>Explain</span>
+        </div>
         <div [class.is-active]="step() === 3"><i>3</i><span>Review</span></div>
       </div>
 
       <div class="drawer-content">
         @if (step() === 1) {
           <section class="select-step">
-            <div class="drawer-section-heading"><div><h3>Select a lecture</h3><p>Choose the record that needs correction.</p></div><button type="button" aria-label="Filter lectures"><svg lucideFilter size="19"></svg></button></div>
-            <label class="drawer-search"><svg lucideSearch size="20"></svg><input #lectureSearch type="search" placeholder="Search lectures…" (input)="setRecordSearch(lectureSearch.value)" /></label>
+            <div class="drawer-section-heading">
+              <div>
+                <h3>Select a lecture</h3>
+                <p>Choose the record that needs correction.</p>
+              </div>
+              <button type="button" aria-label="Filter lectures">
+                <svg lucideFilter size="19"></svg>
+              </button>
+            </div>
+            <label class="drawer-search"
+              ><svg lucideSearch size="20"></svg
+              ><input
+                #lectureSearch
+                type="search"
+                placeholder="Search lectures…"
+                (input)="setRecordSearch(lectureSearch.value)"
+            /></label>
             <div class="lecture-list">
               @for (record of filteredRecords(); track record.recordId) {
-                <button type="button" [class.is-selected]="selectedRecord()?.recordId === record.recordId" (click)="chooseRecord(record)">
+                <button
+                  type="button"
+                  [class.is-selected]="selectedRecord()?.recordId === record.recordId"
+                  (click)="chooseRecord(record)"
+                >
                   <i><svg lucideFileText size="23"></svg></i>
-                  <span><strong>{{ record.subjectName }}</strong><small>{{ record.date | date: 'dd MMM' }} · {{ record.startTime || 'Time unavailable' }}</small></span>
-                  <em [attr.data-status]="record.status">{{ record.status === 'present' ? 'Present' : 'Absent' }}</em>
-                  <b>@if (selectedRecord()?.recordId === record.recordId) { <svg lucideCheck size="18"></svg> }</b>
+                  <span
+                    ><strong>{{ record.subjectName }}</strong
+                    ><small
+                      >{{ record.date | date: 'dd MMM' }} ·
+                      {{ record.startTime || 'Time unavailable' }}</small
+                    ></span
+                  >
+                  <em [attr.data-status]="record.status">{{
+                    record.status === 'present' ? 'Present' : 'Absent'
+                  }}</em>
+                  <b>
+                    @if (selectedRecord()?.recordId === record.recordId) {
+                      <svg lucideCheck size="18"></svg>
+                    }
+                  </b>
                 </button>
-              } @empty { <div class="drawer-empty">No attendance records match your search.</div> }
+              } @empty {
+                <div class="drawer-empty">No attendance records match your search.</div>
+              }
             </div>
           </section>
         } @else if (step() === 2) {
           <section class="explain-step">
             @if (selectedRecord(); as record) {
-              <div class="selected-lecture"><i><svg lucideFileText size="22"></svg></i><span><strong>{{ record.subjectName }}</strong><small>{{ record.date | date: 'dd MMM' }} · {{ record.startTime }}</small></span><button type="button" (click)="previousStep()"><svg lucidePencil size="17"></svg>Edit</button></div>
+              <div class="selected-lecture">
+                <i><svg lucideFileText size="22"></svg></i
+                ><span
+                  ><strong>{{ record.subjectName }}</strong
+                  ><small>{{ record.date | date: 'dd MMM' }} · {{ record.startTime }}</small></span
+                ><button type="button" (click)="previousStep()">
+                  <svg lucidePencil size="17"></svg>Edit
+                </button>
+              </div>
               <h3>What needs correction?</h3>
               <div class="reason-grid">
                 @for (reason of reasons; track reason.id) {
-                  <button type="button" [class.is-selected]="reasonType() === reason.id" (click)="chooseReason(reason.id)"><i>{{ reason.mark }}</i><span>{{ reason.label }}</span><b>@if (reasonType() === reason.id) { <svg lucideCheck size="17"></svg> }</b></button>
+                  <button
+                    type="button"
+                    [class.is-selected]="reasonType() === reason.id"
+                    (click)="chooseReason(reason.id)"
+                  >
+                    <i>{{ reason.mark }}</i
+                    ><span>{{ reason.label }}</span
+                    ><b>
+                      @if (reasonType() === reason.id) {
+                        <svg lucideCheck size="17"></svg>
+                      }
+                    </b>
+                  </button>
                 }
               </div>
-              <div class="correction-preview"><strong>Current status → Requested status</strong><div><em [attr.data-status]="record.status">{{ record.status | titlecase }}</em><svg lucideArrowRight size="22"></svg><em [attr.data-status]="record.status === 'absent' ? 'present' : 'absent'">{{ requestedStatus(record) }}</em></div></div>
-              <label class="note-field"><strong>Add a short note</strong><textarea #noteInput rows="4" maxlength="300" placeholder="e.g. I was present in class…" [value]="note()" (input)="setNote(noteInput.value)"></textarea><small>{{ note().length }}/300</small></label>
-              <div class="proof-field"><strong>Add proof <span>(optional)</span></strong><label><svg lucideUpload size="25"></svg><b>Add proof</b><small>PDF, JPG or PNG · Max 5 MB</small><input type="file" accept="application/pdf,image/png,image/jpeg" (change)="chooseAttachment($event)" /></label></div>
-              @if (attachment(); as file) { <div class="file-chip"><svg lucidePaperclip size="21"></svg><span><strong>{{ file.name }}</strong><small>{{ formatBytes(file.size) }}</small></span><button type="button" (click)="removeAttachment()" aria-label="Remove file"><svg lucideX size="18"></svg></button></div> }
-              <div class="duplicate-check"><svg lucideCheck size="18"></svg>No open request found for this lecture</div>
+              <div class="correction-preview">
+                <strong>Current status → Requested status</strong>
+                <div>
+                  <em [attr.data-status]="record.status">{{ record.status | titlecase }}</em
+                  ><svg lucideArrowRight size="22"></svg
+                  ><em [attr.data-status]="record.status === 'absent' ? 'present' : 'absent'">{{
+                    requestedStatus(record)
+                  }}</em>
+                </div>
+              </div>
+              <label class="note-field"
+                ><strong>Add a short note</strong
+                ><textarea
+                  #noteInput
+                  rows="4"
+                  maxlength="300"
+                  placeholder="e.g. I was present in class…"
+                  [value]="note()"
+                  (input)="setNote(noteInput.value)"
+                ></textarea
+                ><small>{{ note().length }}/300</small></label
+              >
+              <div class="proof-field">
+                <strong>Add proof <span>(optional)</span></strong
+                ><label
+                  ><svg lucideUpload size="25"></svg><b>Add proof</b
+                  ><small>PDF, JPG or PNG · Max 5 MB</small
+                  ><input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg"
+                    (change)="chooseAttachment($event)"
+                /></label>
+              </div>
+              @if (attachment(); as file) {
+                <div class="file-chip">
+                  <svg lucidePaperclip size="21"></svg
+                  ><span
+                    ><strong>{{ file.name }}</strong
+                    ><small>{{ formatBytes(file.size) }}</small></span
+                  ><button type="button" (click)="removeAttachment()" aria-label="Remove file">
+                    <svg lucideX size="18"></svg>
+                  </button>
+                </div>
+              }
+              <div class="duplicate-check">
+                <svg lucideCheck size="18"></svg>No open request found for this lecture
+              </div>
             }
           </section>
         } @else {
           @if (selectedRecord(); as record) {
             <section class="review-step">
-              <div class="review-hero"><span><svg lucideCheck size="26"></svg></span><h3>Ready to submit</h3><p>Review the details before sending your request.</p></div>
-              <div class="review-card"><h3>{{ record.subjectName }}</h3><p>{{ record.subjectCode }} · {{ record.date | date: 'dd MMM yyyy' }} · {{ record.startTime }}</p><div class="status-change status-change--large"><em [attr.data-status]="record.status">{{ record.status | titlecase }}</em><svg lucideArrowRight size="20"></svg><em [attr.data-status]="record.status === 'absent' ? 'present' : 'absent'">{{ requestedStatus(record) }}</em></div><dl><div><dt>Reason</dt><dd>{{ reasonLabel(reasonType()) }}</dd></div><div><dt>Note</dt><dd>{{ note() }}</dd></div><div><dt>Proof</dt><dd>{{ attachment()?.name || 'No attachment' }}</dd></div></dl></div>
+              <div class="review-hero">
+                <span><svg lucideCheck size="26"></svg></span>
+                <h3>Ready to submit</h3>
+                <p>Review the details before sending your request.</p>
+              </div>
+              <div class="review-card">
+                <h3>{{ record.subjectName }}</h3>
+                <p>
+                  {{ record.subjectCode }} · {{ record.date | date: 'dd MMM yyyy' }} ·
+                  {{ record.startTime }}
+                </p>
+                <div class="status-change status-change--large">
+                  <em [attr.data-status]="record.status">{{ record.status | titlecase }}</em
+                  ><svg lucideArrowRight size="20"></svg
+                  ><em [attr.data-status]="record.status === 'absent' ? 'present' : 'absent'">{{
+                    requestedStatus(record)
+                  }}</em>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Reason</dt>
+                    <dd>{{ reasonLabel(reasonType()) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Note</dt>
+                    <dd>{{ note() }}</dd>
+                  </div>
+                  <div>
+                    <dt>Proof</dt>
+                    <dd>{{ attachment()?.name || 'No attachment' }}</dd>
+                  </div>
+                </dl>
+              </div>
             </section>
           }
         }
       </div>
 
-      @if (formError()) { <div class="drawer-error"><svg lucideCircleAlert size="17"></svg>{{ formError() }}</div> }
+      @if (formError()) {
+        <div class="drawer-error"><svg lucideCircleAlert size="17"></svg>{{ formError() }}</div>
+      }
       <footer class="drawer-footer">
-        @if (step() === 1) { <button class="secondary-button" type="button" (click)="closeDrawer()">Cancel</button> } @else { <button class="secondary-button" type="button" (click)="previousStep()"><svg lucideArrowLeft size="18"></svg>Back</button> }
-        @if (step() < 3) { <button class="primary-button" type="button" (click)="nextStep()">Continue<svg lucideArrowRight size="18"></svg></button> } @else { <button class="primary-button" type="button" [disabled]="submitting()" (click)="submitRequest()"><svg lucideSend size="18"></svg>{{ submitting() ? 'Submitting…' : 'Submit request' }}</button> }
+        @if (step() === 1) {
+          <button class="secondary-button" type="button" (click)="closeDrawer()">Cancel</button>
+        } @else {
+          <button class="secondary-button" type="button" (click)="previousStep()">
+            <svg lucideArrowLeft size="18"></svg>Back
+          </button>
+        }
+        @if (step() < 3) {
+          <button class="primary-button" type="button" (click)="nextStep()">
+            Continue<svg lucideArrowRight size="18"></svg>
+          </button>
+        } @else {
+          <button
+            class="primary-button"
+            type="button"
+            [disabled]="submitting()"
+            (click)="submitRequest()"
+          >
+            <svg lucideSend size="18"></svg>{{ submitting() ? 'Submitting…' : 'Submit request' }}
+          </button>
+        }
       </footer>
     } @else if (selectedRequest(); as request) {
       <header class="drawer-header drawer-header--detail">
-        <button type="button" (click)="closeDrawer()" aria-label="Back"><svg lucideArrowLeft size="23"></svg></button>
+        <button type="button" (click)="closeDrawer()" aria-label="Back">
+          <svg lucideArrowLeft size="23"></svg>
+        </button>
         <h2>{{ request.requestNumber }}</h2>
-        <span class="status-pill" [attr.data-status]="request.status">{{ statusLabel(request.status) }}</span>
-        <button type="button" aria-label="More actions"><svg lucideEllipsisVertical size="22"></svg></button>
-        <button class="desktop-close" type="button" (click)="closeDrawer()" aria-label="Close"><svg lucideX size="23"></svg></button>
+        <span class="status-pill" [attr.data-status]="request.status">{{
+          statusLabel(request.status)
+        }}</span>
+        <button type="button" aria-label="More actions">
+          <svg lucideEllipsisVertical size="22"></svg>
+        </button>
+        <button class="desktop-close" type="button" (click)="closeDrawer()" aria-label="Close">
+          <svg lucideX size="23"></svg>
+        </button>
       </header>
       <div class="detail-content">
-        @if (request.status === 'needs-reply') { <div class="reply-banner"><svg lucideCircleAlert size="23"></svg><strong>Add proof or reply to continue</strong><button type="button" (click)="responseBox.scrollIntoView({ behavior: 'smooth' })">Respond<svg lucideChevronRight size="18"></svg></button></div> }
-        <section class="detail-lecture"><i><svg lucideFileText size="23"></svg></i><span><strong>{{ request.subjectName }}</strong><small>{{ request.attendanceDate | date: 'dd MMM' }} · {{ request.startTime }}</small></span><div><em [attr.data-status]="request.recordedStatus">{{ request.recordedStatus | titlecase }}</em><svg lucideArrowRight size="18"></svg><em [attr.data-status]="request.requestedStatus">{{ request.requestedStatus | titlecase }}</em></div></section>
+        @if (request.status === 'needs-reply') {
+          <div class="reply-banner">
+            <svg lucideCircleAlert size="23"></svg><strong>Add proof or reply to continue</strong
+            ><button type="button" (click)="scrollToResponse()">
+              Respond<svg lucideChevronRight size="18"></svg>
+            </button>
+          </div>
+        }
+        <section class="detail-lecture">
+          <i><svg lucideFileText size="23"></svg></i
+          ><span
+            ><strong>{{ request.subjectName }}</strong
+            ><small
+              >{{ request.attendanceDate | date: 'dd MMM' }} · {{ request.startTime }}</small
+            ></span
+          >
+          <div>
+            <em [attr.data-status]="request.recordedStatus">{{
+              request.recordedStatus | titlecase
+            }}</em
+            ><svg lucideArrowRight size="18"></svg
+            ><em [attr.data-status]="request.requestedStatus">{{
+              request.requestedStatus | titlecase
+            }}</em>
+          </div>
+        </section>
         <section class="timeline" aria-label="Request progress">
-          <div class="is-done"><i><svg lucideCheck size="17"></svg></i><span>Submitted<small>{{ request.createdAt | date: 'dd MMM' }}</small></span></div>
-          <div [class.is-done]="request.status !== 'submitted'"><i>@if (request.status !== 'submitted') { <svg lucideCheck size="17"></svg> } @else { 2 }</i><span>Review</span></div>
-          <div [class.is-active]="request.status === 'needs-reply'" [class.is-done]="['approved','rejected'].includes(request.status)"><i>3</i><span>Reply</span></div>
-          <div [class.is-done]="['approved','rejected'].includes(request.status)"><i>4</i><span>Decision</span></div>
+          <div class="is-done">
+            <i><svg lucideCheck size="17"></svg></i
+            ><span
+              >Submitted<small>{{ request.createdAt | date: 'dd MMM' }}</small></span
+            >
+          </div>
+          <div [class.is-done]="request.status !== 'submitted'">
+            <i>
+              @if (request.status !== 'submitted') {
+                <svg lucideCheck size="17"></svg>
+              } @else {
+                2
+              }</i
+            ><span>Review</span>
+          </div>
+          <div
+            [class.is-active]="request.status === 'needs-reply'"
+            [class.is-done]="['approved', 'rejected'].includes(request.status)"
+          >
+            <i>3</i><span>Reply</span>
+          </div>
+          <div [class.is-done]="['approved', 'rejected'].includes(request.status)">
+            <i>4</i><span>Decision</span>
+          </div>
         </section>
         <div class="detail-grid">
-          <section class="detail-card"><h3><svg lucideMessageSquare size="20"></svg>Your request</h3><p>{{ request.note }}</p><div class="status-change status-change--large"><em [attr.data-status]="request.recordedStatus">{{ request.recordedStatus | titlecase }}</em><svg lucideArrowRight size="18"></svg><em [attr.data-status]="request.requestedStatus">{{ request.requestedStatus | titlecase }}</em></div>@for (file of request.attachments; track file.key) { <a class="file-chip" [href]="file.url" target="_blank" rel="noopener"><svg lucidePaperclip size="20"></svg><span><strong>{{ file.name }}</strong><small>{{ formatBytes(file.size) }}</small></span><svg lucideChevronRight size="18"></svg></a> }</section>
-          <section class="detail-card"><h3><svg lucideBuilding2 size="20"></svg>Academic Office</h3>@for (message of request.messages; track message.createdAt) { <article class="office-message"><strong>{{ message.authorName }}</strong><time>{{ message.createdAt | date: 'dd MMM, h:mm a' }}</time><p>{{ message.message }}</p>@for (file of message.attachments; track file.key) { <a [href]="file.url" target="_blank" rel="noopener"><svg lucidePaperclip size="17"></svg>{{ file.name }}</a> }</article> } @empty { <div class="office-empty"><svg lucideClock3 size="21"></svg><p>Your request is in the Academic Office queue. Updates will appear here.</p></div> }</section>
+          <section class="detail-card">
+            <h3><svg lucideMessageSquare size="20"></svg>Your request</h3>
+            <p>{{ request.note }}</p>
+            <div class="status-change status-change--large">
+              <em [attr.data-status]="request.recordedStatus">{{
+                request.recordedStatus | titlecase
+              }}</em
+              ><svg lucideArrowRight size="18"></svg
+              ><em [attr.data-status]="request.requestedStatus">{{
+                request.requestedStatus | titlecase
+              }}</em>
+            </div>
+            @for (file of request.attachments; track file.key) {
+              <button
+                class="file-chip"
+                type="button"
+                (click)="openAttachment(request._id, file.key, file.name)"
+              >
+                <svg lucidePaperclip size="20"></svg
+                ><span
+                  ><strong>{{ file.name }}</strong
+                  ><small>{{ formatBytes(file.size) }}</small></span
+                ><svg lucideChevronRight size="18"></svg>
+              </button>
+            }
+          </section>
+          <section class="detail-card">
+            <h3><svg lucideBuilding2 size="20"></svg>Academic Office</h3>
+            @for (message of request.messages; track message.createdAt) {
+              <article class="office-message">
+                <strong>{{ message.authorName }}</strong
+                ><time>{{ message.createdAt | date: 'dd MMM, h:mm a' }}</time>
+                <p>{{ message.message }}</p>
+                @for (file of message.attachments; track file.key) {
+                  <button type="button" (click)="openAttachment(request._id, file.key, file.name)">
+                    <svg lucidePaperclip size="17"></svg>{{ file.name }}
+                  </button>
+                }
+              </article>
+            } @empty {
+              <div class="office-empty">
+                <svg lucideClock3 size="21"></svg>
+                <p>Your request is in the Academic Office queue. Updates will appear here.</p>
+              </div>
+            }
+          </section>
         </div>
         @if (request.status === 'needs-reply') {
-          <section #responseBox class="response-box"><h3>Send your response</h3><textarea #responseInput rows="3" maxlength="1000" placeholder="Write a reply for the Academic Office…" [value]="responseMessage()" (input)="setResponse(responseInput.value)"></textarea><div><label><svg lucideUpload size="18"></svg>Add proof<input type="file" accept="application/pdf,image/png,image/jpeg" (change)="chooseAttachment($event, true)" /></label>@if (responseAttachment(); as file) { <span>{{ file.name }}<button type="button" (click)="removeAttachment(true)"><svg lucideX size="15"></svg></button></span> }<button class="primary-button" type="button" [disabled]="submitting()" (click)="submitResponse()"><svg lucideSend size="17"></svg>Send response</button></div></section>
+          <section #responseBox class="response-box">
+            <h3>Send your response</h3>
+            <textarea
+              #responseInput
+              rows="3"
+              maxlength="1000"
+              placeholder="Write a reply for the Academic Office…"
+              [value]="responseMessage()"
+              (input)="setResponse(responseInput.value)"
+            ></textarea>
+            <div>
+              <label
+                ><svg lucideUpload size="18"></svg>Add proof<input
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg"
+                  (change)="chooseAttachment($event, true)"
+              /></label>
+              @if (responseAttachment(); as file) {
+                <span
+                  >{{ file.name
+                  }}<button type="button" (click)="removeAttachment(true)">
+                    <svg lucideX size="15"></svg></button
+                ></span>
+              }
+              <button
+                class="primary-button"
+                type="button"
+                [disabled]="submitting()"
+                (click)="submitResponse()"
+              >
+                <svg lucideSend size="17"></svg>Send response
+              </button>
+            </div>
+          </section>
         }
-        @if (formError()) { <div class="drawer-error"><svg lucideCircleAlert size="17"></svg>{{ formError() }}</div> }
-        <div class="detail-actions"><a [routerLink]="['/student/attendance/subjects', request.subjectId]"><svg lucideFileText size="19"></svg>Attendance record</a>@if (isOpen(request.status)) { <button type="button" [disabled]="submitting()" (click)="withdraw()"><svg lucideTrash2 size="19"></svg>Withdraw request</button> }</div>
+        @if (formError()) {
+          <div class="drawer-error"><svg lucideCircleAlert size="17"></svg>{{ formError() }}</div>
+        }
+        <div class="detail-actions">
+          <a [routerLink]="['/student/attendance/subjects', request.subjectId]"
+            ><svg lucideFileText size="19"></svg>Attendance record</a
+          >
+          @if (isOpen(request.status)) {
+            <button type="button" [disabled]="submitting()" (click)="withdraw()">
+              <svg lucideTrash2 size="19"></svg>Withdraw request
+            </button>
+          }
+        </div>
       </div>
     }
   </aside>

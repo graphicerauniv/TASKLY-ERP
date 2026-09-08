@@ -39,6 +39,14 @@ export const STUDENT_ROUTES: Routes = [
           ),
       },
       {
+        path: 'attendance/reports',
+        title: 'Attendance Reports & Downloads | GEU ERP',
+        loadComponent: () =>
+          import('./academics/student-attendance-reports.component').then(
+            (component) => component.StudentAttendanceReportsComponent,
+          ),
+      },
+      {
         path: 'attendance/corrections',
         title: 'Attendance Correction Requests | GEU ERP',
         loadComponent: () =>

@@ -57,6 +57,10 @@ import {
   StudentAttendanceRisk,
   StudentNotificationFeed,
   StudentNotificationPreferences,
+  AttendanceReport,
+  AttendanceReportConfig,
+  AttendanceReportFeed,
+  AttendanceReportPreview,
 } from './models';
 import type { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
@@ -247,9 +251,12 @@ export class ApiService {
     });
   }
   studentAttendanceAnalytics(token: string) {
-    return this.http.get<StudentAttendanceAnalytics>(`${API_BASE_URL}/student-attendance/analytics`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    return this.http.get<StudentAttendanceAnalytics>(
+      `${API_BASE_URL}/student-attendance/analytics`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
   }
   studentAttendanceRisk(token: string) {
     return this.http.get<StudentAttendanceRisk>(`${API_BASE_URL}/student-attendance/risk`, {
@@ -315,6 +322,16 @@ export class ApiService {
       { headers: { Authorization: `Bearer ${token}` } },
     );
   }
+  studentAttendanceCorrectionAttachment(token: string, requestId: string, key: string) {
+    return this.http.get(
+      `${API_BASE_URL}/student-attendance/correction-requests/${requestId}/attachment`,
+      {
+        params: { key },
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      },
+    );
+  }
   createStudentAttendanceCorrection(token: string, body: FormData) {
     return this.http.post<{ item: AttendanceCorrectionRequest }>(
       `${API_BASE_URL}/student-attendance/correction-requests`,
@@ -332,6 +349,38 @@ export class ApiService {
   withdrawStudentAttendanceCorrection(token: string, requestId: string) {
     return this.http.post<{ message: string }>(
       `${API_BASE_URL}/student-attendance/correction-requests/${requestId}/withdraw`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  studentAttendanceReports(token: string) {
+    return this.http.get<AttendanceReportFeed>(`${API_BASE_URL}/student-attendance/reports`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+  previewStudentAttendanceReport(token: string, body: AttendanceReportConfig) {
+    return this.http.post<{ preview: AttendanceReportPreview }>(
+      `${API_BASE_URL}/student-attendance/reports/preview`,
+      body,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  createStudentAttendanceReport(token: string, body: AttendanceReportConfig) {
+    return this.http.post<{ item: AttendanceReport }>(
+      `${API_BASE_URL}/student-attendance/reports`,
+      body,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  downloadStudentAttendanceReport(token: string, reportId: string) {
+    return this.http.get(`${API_BASE_URL}/student-attendance/reports/${reportId}/download`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'blob',
+    });
+  }
+  regenerateStudentAttendanceReport(token: string, reportId: string) {
+    return this.http.post<{ message: string }>(
+      `${API_BASE_URL}/student-attendance/reports/${reportId}/regenerate`,
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -527,7 +576,7 @@ export class ApiService {
     return this.http.post<{ message: string }>(`${API_BASE_URL}/admissions/${id}/password`, body);
   }
   studentLogin(studentId: string, password: string) {
-    return this.http.post<{ token: string; student: StudentSession }>(
+    return this.http.post<{ token: string; refreshToken: string; student: StudentSession }>(
       `${API_BASE_URL}/auth/student/login`,
       { studentId, password },
     );
@@ -551,7 +600,7 @@ export class ApiService {
     });
   }
   changeStudentPassword(token: string, password: string) {
-    return this.http.post<{ token: string; student: StudentSession }>(
+    return this.http.post<{ token: string; refreshToken: string; student: StudentSession }>(
       `${API_BASE_URL}/auth/student/change-password`,
       { password },
       { headers: { Authorization: `Bearer ${token}` } },

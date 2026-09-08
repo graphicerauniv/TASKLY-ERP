@@ -23,7 +23,7 @@ export const config = Object.freeze({
   jwtSecret: process.env.JWT_ACCESS_SECRET || '',
   jwtTtl: process.env.JWT_ACCESS_TTL || '8h',
   jwtRefreshTtl: process.env.JWT_REFRESH_TTL || '365d',
-  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:4200')
+  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:4200,http://127.0.0.1:4200')
     .split(',')
     .map((v) => v.trim())
     .filter(Boolean),
@@ -35,6 +35,7 @@ export const config = Object.freeze({
     bucket: process.env.S3_BUCKET || '',
     attendanceCorrectionBucket:
       process.env.ATTENDANCE_CORRECTION_S3_BUCKET || 'attandencecorrection',
+    attendanceReportsBucket: process.env.ATTENDANCE_REPORTS_S3_BUCKET || 'attendancereports',
     region: process.env.S3_REGION || 'us-east-1',
     endpoint: process.env.S3_ENDPOINT || '',
     accessKeyId: process.env.S3_ACCESS_KEY_ID || '',

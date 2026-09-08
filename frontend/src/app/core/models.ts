@@ -388,12 +388,7 @@ export interface StudentAttendanceAnalytics {
   planningThrough: string;
   syncedAt: string;
 }
-export type StudentAttendanceRiskStatus =
-  | 'critical'
-  | 'at-risk'
-  | 'watch'
-  | 'pending'
-  | 'on-track';
+export type StudentAttendanceRiskStatus = 'critical' | 'at-risk' | 'watch' | 'pending' | 'on-track';
 export interface StudentAttendanceRiskSubject extends StudentAttendanceSubject {
   upcomingLectures: number;
   requiredAttendance: number;
@@ -470,6 +465,53 @@ export interface StudentAttendanceDetail {
   schedule: StudentAttendanceSchedule[];
   records: StudentAttendanceRecord[];
 }
+export type AttendanceReportStatus = 'ready' | 'generating' | 'expired' | 'failed';
+export interface AttendanceReportConfig {
+  reportType: 'detailed' | 'summary' | 'monthly';
+  coverage: 'all' | 'selected';
+  subjectIds: string[];
+  period: 'semester' | 'month' | 'custom';
+  startDate?: string;
+  endDate?: string;
+  format: 'pdf' | 'csv';
+  includeLectureDetails: boolean;
+  includeSummaryPage: boolean;
+}
+export interface AttendanceReportPreview {
+  student: { name: string; studentId: string; academicSession: string; semester: number };
+  startDate: string;
+  endDate: string;
+  generatedAt: string;
+  subjects: StudentAttendanceSubject[];
+  overall: {
+    totalLectures: number;
+    presentLectures: number;
+    absentLectures: number;
+    attendancePercentage: number;
+  };
+  records: Array<{
+    date: string;
+    subjectName: string;
+    subjectCode: string;
+    status: 'present' | 'absent';
+    facultyName: string;
+  }>;
+}
+export interface AttendanceReport extends AttendanceReportConfig {
+  _id: string;
+  reportNumber: string;
+  status: AttendanceReportStatus;
+  subjectCount: number;
+  recordCount: number;
+  fileName: string;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+}
+export interface AttendanceReportFeed {
+  items: AttendanceReport[];
+  counts: { all: number; ready: number; generating: number; expired: number; failed: number };
+}
 export interface AttendanceCorrectionRequest {
   _id: string;
   requestNumber: string;
@@ -500,19 +542,9 @@ export interface AttendanceCorrectionRequest {
   updatedAt: string;
 }
 export type AttendanceCorrectionStatus =
-  | 'submitted'
-  | 'reviewing'
-  | 'needs-reply'
-  | 'approved'
-  | 'rejected'
-  | 'withdrawn';
+  'submitted' | 'reviewing' | 'needs-reply' | 'approved' | 'rejected' | 'withdrawn';
 export type AttendanceCorrectionReasonType =
-  | 'marked-absent'
-  | 'not-updated'
-  | 'class-cancelled'
-  | 'wrong-status'
-  | 'duplicate'
-  | 'other';
+  'marked-absent' | 'not-updated' | 'class-cancelled' | 'wrong-status' | 'duplicate' | 'other';
 export interface AttendanceCorrectionAttachment {
   name: string;
   bucket: string;

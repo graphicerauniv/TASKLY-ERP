@@ -135,11 +135,44 @@ authRouter.post(
       !(await argon2.verify(student.passwordHash, parsed.data.password))
     )
       return response.status(401).json({ message: 'The Student ID or password is incorrect.' });
-    const token = await studentToken(student);
+    const [token, refreshToken] = await Promise.all([
+      studentToken(student),
+      studentRefreshToken(student),
+    ]);
     await db()
       .collection('admissions')
       .updateOne({ _id: student._id }, { $set: { lastLoginAt: new Date() } });
-    response.json({ token, student: publicStudent(student) });
+    response.json({ token, refreshToken, student: publicStudent(student) });
+  }),
+);
+
+authRouter.post(
+  '/student/refresh',
+  asyncHandler(async (request, response) => {
+    const parsed = refreshSchema.safeParse(request.body);
+    if (!parsed.success)
+      return response.status(401).json({ message: 'A renewable student session is required.' });
+    try {
+      const { payload } = await jwtVerify(
+        parsed.data.refreshToken,
+        new TextEncoder().encode(config.jwtSecret),
+        { issuer: 'taskly-erp', audience: 'taskly-erp-student-refresh' },
+      );
+      if (payload.role !== 'student' || payload.tokenUse !== 'refresh')
+        throw new Error('Invalid student refresh token');
+      const student = await db()
+        .collection('admissions')
+        .findOne({ _id: id(payload.sub), status: 'approved', isActive: true });
+      if (!student)
+        return response.status(401).json({ message: 'Student account is unavailable.' });
+      const [token, refreshToken] = await Promise.all([
+        studentToken(student),
+        studentRefreshToken(student),
+      ]);
+      return response.json({ token, refreshToken, student: publicStudent(student) });
+    } catch {
+      return response.status(401).json({ message: 'Your renewable student session is invalid.' });
+    }
   }),
 );
 
@@ -246,7 +279,11 @@ authRouter.post(
         },
       );
     const student = { ...request.student, mustChangePassword: false };
-    response.json({ token: await studentToken(student), student: publicStudent(student) });
+    const [token, refreshToken] = await Promise.all([
+      studentToken(student),
+      studentRefreshToken(student),
+    ]);
+    response.json({ token, refreshToken, student: publicStudent(student) });
   }),
 );
 
@@ -285,12 +322,23 @@ function publicAdmin(admin) {
 }
 
 function studentToken(student) {
-  return new SignJWT({ role: 'student', studentId: student.studentId })
+  return new SignJWT({ role: 'student', studentId: student.studentId, tokenUse: 'access' })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(student._id.toString())
     .setIssuer('taskly-erp')
     .setIssuedAt()
     .setExpirationTime(config.jwtTtl)
+    .sign(new TextEncoder().encode(config.jwtSecret));
+}
+
+function studentRefreshToken(student) {
+  return new SignJWT({ role: 'student', tokenUse: 'refresh' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(student._id.toString())
+    .setIssuer('taskly-erp')
+    .setAudience('taskly-erp-student-refresh')
+    .setIssuedAt()
+    .setExpirationTime(config.jwtRefreshTtl)
     .sign(new TextEncoder().encode(config.jwtSecret));
 }
 

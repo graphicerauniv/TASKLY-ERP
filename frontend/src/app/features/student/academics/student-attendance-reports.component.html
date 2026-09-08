@@ -1,0 +1,400 @@
+<main class="reports-page">
+  <header class="reports-heading">
+    <div>
+      <nav>
+        <a routerLink="/student/attendance">Attendance</a><span>/</span>Reports &amp; Downloads
+      </nav>
+      <a class="mobile-back" routerLink="/student/attendance" aria-label="Back"
+        ><svg lucideArrowLeft></svg
+      ></a>
+      <h1>Reports <span>&amp; Downloads</span></h1>
+      <p>Create and access your attendance reports.</p>
+    </div>
+    <button class="primary" type="button" (click)="openCreate()">
+      <svg lucidePlus></svg>Create report
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="message message--error">
+      <svg lucideAlertTriangle></svg>{{ error() }}<button (click)="error.set('')">Dismiss</button>
+    </div>
+  }
+
+  <section class="report-stats" aria-label="Report status filters">
+    <button [class.active]="status() === 'all'" (click)="status.set('all')">
+      <svg lucideFileText></svg
+      ><span
+        >All<strong>{{ counts().all }}</strong></span
+      >
+    </button>
+    <button [class.active]="status() === 'ready'" (click)="status.set('ready')">
+      <svg lucideCheck></svg
+      ><span
+        >Ready<strong>{{ counts().ready }}</strong></span
+      >
+    </button>
+    <button [class.active]="status() === 'generating'" (click)="status.set('generating')">
+      <svg lucideClock3></svg
+      ><span
+        >Generating<strong>{{ counts().generating }}</strong></span
+      >
+    </button>
+    <button [class.active]="status() === 'expired'" (click)="status.set('expired')">
+      <svg lucideClock3></svg
+      ><span
+        >Expired<strong>{{ counts().expired }}</strong></span
+      >
+    </button>
+    <button [class.active]="status() === 'failed'" (click)="status.set('failed')">
+      <svg lucideAlertTriangle></svg
+      ><span
+        >Failed<strong>{{ counts().failed }}</strong></span
+      >
+    </button>
+  </section>
+
+  <section class="reports-card">
+    <div class="reports-toolbar">
+      <label
+        ><svg lucideSearch></svg
+        ><input
+          placeholder="Search reports..."
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+      /></label>
+      <button type="button"><svg lucideFilter></svg>All types</button>
+      <button type="button"><svg lucideCalendarDays></svg>All time</button>
+    </div>
+    @if (loading()) {
+      <div class="empty"><svg lucideRefreshCw class="spin"></svg>Loading reports...</div>
+    } @else if (!filtered().length) {
+      <div class="empty">
+        <svg lucideFileText></svg><strong>No reports yet</strong
+        ><span>Create your first attendance report when you need it.</span
+        ><button class="primary" (click)="openCreate()"><svg lucidePlus></svg>Create report</button>
+      </div>
+    } @else {
+      <div class="report-table report-table--head">
+        <span>Report</span><span>Coverage</span><span>Created</span><span>Format</span
+        ><span>Status</span><span>Action</span>
+      </div>
+      @for (item of filtered(); track item._id) {
+        <article class="report-table">
+          <div class="report-name">
+            <span [attr.data-format]="item.format">
+              @if (item.format === 'csv') {
+                <svg lucideFileSpreadsheet></svg>
+              } @else {
+                <svg lucideFileText></svg>
+              }
+            </span>
+            <div>
+              <strong>{{ item.reportNumber }}</strong
+              ><small>{{ label(item.reportType) }}</small>
+            </div>
+          </div>
+          <div>
+            <strong>{{
+              item.coverage === 'all' ? 'All subjects' : item.subjectCount + ' subjects'
+            }}</strong
+            ><small
+              >{{ item.startDate | date: 'dd MMM' }} -
+              {{ item.endDate | date: 'dd MMM yyyy' }}</small
+            >
+          </div>
+          <div>
+            <strong>{{ item.createdAt | date: 'dd MMM yyyy' }}</strong
+            ><small>{{ item.createdAt | date: 'shortTime' }}</small>
+          </div>
+          <div class="format">{{ item.format | uppercase }}</div>
+          <span class="status" [attr.data-status]="item.status">
+            @if (item.status === 'ready') {
+              <svg lucideCheck></svg>
+            } @else if (item.status === 'failed') {
+              <svg lucideAlertTriangle></svg>
+            } @else {
+              <svg lucideClock3></svg>
+            }
+            {{ item.status }}</span
+          >
+          <div class="actions">
+            @if (item.status === 'ready') {
+              <button title="Download" (click)="download(item)"><svg lucideDownload></svg></button>
+            } @else if (item.status === 'expired' || item.status === 'failed') {
+              <button title="Regenerate" (click)="regenerate(item)">
+                <svg lucideRefreshCw></svg>
+              </button>
+            }
+            <button title="More options"><svg lucideEllipsisVertical></svg></button>
+          </div>
+        </article>
+      }
+    }
+    <footer>
+      <span>Reports are retained for 180 days.</span
+      ><span><svg lucideInfo></svg> Secure, student-only downloads</span>
+    </footer>
+  </section>
+</main>
+
+@if (drawerOpen()) {
+  <div class="drawer-backdrop" (click)="close()"></div>
+  <aside
+    class="report-drawer"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Create attendance report"
+  >
+    <header>
+      <button type="button" (click)="close()"><svg lucideX></svg></button>
+      <div>
+        <h2>{{ step() === 1 ? 'Create attendance report' : 'Preview report' }}</h2>
+        <div class="steps">
+          <b [class.done]="step() === 2">{{ step() === 2 ? '✓' : '1' }}</b
+          ><span>Configure</span><i></i><b [class.active]="step() === 2">2</b><span>Preview</span>
+        </div>
+      </div>
+    </header>
+    @if (step() === 1) {
+      <div class="drawer-body configure">
+        <section>
+          <h3>Report type</h3>
+          <div class="choice-grid three">
+            <button
+              [class.selected]="config().reportType === 'detailed'"
+              (click)="update({ reportType: 'detailed' })"
+            >
+              <svg lucideFileText></svg><strong>Detailed attendance</strong
+              ><small>Full attendance breakdown</small>
+            </button>
+            <button
+              [class.selected]="config().reportType === 'summary'"
+              (click)="update({ reportType: 'summary' })"
+            >
+              <svg lucideFileSpreadsheet></svg><strong>Subject summary</strong
+              ><small>Totals by subject</small>
+            </button>
+            <button
+              [class.selected]="config().reportType === 'monthly'"
+              (click)="update({ reportType: 'monthly' })"
+            >
+              <svg lucideBarChart3></svg><strong>Monthly report</strong
+              ><small>Month-wise attendance</small>
+            </button>
+          </div>
+        </section>
+        <section>
+          <h3>Coverage</h3>
+          <div class="segmented">
+            <button
+              [class.selected]="config().coverage === 'all'"
+              (click)="update({ coverage: 'all' })"
+            >
+              All subjects</button
+            ><button
+              [class.selected]="config().coverage === 'selected'"
+              (click)="update({ coverage: 'selected' })"
+            >
+              Choose subjects
+            </button>
+          </div>
+          @if (config().coverage === 'selected') {
+            <div class="subject-picker">
+              @for (subject of subjects(); track subject.subjectId) {
+                <label
+                  ><input
+                    type="checkbox"
+                    [checked]="config().subjectIds.includes(subject.subjectId)"
+                    (change)="selectSubject(subject.subjectId)"
+                  />{{ subject.subjectName }}</label
+                >
+              }
+            </div>
+          }
+        </section>
+        <section>
+          <h3>Period</h3>
+          <div class="segmented three">
+            <button
+              [class.selected]="config().period === 'semester'"
+              (click)="update({ period: 'semester', startDate: undefined, endDate: undefined })"
+            >
+              Semester to date</button
+            ><button
+              [class.selected]="config().period === 'month'"
+              (click)="update({ period: 'month', startDate: undefined, endDate: undefined })"
+            >
+              This month</button
+            ><button
+              [class.selected]="config().period === 'custom'"
+              (click)="update({ period: 'custom' })"
+            >
+              Custom
+            </button>
+          </div>
+          @if (config().period === 'custom') {
+            <div class="dates">
+              <label
+                >From<input
+                  type="date"
+                  [ngModel]="config().startDate"
+                  (ngModelChange)="update({ startDate: $event })" /></label
+              ><label
+                >To<input
+                  type="date"
+                  [ngModel]="config().endDate"
+                  (ngModelChange)="update({ endDate: $event })"
+              /></label>
+            </div>
+          }
+        </section>
+        <section>
+          <h3>Format</h3>
+          <div class="choice-grid two">
+            <button
+              [class.selected]="config().format === 'pdf'"
+              (click)="update({ format: 'pdf' })"
+            >
+              <svg lucideFileText></svg><strong>PDF</strong
+              ><small>Best for printing and sharing</small></button
+            ><button
+              [class.selected]="config().format === 'csv'"
+              (click)="update({ format: 'csv' })"
+            >
+              <svg lucideFileSpreadsheet></svg><strong>CSV</strong><small>For data analysis</small>
+            </button>
+          </div>
+        </section>
+        <section class="toggles">
+          <label
+            ><span
+              ><strong>Include lecture details</strong
+              ><small>Include date, status and faculty</small></span
+            ><input
+              type="checkbox"
+              [checked]="config().includeLectureDetails"
+              (change)="
+                update({ includeLectureDetails: !config().includeLectureDetails })
+              " /></label
+          ><label
+            ><span
+              ><strong>Summary page</strong><small>Add an overview and key statistics</small></span
+            ><input
+              type="checkbox"
+              [checked]="config().includeSummaryPage"
+              (change)="update({ includeSummaryPage: !config().includeSummaryPage })"
+          /></label>
+        </section>
+      </div>
+      <footer>
+        <button (click)="close()">Cancel</button
+        ><button class="primary" [disabled]="busy()" (click)="toPreview()">
+          {{ busy() ? 'Preparing...' : 'Preview report' }}<svg lucideArrowRight></svg>
+        </button>
+      </footer>
+    } @else {
+      <div class="drawer-body preview-layout">
+        @if (preview(); as data) {
+          <div class="paper-wrap">
+            <article class="paper">
+              <header><strong>GEU</strong><span>GRAPHIC ERA UNIVERSITY</span></header>
+              <h2>Detailed Attendance Report</h2>
+              <p>Semester to date</p>
+              <dl>
+                <div>
+                  <dt>Student Name</dt>
+                  <dd>{{ data.student.name }}</dd>
+                </div>
+                <div>
+                  <dt>Student ID</dt>
+                  <dd>{{ data.student.studentId }}</dd>
+                </div>
+                <div>
+                  <dt>Period</dt>
+                  <dd>
+                    {{ data.startDate | date: 'dd MMM yyyy' }} -
+                    {{ data.endDate | date: 'dd MMM yyyy' }}
+                  </dd>
+                </div>
+              </dl>
+              <div class="paper-stats">
+                <span
+                  ><small>Overall Attendance</small
+                  ><strong>{{ data.overall.attendancePercentage }}%</strong></span
+                ><span
+                  ><small>Present</small><strong>{{ data.overall.presentLectures }}</strong></span
+                ><span
+                  ><small>Absent</small><strong>{{ data.overall.absentLectures }}</strong></span
+                ><span
+                  ><small>Conducted</small><strong>{{ data.overall.totalLectures }}</strong></span
+                >
+              </div>
+              <h3>Subject-wise Attendance</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Conducted</th>
+                    <th>Attendance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (subject of data.subjects; track subject.subjectId) {
+                    <tr>
+                      <td>{{ subject.subjectName }}</td>
+                      <td>{{ subject.presentLectures }}</td>
+                      <td>{{ subject.absentLectures }}</td>
+                      <td>{{ subject.totalLectures }}</td>
+                      <td>{{ subject.attendancePercentage }}%</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              <footer>Graphic Era University <span>Page 1</span></footer>
+            </article>
+          </div>
+          <section class="preview-settings">
+            <h3>Report settings</h3>
+            <p>
+              <svg lucideFileText></svg
+              ><span
+                ><small>Format</small><strong>{{ config().format | uppercase }}</strong></span
+              >
+            </p>
+            <p>
+              <svg lucideUsersRound></svg
+              ><span
+                ><small>Subjects</small
+                ><strong>{{
+                  config().coverage === 'all'
+                    ? 'All subjects'
+                    : config().subjectIds.length + ' selected'
+                }}</strong></span
+              >
+            </p>
+            <p>
+              <svg lucideCalendarDays></svg
+              ><span
+                ><small>Period</small
+                ><strong>{{ data.startDate }} - {{ data.endDate }}</strong></span
+              >
+            </p>
+            <div>
+              <svg lucideCheck></svg>Data updated {{ data.generatedAt | date: 'dd MMM, shortTime' }}
+            </div>
+          </section>
+        }
+      </div>
+      <footer>
+        <button (click)="step.set(1)"><svg lucideArrowLeft></svg>Back</button
+        ><button class="primary" [disabled]="busy()" (click)="generate()">
+          <svg lucideDownload></svg>{{ busy() ? 'Generating...' : 'Generate & download'
+          }}<svg lucideArrowRight></svg>
+        </button>
+      </footer>
+    }
+  </aside>
+}

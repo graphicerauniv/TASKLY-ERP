@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Private object storage for Taskly ERP attendance correction proof files.
+
+Parameters:
+  AttendanceCorrectionBucketName:
+    Type: String
+    Default: attandencecorrection
+    Description: Globally unique S3 bucket name used by ATTENDANCE_CORRECTION_S3_BUCKET.
+
+Resources:
+  AttendanceCorrectionBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Ref AttendanceCorrectionBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: AbortIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+
+  AttendanceCorrectionBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AttendanceCorrectionBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt AttendanceCorrectionBucket.Arn
+              - !Sub '${AttendanceCorrectionBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+Outputs:
+  BucketName:
+    Description: Set this value as ATTENDANCE_CORRECTION_S3_BUCKET.
+    Value: !Ref AttendanceCorrectionBucket
+  BucketArn:
+    Description: Grant the backend role read/write access to this ARN.
+    Value: !GetAtt AttendanceCorrectionBucket.Arn

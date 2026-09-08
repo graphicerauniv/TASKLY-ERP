@@ -73,9 +73,9 @@ export class StudentLoginComponent {
     this.error.set('');
     const { studentId, password } = this.form.getRawValue();
     this.api.studentLogin(studentId, password).subscribe({
-      next: ({ token, student }) => {
+      next: ({ token, refreshToken, student }) => {
         this.studentToken = token;
-        this.saveSession(token, student);
+        this.saveSession(token, student, refreshToken);
         this.loading.set(false);
         if (student.mustChangePassword) this.changeRequired.set(true);
         else void this.router.navigate(['/student/dashboard']);
@@ -97,8 +97,8 @@ export class StudentLoginComponent {
     this.loading.set(true);
     this.error.set('');
     this.api.changeStudentPassword(this.studentToken, password).subscribe({
-      next: ({ token, student }) => {
-        this.saveSession(token, student);
+      next: ({ token, refreshToken, student }) => {
+        this.saveSession(token, student, refreshToken);
         this.loading.set(false);
         void this.router.navigate(['/student/dashboard']);
       },
@@ -109,7 +109,11 @@ export class StudentLoginComponent {
     });
   }
 
-  private saveSession(token: string, student: import('../../../../../core/models').StudentSession) {
-    this.session.save(token, student);
+  private saveSession(
+    token: string,
+    student: import('../../../../../core/models').StudentSession,
+    refreshToken?: string,
+  ) {
+    this.session.save(token, student, refreshToken);
   }
 }

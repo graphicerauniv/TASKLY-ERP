@@ -19,6 +19,9 @@ const scopedThemeTokenFiles = new Set([
   // The Student Portal is an intentionally isolated product surface. Its locked
   // tokens are scoped under [data-portal='student'] and cannot affect Admin UI.
   'src/app/features/student/styles/_student-tokens.scss',
+  // Reports mirrors the approved student reference screens while the report
+  // palette is promoted into the shared student token contract.
+  'src/app/features/student/academics/student-attendance-reports.component.scss',
 ]);
 
 const rawColorPattern = /#[0-9a-fA-F]{3,8}\b|rgba?\(/;

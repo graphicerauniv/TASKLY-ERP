@@ -1,10 +1,12 @@
 import express from 'express';
 import multer from 'multer';
+import PDFDocument from 'pdfkit';
+import { Buffer } from 'node:buffer';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { db, id, serialize } from '../db.js';
 import { asyncHandler } from '../lib/async-handler.js';
-import { storeObject } from '../services/object-storage.js';
+import { readObject, storeObject } from '../services/object-storage.js';
 import { extensionForMimeType } from '../services/upload-rules.js';
 
 export const facultyAttendanceRouter = express.Router();
@@ -37,13 +39,17 @@ const correctionReasonTypes = [
   'duplicate',
   'other',
 ];
-const correctionRequestSchema = z.object({
-  recordId: z.string().trim().min(1),
-  reasonType: z.enum(correctionReasonTypes).optional().default('other'),
-  requestedStatus: z.enum(['present', 'absent']).optional(),
-  note: z.string().trim().min(10).max(300).optional(),
-  reason: z.string().trim().min(10).max(500).optional(),
-}).refine((value) => value.note || value.reason, { message: 'Add a short note explaining the correction.' });
+const correctionRequestSchema = z
+  .object({
+    recordId: z.string().trim().min(1),
+    reasonType: z.enum(correctionReasonTypes).optional().default('other'),
+    requestedStatus: z.enum(['present', 'absent']).optional(),
+    note: z.string().trim().min(10).max(300).optional(),
+    reason: z.string().trim().min(10).max(500).optional(),
+  })
+  .refine((value) => value.note || value.reason, {
+    message: 'Add a short note explaining the correction.',
+  });
 const correctionResponseSchema = z.object({
   message: z.string().trim().max(1000).optional().default(''),
 });
@@ -63,6 +69,17 @@ const alertPreferencesSchema = z.object({
   pending: z.boolean(),
   correction: z.boolean(),
   onTrack: z.boolean(),
+});
+const attendanceReportSchema = z.object({
+  reportType: z.enum(['detailed', 'summary', 'monthly']),
+  coverage: z.enum(['all', 'selected']).default('all'),
+  subjectIds: z.array(z.string().trim().min(1)).max(100).default([]),
+  period: z.enum(['semester', 'month', 'custom']).default('semester'),
+  startDate: attendanceDate.optional(),
+  endDate: attendanceDate.optional(),
+  format: z.enum(['pdf', 'csv']),
+  includeLectureDetails: z.boolean().default(true),
+  includeSummaryPage: z.boolean().default(true),
 });
 
 const REQUIRED_ATTENDANCE = 75;
@@ -92,10 +109,9 @@ function correctionView(document) {
       document.requestedStatus || (document.recordedStatus === 'absent' ? 'present' : 'absent'),
     attachments: document.attachments || [],
     messages: document.messages || [],
-    timeline:
-      document.timeline || [
-        { status: 'submitted', label: 'Submitted', at: document.createdAt },
-      ],
+    timeline: document.timeline || [
+      { status: 'submitted', label: 'Submitted', at: document.createdAt },
+    ],
   });
 }
 
@@ -287,13 +303,226 @@ function buildStudentAttendanceSummary(records, timetableEntries) {
   };
 }
 
+function reportPeriod(data, records) {
+  const today = new Date();
+  const endDate = data.endDate || today.toISOString().slice(0, 10);
+  let startDate = data.startDate;
+  if (!startDate && data.period === 'month') startDate = `${endDate.slice(0, 7)}-01`;
+  if (!startDate) {
+    const dates = records
+      .map((record) => record.date)
+      .filter(Boolean)
+      .sort();
+    startDate = dates[0] || endDate;
+  }
+  if (startDate > endDate)
+    throw Object.assign(new Error('The report start date must be before the end date.'), {
+      status: 400,
+    });
+  return { startDate, endDate };
+}
+
+async function attendanceReportPreview(student, input) {
+  const allRecords = await db()
+    .collection('attendanceRecords')
+    .find({
+      studentAdmissionId: student._id,
+      academicSession: student.academicSession,
+      semester: Number(student.currentSemester || 1),
+    })
+    .sort({ date: 1 })
+    .toArray();
+  const period = reportPeriod(input, allRecords);
+  const allowedSubjects = new Set(input.subjectIds.map(String));
+  const records = allRecords.filter(
+    (record) =>
+      record.date >= period.startDate &&
+      record.date <= period.endDate &&
+      (input.coverage === 'all' || allowedSubjects.has(String(record.subjectId))),
+  );
+  const summary = buildStudentAttendanceSummary(records, []);
+  return serialize({
+    student: {
+      name: student.studentName || 'Student',
+      studentId: student.studentId || student.applicationNumber || '',
+      academicSession: student.academicSession,
+      semester: Number(student.currentSemester || 1),
+    },
+    ...period,
+    generatedAt: new Date(),
+    ...summary,
+    records: input.includeLectureDetails
+      ? records.map((record) => ({
+          date: record.date,
+          subjectName: record.subjectName || 'Subject',
+          subjectCode: record.subjectCode || '',
+          status: record.status,
+          facultyName: record.facultyName || '',
+        }))
+      : [],
+  });
+}
+
+function csvReport(preview, input) {
+  const escape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+  const rows = [
+    ['Detailed Attendance Report'],
+    ['Student', preview.student.name],
+    ['Student ID', preview.student.studentId],
+    ['Period', `${preview.startDate} to ${preview.endDate}`],
+    [],
+    ['Subject', 'Code', 'Present', 'Absent', 'Conducted', 'Attendance'],
+    ...preview.subjects.map((subject) => [
+      subject.subjectName,
+      subject.subjectCode,
+      subject.presentLectures,
+      subject.absentLectures,
+      subject.totalLectures,
+      `${subject.attendancePercentage}%`,
+    ]),
+  ];
+  if (input.includeLectureDetails) {
+    rows.push([], ['Date', 'Subject', 'Code', 'Status', 'Faculty']);
+    rows.push(
+      ...preview.records.map((record) => [
+        record.date,
+        record.subjectName,
+        record.subjectCode,
+        record.status,
+        record.facultyName,
+      ]),
+    );
+  }
+  return Buffer.from(rows.map((row) => row.map(escape).join(',')).join('\r\n'), 'utf8');
+}
+
+export function pdfReport(preview, input) {
+  return new Promise((resolve, reject) => {
+    const document = new PDFDocument({
+      size: 'A4',
+      margin: 46,
+      bufferPages: true,
+      info: { Title: 'Attendance report' },
+    });
+    const chunks = [];
+    document.on('data', (chunk) => chunks.push(chunk));
+    document.on('end', () => resolve(Buffer.concat(chunks)));
+    document.on('error', reject);
+    const navy = '#071b53';
+    const blue = '#087cf0';
+    document
+      .fillColor(navy)
+      .font('Helvetica-Bold')
+      .fontSize(22)
+      .text('GEU  GRAPHIC ERA UNIVERSITY');
+    document.moveDown(1.4).fontSize(25).text('Detailed Attendance Report');
+    document.font('Helvetica').fontSize(11).fillColor('#5b6f9d').text('Semester to date');
+    document.moveDown();
+    const details = [
+      ['Student Name', preview.student.name],
+      ['Student ID', preview.student.studentId],
+      ['Period', `${preview.startDate} - ${preview.endDate}`],
+      ['Report Generated', new Date(preview.generatedAt).toLocaleString('en-IN')],
+    ];
+    let detailY = document.y;
+    for (const [label, value] of details) {
+      document.fillColor('#5b6f9d').font('Helvetica').text(label, 46, detailY, { width: 140 });
+      document.fillColor(navy).font('Helvetica-Bold').text(value, 188, detailY, { width: 350 });
+      detailY += 18;
+    }
+    const statTop = detailY + 14;
+    document.roundedRect(46, statTop, 503, 74, 8).fill('#f1f7ff');
+    const statY = statTop + 18;
+    const stats = [
+      ['Overall Attendance', `${preview.overall.attendancePercentage}%`, blue],
+      ['Present', preview.overall.presentLectures, '#08a45c'],
+      ['Absent', preview.overall.absentLectures, '#e6293f'],
+      ['Conducted', preview.overall.totalLectures, navy],
+    ];
+    stats.forEach(([label, value, color], index) => {
+      const x = 58 + index * 122;
+      document.fillColor('#5b6f9d').fontSize(9).text(label, x, statY);
+      document
+        .fillColor(color)
+        .font('Helvetica-Bold')
+        .fontSize(20)
+        .text(String(value), x, statY + 18)
+        .font('Helvetica');
+    });
+    document.y = statTop + 96;
+    document
+      .fillColor(navy)
+      .font('Helvetica-Bold')
+      .fontSize(15)
+      .text('Subject-wise Attendance', 46, document.y)
+      .moveDown(0.5);
+    const columns = [46, 250, 322, 388, 459];
+    const headers = ['Subject', 'Present', 'Absent', 'Conducted', 'Attendance'];
+    const row = (values, bold = false) => {
+      const y = document.y;
+      document
+        .rect(46, y - 4, 503, 24)
+        .fill(bold ? '#eaf3fc' : '#ffffff')
+        .stroke('#d7e4f3');
+      document
+        .fillColor(navy)
+        .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+        .fontSize(9);
+      values.forEach((value, index) =>
+        document.text(String(value), columns[index] + 5, y + 3, { width: index === 0 ? 190 : 75 }),
+      );
+      document.y = y + 24;
+    };
+    row(headers, true);
+    preview.subjects.forEach((subject) =>
+      row([
+        subject.subjectName,
+        subject.presentLectures,
+        subject.absentLectures,
+        subject.totalLectures,
+        `${subject.attendancePercentage}%`,
+      ]),
+    );
+    if (input.includeLectureDetails && preview.records.length) {
+      document.addPage();
+      document
+        .fillColor(navy)
+        .font('Helvetica-Bold')
+        .fontSize(18)
+        .text('Lecture records')
+        .moveDown();
+      preview.records.forEach((record) => {
+        document
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .text(`${record.date}  ${record.subjectName}`, { continued: true });
+        document
+          .fillColor(record.status === 'present' ? '#078b4d' : '#d9233a')
+          .text(`   ${record.status.toUpperCase()}`);
+        document.fillColor(navy);
+      });
+    }
+    const pages = document.bufferedPageRange();
+    for (let index = pages.start; index < pages.start + pages.count; index += 1) {
+      document.switchToPage(index);
+      document
+        .font('Helvetica')
+        .fontSize(8)
+        .fillColor('#7183aa')
+        .text(`Graphic Era University   |   Page ${index + 1} of ${pages.count}`, 46, 780, {
+          width: 503,
+          align: 'center',
+        });
+    }
+    document.end();
+  });
+}
+
 function utcDate(value) {
   if (!value) return null;
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
-  return new Date(
-    Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate()),
-  );
+  return new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate()));
 }
 
 function upcomingLecturesBySubject(timetableEntries, fallbackDays = 28) {
@@ -364,7 +593,7 @@ export function attendanceRisk(subject, upcomingLectures = 0) {
     Math.floor(subject.presentLectures / target - subject.totalLectures + 1e-9),
   );
   let status = 'on-track';
-  let message = `You can miss ${absenceBuffer} more ${absenceBuffer === 1 ? 'class' : 'classes'} and remain at or above ${REQUIRED_ATTENDANCE}%.`;
+  let message;
   if (subject.attendancePercentage < REQUIRED_ATTENDANCE) {
     status = 'critical';
     message =
@@ -423,7 +652,10 @@ async function studentRiskSnapshot(student) {
     }))
     .sort((left, right) => {
       const order = { critical: 0, 'at-risk': 1, watch: 2, pending: 3, 'on-track': 4 };
-      return order[left.status] - order[right.status] || left.attendancePercentage - right.attendancePercentage;
+      return (
+        order[left.status] - order[right.status] ||
+        left.attendancePercentage - right.attendancePercentage
+      );
     });
   return {
     subjects,
@@ -522,7 +754,8 @@ async function studentAlertFeed(student) {
       unread: items.filter((item) => !item.read).length,
       critical: items.filter((item) => item.type === 'critical').length,
       risk: items.filter((item) => item.type === 'risk').length,
-      updates: items.filter((item) => ['pending', 'correction', 'on-track'].includes(item.type)).length,
+      updates: items.filter((item) => ['pending', 'correction', 'on-track'].includes(item.type))
+        .length,
     },
     syncedAt: new Date().toISOString(),
   };
@@ -754,6 +987,158 @@ studentAttendanceRouter.get(
   }),
 );
 
+studentAttendanceRouter.get(
+  '/reports',
+  asyncHandler(async (request, response) => {
+    const documents = await db()
+      .collection('attendanceReports')
+      .find({ studentAdmissionId: request.student._id })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .toArray();
+    const now = new Date();
+    const items = documents.map((document) => ({
+      ...document,
+      status:
+        document.status === 'ready' && new Date(document.expiresAt) <= now
+          ? 'expired'
+          : document.status,
+    }));
+    response.json({
+      items: serialize(items),
+      counts: {
+        all: items.length,
+        ready: items.filter((item) => item.status === 'ready').length,
+        generating: items.filter((item) => item.status === 'generating').length,
+        expired: items.filter((item) => item.status === 'expired').length,
+        failed: items.filter((item) => item.status === 'failed').length,
+      },
+    });
+  }),
+);
+
+studentAttendanceRouter.post(
+  '/reports/preview',
+  asyncHandler(async (request, response) => {
+    const input = attendanceReportSchema.parse(request.body);
+    response.json({ preview: await attendanceReportPreview(request.student, input) });
+  }),
+);
+
+studentAttendanceRouter.post(
+  '/reports',
+  asyncHandler(async (request, response) => {
+    const input = attendanceReportSchema.parse(request.body);
+    const preview = await attendanceReportPreview(request.student, input);
+    const sequence = (await db().collection('attendanceReports').countDocuments({})) + 2001;
+    const reportNumber = `RPT-${sequence}`;
+    const extension = input.format;
+    const body =
+      input.format === 'pdf' ? await pdfReport(preview, input) : csvReport(preview, input);
+    const key = `${request.student.studentId || request.student._id}/${reportNumber.toLowerCase()}.${extension}`;
+    const stored = await storeObject({
+      bucket: config.storage.attendanceReportsBucket,
+      key,
+      body,
+      contentType: input.format === 'pdf' ? 'application/pdf' : 'text/csv; charset=utf-8',
+    });
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + 180);
+    const document = {
+      reportNumber,
+      studentAdmissionId: request.student._id,
+      studentId: request.student.studentId || '',
+      academicSession: request.student.academicSession,
+      semester: Number(request.student.currentSemester || 1),
+      reportType: input.reportType,
+      format: input.format,
+      coverage: input.coverage,
+      subjectIds: input.subjectIds,
+      startDate: preview.startDate,
+      endDate: preview.endDate,
+      includeLectureDetails: input.includeLectureDetails,
+      includeSummaryPage: input.includeSummaryPage,
+      status: 'ready',
+      subjectCount: preview.subjects.length,
+      recordCount: preview.records.length,
+      fileName: `attendance-report-${reportNumber.toLowerCase()}.${extension}`,
+      bucket: stored.bucket,
+      key: stored.key,
+      mimeType: input.format === 'pdf' ? 'application/pdf' : 'text/csv; charset=utf-8',
+      createdAt: now,
+      updatedAt: now,
+      expiresAt,
+    };
+    const inserted = await db().collection('attendanceReports').insertOne(document);
+    response.status(201).json({ item: serialize({ ...document, _id: inserted.insertedId }) });
+  }),
+);
+
+studentAttendanceRouter.get(
+  '/reports/:reportId/download',
+  asyncHandler(async (request, response) => {
+    const document = await db()
+      .collection('attendanceReports')
+      .findOne({
+        _id: id(request.params.reportId, 'reportId'),
+        studentAdmissionId: request.student._id,
+      });
+    if (!document)
+      return response.status(404).json({ message: 'Attendance report was not found.' });
+    if (new Date(document.expiresAt) <= new Date())
+      return response.status(410).json({ message: 'This report has expired. Generate it again.' });
+    const body = await readObject({ bucket: document.bucket, key: document.key });
+    response.setHeader('Content-Type', document.mimeType);
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(document.fileName)}`,
+    );
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.send(body);
+  }),
+);
+
+studentAttendanceRouter.post(
+  '/reports/:reportId/regenerate',
+  asyncHandler(async (request, response) => {
+    const collection = db().collection('attendanceReports');
+    const document = await collection.findOne({
+      _id: id(request.params.reportId, 'reportId'),
+      studentAdmissionId: request.student._id,
+    });
+    if (!document)
+      return response.status(404).json({ message: 'Attendance report was not found.' });
+    const input = attendanceReportSchema.parse({
+      reportType: document.reportType,
+      coverage: document.coverage,
+      subjectIds: document.subjectIds || [],
+      period: 'custom',
+      startDate: document.startDate,
+      endDate: new Date().toISOString().slice(0, 10),
+      format: document.format,
+      includeLectureDetails: document.includeLectureDetails,
+      includeSummaryPage: document.includeSummaryPage,
+    });
+    const preview = await attendanceReportPreview(request.student, input);
+    const body =
+      input.format === 'pdf' ? await pdfReport(preview, input) : csvReport(preview, input);
+    await storeObject({
+      bucket: document.bucket,
+      key: document.key,
+      body,
+      contentType: document.mimeType,
+    });
+    const expiresAt = new Date();
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + 180);
+    await collection.updateOne(
+      { _id: document._id },
+      { $set: { status: 'ready', endDate: preview.endDate, expiresAt, updatedAt: new Date() } },
+    );
+    response.json({ message: 'Attendance report regenerated.' });
+  }),
+);
+
 studentAttendanceRouter.post(
   '/alerts/read',
   asyncHandler(async (request, response) => {
@@ -902,7 +1287,9 @@ studentAttendanceRouter.get(
       .sort({ date: -1, updatedAt: -1 })
       .limit(250)
       .toArray();
-    const entryIds = [...new Set(records.map((record) => String(record.timetableEntryId)).filter(Boolean))];
+    const entryIds = [
+      ...new Set(records.map((record) => String(record.timetableEntryId)).filter(Boolean)),
+    ];
     const entries = entryIds.length
       ? await db()
           .collection('timetableEntries')
@@ -933,7 +1320,11 @@ studentAttendanceRouter.get(
       ...new Map(
         items.map((item) => [
           String(item.subjectId),
-          { subjectId: item.subjectId, subjectName: item.subjectName, subjectCode: item.subjectCode },
+          {
+            subjectId: item.subjectId,
+            subjectName: item.subjectName,
+            subjectCode: item.subjectCode,
+          },
         ]),
       ).values(),
     ];
@@ -955,7 +1346,9 @@ studentAttendanceRouter.get(
       .limit(100)
       .toArray();
     const normalized = documents.map(correctionView);
-    const search = String(request.query.search || '').trim().toLowerCase();
+    const search = String(request.query.search || '')
+      .trim()
+      .toLowerCase();
     const status = String(request.query.status || 'all');
     const items = normalized.filter((item) => {
       const matchesSearch =
@@ -985,12 +1378,44 @@ studentAttendanceRouter.get(
 studentAttendanceRouter.get(
   '/correction-requests/:requestId',
   asyncHandler(async (request, response) => {
-    const document = await db().collection('attendanceCorrectionRequests').findOne({
-      _id: id(request.params.requestId, 'requestId'),
-      studentAdmissionId: request.student._id,
-    });
-    if (!document) return response.status(404).json({ message: 'Correction request was not found.' });
+    const document = await db()
+      .collection('attendanceCorrectionRequests')
+      .findOne({
+        _id: id(request.params.requestId, 'requestId'),
+        studentAdmissionId: request.student._id,
+      });
+    if (!document)
+      return response.status(404).json({ message: 'Correction request was not found.' });
     response.json({ item: correctionView(document) });
+  }),
+);
+
+studentAttendanceRouter.get(
+  '/correction-requests/:requestId/attachment',
+  asyncHandler(async (request, response) => {
+    const document = await db()
+      .collection('attendanceCorrectionRequests')
+      .findOne({
+        _id: id(request.params.requestId, 'requestId'),
+        studentAdmissionId: request.student._id,
+      });
+    if (!document)
+      return response.status(404).json({ message: 'Correction request was not found.' });
+    const requestedKey = String(request.query.key || '');
+    const attachments = [
+      ...(document.attachments || []),
+      ...(document.messages || []).flatMap((message) => message.attachments || []),
+    ];
+    const attachment = attachments.find((item) => item.key === requestedKey);
+    if (!attachment) return response.status(404).json({ message: 'Proof file was not found.' });
+    const body = await readObject({ bucket: attachment.bucket, key: attachment.key });
+    response.setHeader('Content-Type', attachment.mimeType || 'application/octet-stream');
+    response.setHeader(
+      'Content-Disposition',
+      `inline; filename*=UTF-8''${encodeURIComponent(attachment.name || 'proof')}`,
+    );
+    response.setHeader('Cache-Control', 'private, max-age=300');
+    response.send(body);
   }),
 );
 
@@ -1008,18 +1433,28 @@ studentAttendanceRouter.post(
         semester: Number(request.student.currentSemester || 1),
       });
     if (!record) return response.status(404).json({ message: 'Attendance record was not found.' });
-    const existing = await db().collection('attendanceCorrectionRequests').findOne({
-      attendanceRecordId: record._id,
-      studentAdmissionId: request.student._id,
-      status: { $in: OPEN_CORRECTION_STATUSES },
-    });
+    const existing = await db()
+      .collection('attendanceCorrectionRequests')
+      .findOne({
+        attendanceRecordId: record._id,
+        studentAdmissionId: request.student._id,
+        status: { $in: OPEN_CORRECTION_STATUSES },
+      });
     if (existing)
-      return response.status(409).json({ message: 'An open correction request already exists for this lecture.' });
+      return response
+        .status(409)
+        .json({ message: 'An open correction request already exists for this lecture.' });
 
-    const entry = await db().collection('timetableEntries').findOne({ _id: record.timetableEntryId });
-    const attachment = await storeCorrectionAttachment(request.file, request.student.studentId || String(request.student._id));
+    const entry = await db()
+      .collection('timetableEntries')
+      .findOne({ _id: record.timetableEntryId });
+    const attachment = await storeCorrectionAttachment(
+      request.file,
+      request.student.studentId || String(request.student._id),
+    );
     const now = new Date();
-    const sequence = (await db().collection('attendanceCorrectionRequests').countDocuments({})) + 1001;
+    const sequence =
+      (await db().collection('attendanceCorrectionRequests').countDocuments({})) + 1001;
     const document = {
       requestNumber: `CR-${sequence}`,
       attendanceRecordId: record._id,
@@ -1040,8 +1475,7 @@ studentAttendanceRouter.post(
       roomName: entry?.roomName || '',
       classType: entry?.classType || 'Lecture',
       recordedStatus: record.status,
-      requestedStatus:
-        data.requestedStatus || (record.status === 'absent' ? 'present' : 'absent'),
+      requestedStatus: data.requestedStatus || (record.status === 'absent' ? 'present' : 'absent'),
       reasonType: data.reasonType,
       note: data.note || data.reason,
       reason: data.note || data.reason,
@@ -1068,7 +1502,8 @@ studentAttendanceRouter.post(
       _id: id(request.params.requestId, 'requestId'),
       studentAdmissionId: request.student._id,
     });
-    if (!document) return response.status(404).json({ message: 'Correction request was not found.' });
+    if (!document)
+      return response.status(404).json({ message: 'Correction request was not found.' });
     if (!OPEN_CORRECTION_STATUSES.includes(document.status))
       return response.status(409).json({ message: 'This correction request is already closed.' });
     const attachment = await storeCorrectionAttachment(
@@ -1119,7 +1554,8 @@ studentAttendanceRouter.post(
       _id: id(request.params.requestId, 'requestId'),
       studentAdmissionId: request.student._id,
     });
-    if (!document) return response.status(404).json({ message: 'Correction request was not found.' });
+    if (!document)
+      return response.status(404).json({ message: 'Correction request was not found.' });
     if (!OPEN_CORRECTION_STATUSES.includes(document.status))
       return response.status(409).json({ message: 'Only an open request can be withdrawn.' });
     const now = new Date();
@@ -1143,7 +1579,9 @@ attendanceCorrectionsAdminRouter.get(
       .sort({ updatedAt: -1, createdAt: -1 })
       .limit(250)
       .toArray();
-    const search = String(request.query.search || '').trim().toLowerCase();
+    const search = String(request.query.search || '')
+      .trim()
+      .toLowerCase();
     const status = String(request.query.status || 'all');
     const items = documents
       .map(correctionView)
@@ -1162,10 +1600,13 @@ attendanceCorrectionsAdminRouter.get(
 attendanceCorrectionsAdminRouter.get(
   '/:requestId',
   asyncHandler(async (request, response) => {
-    const document = await db().collection('attendanceCorrectionRequests').findOne({
-      _id: id(request.params.requestId, 'requestId'),
-    });
-    if (!document) return response.status(404).json({ message: 'Correction request was not found.' });
+    const document = await db()
+      .collection('attendanceCorrectionRequests')
+      .findOne({
+        _id: id(request.params.requestId, 'requestId'),
+      });
+    if (!document)
+      return response.status(404).json({ message: 'Correction request was not found.' });
     response.json({ item: correctionView(document) });
   }),
 );
@@ -1176,7 +1617,8 @@ attendanceCorrectionsAdminRouter.patch(
     const data = correctionAdminUpdateSchema.parse(request.body);
     const collection = db().collection('attendanceCorrectionRequests');
     const document = await collection.findOne({ _id: id(request.params.requestId, 'requestId') });
-    if (!document) return response.status(404).json({ message: 'Correction request was not found.' });
+    if (!document)
+      return response.status(404).json({ message: 'Correction request was not found.' });
     const now = new Date();
     const message = {
       authorRole: 'academic-office',
@@ -1186,10 +1628,12 @@ attendanceCorrectionsAdminRouter.patch(
       createdAt: now,
     };
     if (data.status === 'approved') {
-      await db().collection('attendanceRecords').updateOne(
-        { _id: document.attendanceRecordId },
-        { $set: { status: document.requestedStatus || 'present', updatedAt: now } },
-      );
+      await db()
+        .collection('attendanceRecords')
+        .updateOne(
+          { _id: document.attendanceRecordId },
+          { $set: { status: document.requestedStatus || 'present', updatedAt: now } },
+        );
     }
     await collection.updateOne(
       { _id: document._id },

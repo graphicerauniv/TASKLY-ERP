@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
+import { retry, throwError, timer } from 'rxjs';
 import {
   LucideAlertTriangle,
   LucideCheck,
@@ -13,13 +15,7 @@ import { StudentSessionService } from '../shared/services/student-session.servic
 import { StudentSubjectIconComponent } from '../shared/components/student-subject-icon/student-subject-icon.component';
 
 interface AttendanceTool {
-  readonly id:
-    | 'overview'
-    | 'subjects'
-    | 'analysis'
-    | 'alerts'
-    | 'corrections'
-    | 'reports';
+  readonly id: 'overview' | 'subjects' | 'analysis' | 'alerts' | 'corrections' | 'reports';
   readonly title: string;
   readonly description: string;
   readonly image: string;
@@ -104,6 +100,7 @@ export class StudentAttendanceComponent {
       description: 'Download attendance reports',
       image: '/assets/student/attendance/reports-downloads.webp',
       tone: 'reports',
+      route: ['/student/attendance/reports'],
     },
   ];
 
@@ -184,19 +181,36 @@ export class StudentAttendanceComponent {
     }
     if (!isRefresh) this.loading.set(true);
     this.error.set('');
-    this.api.studentAttendance(token).subscribe({
-      next: (result) => {
-        this.subjects.set(result.subjects);
-        this.overall.set(result.overall);
-        this.lastUpdated.set(new Date());
-        this.loading.set(false);
-        this.refreshing.set(false);
-      },
-      error: () => {
-        this.error.set('Your attendance is temporarily unavailable.');
-        this.loading.set(false);
-        this.refreshing.set(false);
-      },
-    });
+    this.api
+      .studentAttendance(token)
+      .pipe(
+        retry({
+          count: 2,
+          delay: (requestError: HttpErrorResponse, retryCount) =>
+            requestError.status === 0 || requestError.status >= 500
+              ? timer(retryCount * 600)
+              : throwError(() => requestError),
+        }),
+      )
+      .subscribe({
+        next: (result) => {
+          this.subjects.set(result.subjects);
+          this.overall.set(result.overall);
+          this.lastUpdated.set(new Date());
+          this.loading.set(false);
+          this.refreshing.set(false);
+        },
+        error: (requestError: HttpErrorResponse) => {
+          this.error.set(
+            requestError.status === 401
+              ? 'Your student session has expired. Sign in again to continue.'
+              : requestError.status === 0
+                ? 'The attendance service could not be reached. Check the API connection and try again.'
+                : requestError.error?.message || 'Your attendance is temporarily unavailable.',
+          );
+          this.loading.set(false);
+          this.refreshing.set(false);
+        },
+      });
   }
 }
