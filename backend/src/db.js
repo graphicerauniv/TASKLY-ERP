@@ -6,8 +6,8 @@ import { syncActiveStudent } from './services/active-student.js';
 import { syncAdmissionIdentity } from './services/admission-identity.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-06-v23';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-06-v23';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-07-v24';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-07-v24';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -321,6 +321,28 @@ async function ensureIndexes(databaseInstance) {
         date: -1,
         subjectId: 1,
       }),
+    () =>
+      databaseInstance
+        .collection('attendanceCorrectionRequests')
+        .createIndex({ studentAdmissionId: 1, status: 1, createdAt: -1 }),
+    () =>
+      databaseInstance
+        .collection('attendanceCorrectionRequests')
+        .createIndex(
+          { attendanceRecordId: 1 },
+          { unique: true, partialFilterExpression: { status: 'pending' } },
+        ),
+    () =>
+      databaseInstance
+        .collection('attendanceCorrectionRequests')
+        .createIndex({ requestNumber: 1 }, { unique: true, sparse: true }),
+    () =>
+      databaseInstance
+        .collection('attendanceCorrectionRequests')
+        .createIndex(
+          { attendanceRecordId: 1, studentAdmissionId: 1, active: 1 },
+          { unique: true, partialFilterExpression: { active: true } },
+        ),
     () =>
       databaseInstance
         .collection('forms')

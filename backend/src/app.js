@@ -15,7 +15,12 @@ import { hostelsRouter } from './routes/hostels.routes.js';
 import { feesRouter } from './routes/fees.routes.js';
 import { paymentsRouter } from './routes/payments.routes.js';
 import { academicsRouter, studentAcademicsRouter } from './routes/academics.routes.js';
-import { facultyAttendanceRouter, studentAttendanceRouter } from './routes/attendance.routes.js';
+import {
+  attendanceCorrectionsAdminRouter,
+  facultyAttendanceRouter,
+  studentAttendanceRouter,
+} from './routes/attendance.routes.js';
+import { studentSupportRouter } from './routes/student-support.routes.js';
 
 export function createApp() {
   const app = express();
@@ -57,9 +62,15 @@ export function createApp() {
   app.use(`${config.apiPrefix}/hostels`, requireAdmin, hostelsRouter);
   app.use(`${config.apiPrefix}/fees`, requireAdmin, feesRouter);
   app.use(`${config.apiPrefix}/academics`, requireAdmin, academicsRouter);
+  app.use(
+    `${config.apiPrefix}/attendance-corrections`,
+    requireAdmin,
+    attendanceCorrectionsAdminRouter,
+  );
   app.use(`${config.apiPrefix}/student-academics`, requireStudent, studentAcademicsRouter);
   app.use(`${config.apiPrefix}/faculty-attendance`, requireFaculty, facultyAttendanceRouter);
   app.use(`${config.apiPrefix}/student-attendance`, requireStudent, studentAttendanceRouter);
+  app.use(`${config.apiPrefix}/student-support`, requireStudent, studentSupportRouter);
   app.use(`${config.apiPrefix}/payments`, paymentsRouter);
   app.use(notFound);
   app.use(errorHandler);

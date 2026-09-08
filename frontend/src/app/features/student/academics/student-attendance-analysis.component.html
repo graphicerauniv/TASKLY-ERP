@@ -1,0 +1,364 @@
+<div class="student-analysis-page" aria-labelledby="student-analysis-title">
+  <header class="student-analysis-heading">
+    <nav aria-label="Breadcrumb">
+      <a routerLink="/student/attendance">Attendance</a><b>/</b><strong>Analyze</strong>
+    </nav>
+    <div class="student-analysis-heading__title">
+      <img
+        src="/assets/student/attendance/analyze-attendance.webp"
+        width="320"
+        height="320"
+        alt=""
+        aria-hidden="true"
+      />
+      <span>
+        <h1 id="student-analysis-title">Analyze Attendance</h1>
+        <p>Understand your attendance, subject by subject.</p>
+      </span>
+    </div>
+    <button
+      type="button"
+      class="student-analysis-refresh"
+      [disabled]="loading() || refreshing()"
+      (click)="refresh()"
+    >
+      <svg lucideRefreshCw size="18" [class.is-spinning]="refreshing()" aria-hidden="true"></svg>
+      <span>Live data</span>
+    </button>
+  </header>
+
+  @if (loading()) {
+    <section class="student-analysis-state" role="status" aria-live="polite">
+      <span class="student-analysis-state__spinner" aria-hidden="true"></span>
+      <strong>Building your attendance analysis</strong>
+      <p>Calculating subject performance and timetable projections…</p>
+    </section>
+  } @else if (error()) {
+    <section class="student-analysis-state student-analysis-state--error" role="alert">
+      <svg lucideAlertTriangle size="28" aria-hidden="true"></svg>
+      <strong>Analysis could not be loaded</strong>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="refresh()">Try again</button>
+    </section>
+  } @else {
+    <section class="student-analysis-summary" aria-label="Attendance summary">
+      <article class="student-analysis-summary__card student-analysis-summary__card--attended">
+        <span><svg lucideGraduationCap size="26" aria-hidden="true"></svg></span>
+        <div><small>Attended</small><strong>{{ overall().presentLectures }}</strong><p>Lectures attended</p></div>
+      </article>
+      <article class="student-analysis-summary__card student-analysis-summary__card--conducted">
+        <span><svg lucideBookOpen size="25" aria-hidden="true"></svg></span>
+        <div><small>Conducted</small><strong>{{ overall().totalLectures }}</strong><p>Total lectures conducted</p></div>
+      </article>
+      <article class="student-analysis-summary__card student-analysis-summary__card--absent">
+        <span><svg lucideUserRound size="25" aria-hidden="true"></svg></span>
+        <div><small>Absent</small><strong>{{ overall().absentLectures }}</strong><p>Lectures missed</p></div>
+      </article>
+      <article class="student-analysis-summary__card student-analysis-summary__card--overall">
+        <span class="student-analysis-summary__donut" aria-hidden="true"></span>
+        <div><small>Overall Attendance</small><strong>{{ formatPercentage(overall().attendancePercentage) }}%</strong><p>Across all subjects</p></div>
+      </article>
+    </section>
+
+    <section class="student-analysis-workspace" aria-labelledby="student-analysis-subjects-title">
+      <header class="student-analysis-workspace__header">
+        <div>
+          <h2 id="student-analysis-subjects-title">Subject analysis · {{ subjects().length }}</h2>
+          <p>Attendance breakdown for each enrolled subject.</p>
+        </div>
+        <span><svg lucideInfo size="17" aria-hidden="true"></svg> Select subjects to compare</span>
+      </header>
+
+      <div class="student-analysis-toolbar">
+        <label class="student-analysis-search">
+          <svg lucideSearch size="19" aria-hidden="true"></svg>
+          <span class="student-analysis-visually-hidden">Search subjects</span>
+          <input
+            type="search"
+            placeholder="Search subjects…"
+            [ngModel]="search()"
+            (ngModelChange)="updateSearch($event)"
+          />
+        </label>
+        <label class="student-analysis-select">
+          <span class="student-analysis-visually-hidden">Filter subjects</span>
+          <select [ngModel]="filter()" (ngModelChange)="updateFilter($event)">
+            <option value="all">All subjects</option>
+            <option value="on-track">On track</option>
+            <option value="attention">Below target</option>
+          </select>
+          <svg lucideChevronDown size="16" aria-hidden="true"></svg>
+        </label>
+        <label class="student-analysis-select">
+          <span class="student-analysis-visually-hidden">Sort subjects</span>
+          <select [ngModel]="sort()" (ngModelChange)="updateSort($event)">
+            <option value="lowest">Lowest attendance</option>
+            <option value="highest">Highest attendance</option>
+            <option value="subject">Subject name</option>
+          </select>
+          <svg lucideChevronDown size="16" aria-hidden="true"></svg>
+        </label>
+        <button
+          type="button"
+          class="student-analysis-compare"
+          [disabled]="selectedSubjects().length < 2"
+          (click)="openComparison()"
+        >
+          <svg lucideUsersRound size="18" aria-hidden="true"></svg>
+          Compare selected
+          @if (selectedSubjects().length) { <b>{{ selectedSubjects().length }}</b> }
+        </button>
+      </div>
+
+      <div class="student-analysis-legend" aria-label="Chart legend">
+        <span><i class="is-attended"></i>Attended</span>
+        <span><i class="is-absent"></i>Absent</span>
+      </div>
+
+      <div class="student-analysis-table" role="table" aria-label="Subject attendance analysis">
+        <div class="student-analysis-table__head" role="row">
+          <span role="columnheader" aria-label="Select"></span>
+          <span role="columnheader">Subject</span>
+          <span role="columnheader">Attendance split</span>
+          <span role="columnheader">Current</span>
+          <span role="columnheader" aria-label="Open"></span>
+        </div>
+        @for (subject of filteredSubjects(); track subject.subjectId) {
+          <article class="student-analysis-row" role="row">
+            <label class="student-analysis-check" role="cell">
+              <input
+                type="checkbox"
+                [checked]="isSelected(subject.subjectId)"
+                (change)="toggleSubject(subject.subjectId)"
+                [attr.aria-label]="'Select ' + subject.subjectName + ' for comparison'"
+              />
+              <span><svg lucideCheck size="14" aria-hidden="true"></svg></span>
+            </label>
+            <div class="student-analysis-row__subject" role="cell">
+              <strong>{{ subject.subjectName }}</strong>
+              <small>{{ subject.subjectCode || 'Subject' }}</small>
+            </div>
+            <div class="student-analysis-row__chart" role="cell">
+              <span class="student-analysis-row__bar" aria-hidden="true">
+                <i class="is-attended" [style.width.%]="subject.attendancePercentage">
+                  @if (subject.presentLectures) { <b>{{ subject.presentLectures }}</b> }
+                </i>
+                <i class="is-absent" [style.width.%]="100 - subject.attendancePercentage">
+                  @if (subject.absentLectures) { <b>{{ subject.absentLectures }}</b> }
+                </i>
+              </span>
+              <small>{{ subject.presentLectures }} attended · {{ subject.absentLectures }} absent</small>
+            </div>
+            <div class="student-analysis-row__current" role="cell">
+              <strong>{{ formatPercentage(subject.attendancePercentage) }}%</strong>
+              <small [class.is-alert]="subject.attendancePercentage < requiredAttendance">
+                {{ statusLabel(subject) }}
+              </small>
+            </div>
+            <button
+              type="button"
+              class="student-analysis-row__open"
+              role="cell"
+              (click)="openPlanner(subject)"
+              [attr.aria-label]="'Analyze ' + subject.subjectName"
+            >
+              <svg lucideChevronRight size="20" aria-hidden="true"></svg>
+            </button>
+          </article>
+        } @empty {
+          <div class="student-analysis-empty">
+            <img src="/assets/student/attendance/analyze-attendance.webp" alt="" aria-hidden="true" />
+            <strong>No matching subjects</strong>
+            <p>Change the search or filter to see more attendance records.</p>
+          </div>
+        }
+      </div>
+
+      <footer class="student-analysis-workspace__footer">
+        <span><svg lucideInfo size="17" aria-hidden="true"></svg> Tap a subject to analyze its attendance plan.</span>
+        @if (data()?.syncedAt; as syncedAt) {
+          <span><i></i> Last synced: {{ syncedAt | date: 'mediumTime' }}</span>
+        }
+      </footer>
+    </section>
+  }
+</div>
+
+@if (plannerSubject(); as subject) {
+  <div class="student-analysis-overlay" role="presentation" (mousedown)="closePlanner()">
+    <section
+      class="student-analysis-dialog student-analysis-dialog--planner"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="student-planner-title"
+      (mousedown)="$event.stopPropagation()"
+    >
+      <span class="student-analysis-dialog__handle" aria-hidden="true"></span>
+      <header class="student-analysis-dialog__header">
+        <img src="/assets/student/attendance/subject-attendance.webp" alt="" aria-hidden="true" />
+        <div><h2 id="student-planner-title">{{ subject.subjectName }}</h2><p>{{ subject.subjectCode || 'Subject' }}</p></div>
+        <span class="student-analysis-live-chip">Live data</span>
+        <button type="button" (click)="closePlanner()" aria-label="Close attendance planner">
+          <svg lucideX size="23" aria-hidden="true"></svg>
+        </button>
+      </header>
+
+      <dl class="student-analysis-dialog__stats">
+        <div><dt>{{ formatPercentage(subject.attendancePercentage) }}%</dt><dd>Current attendance</dd></div>
+        <div><dt class="is-success">{{ subject.presentLectures }}</dt><dd>Attended</dd></div>
+        <div><dt class="is-danger">{{ subject.absentLectures }}</dt><dd>Absent</dd></div>
+        <div><dt>{{ subject.totalLectures }}</dt><dd>Conducted</dd></div>
+      </dl>
+
+      <div class="student-analysis-upcoming">
+        <svg lucideBookOpen size="20" aria-hidden="true"></svg>
+        <strong>{{ subject.upcomingLectures }} upcoming</strong><span>· From timetable</span>
+        <small>
+          @if (subject.upcomingSource === 'configured-timetable' && subject.upcomingThrough) {
+            Scheduled through {{ subject.upcomingThrough | date: 'mediumDate' : 'UTC' }}
+          } @else {
+            Next {{ data()?.planningWindowDays }} days
+          }
+        </small>
+      </div>
+
+      <div class="student-analysis-planner-control">
+        <span class="student-analysis-planner-control__icon"><svg lucideTarget size="25" aria-hidden="true"></svg></span>
+        <div class="student-analysis-planner-control__copy"><h3>My target</h3><p>Set your personal attendance target</p></div>
+        <div class="student-analysis-stepper" aria-label="Target attendance percentage">
+          <button type="button" (click)="adjustTarget(-1)" aria-label="Decrease target"><svg lucideMinus size="17"></svg></button>
+          <strong>{{ target() }}</strong><span>%</span>
+          <button type="button" (click)="adjustTarget(1)" aria-label="Increase target"><svg lucidePlus size="17"></svg></button>
+        </div>
+        <label class="student-analysis-range">
+          <span class="student-analysis-visually-hidden">Target attendance percentage</span>
+          <input type="range" min="50" max="100" step="1" [ngModel]="target()" (ngModelChange)="setTarget($event)" />
+          <small><b>50%</b><b>100%</b></small>
+        </label>
+      </div>
+
+      @if (plannerProjection(); as projection) {
+        <section
+          class="student-analysis-result"
+          [class.student-analysis-result--warning]="!projection.reachable"
+        >
+          <span>
+            @if (projection.reachable) { <svg lucideCheck size="25" aria-hidden="true"></svg> }
+            @else { <svg lucideAlertTriangle size="25" aria-hidden="true"></svg> }
+          </span>
+          <div>
+            @if (projection.alreadyReached) {
+              <h3>Target already achieved</h3>
+              <p>Your attendance is <strong>{{ formatPercentage(subject.attendancePercentage) }}%</strong>, which has cleared the {{ target() }}% target.</p>
+            } @else if (projection.reachable) {
+              <h3>Attend the next {{ projection.classesRequired }} classes</h3>
+              <p>You will reach approximately <strong>{{ formatPercentage(projection.projectedPercentage) }}%</strong> after {{ subject.presentLectures + (projection.classesRequired || 0) }} / {{ subject.totalLectures + (projection.classesRequired || 0) }} attended.</p>
+            } @else if (projection.classesRequired !== null) {
+              <h3>Not enough scheduled classes</h3>
+              <p>You need <strong>{{ projection.classesRequired }} consecutive classes</strong>, but only {{ subject.upcomingLectures }} are currently scheduled.</p>
+            } @else {
+              <h3>This target is not reachable</h3>
+              <p>A 100% target cannot be restored because an absence is already recorded.</p>
+            }
+          </div>
+          <aside>
+            @if (projection.alreadyReached) {
+              <small>Status</small><strong>Target reached</strong>
+            } @else if (projection.reachable) {
+              <small>Classes available</small><strong>{{ subject.upcomingLectures }} scheduled</strong>
+            } @else {
+              <small>Best possible</small><strong>{{ formatPercentage(projection.bestPossiblePercentage) }}%</strong>
+            }
+          </aside>
+        </section>
+        <section class="student-analysis-insight">
+          <img src="/assets/student/attendance/analyze-attendance.webp" alt="" aria-hidden="true" />
+          @if (projection.alreadyReached) {
+            <p><strong>You have reached your selected target.</strong><br />Keep your attendance at or above {{ target() }}% in future classes.</p>
+          } @else if (projection.reachable) {
+            <p><strong>Calculated automatically from saved attendance and the timetable.</strong><br />{{ subject.upcomingLectures - (projection.classesRequired || 0) }} scheduled classes remain after the earliest point you can reach the target.</p>
+          } @else if (projection.classesBeyondSchedule !== null) {
+            <p><strong>{{ projection.classesBeyondSchedule }} more classes are required beyond the current timetable.</strong><br />The result will update automatically when more classes are scheduled.</p>
+          } @else {
+            <p><strong>Choose a target below 100% for a reachable plan.</strong><br />All calculations use faculty-saved attendance only.</p>
+          }
+        </section>
+      }
+
+      <footer class="student-analysis-dialog__actions">
+        <button type="button" class="is-secondary" (click)="resetPlanner()">Reset</button>
+        <button type="button" class="is-primary" (click)="closePlanner()">Done</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (compareOpen()) {
+  <div class="student-analysis-overlay" role="presentation" (mousedown)="closeComparison()">
+    <section
+      class="student-analysis-dialog student-analysis-dialog--compare"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="student-compare-title"
+      (mousedown)="$event.stopPropagation()"
+    >
+      <span class="student-analysis-dialog__handle" aria-hidden="true"></span>
+      <header class="student-analysis-dialog__header">
+        <img src="/assets/student/attendance/analyze-attendance.webp" alt="" aria-hidden="true" />
+        <div><h2 id="student-compare-title">Compare subjects</h2><p>See how your subjects perform against your target.</p></div>
+        <button type="button" (click)="closeComparison()" aria-label="Close subject comparison"><svg lucideX size="23"></svg></button>
+      </header>
+
+      <div class="student-analysis-compare-controls">
+        <div>
+          <strong>Selected subjects ({{ selectedSubjects().length }})</strong>
+          <div class="student-analysis-chips">
+            @for (subject of selectedSubjects(); track subject.subjectId) {
+              <button type="button" (click)="toggleSubject(subject.subjectId)">{{ subject.subjectName }} <svg lucideX size="14"></svg></button>
+            }
+          </div>
+        </div>
+        <div>
+          <strong>My target attendance</strong>
+          <div class="student-analysis-stepper">
+            <button type="button" (click)="adjustTarget(-1)" aria-label="Decrease comparison target"><svg lucideMinus size="17"></svg></button>
+            <strong>{{ target() }}</strong><span>%</span>
+            <button type="button" (click)="adjustTarget(1)" aria-label="Increase comparison target"><svg lucidePlus size="17"></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="student-analysis-comparison-table" role="table" aria-label="Selected subject projections">
+        <div class="student-analysis-comparison-table__head" role="row">
+          <span>Subject</span><span>Current</span><span>Upcoming</span><span>Need to attend</span><span>Best possible</span><span></span>
+        </div>
+        @for (subject of selectedSubjects(); track subject.subjectId) {
+          @let projection = projectionFor(subject);
+          <article role="row">
+            <div><strong>{{ subject.subjectName }}</strong><small>{{ subject.subjectCode }}</small></div>
+            <div><strong [class.is-danger]="subject.attendancePercentage < target()">{{ formatPercentage(subject.attendancePercentage) }}%</strong><small>{{ statusLabel(subject, target()) }}</small></div>
+            <div><strong>{{ subject.upcomingLectures }}</strong><small>scheduled</small></div>
+            <div><strong [class.is-danger]="!projection.reachable">{{ projection.alreadyReached ? 'Reached' : projection.reachable ? projection.classesRequired + ' classes' : 'Not reachable' }}</strong><small>to reach {{ target() }}%</small></div>
+            <div><strong class="is-success">{{ formatPercentage(projection.bestPossiblePercentage) }}%</strong><small>attend all</small></div>
+            <button type="button" (click)="openPlanner(subject)">Analyze <svg lucideChevronRight size="17"></svg></button>
+          </article>
+        }
+      </div>
+
+      @if (selectedSubjects().length < 2) {
+        <section class="student-analysis-warning"><svg lucideAlertTriangle size="21"></svg><p>Select at least two subjects to continue comparing.</p></section>
+      } @else {
+        @for (subject of selectedSubjects(); track subject.subjectId) {
+          @if (!projectionFor(subject).reachable) {
+            <section class="student-analysis-warning"><svg lucideAlertTriangle size="21"></svg><p><strong>{{ subject.subjectName }} cannot reach {{ target() }}%</strong> within {{ subject.upcomingLectures }} scheduled classes. @if (projectionFor(subject).classesRequired !== null) { It needs {{ projectionFor(subject).classesRequired }} consecutive classes. } Best possible is {{ formatPercentage(projectionFor(subject).bestPossiblePercentage) }}%.</p></section>
+          }
+        }
+      }
+
+      <footer class="student-analysis-dialog__actions student-analysis-dialog__actions--compare">
+        <p><svg lucideInfo size="17"></svg> Each subject is calculated separately.</p>
+        <button type="button" class="is-primary" (click)="closeComparison()">Done</button>
+      </footer>
+    </section>
+  </div>
+}

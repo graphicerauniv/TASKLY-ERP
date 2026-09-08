@@ -128,16 +128,18 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
     children: [
       {
         id: 'new-admission',
-        label: 'New admission',
+        label: 'New application',
         description: 'Register a new student application',
+        group: 'Application intake',
         route: '/admin/admission/student',
         icon: 'createStudent',
         activeWhen: [exact('/admin/admission/student'), /^\/admin\/admissions\/[^/]+\/edit\/?$/],
       },
       {
         id: 'admission-forms',
-        label: 'Forms',
+        label: 'Form builder',
         description: 'Build and manage admission forms',
+        group: 'Configuration',
         route: '/admin/admissions/forms',
         icon: 'draft',
         activeWhen: [branch('/admin/admissions/forms'), branch('/admin/form-builder')],
@@ -520,7 +522,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
 ];
 
 const ADMIN_PAGE_TITLES: readonly { readonly pattern: RegExp; readonly title: string }[] = [
-  { pattern: exact('/admin/admission/student'), title: 'New admission' },
+  { pattern: exact('/admin/admission/student'), title: 'New application' },
   { pattern: exact('/admin/admissions/applications'), title: 'All applications' },
   { pattern: exact('/admin/admissions/unfilled'), title: 'Draft applications' },
   { pattern: exact('/admin/admissions/not-approved'), title: 'Awaiting review' },

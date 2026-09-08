@@ -33,6 +33,8 @@ export const config = Object.freeze({
   storage: {
     driver: process.env.STORAGE_DRIVER || 'local',
     bucket: process.env.S3_BUCKET || '',
+    attendanceCorrectionBucket:
+      process.env.ATTENDANCE_CORRECTION_S3_BUCKET || 'attandencecorrection',
     region: process.env.S3_REGION || 'us-east-1',
     endpoint: process.env.S3_ENDPOINT || '',
     accessKeyId: process.env.S3_ACCESS_KEY_ID || '',

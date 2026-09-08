@@ -1,0 +1,707 @@
+<div class="subject-attendance-page">
+  @if (loading()) {
+    <section class="subject-attendance-state" role="status">
+      <span></span>
+      <strong>Loading subject attendance</strong>
+      <p>Preparing your lecture records…</p>
+    </section>
+  } @else if (error()) {
+    <section class="subject-attendance-state subject-attendance-state--error" role="alert">
+      <svg lucideAlertCircle size="30" aria-hidden="true"></svg>
+      <strong>Attendance could not be loaded</strong>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="goBack()">Back to attendance</button>
+    </section>
+  } @else if (!isDetail()) {
+    <header class="subject-attendance-heading">
+      <nav aria-label="Breadcrumb">
+        <span>Academics</span><b>/</b><span>Attendance</span><b>/</b
+        ><strong>Subject Attendance</strong>
+      </nav>
+      <div>
+        <button
+          type="button"
+          class="subject-attendance-back subject-attendance-back--mobile"
+          (click)="goBack()"
+          aria-label="Back to attendance"
+        >
+          <svg lucideArrowLeft size="22" aria-hidden="true"></svg>
+        </button>
+        <div>
+          <h1>Subject Attendance</h1>
+          <p>Review attendance across every enrolled subject.</p>
+        </div>
+        <div class="subject-attendance-heading__controls">
+          <button type="button" aria-label="Refresh subject attendance" (click)="loadSubjects()">
+            <svg lucideRefreshCw size="18"></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <section
+      class="subject-attendance-overall subject-attendance-overall--desktop"
+      aria-label="Overall subject attendance summary"
+    >
+      <div
+        class="subject-attendance-overall__ring"
+        [style.--subject-progress]="overall().attendancePercentage + '%'"
+      >
+        <strong>{{ formatPercentage(overall().attendancePercentage) }}%</strong>
+      </div>
+      <div>
+        <strong>Overall</strong
+        ><span>{{ overall().presentLectures }} of {{ overall().totalLectures }} classes</span>
+      </div>
+      <i></i>
+      <div class="is-present">
+        <span><svg lucideCheck size="21" aria-hidden="true"></svg></span
+        ><strong>{{ overall().presentLectures }}</strong
+        ><b>Present</b><small>classes attended</small>
+      </div>
+      <i></i>
+      <div class="is-absent">
+        <span><svg lucideX size="21" aria-hidden="true"></svg></span
+        ><strong>{{ overall().absentLectures }}</strong
+        ><b>Absent</b><small>classes missed</small>
+      </div>
+      <i></i>
+      <div class="is-conducted">
+        <span><svg lucideCircleMinus size="21" aria-hidden="true"></svg></span
+        ><strong>{{ overall().totalLectures }}</strong
+        ><b>Conducted</b><small>total classes</small>
+      </div>
+    </section>
+
+    <section
+      class="subject-attendance-mobile-summary"
+      aria-label="Overall subject attendance summary"
+    >
+      <div>
+        <strong>{{ formatPercentage(overall().attendancePercentage) }}%</strong>
+        <span>Overall attendance</span>
+      </div>
+      <i aria-hidden="true"></i>
+      <div>
+        <p>
+          <strong>{{ overall().presentLectures }}</strong> of {{ overall().totalLectures }} lectures
+        </p>
+        <span class="subject-attendance-mobile-summary__progress"
+          ><i [style.width]="overall().attendancePercentage + '%'"> </i><b></b
+        ></span>
+        <small>Required {{ requiredAttendance }}%</small>
+      </div>
+    </section>
+
+    <section class="subject-attendance-directory">
+      <header>
+        <label>
+          <svg lucideSearch size="20" aria-hidden="true"></svg>
+          <input
+            type="search"
+            placeholder="Search subject or code…"
+            [ngModel]="search()"
+            (ngModelChange)="setSearch($event)"
+          />
+        </label>
+        <div class="subject-attendance-directory__desktop-filters">
+          <button type="button" (click)="cycleSubjectFilter()">
+            <svg lucideFilter size="18" aria-hidden="true"></svg> {{ desktopFilterLabel() }}
+            <svg lucideChevronDown size="15" aria-hidden="true"></svg>
+          </button>
+          <button type="button" (click)="cycleSubjectSort()">
+            {{ desktopSortLabel() }} <svg lucideChevronDown size="15" aria-hidden="true"></svg>
+          </button>
+        </div>
+      </header>
+      <div
+        class="subject-attendance-filter-pills"
+        aria-label="Filter subjects by attendance status"
+      >
+        <button
+          type="button"
+          [class.is-active]="subjectFilter() === 'all'"
+          (click)="setSubjectFilter('all')"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          [class.is-active]="subjectFilter() === 'safe'"
+          (click)="setSubjectFilter('safe')"
+        >
+          <span class="is-safe"><svg lucideCheck size="16"></svg></span> On track
+        </button>
+        <button
+          type="button"
+          [class.is-active]="subjectFilter() === 'attention'"
+          (click)="setSubjectFilter('attention')"
+        >
+          <span class="is-attention"><svg lucideAlertCircle size="16"></svg></span> Attention
+        </button>
+        <button
+          type="button"
+          [class.is-active]="subjectFilter() === 'critical'"
+          (click)="setSubjectFilter('critical')"
+        >
+          <span class="is-critical"><svg lucideX size="16"></svg></span> Critical
+        </button>
+      </div>
+
+      <div class="subject-attendance-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Faculty</th>
+              <th>Conducted</th>
+              <th>Present</th>
+              <th>Absent</th>
+              <th>Attendance</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (subject of pagedSubjects(); track subject.subjectId) {
+              <tr>
+                <td>
+                  <strong>{{ subject.subjectName }}</strong
+                  ><small>{{ subject.subjectCode }}</small>
+                </td>
+                <td>{{ subject.facultyNames.join(', ') || 'Faculty not assigned' }}</td>
+                <td>{{ subject.totalLectures }}</td>
+                <td class="is-present-text">{{ subject.presentLectures }}</td>
+                <td class="is-absent-text">{{ subject.absentLectures }}</td>
+                <td>
+                  <div
+                    [class]="
+                      'subject-attendance-table-progress is-' +
+                      subjectStatus(subject.attendancePercentage)
+                    "
+                  >
+                    <span><i [style.width]="subject.attendancePercentage + '%'"></i></span
+                    ><b>{{ formatPercentage(subject.attendancePercentage) }}%</b
+                    ><em [class]="'is-' + subjectStatus(subject.attendancePercentage)">{{
+                      statusLabel(subject.attendancePercentage)
+                    }}</em>
+                  </div>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    (click)="openSubject(subject)"
+                    [attr.aria-label]="'Open ' + subject.subjectName"
+                  >
+                    <svg lucideChevronRight size="18"></svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="subject-attendance-mobile-list">
+        @for (subject of filteredSubjects(); track subject.subjectId) {
+          <button type="button" (click)="openSubject(subject)">
+            <erp-student-subject-icon class="subject-attendance-subject-icon" [subject]="subject.subjectName" [size]="25" />
+            <span class="subject-attendance-mobile-list__copy"
+              ><strong>{{ subject.subjectName }}</strong
+              ><small
+                >{{ subject.subjectCode }} ·
+                {{ subject.facultyNames[0] || 'Faculty not assigned' }}</small
+              ><i><b [style.width]="subject.attendancePercentage + '%'"></b></i
+            ></span>
+            <span class="subject-attendance-mobile-list__score"
+              ><strong>{{ formatPercentage(subject.attendancePercentage) }}%</strong
+              ><small [class]="'is-' + subjectStatus(subject.attendancePercentage)">
+                @if (subjectStatus(subject.attendancePercentage) === 'safe') {
+                  <svg lucideCheck size="14"></svg>
+                } @else {
+                  <svg lucideAlertCircle size="14"></svg>
+                }
+                {{ statusLabel(subject.attendancePercentage) }}
+              </small></span
+            >
+            <svg lucideChevronRight size="18" aria-hidden="true"></svg>
+          </button>
+        } @empty {
+          <p class="subject-attendance-empty">No subjects match your search or filter.</p>
+        }
+      </div>
+
+      <footer>
+        <span
+          >{{ subjectRangeStart() }}–{{ subjectRangeEnd() }} of
+          {{ filteredSubjects().length }} subjects</span
+        >
+        <nav aria-label="Subject result pages">
+          <button
+            type="button"
+            [disabled]="subjectPage() === 1"
+            (click)="subjectPage.set(subjectPage() - 1)"
+          >
+            <svg lucideChevronLeft size="17"></svg></button
+          ><b>{{ subjectPage() }}</b
+          ><button
+            type="button"
+            [disabled]="subjectPage() === subjectPages()"
+            (click)="subjectPage.set(subjectPage() + 1)"
+          >
+            <svg lucideChevronRight size="17"></svg>
+          </button>
+        </nav>
+      </footer>
+    </section>
+  } @else if (detail(); as attendance) {
+    <header
+      class="subject-attendance-detail-heading subject-attendance-detail-heading--desktop"
+      [class.is-drawer-open]="selectedRecord()"
+    >
+      <nav aria-label="Breadcrumb">
+        <span>Academics</span><b>/</b><span>Attendance</span><b>/</b
+        ><strong>{{ attendance.subject.subjectName }}</strong>
+      </nav>
+      <div>
+        <button
+          type="button"
+          class="subject-attendance-back"
+          (click)="goBack()"
+          aria-label="Back to subject attendance"
+        >
+          <svg lucideArrowLeft size="22"></svg>
+        </button>
+        <section>
+          <h1>{{ attendance.subject.subjectName }}</h1>
+          <p>
+            {{ attendance.subject.subjectCode }} · Semester {{ semester() }} ·
+            {{ attendance.subject.facultyNames[0] || 'Faculty not assigned' }}
+          </p>
+          <div class="subject-attendance-detail-heading__stats">
+            <span
+              ><strong>{{ attendance.subject.presentLectures }}</strong> Present</span
+            ><i>·</i>
+            <span
+              ><strong>{{ attendance.subject.absentLectures }}</strong> Absent</span
+            ><i>·</i>
+            <span
+              ><strong>{{ attendance.subject.totalLectures }}</strong> Conducted</span
+            ><i>·</i>
+            <span
+              ><strong
+                >{{ formatPercentage(attendance.subject.attendancePercentage) }}%</strong
+              ></span
+            >
+          </div>
+        </section>
+        <aside>
+          <strong>{{ formatPercentage(attendance.subject.attendancePercentage) }}%</strong
+          ><span [class]="'is-' + subjectStatus(attendance.subject.attendancePercentage)">{{
+            statusLabel(attendance.subject.attendancePercentage)
+          }}</span>
+        </aside>
+      </div>
+    </header>
+
+    <section class="subject-attendance-mobile-detail">
+      @if (view() === 'month') {
+        <header class="subject-attendance-mobile-detail__month-heading">
+          <button type="button" (click)="goBack()" aria-label="Back to subject attendance">
+            <svg lucideArrowLeft size="22"></svg>
+          </button>
+          <div>
+            <h1>{{ attendance.subject.subjectName }}</h1>
+            <p>{{ attendance.subject.subjectCode }} · Semester {{ semester() }}</p>
+          </div>
+          <aside>
+            <strong>{{ formatPercentage(attendance.subject.attendancePercentage) }}%</strong>
+            <span>{{ statusLabel(attendance.subject.attendancePercentage) }}</span>
+          </aside>
+        </header>
+      } @else {
+        <header class="subject-attendance-mobile-detail__page-heading">
+          @if (view() === 'list') {
+            <button type="button" (click)="goBack()" aria-label="Back to subject attendance">
+              <svg lucideArrowLeft size="22"></svg>
+            </button>
+          }
+          <div>
+            <h1>Subject Attendance</h1>
+            @if (view() === 'week') {
+              <p>Track your attendance for each subject</p>
+            }
+          </div>
+        </header>
+        <section class="subject-attendance-mobile-detail__subject-card">
+          <span><svg lucideMonitor size="29"></svg></span>
+          <div>
+            <strong>{{ attendance.subject.subjectName }}</strong>
+            <small
+              >{{ attendance.subject.subjectCode }} ·
+              {{ attendance.subject.facultyNames[0] || 'Faculty not assigned' }}</small
+            >
+          </div>
+          <i aria-hidden="true"></i>
+          <aside>
+            <strong>{{ formatPercentage(attendance.subject.attendancePercentage) }}%</strong>
+            <small [class]="'is-' + subjectStatus(attendance.subject.attendancePercentage)">
+              <svg lucideAlertCircle size="15"></svg>
+              {{ statusLabel(attendance.subject.attendancePercentage) }}
+            </small>
+          </aside>
+        </section>
+      }
+    </section>
+
+    <section class="subject-attendance-history">
+      <header>
+        <div>
+          <h2>Attendance history</h2>
+          <p>View your attendance for this subject.</p>
+        </div>
+        <nav aria-label="Attendance history view">
+          <button type="button" [class.is-active]="view() === 'month'" (click)="setView('month')">
+            Month</button
+          ><button type="button" [class.is-active]="view() === 'week'" (click)="setView('week')">
+            Week</button
+          ><button type="button" [class.is-active]="view() === 'list'" (click)="setView('list')">
+            List
+          </button>
+        </nav>
+        <div class="subject-attendance-history__controls">
+          <button type="button" (click)="changeMonth(-1)" aria-label="Previous month">
+            <svg lucideChevronLeft size="18"></svg></button
+          ><span>{{ monthLabel() }} <svg lucideChevronDown size="15"></svg></span
+          ><button type="button" (click)="changeMonth(1)" aria-label="Next month">
+            <svg lucideChevronRight size="18"></svg></button
+          ><button type="button" (click)="goToday()">Today</button>
+        </div>
+      </header>
+
+      @if (view() === 'month') {
+        <div class="subject-attendance-calendar subject-attendance-calendar--desktop">
+          <div class="subject-attendance-calendar__weekdays">
+            @for (day of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']; track day) {
+              <span>{{ day }}</span>
+            }
+          </div>
+          <div class="subject-attendance-calendar__grid">
+            @for (cell of desktopCalendar(); track cell.key) {
+              <button
+                type="button"
+                [class.is-outside]="cell.outside"
+                [class.is-selected]="selectedRecord()?.date === cell.key"
+                [disabled]="!cell.record"
+                (click)="selectCell(cell)"
+              >
+                <b>{{ cell.day }}</b>
+                @if (cell.status !== 'empty') {
+                  <span [class]="'is-' + cell.status">
+                    @if (cell.status === 'present') {
+                      <svg lucideCheck size="13"></svg><i>P</i>
+                    } @else if (cell.status === 'absent') {
+                      <svg lucideX size="13"></svg><i>A</i>
+                    } @else {
+                      <svg lucideCircleMinus size="13"></svg><i>No class</i>
+                    }
+                  </span>
+                }
+              </button>
+            }
+          </div>
+        </div>
+        <div class="subject-attendance-calendar subject-attendance-calendar--mobile">
+          <header>
+            <button type="button" (click)="changeMonth(-1)">
+              <svg lucideChevronLeft size="20"></svg></button
+            ><strong>{{ monthLabel() }}</strong
+            ><button type="button" (click)="changeMonth(1)">
+              <svg lucideChevronRight size="20"></svg>
+            </button>
+          </header>
+          <div class="subject-attendance-calendar__weekdays">
+            @for (day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; track day) {
+              <span>{{ day }}</span>
+            }
+          </div>
+          <div class="subject-attendance-calendar__grid">
+            @for (cell of mobileCalendar(); track cell.key) {
+              <button
+                type="button"
+                [class.is-outside]="cell.outside"
+                [class.is-selected]="selectedRecord()?.date === cell.key"
+                [disabled]="!cell.record"
+                (click)="selectCell(cell)"
+              >
+                <b>{{ cell.day }}</b>
+                @if (cell.status !== 'empty') {
+                  <span [class]="'is-' + cell.status">
+                    @if (cell.status === 'present') {
+                      <svg lucideCheck size="13"></svg><i>P</i>
+                    } @else if (cell.status === 'absent') {
+                      <svg lucideX size="13"></svg><i>A</i>
+                    } @else {
+                      <svg lucideCircleMinus size="13"></svg><i>-</i>
+                    }
+                  </span>
+                }
+              </button>
+            }
+          </div>
+          <div class="subject-attendance-calendar__summary">
+            <span
+              ><strong>{{ attendance.subject.presentLectures }}</strong
+              >Present</span
+            ><span
+              ><strong>{{ attendance.subject.absentLectures }}</strong
+              >Absent</span
+            ><span
+              ><strong>{{ requiredAttendance }}%</strong>Required</span
+            >
+          </div>
+        </div>
+      } @else if (view() === 'week') {
+        <div class="subject-attendance-week">
+          <header>
+            <button type="button" (click)="changeWeek(-1)">
+              <svg lucideChevronLeft size="20"></svg></button
+            ><strong>{{ weekLabel() }}</strong
+            ><button type="button" (click)="changeWeek(1)">
+              <svg lucideChevronRight size="20"></svg>
+            </button>
+          </header>
+          <nav>
+            @for (day of weekDays(); track day.key) {
+              <button type="button" [class.is-active]="day.record" (click)="selectCell(day)">
+                <span>{{ day.label }}</span
+                ><strong>{{ day.day }}</strong>
+              </button>
+            }
+          </nav>
+          <div>
+            @for (day of weekDays(); track day.key) {
+              <article
+                [class.has-record]="day.record"
+                (click)="day.record && openRecord(day.record)"
+              >
+                <time
+                  ><strong>{{ day.label }}</strong
+                  ><span>{{ day.shortLabel }}</span></time
+                >
+                @if (day.record; as record) {
+                  <span>{{ formatTime(record.startTime) }} – {{ formatTime(record.endTime) }}</span
+                  ><em [class]="'is-' + record.status">
+                    @if (record.status === 'present') {
+                      <svg lucideCheck size="16"></svg> Present
+                    } @else {
+                      <svg lucideX size="16"></svg> Absent
+                    }</em
+                  ><small
+                    ><svg lucideMapPin size="16"></svg>{{ record.roomName || 'Venue unavailable'
+                    }}<br /><svg lucideBookOpen size="16"></svg
+                    >{{ attendance.subject.subjectName }}</small
+                  >
+                } @else {
+                  <p>
+                    <svg lucideCircleMinus size="16"></svg
+                    >{{ day.schedule ? 'Attendance not saved' : 'No class scheduled' }}
+                  </p>
+                }
+              </article>
+            }
+          </div>
+          <footer>
+            <button type="button" (click)="changeWeek(-1)">
+              <svg lucideChevronLeft size="18"></svg>Previous week</button
+            ><button type="button"><svg lucideCalendarDays size="18"></svg>This week</button
+            ><button type="button" (click)="changeWeek(1)">
+              Next week<svg lucideChevronRight size="18"></svg>
+            </button>
+          </footer>
+        </div>
+      } @else {
+        <div class="subject-attendance-record-toolbar">
+          <span
+            ><svg lucideCalendarDays size="18"></svg>{{ monthLabel()
+            }}<svg lucideChevronDown size="15"></svg></span
+          ><label
+            ><svg lucideFilter size="17"></svg
+            ><select [ngModel]="recordFilter()" (ngModelChange)="recordFilter.set($event)">
+              <option value="all">All records</option>
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+            </select></label
+          ><button type="button" (click)="downloadCsv()" aria-label="Download attendance CSV">
+            <svg lucideArrowDownToLine size="18"></svg>
+          </button>
+        </div>
+        <div class="subject-attendance-record-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Faculty</th>
+                <th>Venue</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (record of monthRecords(); track record.recordId) {
+                <tr (click)="openRecord(record)">
+                  <td>{{ parseDate(record.date) | date: 'dd MMM yyyy' }}</td>
+                  <td>{{ parseDate(record.date) | date: 'EEE' }}</td>
+                  <td>{{ formatTime(record.startTime) }} – {{ formatTime(record.endTime) }}</td>
+                  <td>{{ record.classType }}</td>
+                  <td>{{ record.facultyName }}</td>
+                  <td>{{ record.roomName || '—' }}</td>
+                  <td>
+                    <em [class]="'is-' + record.status">
+                      @if (record.status === 'present') {
+                        <svg lucideCheck size="15"></svg> Present (P)
+                      } @else {
+                        <svg lucideX size="15"></svg> Absent (A)
+                      }
+                    </em>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="subject-attendance-record-list">
+          @for (record of visibleRecords(); track record.recordId) {
+            <button type="button" (click)="openRecord(record)">
+              <time
+                ><strong>{{ parseDate(record.date) | date: 'dd' }}</strong
+                ><span>{{ parseDate(record.date) | date: 'EEE' }}</span></time
+              ><span
+                ><strong
+                  >{{ formatTime(record.startTime) }} – {{ formatTime(record.endTime) }}</strong
+                ><small
+                  ><svg lucideMapPin size="15"></svg
+                  >{{ record.roomName || 'Venue unavailable' }}</small
+                ></span
+              ><em [class]="'is-' + record.status">
+                @if (record.status === 'present') {
+                  <svg lucideCheck size="15"></svg>Present
+                } @else {
+                  <svg lucideX size="15"></svg>Absent
+                }
+              </em>
+            </button>
+          } @empty {
+            <p class="subject-attendance-empty">No saved attendance records match this filter.</p>
+          }
+          <footer class="subject-attendance-record-list__footer">
+            <span
+              >Showing {{ visibleRecords().length }} of {{ monthRecords().length }} records</span
+            >
+            @if (visibleRecords().length < monthRecords().length) {
+              <button class="subject-attendance-load-more" type="button" (click)="loadMore()">
+                Load more <svg lucideChevronDown size="17"></svg>
+              </button>
+            }
+          </footer>
+        </div>
+      }
+
+      <footer class="subject-attendance-legend">
+        <span
+          ><i class="is-present"><svg lucideCheck size="14"></svg></i><b>P</b>Present</span
+        ><span
+          ><i class="is-absent"><svg lucideX size="14"></svg></i><b>A</b>Absent</span
+        ><span
+          ><i class="is-no_class"><svg lucideCircleMinus size="14"></svg></i><b>-</b>No class</span
+        >
+        <p><svg lucideInfo size="17"></svg>Only faculty-saved lectures are included.</p>
+      </footer>
+    </section>
+  }
+
+  @if (selectedRecord(); as record) {
+    <div class="subject-attendance-sheet-backdrop" (click)="closeRecord()"></div>
+    <aside
+      class="subject-attendance-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lecture-detail-title"
+    >
+      <span class="subject-attendance-sheet__handle" aria-hidden="true"></span>
+      <header>
+        <div>
+          <h2 id="lecture-detail-title">Lecture details</h2>
+          <p>{{ parseDate(record.date) | date: 'dd MMMM yyyy, EEEE' }}</p>
+        </div>
+        <button type="button" (click)="closeRecord()" aria-label="Close lecture details">
+          <svg lucideX size="23"></svg>
+        </button>
+      </header>
+      <section
+        class="subject-attendance-sheet__status"
+        [class]="'subject-attendance-sheet__status is-' + record.status"
+      >
+        @if (record.status === 'present') {
+          <span><svg lucideCheck size="22"></svg></span>
+          <div>
+            <strong>Present</strong><small>You were marked present for this lecture.</small>
+          </div>
+        } @else {
+          <span><svg lucideX size="22"></svg></span>
+          <div><strong>Absent</strong><small>You were marked absent for this lecture.</small></div>
+        }
+      </section>
+      <dl>
+        <div>
+          <dt><svg lucideClock3 size="21"></svg><span>Time</span></dt>
+          <dd>{{ formatTime(record.startTime) }} – {{ formatTime(record.endTime) }}</dd>
+        </div>
+        <div>
+          <dt><svg lucideBookOpen size="21"></svg><span>Subject</span></dt>
+          <dd>{{ detail()?.subject?.subjectName }} · {{ detail()?.subject?.subjectCode }}</dd>
+        </div>
+        <div>
+          <dt><svg lucideUserRound size="21"></svg><span>Faculty</span></dt>
+          <dd>{{ record.facultyName || 'Faculty' }}</dd>
+        </div>
+        <div>
+          <dt><svg lucideMapPin size="21"></svg><span>Venue</span></dt>
+          <dd>{{ record.roomName || 'Venue unavailable' }}</dd>
+        </div>
+      </dl>
+      <p class="subject-attendance-sheet__updated">
+        Updated {{ record.updatedAt | date: 'shortTime' }} · Marked by faculty
+      </p>
+      @if (correctionOpen()) {
+        <form (submit)="$event.preventDefault(); submitCorrection()">
+          <label for="correction-reason">What should be corrected?</label
+          ><textarea
+            id="correction-reason"
+            rows="3"
+            maxlength="500"
+            placeholder="Explain what is incorrect in this attendance record…"
+            [ngModel]="correctionReason()"
+            (ngModelChange)="correctionReason.set($event)"
+            name="reason"
+          ></textarea
+          ><button type="submit" [disabled]="correctionSubmitting()">
+            {{ correctionSubmitting() ? 'Submitting…' : 'Submit request' }}
+          </button>
+        </form>
+      }
+      @if (correctionMessage()) {
+        <p class="subject-attendance-sheet__message" aria-live="polite">
+          {{ correctionMessage() }}
+        </p>
+      }
+      <footer>
+        <button type="button" (click)="closeRecord()">Close</button
+        ><button type="button" (click)="correctionOpen.set(!correctionOpen())">
+          Request correction
+        </button>
+      </footer>
+    </aside>
+  }
+</div>

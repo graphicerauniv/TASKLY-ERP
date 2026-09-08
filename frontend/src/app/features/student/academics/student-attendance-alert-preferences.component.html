@@ -1,0 +1,23 @@
+<div class="preference-page">
+  <a class="preference-back" routerLink="/student/attendance/alerts"><svg lucideChevronLeft size="18"></svg> Back to alerts</a>
+  <header><span><img src="/assets/student/attendance/alerts-bell.webp" width="128" height="128" alt="" aria-hidden="true" /></span><div><h1>Alert preferences</h1><p>Choose the attendance notifications you receive.</p></div></header>
+  @if (loading()) { <div class="preference-state">Loading preferences…</div> }
+  @else if (error() && !preferences()) { <div class="preference-state preference-state--error">{{ error() }}</div> }
+  @else {
+    <section class="preference-card preference-required">
+      <div class="preference-card__heading"><div><h2>Required notification</h2><p>Critical shortages are always enabled to help you meet university requirements.</p></div><strong>Notification</strong></div>
+      <article><span class="preference-icon" data-tone="danger"><svg lucideAlertTriangle size="23"></svg></span><div><h3>Critical shortage</h3><p>Notify me when a subject falls below the required attendance.</p></div><button class="preference-toggle is-on" type="button" disabled aria-label="Critical shortage notifications are always on"><i></i></button><small>Always on</small></article>
+    </section>
+    <section class="preference-card">
+      <div class="preference-card__heading"><div><h2>Additional notifications</h2><p>Choose which attendance updates appear in your notifications.</p></div><strong>Notification</strong></div>
+      <article><span class="preference-icon" data-tone="warning"><svg lucideAlertTriangle size="23"></svg></span><div><h3>At-risk warning</h3><p>When attendance is close to falling below the minimum.</p></div><button class="preference-toggle" [class.is-on]="preferences().risk" type="button" (click)="toggle('risk')" [attr.aria-pressed]="preferences().risk"><i></i></button></article>
+      <article><span class="preference-icon"><svg lucideClock3 size="23"></svg></span><div><h3>Attendance not marked</h3><p>When a subject does not yet have a saved attendance record.</p></div><button class="preference-toggle" [class.is-on]="preferences().pending" type="button" (click)="toggle('pending')" [attr.aria-pressed]="preferences().pending"><i></i></button></article>
+      <article><span class="preference-icon"><svg lucideFileCheck2 size="23"></svg></span><div><h3>Correction updates</h3><p>When the status of an attendance correction changes.</p></div><button class="preference-toggle" [class.is-on]="preferences().correction" type="button" (click)="toggle('correction')" [attr.aria-pressed]="preferences().correction"><i></i></button></article>
+      <article><span class="preference-icon" data-tone="success"><svg lucideCheck size="23"></svg></span><div><h3>Back on track</h3><p>When a subject is at or above the university minimum.</p></div><button class="preference-toggle" [class.is-on]="preferences().onTrack" type="button" (click)="toggle('onTrack')" [attr.aria-pressed]="preferences().onTrack"><i></i></button></article>
+    </section>
+    <div class="preference-info"><svg lucideInfo size="20"></svg><p><strong>One clear notification system</strong><span>All enabled alerts appear in the student portal notification drawer and Alerts page.</span></p></div>
+    @if (saved()) { <div class="preference-saved" role="status"><svg lucideCheck size="20"></svg> Preferences saved.</div> }
+    @if (error()) { <div class="preference-error" role="alert">{{ error() }}</div> }
+    <footer><button type="button" (click)="reset()"><svg lucideRotateCcw size="18"></svg> Reset to default</button><button class="preference-save" type="button" (click)="save()" [disabled]="saving()"><svg lucideSave size="18"></svg> {{ saving() ? 'Saving…' : 'Save preferences' }}</button></footer>
+  }
+</div>

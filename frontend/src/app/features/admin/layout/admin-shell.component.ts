@@ -1,5 +1,6 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,8 +19,14 @@ import {
   LucideChevronLeft,
   LucideChevronRight,
   LucideBell,
+  LucideBuilding2,
+  LucideCalendarDays,
+  LucideClock3,
+  LucideFilter,
+  LucideGraduationCap,
+  LucideLandmark,
+  LucideUserRound,
   LucideCircleHelp,
-  LucideCircleCheck,
   LucideDynamicIcon,
   LucideLifeBuoy,
   LucideLogOut,
@@ -27,25 +34,35 @@ import {
   LucideSearch,
   LucideX,
 } from '@lucide/angular';
-import { filter } from 'rxjs';
+import { filter, forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth.service';
 import { ApiService } from '../../../core/api.service';
-import { AdmissionForm } from '../../../core/models';
+import { Admission, AdmissionForm, MasterValue } from '../../../core/models';
 import {
   ADMIN_NAVIGATION,
   AdminNavigationEntry,
+  AdminNavigationLink,
   AdminNavigationSection,
   adminNavigationIcon,
   matchesAdminRoute,
   resolveAdminPageContext,
 } from './navigation/admin-navigation.config';
 
+interface GlobalSearchResult {
+  id: string;
+  title: string;
+  meta: string;
+  type: 'module' | 'student' | 'workflow' | 'record';
+  route: string;
+}
+
 @Component({
   selector: 'erp-admin-shell',
   standalone: true,
   imports: [
     CdkTrapFocus,
+    FormsModule,
     NgTemplateOutlet,
     RouterLink,
     RouterOutlet,
@@ -53,8 +70,14 @@ import {
     LucideChevronLeft,
     LucideChevronRight,
     LucideBell,
+    LucideBuilding2,
+    LucideCalendarDays,
+    LucideClock3,
+    LucideFilter,
+    LucideGraduationCap,
+    LucideLandmark,
+    LucideUserRound,
     LucideCircleHelp,
-    LucideCircleCheck,
     LucideDynamicIcon,
     LucideLifeBuoy,
     LucideLogOut,
@@ -103,6 +126,29 @@ export class AdminShellComponent {
       ? 'Draft saved just now'
       : 'Saved just now',
   );
+  readonly forms = signal<AdmissionForm[]>([]);
+  readonly campusOptions = signal<MasterValue[]>([]);
+  readonly sessionOptions = signal<MasterValue[]>([]);
+  readonly searchOpen = signal(false);
+  readonly searchClosing = signal(false);
+  readonly filterOpen = signal(false);
+  readonly recentOpen = signal(false);
+  readonly notificationsOpen = signal(false);
+  readonly profileOpen = signal(false);
+  readonly searchLoading = signal(false);
+  readonly searchResults = signal<GlobalSearchResult[]>([]);
+  readonly recentPages = signal<Array<{ title: string; route: string }>>([]);
+  readonly enabledSearchTypes = signal<Array<GlobalSearchResult['type']>>([
+    'module',
+    'student',
+    'workflow',
+    'record',
+  ]);
+  readonly unreadNotifications = signal(3);
+  globalSearchQuery = '';
+  selectedCampus = '';
+  selectedSession = '';
+  selectedSearchStatus = '';
   readonly adminInitials = computed(() => {
     const name = this.auth.admin()?.name?.trim() || 'Administrator';
     return name
@@ -115,12 +161,16 @@ export class AdminShellComponent {
   @ViewChild('mobileMenuButton') private mobileMenuButton?: ElementRef<HTMLButtonElement>;
   @ViewChild('mobileCloseButton') private mobileCloseButton?: ElementRef<HTMLButtonElement>;
   @ViewChild('pageTitle') private pageTitle?: ElementRef<HTMLElement>;
+  @ViewChild('globalSearchInput') private globalSearchInput?: ElementRef<HTMLInputElement>;
   private desktopFlyoutAnchor: HTMLElement | null = null;
   private flyoutCloseTimer: ReturnType<typeof window.setTimeout> | null = null;
+  private globalSearchTimer: ReturnType<typeof window.setTimeout> | null = null;
+  private headerSearchCloseTimer: ReturnType<typeof window.setTimeout> | null = null;
 
   constructor() {
     this.syncNavigation(this.router.url);
     this.loadFormNavigation();
+    this.loadHeaderContext();
 
     this.router.events
       .pipe(
@@ -129,6 +179,7 @@ export class AdminShellComponent {
       )
       .subscribe((event) => {
         this.syncNavigation(event.urlAfterRedirects);
+        this.rememberRecentPage(event.urlAfterRedirects);
         this.closeMobileNavigation(false);
         window.setTimeout(() => this.pageTitle?.nativeElement.focus(), 0);
       });
@@ -149,6 +200,109 @@ export class AdminShellComponent {
   }
 
   iconFor = adminNavigationIcon;
+
+  toggleHeaderPanel(panel: 'search' | 'filter' | 'recent' | 'notifications' | 'profile'): void {
+    if (panel === 'search') {
+      if (this.searchOpen()) {
+        this.closeHeaderPanels();
+        return;
+      }
+      this.closeHeaderPanels(false);
+      this.searchOpen.set(true);
+      this.searchClosing.set(false);
+      window.setTimeout(() => this.globalSearchInput?.nativeElement.focus(), 0);
+      return;
+    }
+    const next = !this.headerPanelOpen(panel);
+    this.closeHeaderPanels();
+    if (panel === 'filter') this.filterOpen.set(next);
+    else if (panel === 'recent') this.recentOpen.set(next);
+    else if (panel === 'notifications') this.notificationsOpen.set(next);
+    else this.profileOpen.set(next);
+  }
+
+  headerPanelOpen(panel: 'search' | 'filter' | 'recent' | 'notifications' | 'profile'): boolean {
+    return {
+      search: this.searchOpen(),
+      filter: this.filterOpen(),
+      recent: this.recentOpen(),
+      notifications: this.notificationsOpen(),
+      profile: this.profileOpen(),
+    }[panel];
+  }
+
+  closeHeaderPanels(animateSearch = true): void {
+    if (this.headerSearchCloseTimer !== null) window.clearTimeout(this.headerSearchCloseTimer);
+    if (animateSearch && this.searchOpen()) {
+      this.searchClosing.set(true);
+      this.headerSearchCloseTimer = window.setTimeout(() => {
+        this.searchOpen.set(false);
+        this.searchClosing.set(false);
+        this.headerSearchCloseTimer = null;
+      }, 180);
+    } else {
+      this.searchOpen.set(false);
+      this.searchClosing.set(false);
+    }
+    this.filterOpen.set(false);
+    this.recentOpen.set(false);
+    this.notificationsOpen.set(false);
+    this.profileOpen.set(false);
+  }
+
+  onGlobalSearch(value: string): void {
+    this.globalSearchQuery = value;
+    if (this.globalSearchTimer !== null) window.clearTimeout(this.globalSearchTimer);
+    const query = value.trim();
+    if (query.length < 2) {
+      this.searchResults.set([]);
+      this.searchLoading.set(false);
+      return;
+    }
+    this.searchLoading.set(true);
+    this.globalSearchTimer = window.setTimeout(() => this.executeGlobalSearch(query), 220);
+  }
+
+  toggleSearchType(type: GlobalSearchResult['type']): void {
+    this.enabledSearchTypes.update((types) =>
+      types.includes(type) ? types.filter((item) => item !== type) : [...types, type],
+    );
+    if (this.globalSearchQuery.trim().length >= 2) this.onGlobalSearch(this.globalSearchQuery);
+  }
+
+  searchTypeEnabled(type: GlobalSearchResult['type']): boolean {
+    return this.enabledSearchTypes().includes(type);
+  }
+
+  applyGlobalFilters(): void {
+    this.filterOpen.set(false);
+    this.searchOpen.set(true);
+    if (this.globalSearchQuery.trim().length >= 2) this.onGlobalSearch(this.globalSearchQuery);
+    window.setTimeout(() => this.globalSearchInput?.nativeElement.focus(), 0);
+  }
+
+  resetGlobalFilters(): void {
+    this.enabledSearchTypes.set(['module', 'student', 'workflow', 'record']);
+    this.selectedSearchStatus = '';
+    this.selectedCampus = '';
+    this.selectedSession = '';
+  }
+
+  openGlobalResult(result: GlobalSearchResult): void {
+    this.closeHeaderPanels();
+    this.globalSearchQuery = '';
+    this.searchResults.set([]);
+    void this.router.navigateByUrl(result.route);
+  }
+
+  openRecent(route: string): void {
+    this.closeHeaderPanels();
+    void this.router.navigateByUrl(route);
+  }
+
+  markNotificationsRead(): void {
+    this.unreadNotifications.set(0);
+  }
 
   toggleDesktopSidebar(): void {
     this.desktopCollapsed.update((collapsed) => !collapsed);
@@ -279,6 +433,16 @@ export class AdminShellComponent {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (
+      this.searchOpen() ||
+      this.filterOpen() ||
+      this.recentOpen() ||
+      this.notificationsOpen() ||
+      this.profileOpen()
+    ) {
+      this.closeHeaderPanels();
+      return;
+    }
     if (this.mobileOpen()) {
       this.closeMobileNavigation();
       return;
@@ -292,6 +456,7 @@ export class AdminShellComponent {
     if (this.expandedSectionId() && !target?.closest('.admin-sidebar--desktop')) {
       this.closeDesktopFlyout();
     }
+    if (!target?.closest('.admin-header__interactive')) this.closeHeaderPanels();
   }
 
   @HostListener('window:resize')
@@ -311,6 +476,130 @@ export class AdminShellComponent {
     this.pageContext.set(resolveAdminPageContext(url, this.deepestRouteTitle()));
   }
 
+  private loadHeaderContext(): void {
+    forkJoin({
+      campuses: this.api.masterValues('university', { active: true }),
+      sessions: this.api.masterValues('academic', { active: true }),
+    }).subscribe({
+      next: ({ campuses, sessions }) => {
+        this.campusOptions.set(campuses.items);
+        this.sessionOptions.set(sessions.items);
+        if (!this.selectedCampus && campuses.items.length === 1) {
+          this.selectedCampus = campuses.items[0].name;
+        }
+        if (!this.selectedSession && sessions.items.length) {
+          this.selectedSession = sessions.items[0].name;
+        }
+      },
+    });
+  }
+
+  private executeGlobalSearch(query: string): void {
+    const normalised = query.toLowerCase();
+    const localResults: GlobalSearchResult[] = [];
+    if (
+      this.searchTypeEnabled('module') ||
+      this.searchTypeEnabled('workflow') ||
+      this.searchTypeEnabled('record')
+    ) {
+      for (const section of this.navigation()) {
+        if (section.route && section.label.toLowerCase().includes(normalised)) {
+          localResults.push({
+            id: `section-${section.id}`,
+            title: section.label,
+            meta: 'Module',
+            type: 'module',
+            route: section.route,
+          });
+        }
+        for (const entry of section.children || []) {
+          if (entry.route && entry.label.toLowerCase().includes(normalised)) {
+            localResults.push({
+              id: `entry-${entry.id}`,
+              title: entry.label,
+              meta: section.label,
+              type:
+                section.id === 'workflows'
+                  ? 'workflow'
+                  : section.id === 'records'
+                    ? 'record'
+                    : 'module',
+              route: entry.route,
+            });
+          }
+          for (const link of entry.children || []) {
+            if (!link.label.toLowerCase().includes(normalised)) continue;
+            localResults.push({
+              id: `link-${link.id}`,
+              title: link.label,
+              meta: `${section.label} · ${entry.label}`,
+              type:
+                section.id === 'workflows'
+                  ? 'workflow'
+                  : section.id === 'records'
+                    ? 'record'
+                    : 'module',
+              route: link.route,
+            });
+          }
+        }
+      }
+    }
+
+    const filteredLocalResults = localResults.filter((result) =>
+      this.searchTypeEnabled(result.type),
+    );
+
+    if (!this.searchTypeEnabled('student')) {
+      this.searchResults.set(filteredLocalResults.slice(0, 20));
+      this.searchLoading.set(false);
+      return;
+    }
+
+    this.api
+      .admissions({
+        search: query,
+        page: 1,
+        limit: 12,
+        status: this.selectedSearchStatus || undefined,
+        university: this.selectedCampus || undefined,
+        session: this.selectedSession || undefined,
+      })
+      .subscribe({
+        next: ({ items }) => {
+          if (this.globalSearchQuery.trim() !== query) return;
+          this.searchResults.set([
+            ...filteredLocalResults.slice(0, 8),
+            ...items.map((student) => this.studentSearchResult(student)),
+          ]);
+          this.searchLoading.set(false);
+        },
+        error: () => {
+          this.searchResults.set(filteredLocalResults.slice(0, 20));
+          this.searchLoading.set(false);
+        },
+      });
+  }
+
+  private studentSearchResult(student: Admission): GlobalSearchResult {
+    return {
+      id: `student-${student._id}`,
+      title: student.studentName || student.applicationNumber || 'Student application',
+      meta: [student.studentId || student.applicationNumber, student.courseName, student.status]
+        .filter(Boolean)
+        .join(' · '),
+      type: 'student',
+      route: `/admin/admissions/applications/${student._id}`,
+    };
+  }
+
+  private rememberRecentPage(route: string): void {
+    const title = resolveAdminPageContext(route, this.deepestRouteTitle()).title;
+    this.recentPages.update((items) =>
+      [{ title, route }, ...items.filter((item) => item.route !== route)].slice(0, 6),
+    );
+  }
+
   private cancelFlyoutClose(): void {
     if (this.flyoutCloseTimer !== null) window.clearTimeout(this.flyoutCloseTimer);
     this.flyoutCloseTimer = null;
@@ -319,7 +608,10 @@ export class AdminShellComponent {
 
   private loadFormNavigation(): void {
     this.api.forms().subscribe({
-      next: ({ items }) => this.navigation.set(this.navigationForForms(items)),
+      next: ({ items }) => {
+        this.forms.set(items);
+        this.navigation.set(this.navigationForForms(items));
+      },
     });
   }
 
@@ -331,6 +623,7 @@ export class AdminShellComponent {
       ...section,
       children: section.children ? [...section.children] : undefined,
     }));
+
     const admissionsIndex = navigation.findIndex((section) => section.id === 'admissions');
     if (admissionsIndex >= 0) {
       const admissions = navigation[admissionsIndex];
@@ -341,85 +634,125 @@ export class AdminShellComponent {
         ...admissions,
         children: [
           ...(admissions.children || []),
-          ...admissionForms.map((form) => this.formNavigationEntry(form, 'admission')),
+          ...(admissionForms.length
+            ? [
+                {
+                  id: 'admission-workflows',
+                  label: 'Application workflows',
+                  description: 'Open published admission processes',
+                  group: 'Application management',
+                  icon: 'records' as const,
+                  children: admissionForms.map((form) =>
+                    this.formNavigationEntry(form, 'admission'),
+                  ),
+                },
+              ]
+            : []),
         ],
       };
     }
-    const destinationGroups = new Map<string, { label: string; forms: AdmissionForm[] }>();
-    for (const form of published.filter((item) => item.purpose !== 'admission')) {
-      const fallback = this.purposeSection(form.purpose);
-      const sectionId = form.destination?.navigationSectionId || fallback.id;
-      const current = destinationGroups.get(sectionId) || {
-        label: form.destination?.navigationSectionName || fallback.label,
-        forms: [],
-      };
-      current.forms.push(form);
-      destinationGroups.set(sectionId, current);
-    }
-    for (const [sectionId, group] of destinationGroups) {
-      navigation.splice(
-        Math.max(
-          1,
-          navigation.findIndex((section) => section.id === 'academics'),
-        ),
-        0,
+
+    const operationalForms = published.filter(
+      (form) => (form.purpose || 'admission') !== 'admission',
+    );
+    if (operationalForms.length) {
+      const workflowGroups: Array<{
+        id: 'employee' | 'faculty' | 'general';
+        label: string;
+        description: string;
+        icon: 'records' | 'students';
+        forms: AdmissionForm[];
+      }> = [
         {
-          id: `forms-${sectionId}`,
-          label: group.label,
+          id: 'employee',
+          label: 'Employee workflows',
+          description: 'Employee onboarding and service forms',
           icon: 'records',
-          activeWhen: group.forms.map((form) => new RegExp(`^/admin/forms/${form._id}/fill/?$`)),
-          children: group.forms.map((form) =>
-            this.formNavigationEntry(form, form.purpose || 'general'),
-          ),
+          forms: operationalForms.filter((form) => form.purpose === 'employee'),
         },
-      );
+        {
+          id: 'faculty',
+          label: 'Faculty workflows',
+          description: 'Faculty onboarding and academic forms',
+          icon: 'students',
+          forms: operationalForms.filter((form) => form.purpose === 'faculty'),
+        },
+        {
+          id: 'general',
+          label: 'Other workflows',
+          description: 'General organisation processes',
+          icon: 'records',
+          forms: operationalForms.filter((form) => form.purpose === 'general'),
+        },
+      ];
+      const workflowEntries: AdminNavigationEntry[] = workflowGroups
+        .filter((group) => group.forms.length)
+        .map((group) => ({
+          id: `workflow-${group.id}`,
+          label: group.label,
+          description: group.description,
+          group: 'Published workflows',
+          icon: group.icon,
+          children: group.forms.map((form) => this.formNavigationEntry(form, group.id)),
+        }));
+      const academicsPosition = navigation.findIndex((section) => section.id === 'academics');
+      navigation.splice(Math.max(1, academicsPosition), 0, {
+        id: 'workflows',
+        label: 'Workflows',
+        description: 'Open published employee, faculty and organisation forms.',
+        icon: 'approval',
+        activeWhen: operationalForms.map((form) => new RegExp(`^/admin/forms/${form._id}/fill/?$`)),
+        children: workflowEntries,
+      });
     }
+
     const databaseSections = new Map<string, string>();
     for (const form of forms.filter(
       (item) => item.purpose !== 'admission' && item.destination?.databaseSectionId,
     )) {
-      const fallback = this.purposeSection(form.purpose);
+      const fallback = this.workflowPurpose(form.purpose);
       databaseSections.set(
         form.destination?.databaseSectionId || fallback.id,
         form.destination?.databaseSectionName || fallback.label,
       );
     }
-    navigation.splice(
-      Math.max(
-        1,
-        navigation.findIndex((section) => section.id === 'academics'),
-      ),
-      0,
-      {
-        id: 'database',
-        label: 'Database',
-        icon: 'database',
-        activeWhen: [new RegExp('^/admin/database(?:/|$)')],
-        children: [
-          {
-            id: 'database-students',
-            label: 'Students',
-            route: '/admin/database/students',
-            icon: 'students',
-            activeWhen: [new RegExp('^/admin/database/students/?$')],
-          },
-          ...[...databaseSections].map(([sectionId, label]) => ({
-            id: `database-${sectionId}`,
-            label,
-            route: `/admin/database/${sectionId}`,
-            icon: 'records' as const,
-            activeWhen: [new RegExp(`^/admin/database/${sectionId}(?:/|$)`)],
-          })),
-        ],
-      },
-    );
+
+    const academicsPosition = navigation.findIndex((section) => section.id === 'academics');
+    navigation.splice(Math.max(1, academicsPosition + 1), 0, {
+      id: 'records',
+      label: 'Records',
+      description: 'Search student and workflow submission records.',
+      icon: 'database',
+      activeWhen: [new RegExp('^/admin/database(?:/|$)')],
+      children: [
+        {
+          id: 'database-students',
+          label: 'Student records',
+          description: 'Search submitted student data',
+          group: 'Core records',
+          route: '/admin/database/students',
+          icon: 'students',
+          activeWhen: [new RegExp('^/admin/database/students/?$')],
+        },
+        ...[...databaseSections].map(([sectionId, label]) => ({
+          id: `database-${sectionId}`,
+          label: `${label} records`,
+          description: `Browse ${label.toLowerCase()} submissions`,
+          group: 'Workflow records',
+          route: `/admin/database/${sectionId}`,
+          icon: 'records' as const,
+          activeWhen: [new RegExp(`^/admin/database/${sectionId}(?:/|$)`)],
+        })),
+      ],
+    });
+
     return navigation;
   }
 
   private formNavigationEntry(
     form: AdmissionForm,
     purpose: 'admission' | 'faculty' | 'employee' | 'general',
-  ): AdminNavigationEntry {
+  ): AdminNavigationLink {
     const route =
       purpose === 'admission'
         ? `/admin/admissions/forms/${form._id}/applications`
@@ -433,11 +766,11 @@ export class AdminShellComponent {
     };
   }
 
-  private purposeSection(purpose: AdmissionForm['purpose']) {
+  private workflowPurpose(purpose: AdmissionForm['purpose']) {
     return {
       faculty: { id: 'faculty', label: 'Faculty' },
       employee: { id: 'employees', label: 'Employees' },
-      general: { id: 'other-applications', label: 'Other Applications' },
+      general: { id: 'other-applications', label: 'Other applications' },
       admission: { id: 'admissions', label: 'Admissions' },
     }[purpose || 'general'];
   }

@@ -1,0 +1,55 @@
+<div class="alerts-page">
+  <header class="alerts-heading">
+    <span><img src="/assets/student/attendance/alerts-bell.webp" width="128" height="128" alt="" aria-hidden="true" /></span>
+    <div><nav><a routerLink="/student/attendance">Attendance</a><i>/</i><a routerLink="/student/attendance/shortage">Shortage & Risk</a><i>/</i>Alerts</nav><h1>Attendance alerts</h1><p>Important changes in your current attendance.</p></div>
+  </header>
+  <div class="alerts-tabs"><a routerLink="/student/attendance/shortage">Overview</a><a class="is-active" routerLink="/student/attendance/alerts">Alerts</a></div>
+
+  @if (loading()) { <div class="alerts-state">Loading notifications…</div> }
+  @else if (error()) { <div class="alerts-state alerts-state--error">{{ error() }}</div> }
+  @else if (feed(); as data) {
+    <div class="alerts-toolbar">
+      <label><svg lucideSearch size="19"></svg><input #searchInput type="search" placeholder="Search alerts by subject or keyword" (input)="setSearch(searchInput.value)" /></label>
+      <div class="alerts-filters" aria-label="Filter alerts">
+        <button type="button" [class.is-active]="filter() === 'all'" (click)="setFilter('all')">All</button>
+        <button type="button" [class.is-active]="filter() === 'unread'" (click)="setFilter('unread')">Unread <b>{{ data.counts.unread }}</b></button>
+        <button type="button" [class.is-active]="filter() === 'critical'" (click)="setFilter('critical')">Critical <b>{{ data.counts.critical + data.counts.risk }}</b></button>
+        <button type="button" [class.is-active]="filter() === 'updates'" (click)="setFilter('updates')">Updates</button>
+      </div>
+      <button class="alerts-read" type="button" (click)="markAllRead()" [disabled]="!data.counts.unread"><svg lucideCheckCheck size="18"></svg><span>Mark all read</span></button>
+    </div>
+
+    <div class="alerts-layout">
+      <main class="alerts-list">
+        @for (group of groups(); track group.label) {
+          <section><h2>{{ group.label }}</h2>
+            @for (item of group.items; track item.id) {
+              <article [attr.data-type]="item.type" [class.is-unread]="!item.read">
+                <span class="alerts-list__icon">
+                  @switch (item.type) {
+                    @case ('critical') { <svg lucideCircleAlert size="22"></svg> }
+                    @case ('risk') { <svg lucideAlertTriangle size="22"></svg> }
+                    @case ('pending') { <svg lucideClock3 size="22"></svg> }
+                    @case ('correction') { <svg lucideCheck size="22"></svg> }
+                    @default { <svg lucideInfo size="22"></svg> }
+                  }
+                </span>
+                <div class="alerts-list__copy"><strong>{{ item.title }}</strong><p>{{ item.message }}</p><em>{{ typeLabel(item.type) }}</em></div>
+                <time>{{ item.createdAt | date: 'dd MMM, h:mm a' }}</time>
+                @if (!item.read) { <i class="alerts-unread" aria-label="Unread"></i> }
+                <button type="button" (click)="open(item)">{{ item.actionLabel }} <svg lucideChevronRight size="17"></svg></button>
+              </article>
+            }
+          </section>
+        } @empty { <div class="alerts-empty"><svg lucideCheck size="28"></svg><strong>No matching alerts</strong><p>Try another filter or search term.</p></div> }
+      </main>
+
+      <aside class="alerts-summary">
+        <h2><svg lucideBell size="20"></svg> Alerts summary</h2>
+        <div class="alerts-summary__unread"><strong>{{ data.counts.unread }}</strong><p>Unread alerts<small>Stay on top of your attendance.</small></p></div>
+        <dl><div><dt>Critical</dt><dd>{{ data.counts.critical }}</dd></div><div><dt>At risk</dt><dd>{{ data.counts.risk }}</dd></div><div><dt>Updates</dt><dd>{{ data.counts.updates }}</dd></div></dl>
+        <a routerLink="/student/attendance/alerts/preferences"><svg lucideSettings size="21"></svg><span><strong>Manage preferences</strong><small>Choose which notifications you receive.</small></span><svg lucideChevronRight size="18"></svg></a>
+      </aside>
+    </div>
+  }
+</div>

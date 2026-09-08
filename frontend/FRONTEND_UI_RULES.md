@@ -381,6 +381,10 @@ Field rules:
 - validation directly below the field,
 - 44px minimum mobile touch targets.
 
+Native range inputs must not show the browser-default blue rectangular outline
+around the complete slider. Any keyboard focus indicator must use the design
+system and follow the slider thumb or track geometry.
+
 Use this pattern for Admission, Hostel, Scholarship, Document Verification,
 Fee Concession, Employee Onboarding, and every future long workflow.
 

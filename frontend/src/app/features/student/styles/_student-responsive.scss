@@ -70,6 +70,41 @@
       flex-basis: 44px;
     }
 
+    .student-notification-drawer {
+      top: auto;
+      bottom: 0;
+      width: 100%;
+      height: min(82dvh, 720px);
+      border-top: 1px solid var(--student-color-border);
+      border-left: 0;
+      border-radius: var(--student-radius-panel) var(--student-radius-panel) 0 0;
+      animation-name: student-notification-mobile-enter;
+    }
+
+    .student-notification-drawer::before {
+      position: absolute;
+      top: var(--student-space-2);
+      left: 50%;
+      width: 54px;
+      height: 5px;
+      border-radius: var(--student-radius-pill);
+      background: var(--student-color-border-strong);
+      content: '';
+      transform: translateX(-50%);
+    }
+
+    .student-notification-drawer > header {
+      min-height: 78px;
+      padding: var(--student-space-5) var(--student-space-4) var(--student-space-3);
+    }
+
+    .student-notification-drawer__actions { padding-inline: var(--student-space-4); }
+    .student-notification-drawer__list > button { padding: var(--student-space-4); }
+
+    @keyframes student-notification-mobile-enter {
+      from { opacity: 0; transform: translateY(40px); }
+    }
+
     .student-profile-menu {
       position: fixed;
       top: calc(var(--student-mobile-header-height) + var(--student-space-2));

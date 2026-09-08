@@ -1,0 +1,1132 @@
+/* ERP-LOCAL-STYLE: unique attendance dashboard, progress-ring, tool-grid and responsive alert geometry. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.student-attendance-page {
+  display: grid;
+  min-width: 0;
+  gap: var(--student-space-4);
+  padding-bottom: var(--student-space-4);
+  color: var(--student-color-text);
+}
+
+.student-attendance-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--student-space-6);
+}
+
+.student-attendance-heading nav {
+  display: flex;
+  align-items: center;
+  gap: var(--student-space-2);
+  margin-bottom: var(--student-space-2);
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-label);
+}
+
+.student-attendance-heading nav span {
+  color: var(--student-color-primary-pressed);
+}
+
+.student-attendance-heading h1,
+.student-attendance-heading p,
+.student-attendance-tools h2,
+.student-attendance-tools p,
+.student-attendance-alerts h2,
+.student-attendance-alerts p {
+  margin: 0;
+}
+
+.student-attendance-heading h1 {
+  font-size: clamp(var(--student-text-display), 2.4vw, var(--student-space-10));
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.student-attendance-heading > div:first-child > p {
+  margin-top: var(--student-space-2);
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-body);
+}
+
+.student-attendance-heading__mobile-copy {
+  display: none;
+}
+
+.student-attendance-context {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--student-space-2);
+  flex-wrap: wrap;
+}
+
+.student-attendance-context small {
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-caption);
+}
+
+.student-attendance-refresh,
+.student-attendance-state button {
+  display: inline-grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 1px solid var(--student-color-border);
+  border-radius: var(--student-radius-control);
+  color: var(--student-color-primary-pressed);
+  background: var(--student-color-surface-raised);
+  cursor: pointer;
+}
+
+.student-attendance-refresh:disabled {
+  color: var(--student-color-text-muted);
+  cursor: wait;
+}
+
+.student-attendance-refresh .is-spinning {
+  animation: student-attendance-spin 700ms linear infinite;
+}
+
+.student-attendance-state {
+  display: grid;
+  min-height: 320px;
+  place-content: center;
+  justify-items: center;
+  gap: var(--student-space-2);
+  padding: var(--student-space-8);
+  border: 1px solid var(--student-color-border);
+  border-radius: var(--student-radius-card);
+  background: var(--student-color-surface);
+  box-shadow: var(--student-shadow-card);
+  text-align: center;
+}
+
+.student-attendance-state p {
+  margin: 0;
+  color: var(--student-color-text-secondary);
+}
+
+.student-attendance-state--error > svg {
+  color: var(--student-color-warning);
+}
+
+.student-attendance-state button {
+  min-width: 110px;
+  margin-top: var(--student-space-2);
+  padding-inline: var(--student-space-4);
+  font-weight: 700;
+}
+
+.student-attendance-state__spinner {
+  width: var(--student-space-8);
+  height: var(--student-space-8);
+  border: var(--student-space-1) solid var(--student-attendance-ring-track);
+  border-top-color: var(--student-color-primary);
+  border-radius: var(--student-radius-pill);
+  animation: student-attendance-spin 700ms linear infinite;
+}
+
+.student-attendance-hero {
+  position: relative;
+  display: grid;
+  min-height: 190px;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(340px, 2fr) minmax(200px, 0.9fr);
+  align-items: center;
+  gap: var(--student-space-6);
+  overflow: hidden;
+  padding: var(--student-space-4) var(--student-space-6);
+  border: 1px solid var(--student-color-border);
+  border-radius: var(--student-radius-card);
+  background: linear-gradient(
+    115deg,
+    var(--student-attendance-hero-start),
+    var(--student-attendance-hero-end)
+  );
+  box-shadow: var(--student-attendance-shadow);
+}
+
+.student-attendance-hero::before,
+.student-attendance-hero::after {
+  position: absolute;
+  border-radius: var(--student-radius-pill);
+  background: var(--student-color-primary-soft);
+  content: '';
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.student-attendance-hero::before {
+  width: 170px;
+  height: 170px;
+  right: -70px;
+  top: -65px;
+}
+
+.student-attendance-hero::after {
+  width: 145px;
+  height: 145px;
+  bottom: -80px;
+  left: -60px;
+}
+
+.student-attendance-page__ring {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 144px;
+  height: 144px;
+  place-items: center;
+  justify-self: center;
+  border-radius: var(--student-radius-pill);
+  background: conic-gradient(
+    var(--student-color-primary) var(--student-attendance-progress),
+    var(--student-attendance-ring-track) 0
+  );
+  box-shadow: inset 0 0 0 1px var(--student-color-border);
+  transform: translateY(calc(var(--student-space-3) * -1));
+}
+
+.student-attendance-page__ring::before {
+  position: absolute;
+  inset: var(--student-space-3);
+  border-radius: inherit;
+  background: var(--student-color-surface);
+  content: '';
+}
+
+.student-attendance-page__ring span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: var(--student-space-1);
+}
+
+.student-attendance-page__ring strong {
+  font-size: clamp(var(--student-text-h1), 2.4vw, var(--student-space-8));
+  letter-spacing: -0.05em;
+}
+
+.student-attendance-page__ring small {
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-caption);
+}
+
+.student-attendance-page__ring em {
+  display: none;
+  color: var(--student-color-success);
+  font-size: var(--student-text-label);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.student-attendance-hero__summary {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.student-attendance-hero__summary h2 {
+  margin: 0;
+  font-size: clamp(var(--student-text-h3), 2vw, var(--student-text-h2));
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.student-attendance-hero__summary h2 strong {
+  color: var(--student-color-primary-pressed);
+  font-size: clamp(var(--student-text-h1), 2.4vw, var(--student-space-8));
+}
+
+.student-attendance-hero__summary h2 b {
+  font-size: 1.2em;
+}
+
+.student-attendance-hero__mobile-copy {
+  display: none;
+}
+
+.student-attendance-progress {
+  position: relative;
+  height: var(--student-space-3);
+  margin-top: var(--student-space-4);
+  overflow: visible;
+  border-radius: var(--student-radius-pill);
+  background: var(--student-attendance-progress-track);
+}
+
+.student-attendance-progress span {
+  display: block;
+  width: var(--student-attendance-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--student-color-primary-pressed),
+    var(--student-color-primary)
+  );
+}
+
+.student-attendance-progress i {
+  position: absolute;
+  top: calc(var(--student-space-2) * -0.5);
+  width: 3px;
+  height: var(--student-space-5);
+  border-radius: var(--student-radius-pill);
+  background: var(--student-color-text);
+}
+
+.student-attendance-hero__summary > small {
+  display: block;
+  margin-top: var(--student-space-2);
+  color: var(--student-color-text-secondary);
+  text-align: right;
+}
+
+.student-attendance-hero dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: var(--student-space-4) 0 0;
+}
+
+.student-attendance-hero dl div {
+  padding-inline: var(--student-space-4);
+  border-left: 1px solid var(--student-color-divider);
+}
+
+.student-attendance-hero dl div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.student-attendance-hero dt {
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-caption);
+}
+
+.student-attendance-hero dd {
+  margin: var(--student-space-1) 0 0;
+  font-size: var(--student-text-h2);
+  font-weight: 800;
+}
+
+.student-attendance-hero dd.is-present {
+  color: var(--student-color-success);
+}
+
+.student-attendance-hero dd.is-absent {
+  color: var(--student-color-danger);
+}
+
+.student-attendance-hero__visual {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.student-attendance-hero__visual img {
+  width: min(160px, 100%);
+  height: 122px;
+  object-fit: contain;
+  filter: drop-shadow(var(--student-shadow-card));
+}
+
+.student-attendance-hero__visual strong {
+  color: var(--student-color-primary-pressed);
+  font-size: var(--student-text-label);
+}
+
+.student-attendance-status {
+  position: absolute;
+  z-index: 2;
+  bottom: var(--student-space-3);
+  left: calc(var(--student-space-6) + 42px);
+  display: flex;
+  align-items: center;
+  gap: var(--student-space-2);
+  color: var(--student-color-success);
+}
+
+.student-attendance-status span {
+  display: grid;
+  width: var(--student-space-6);
+  height: var(--student-space-6);
+  place-items: center;
+  border-radius: var(--student-radius-pill);
+  color: var(--student-color-text-inverse);
+  background: currentColor;
+}
+
+.student-attendance-status svg {
+  color: var(--student-color-text-inverse);
+}
+
+.student-attendance-hero--warning .student-attendance-status {
+  color: var(--student-color-warning);
+}
+
+.student-attendance-hero--critical .student-attendance-status {
+  color: var(--student-color-danger);
+}
+
+.student-attendance-hero--unknown .student-attendance-status {
+  color: var(--student-color-text-muted);
+}
+
+.student-attendance-tools {
+  min-width: 0;
+}
+
+.student-attendance-tools > header,
+.student-attendance-alerts > header > div {
+  display: grid;
+  gap: var(--student-space-1);
+}
+
+.student-attendance-tools h2,
+.student-attendance-alerts h2 {
+  font-size: var(--student-text-h2);
+}
+
+.student-attendance-tools header p,
+.student-attendance-alerts header p {
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-label);
+}
+
+.student-attendance-tools__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--student-space-3);
+  margin-top: var(--student-space-2);
+}
+
+.student-attendance-tool {
+  --student-attendance-card-tone: var(--student-attendance-tool-overview);
+
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 86px;
+  grid-template-columns: 68px minmax(0, 1fr) var(--student-space-8);
+  align-items: center;
+  gap: var(--student-space-3);
+  padding: var(--student-space-2) var(--student-space-3) var(--student-space-2)
+    var(--student-space-2);
+  overflow: hidden;
+  border: 1px solid
+    color-mix(in srgb, var(--student-attendance-card-tone) 70%, var(--student-color-border));
+  border-radius: var(--student-radius-card);
+  color: var(--student-color-text);
+  background: linear-gradient(
+    135deg,
+    var(--student-attendance-card-tone),
+    color-mix(in srgb, var(--student-attendance-card-tone) 76%, var(--student-color-surface-raised))
+  );
+  box-shadow: var(--student-shadow-card);
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--student-motion-standard) var(--student-ease-standard),
+    box-shadow var(--student-motion-standard) var(--student-ease-standard),
+    border-color var(--student-motion-standard) var(--student-ease-standard);
+}
+
+.student-attendance-tool::before {
+  position: absolute;
+  top: -58px;
+  left: -42px;
+  width: 118px;
+  height: 118px;
+  border-radius: var(--student-radius-pill);
+  background: var(--student-color-surface-raised);
+  content: '';
+  opacity: 0.34;
+  pointer-events: none;
+}
+
+.student-attendance-tool::after {
+  position: absolute;
+  right: -62px;
+  bottom: -74px;
+  width: 132px;
+  height: 132px;
+  border-radius: var(--student-radius-pill);
+  background: var(--student-color-surface-raised);
+  content: '';
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.student-attendance-tool:hover {
+  transform: translateY(-2px);
+  border-color: var(--student-color-border-strong);
+  box-shadow: var(--student-attendance-shadow);
+}
+
+.student-attendance-tool--subject {
+  --student-attendance-card-tone: var(--student-attendance-tool-subject);
+}
+
+.student-attendance-tool--analysis {
+  --student-attendance-card-tone: var(--student-attendance-tool-analysis);
+}
+
+.student-attendance-tool--alerts {
+  --student-attendance-card-tone: var(--student-attendance-tool-alerts);
+}
+
+.student-attendance-tool--corrections {
+  --student-attendance-card-tone: var(--student-attendance-tool-corrections);
+}
+
+.student-attendance-tool--reports {
+  --student-attendance-card-tone: var(--student-attendance-tool-reports);
+}
+
+.student-attendance-tool img {
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(var(--student-shadow-card));
+}
+
+.student-attendance-tool > span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  gap: var(--student-space-1);
+}
+
+.student-attendance-tool strong {
+  font-size: var(--student-text-label);
+}
+
+.student-attendance-tool small {
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-caption);
+  line-height: 1.35;
+}
+
+.student-attendance-tool i {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: var(--student-space-8);
+  height: var(--student-space-8);
+  place-items: center;
+  border-radius: var(--student-radius-pill);
+  color: var(--student-color-primary-pressed);
+  background: var(--student-color-surface-raised);
+}
+
+.student-attendance-tool-notice {
+  min-height: var(--student-space-5);
+  margin-top: var(--student-space-2) !important;
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-caption);
+}
+
+.student-attendance-alerts {
+  overflow: hidden;
+  border: 1px solid var(--student-color-border);
+  border-radius: var(--student-radius-card);
+  background: var(--student-color-surface-raised);
+  box-shadow: var(--student-shadow-card);
+}
+
+.student-attendance-alerts > header {
+  display: grid;
+  min-height: 62px;
+  grid-template-columns: var(--student-space-8) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--student-space-3);
+  padding: var(--student-space-2) var(--student-space-4);
+  border-bottom: 1px solid var(--student-color-divider);
+}
+
+.student-attendance-alerts > header > span {
+  display: grid;
+  width: var(--student-space-8);
+  height: var(--student-space-8);
+  place-items: center;
+  border-radius: var(--student-radius-control);
+  color: var(--student-color-warning);
+  background: var(--student-color-warning-soft);
+}
+
+.student-attendance-alerts > header button,
+.student-attendance-alerts > header a,
+.student-attendance-alerts article > button,
+.student-attendance-alerts article > a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--student-space-1);
+  border: 1px solid var(--student-color-border);
+  border-radius: var(--student-radius-control);
+  color: var(--student-color-primary-pressed);
+  background: var(--student-color-surface-raised);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.student-attendance-alerts > header button,
+.student-attendance-alerts > header a {
+  padding-inline: var(--student-space-4);
+}
+
+.student-attendance-alerts article {
+  display: grid;
+  min-height: 54px;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(160px, 0.8fr) 64px 86px 44px;
+  align-items: center;
+  gap: var(--student-space-4);
+  padding: var(--student-space-2) var(--student-space-4);
+  border-bottom: 1px solid var(--student-color-divider);
+}
+
+.student-attendance-alerts article:last-child {
+  border-bottom: 0;
+}
+
+.student-attendance-alerts article > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.student-attendance-alerts__subject-icon {
+  display: none;
+}
+
+.student-attendance-alerts__subject-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.student-attendance-alerts article > div strong,
+.student-attendance-alerts article > div small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-attendance-alerts article small {
+  color: var(--student-color-text-secondary);
+  font-size: var(--student-text-caption);
+}
+
+.student-attendance-alerts__progress {
+  height: var(--student-space-2);
+  overflow: hidden;
+  border-radius: var(--student-radius-pill);
+  background: var(--student-attendance-progress-track);
+}
+
+.student-attendance-alerts__progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--student-color-danger);
+}
+
+.student-attendance-alerts article > b {
+  color: var(--student-color-danger);
+  text-align: right;
+}
+
+.student-attendance-alerts article > em {
+  justify-self: center;
+  padding: var(--student-space-1) var(--student-space-2);
+  border-radius: var(--student-radius-pill);
+  color: var(--student-color-danger);
+  background: var(--student-color-danger-soft);
+  font-size: var(--student-text-caption);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.student-attendance-alerts article > button,
+.student-attendance-alerts article > a {
+  width: 40px;
+  padding: 0;
+  border-color: transparent;
+}
+
+.student-attendance-alerts__empty {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: var(--student-space-3);
+  padding: var(--student-space-3) var(--student-space-4);
+}
+
+.student-attendance-alerts__empty > span {
+  display: grid;
+  width: var(--student-space-8);
+  height: var(--student-space-8);
+  flex: 0 0 var(--student-space-8);
+  place-items: center;
+  border-radius: var(--student-radius-pill);
+  color: var(--student-color-text-inverse);
+  background: var(--student-color-success);
+}
+
+.student-attendance-alerts__empty p {
+  color: var(--student-color-text-secondary);
+}
+
+.student-attendance-alerts__empty strong {
+  color: var(--student-color-text);
+}
+
+@keyframes student-attendance-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1199px) {
+  .student-attendance-hero {
+    grid-template-columns: 170px minmax(300px, 1fr) 175px;
+    gap: var(--student-space-5);
+    padding-inline: var(--student-space-5);
+  }
+
+  .student-attendance-status {
+    left: 62px;
+  }
+
+  .student-attendance-tools__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  :host {
+    position: relative;
+    isolation: isolate;
+  }
+
+  :host::before {
+    position: absolute;
+    z-index: -1;
+    inset: calc(var(--student-space-4) * -1);
+    background:
+      radial-gradient(
+        circle at 108% 12%,
+        var(--student-color-primary-soft) 0 72px,
+        transparent 73px
+      ),
+      radial-gradient(
+        circle at 112% 88%,
+        var(--student-color-primary-soft) 0 112px,
+        transparent 113px
+      ),
+      linear-gradient(
+        155deg,
+        var(--student-color-primary-subtle),
+        var(--student-color-surface-soft)
+      );
+    content: '';
+    pointer-events: none;
+  }
+
+  .student-attendance-page {
+    gap: var(--student-space-4);
+    padding-bottom: var(--student-space-4);
+  }
+
+  .student-attendance-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--student-space-2);
+  }
+
+  .student-attendance-heading nav {
+    display: none;
+  }
+
+  .student-attendance-heading h1 {
+    font-size: clamp(26px, 7vw, var(--student-text-display));
+    line-height: 1.08;
+  }
+
+  .student-attendance-heading > div:first-child > p {
+    margin-top: var(--student-space-1);
+    font-size: var(--student-text-body);
+    line-height: 1.35;
+  }
+
+  .student-attendance-heading > div:first-child > p > span:first-child {
+    display: none;
+  }
+
+  .student-attendance-heading__mobile-copy {
+    display: inline;
+    white-space: normal;
+  }
+
+  .student-attendance-context {
+    display: flex;
+    flex-wrap: nowrap;
+    align-self: start;
+    justify-content: flex-end;
+  }
+
+  .student-attendance-context small {
+    display: none;
+  }
+
+  .student-attendance-refresh {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .student-attendance-hero {
+    min-height: 164px;
+    grid-template-columns: minmax(100px, 118px) minmax(120px, 1fr) 68px;
+    grid-template-rows: 1fr;
+    align-items: center;
+    gap: var(--student-space-3);
+    padding: var(--student-space-4);
+    border-radius: var(--student-radius-card);
+  }
+
+  .student-attendance-hero::before {
+    top: -38px;
+    right: -38px;
+    width: 96px;
+    height: 96px;
+  }
+
+  .student-attendance-hero::after {
+    bottom: -54px;
+    left: -48px;
+    width: 100px;
+    height: 100px;
+  }
+
+  .student-attendance-page__ring {
+    width: min(30vw, 116px);
+    height: min(30vw, 116px);
+    grid-column: 1;
+    transform: none;
+  }
+
+  .student-attendance-page__ring::before {
+    inset: 10px;
+  }
+
+  .student-attendance-page__ring strong {
+    font-size: var(--student-text-h1);
+  }
+
+  .student-attendance-page__ring small {
+    display: none;
+  }
+
+  .student-attendance-page__ring em {
+    display: block;
+    font-size: var(--student-text-caption);
+  }
+
+  .student-attendance-hero__desktop-copy {
+    display: none;
+  }
+
+  .student-attendance-hero__summary {
+    grid-column: 2;
+    align-self: center;
+  }
+
+  .student-attendance-hero__mobile-copy {
+    display: block;
+    max-width: none;
+    padding-right: 0;
+    font-size: var(--student-text-label);
+    line-height: 1.2;
+  }
+
+  .student-attendance-hero__mobile-copy strong {
+    display: inline-block;
+    font-size: var(--student-text-h2);
+  }
+
+  .student-attendance-hero__mobile-copy span {
+    display: block;
+    margin-top: 2px;
+    color: var(--student-color-text-secondary);
+    font-weight: 600;
+  }
+
+  .student-attendance-progress {
+    width: 100%;
+    height: 6px;
+    margin-top: var(--student-space-2);
+  }
+
+  .student-attendance-progress i {
+    top: -4px;
+    height: var(--student-space-4);
+  }
+
+  .student-attendance-hero dl {
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--student-space-2);
+    margin-top: var(--student-space-2);
+  }
+
+  .student-attendance-hero dl div {
+    display: grid;
+    min-width: 0;
+    padding: 6px var(--student-space-2);
+    border: 0;
+    border-radius: var(--student-radius-control);
+    background: var(--student-color-surface-raised);
+  }
+
+  .student-attendance-hero dl div:last-child {
+    display: none;
+  }
+
+  .student-attendance-hero dt {
+    font-size: var(--student-text-overline);
+    white-space: nowrap;
+  }
+
+  .student-attendance-hero dt::before {
+    content: none;
+  }
+
+  .student-attendance-hero dd {
+    margin-top: 0;
+    font-size: var(--student-text-h3);
+  }
+
+  .student-attendance-hero__summary > small {
+    width: 100%;
+    margin-top: var(--student-space-1);
+    font-size: var(--student-text-overline);
+    white-space: nowrap;
+  }
+
+  .student-attendance-hero__visual {
+    position: relative;
+    top: auto;
+    right: auto;
+    grid-column: 3;
+    align-self: start;
+    margin-top: var(--student-space-1);
+  }
+
+  .student-attendance-hero__visual img {
+    width: 66px;
+    height: 66px;
+    opacity: 1;
+  }
+
+  .student-attendance-hero__visual strong {
+    display: none;
+  }
+
+  .student-attendance-status {
+    display: none;
+  }
+
+  .student-attendance-tools h2,
+  .student-attendance-alerts h2 {
+    font-size: var(--student-text-h2);
+  }
+
+  .student-attendance-tools > header > p {
+    display: none;
+  }
+
+  .student-attendance-tools__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--student-space-3);
+  }
+
+  .student-attendance-tool {
+    min-height: 92px;
+    grid-template-columns: 52px minmax(0, 1fr) 18px;
+    gap: var(--student-space-2);
+    padding: 10px var(--student-space-3);
+    border-radius: var(--student-radius-card);
+    text-align: left;
+  }
+
+  .student-attendance-tool::before {
+    top: -72px;
+    left: -50px;
+    opacity: 0.2;
+  }
+
+  .student-attendance-tool::after {
+    right: -76px;
+    bottom: -88px;
+    opacity: 0.08;
+  }
+
+  .student-attendance-tool img {
+    width: 52px;
+    height: 58px;
+  }
+
+  .student-attendance-tool strong {
+    font-size: var(--student-text-label);
+    line-height: 1.3;
+    overflow-wrap: break-word;
+  }
+
+  .student-attendance-tool small {
+    display: none;
+  }
+
+  .student-attendance-tool i {
+    width: 16px;
+    height: var(--student-space-6);
+    background: transparent;
+  }
+
+  .student-attendance-tool i svg {
+    width: var(--student-space-4);
+    height: var(--student-space-4);
+  }
+
+  .student-attendance-tool-notice {
+    min-height: 0;
+  }
+
+  .student-attendance-tool-notice:empty {
+    display: none;
+  }
+
+  .student-attendance-alerts > header {
+    min-height: 68px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    padding: var(--student-space-3) var(--student-space-4);
+  }
+
+  .student-attendance-alerts {
+    border-radius: var(--student-radius-card);
+  }
+
+  .student-attendance-alerts > header button,
+  .student-attendance-alerts > header a {
+    display: none;
+  }
+
+  .student-attendance-alerts article {
+    min-height: 66px;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    gap: var(--student-space-2);
+    padding: var(--student-space-3) var(--student-space-4);
+  }
+
+  .student-attendance-alerts article:nth-of-type(n + 2) {
+    display: none;
+  }
+
+  .student-attendance-alerts__subject {
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: center;
+    gap: var(--student-space-2);
+  }
+
+  .student-attendance-alerts__subject-icon {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--student-color-primary-pressed);
+    background: var(--student-color-primary-soft);
+  }
+
+  .student-attendance-alerts__subject-copy small {
+    display: none;
+  }
+
+  .student-attendance-alerts__progress {
+    display: none;
+  }
+
+  .student-attendance-alerts article > b {
+    color: var(--student-color-danger);
+    font-size: var(--student-text-body);
+  }
+
+  .student-attendance-alerts article > button,
+  .student-attendance-alerts article > a {
+    width: auto;
+    gap: var(--student-space-1);
+    padding-inline: var(--student-space-1);
+    white-space: nowrap;
+  }
+
+  .student-attendance-alerts article > button::before,
+  .student-attendance-alerts article > a::before {
+    content: 'View alerts';
+  }
+}
+
+@media (max-width: 460px) {
+  .student-attendance-hero {
+    grid-template-columns: minmax(96px, 112px) minmax(0, 1fr);
+  }
+
+  .student-attendance-hero__visual {
+    display: none;
+  }
+
+  .student-attendance-tool {
+    min-height: 88px;
+    grid-template-columns: 44px minmax(0, 1fr) 16px;
+    padding-inline: var(--student-space-2);
+  }
+
+  .student-attendance-tool img {
+    width: 44px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 389px) {
+  .student-attendance-hero__mobile-copy {
+    padding-right: 0;
+  }
+
+  .student-attendance-alerts article {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .student-attendance-alerts article > em {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-attendance-refresh .is-spinning,
+  .student-attendance-state__spinner {
+    animation: none;
+  }
+}

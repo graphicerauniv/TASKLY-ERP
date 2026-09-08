@@ -21,59 +21,340 @@
       <svg lucideMenu size="20" aria-hidden="true"></svg>
     </button>
 
+    <span class="admin-header__module-mark" aria-hidden="true">
+      <svg lucideGraduationCap size="22"></svg>
+    </span>
+
     <div class="admin-header__context">
       <nav class="admin-breadcrumbs" aria-label="Breadcrumb">
         <ol>
           @for (breadcrumb of pageContext().breadcrumbs; track $index; let first = $first) {
             <li>
               @if (!first) {
-                <svg lucideChevronRight size="12" aria-hidden="true"></svg>
+                <svg lucideChevronRight size="13" aria-hidden="true"></svg>
               }
               <span>{{ breadcrumb }}</span>
             </li>
           }
           <li #pageTitle class="admin-breadcrumbs__current" tabindex="-1" aria-current="page">
-            <svg lucideChevronRight size="12" aria-hidden="true"></svg>
+            <svg lucideChevronRight size="13" aria-hidden="true"></svg>
             <span>{{ pageContext().title }}</span>
           </li>
         </ol>
       </nav>
     </div>
 
-    @if (showWorkspaceHeader()) {
-      <div class="admin-header__tools">
-        <label class="admin-header__search"
-          ><svg lucideSearch size="17" aria-hidden="true"></svg
-          ><input
-            aria-label="Search students and programmes"
-            [placeholder]="workspaceSearchPlaceholder()"
-        /></label>
+    <div class="admin-header__interactive">
+      <label class="admin-context-select">
+        <svg lucideLandmark size="20" aria-hidden="true"></svg>
+        <span
+          ><small>Campus</small>
+          <select [(ngModel)]="selectedCampus" aria-label="Current campus">
+            <option value="">All campuses</option>
+            @for (campus of campusOptions(); track campus._id) {
+              <option [value]="campus.name">{{ campus.name }}</option>
+            }
+          </select>
+        </span>
+        <svg lucideChevronDown size="16" aria-hidden="true"></svg>
+      </label>
+
+      <label class="admin-context-select">
+        <svg lucideCalendarDays size="20" aria-hidden="true"></svg>
+        <span
+          ><small>Academic session</small>
+          <select [(ngModel)]="selectedSession" aria-label="Current academic session">
+            <option value="">All sessions</option>
+            @for (session of sessionOptions(); track session._id) {
+              <option [value]="session.name">{{ session.name }}</option>
+            }
+          </select>
+        </span>
+        <svg lucideChevronDown size="16" aria-hidden="true"></svg>
+      </label>
+
+      <div class="admin-header-action">
         <button
-          class="admin-icon-button admin-header__notification"
+          class="admin-header-square"
+          type="button"
+          aria-label="Recent pages"
+          [attr.aria-expanded]="recentOpen()"
+          (click)="toggleHeaderPanel('recent')"
+        >
+          <svg lucideClock3 size="20"></svg>
+        </button>
+        <span class="admin-header-tooltip">Recent</span>
+        @if (recentOpen()) {
+          <section class="admin-header-popover admin-recent-popover">
+            <header>
+              <div><strong>Recent pages</strong><small>Your latest admin workspaces</small></div>
+              <button type="button" aria-label="Close" (click)="recentOpen.set(false)">
+                <svg lucideX size="17"></svg>
+              </button>
+            </header>
+            <div class="admin-recent-list">
+              @for (item of recentPages(); track item.route) {
+                <button type="button" (click)="openRecent(item.route)">
+                  <svg lucideClock3 size="16"></svg
+                  ><span
+                    ><strong>{{ item.title }}</strong
+                    ><small>{{ item.route }}</small></span
+                  ><svg lucideChevronRight size="15"></svg>
+                </button>
+              } @empty {
+                <p>No recent pages in this session.</p>
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <div class="admin-header-action">
+        <button
+          class="admin-header-square"
+          type="button"
+          aria-label="Global search"
+          [attr.aria-expanded]="searchOpen()"
+          (click)="toggleHeaderPanel('search')"
+        >
+          <svg lucideSearch size="20"></svg>
+        </button>
+        <span class="admin-header-tooltip">Search</span>
+      </div>
+
+      <div class="admin-header-action">
+        <button
+          class="admin-header-square"
+          type="button"
+          aria-label="Global filters"
+          [class.is-active]="filterOpen()"
+          [attr.aria-expanded]="filterOpen()"
+          (click)="toggleHeaderPanel('filter')"
+        >
+          <svg lucideFilter size="20"></svg>
+        </button>
+        <span class="admin-header-tooltip">Filter</span>
+        @if (filterOpen()) {
+          <section class="admin-header-popover admin-filter-popover">
+            <header>
+              <div>
+                <strong>Platform search filters</strong
+                ><small>Limit results across large ERP datasets</small>
+              </div>
+              <button type="button" aria-label="Close filters" (click)="filterOpen.set(false)">
+                <svg lucideX size="17"></svg>
+              </button>
+            </header>
+            <fieldset>
+              <legend>Search in</legend>
+              <label
+                ><input
+                  type="checkbox"
+                  [checked]="searchTypeEnabled('module')"
+                  (change)="toggleSearchType('module')"
+                /><span
+                  >Modules and pages<small>Navigation, setup and operational tools</small></span
+                ></label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  [checked]="searchTypeEnabled('student')"
+                  (change)="toggleSearchType('student')"
+                /><span>Students<small>Names, student IDs and application IDs</small></span></label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  [checked]="searchTypeEnabled('workflow')"
+                  (change)="toggleSearchType('workflow')"
+                /><span
+                  >Employee and faculty workflows<small
+                    >Published forms and onboarding processes</small
+                  ></span
+                ></label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  [checked]="searchTypeEnabled('record')"
+                  (change)="toggleSearchType('record')"
+                /><span>Records<small>Submission and database directories</small></span></label
+              >
+            </fieldset>
+            <label class="admin-filter-field"
+              ><span>Student status</span
+              ><select [(ngModel)]="selectedSearchStatus">
+                <option value="">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="submitted">Submitted</option>
+                <option value="pending_approval">Awaiting review</option>
+                <option value="approved">Approved</option>
+              </select></label
+            >
+            <footer>
+              <button type="button" (click)="resetGlobalFilters()">Reset</button
+              ><button class="is-primary" type="button" (click)="applyGlobalFilters()">
+                Apply filters
+              </button>
+            </footer>
+          </section>
+        }
+      </div>
+
+      <div class="admin-header-action">
+        <button
+          class="admin-header-square admin-header__notification"
           type="button"
           aria-label="Notifications"
+          [attr.aria-expanded]="notificationsOpen()"
+          (click)="toggleHeaderPanel('notifications')"
         >
-          <svg lucideBell size="19" aria-hidden="true"></svg><small>12</small>
+          <svg lucideBell size="20"></svg>
+          @if (unreadNotifications()) {
+            <small>{{ unreadNotifications() }}</small>
+          }
         </button>
-        <button class="admin-icon-button" type="button" aria-label="Help">
-          <svg lucideCircleHelp size="19" aria-hidden="true"></svg>
-        </button>
-        <span class="admin-header__avatar">{{ adminInitials() }}</span>
-        <strong class="admin-header__admin-name">{{ auth.admin()?.name || 'Super Admin' }}</strong>
-        <button class="admin-icon-button" type="button" aria-label="Open profile menu">
-          <svg lucideChevronDown size="17" aria-hidden="true"></svg>
-        </button>
+        @if (notificationsOpen()) {
+          <section class="admin-header-popover admin-notification-popover">
+            <header>
+              <div>
+                <strong>Notifications</strong><small>Updates requiring your attention</small>
+              </div>
+              <button type="button" (click)="markNotificationsRead()">Mark all read</button>
+            </header>
+            <div>
+              <article>
+                <i></i
+                ><span
+                  ><strong>Applications awaiting review</strong
+                  ><small>Open the student review queue to continue.</small></span
+                >
+              </article>
+              <article>
+                <i></i
+                ><span
+                  ><strong>Timetable configuration</strong
+                  ><small>Some periods still require timings.</small></span
+                >
+              </article>
+              <article>
+                <i></i
+                ><span
+                  ><strong>Fee schedule update</strong
+                  ><small>A publication window is approaching.</small></span
+                >
+              </article>
+            </div>
+          </section>
+        }
       </div>
-    } @else {
-      <div class="admin-header__status" aria-live="polite">
-        <svg lucideCircleCheck size="20" aria-hidden="true"></svg>
-        <span>{{ headerSaveStatus() }}</span>
-        <span class="admin-header__status-divider" aria-hidden="true"></span>
-        <button class="admin-icon-button" type="button" aria-label="Open header options">
-          <svg lucideChevronDown size="18" aria-hidden="true"></svg>
+
+      <span class="admin-header__divider" aria-hidden="true"></span>
+
+      <div class="admin-profile-control">
+        <button
+          type="button"
+          [attr.aria-expanded]="profileOpen()"
+          (click)="toggleHeaderPanel('profile')"
+        >
+          <span class="admin-header__avatar">{{ adminInitials() }}</span>
+          <span
+            ><strong>{{ auth.admin()?.name || 'Super Admin' }}</strong
+            ><small>Administrator</small></span
+          >
+          <svg lucideChevronDown size="17"></svg>
         </button>
+        @if (profileOpen()) {
+          <section class="admin-header-popover admin-profile-popover">
+            <header>
+              <span class="admin-header__avatar">{{ adminInitials() }}</span>
+              <div>
+                <strong>{{ auth.admin()?.name || 'Super Admin' }}</strong
+                ><small>{{ auth.admin()?.email || 'Admin account' }}</small>
+              </div>
+            </header>
+            <button type="button" (click)="openRecent('/admin/master-data/academic/view')">
+              <svg lucideBuilding2 size="17"></svg>Organisation settings
+            </button>
+            <button type="button" (click)="logout()">
+              <svg lucideLogOut size="17"></svg>Sign out
+            </button>
+          </section>
+        }
       </div>
-    }
+
+      @if (searchOpen()) {
+        <section class="admin-global-search" [class.is-closing]="searchClosing()">
+          <div class="admin-global-search__input">
+            <svg lucideSearch size="20"></svg>
+            <input
+              #globalSearchInput
+              [ngModel]="globalSearchQuery"
+              (ngModelChange)="onGlobalSearch($event)"
+              placeholder="Search students, applications, employees, faculty, forms and modules…"
+              aria-label="Search the ERP"
+            />
+            @if (globalSearchQuery) {
+              <button type="button" aria-label="Clear search" (click)="onGlobalSearch('')">
+                <svg lucideX size="18"></svg>
+              </button>
+            }
+            <kbd>Esc</kbd>
+          </div>
+          <div class="admin-global-search__scope">
+            <span>Searching:</span>
+            @for (type of enabledSearchTypes(); track type) {
+              <b>{{ type }}</b>
+            }
+            @if (selectedCampus) {
+              <b>{{ selectedCampus }}</b>
+            }
+            @if (selectedSession) {
+              <b>{{ selectedSession }}</b>
+            }
+          </div>
+          <div class="admin-global-search__results">
+            @if (searchLoading()) {
+              <p>Searching across ERP records…</p>
+            } @else if (globalSearchQuery.trim().length < 2) {
+              <div class="admin-global-search__hint">
+                <svg lucideSearch size="26"></svg><strong>Search the complete admin platform</strong
+                ><span>Enter at least two characters. Use Filters to narrow large datasets.</span>
+              </div>
+            } @else {
+              @for (result of searchResults(); track result.id) {
+                <button type="button" (click)="openGlobalResult(result)">
+                  @if (result.type === 'student') {
+                    <svg lucideUserRound size="18"></svg>
+                  } @else if (result.type === 'workflow') {
+                    <svg lucideGraduationCap size="18"></svg>
+                  } @else {
+                    <svg lucideBuilding2 size="18"></svg>
+                  }
+                  <span
+                    ><strong>{{ result.title }}</strong
+                    ><small>{{ result.meta }}</small></span
+                  ><b>{{ result.type }}</b
+                  ><svg lucideChevronRight size="16"></svg>
+                </button>
+              } @empty {
+                <div class="admin-global-search__hint">
+                  <svg lucideSearch size="26"></svg><strong>No matching results</strong
+                  ><span>Try another name, ID or change the platform filters.</span>
+                </div>
+              }
+            }
+          </div>
+          <footer>
+            <span>Results are limited for performance.</span
+            ><button type="button" (click)="toggleHeaderPanel('filter')">
+              <svg lucideFilter size="15"></svg>Refine filters
+            </button>
+          </footer>
+        </section>
+      }
+    </div>
   </header>
 
   <main id="admin-main" class="content admin-main" tabindex="-1">

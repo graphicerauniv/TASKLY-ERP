@@ -371,6 +371,178 @@ export interface StudentAttendanceSubject {
   absentLectures: number;
   attendancePercentage: number;
 }
+export interface StudentAttendanceAnalyticsSubject extends StudentAttendanceSubject {
+  upcomingLectures: number;
+  upcomingThrough: string | null;
+  upcomingSource: 'configured-timetable' | 'forecast-window';
+}
+export interface StudentAttendanceAnalytics {
+  subjects: StudentAttendanceAnalyticsSubject[];
+  overall: {
+    totalLectures: number;
+    presentLectures: number;
+    absentLectures: number;
+    attendancePercentage: number;
+  };
+  planningWindowDays: number;
+  planningThrough: string;
+  syncedAt: string;
+}
+export type StudentAttendanceRiskStatus =
+  | 'critical'
+  | 'at-risk'
+  | 'watch'
+  | 'pending'
+  | 'on-track';
+export interface StudentAttendanceRiskSubject extends StudentAttendanceSubject {
+  upcomingLectures: number;
+  requiredAttendance: number;
+  status: StudentAttendanceRiskStatus;
+  classesToTarget: number | null;
+  canReachTarget: boolean | null;
+  bestPossibleAttendance: number | null;
+  absenceBuffer: number | null;
+  message: string;
+  latestActivityAt: string;
+}
+export interface StudentAttendanceRisk {
+  subjects: StudentAttendanceRiskSubject[];
+  summary: { belowMinimum: number; atRisk: number; pending: number; onTrack: number };
+  overall: {
+    totalLectures: number;
+    presentLectures: number;
+    absentLectures: number;
+    attendancePercentage: number;
+  };
+  requiredAttendance: number;
+  syncedAt: string;
+}
+export type StudentNotificationType = 'critical' | 'risk' | 'pending' | 'correction' | 'on-track';
+export interface StudentNotification {
+  id: string;
+  type: StudentNotificationType;
+  title: string;
+  message: string;
+  createdAt: string;
+  read: boolean;
+  subjectId?: string;
+  recordId?: string;
+  actionLabel: string;
+}
+export interface StudentNotificationFeed {
+  items: StudentNotification[];
+  counts: { unread: number; critical: number; risk: number; updates: number };
+  syncedAt: string;
+}
+export interface StudentNotificationPreferences {
+  enabled: boolean;
+  critical: boolean;
+  risk: boolean;
+  pending: boolean;
+  correction: boolean;
+  onTrack: boolean;
+}
+export interface StudentAttendanceSchedule {
+  timetableEntryId: string;
+  day: string;
+  startTime: string;
+  endTime: string;
+  classType: string;
+  roomName: string;
+  facultyName: string;
+}
+export interface StudentAttendanceRecord {
+  recordId: string;
+  attendanceSessionId: string;
+  timetableEntryId: string;
+  date: string;
+  status: 'present' | 'absent';
+  updatedAt: string;
+  markedBy: string;
+  startTime: string;
+  endTime: string;
+  roomName: string;
+  facultyName: string;
+  classType: string;
+}
+export interface StudentAttendanceDetail {
+  subject: StudentAttendanceSubject;
+  schedule: StudentAttendanceSchedule[];
+  records: StudentAttendanceRecord[];
+}
+export interface AttendanceCorrectionRequest {
+  _id: string;
+  requestNumber: string;
+  attendanceRecordId: string;
+  attendanceSessionId: string;
+  timetableEntryId: string;
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  attendanceDate: string;
+  recordedStatus: 'present' | 'absent';
+  requestedStatus: 'present' | 'absent';
+  startTime: string;
+  endTime: string;
+  facultyName: string;
+  roomName: string;
+  classType: string;
+  reasonType: AttendanceCorrectionReasonType;
+  note: string;
+  reason?: string;
+  attachments: AttendanceCorrectionAttachment[];
+  messages: AttendanceCorrectionMessage[];
+  timeline: AttendanceCorrectionTimeline[];
+  status: AttendanceCorrectionStatus;
+  active: boolean;
+  replyDueAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+export type AttendanceCorrectionStatus =
+  | 'submitted'
+  | 'reviewing'
+  | 'needs-reply'
+  | 'approved'
+  | 'rejected'
+  | 'withdrawn';
+export type AttendanceCorrectionReasonType =
+  | 'marked-absent'
+  | 'not-updated'
+  | 'class-cancelled'
+  | 'wrong-status'
+  | 'duplicate'
+  | 'other';
+export interface AttendanceCorrectionAttachment {
+  name: string;
+  bucket: string;
+  key: string;
+  url: string;
+  mimeType: string;
+  size: number;
+  uploadedAt: string;
+}
+export interface AttendanceCorrectionMessage {
+  authorRole: 'student' | 'academic-office';
+  authorName: string;
+  message: string;
+  attachments: AttendanceCorrectionAttachment[];
+  createdAt: string;
+}
+export interface AttendanceCorrectionTimeline {
+  status: string;
+  label: string;
+  at: string;
+}
+export interface AttendanceCorrectionRecord extends StudentAttendanceRecord {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+}
+export interface AttendanceCorrectionFeed {
+  items: AttendanceCorrectionRequest[];
+  counts: { all: number; open: number; needsReply: number; approved: number; rejected: number };
+}
 export interface AcademicAllocationInput {
   studentAdmissionId: string;
   groupId: string;

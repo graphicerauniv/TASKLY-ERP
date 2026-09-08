@@ -4,3 +4,13 @@
 @use './student-dashboard';
 @use './student-profile';
 @use './student-responsive';
+@use '../academics/student-subject-attendance.component' as subject-attendance;
+@use '../academics/student-attendance-analysis.component' as attendance-analysis;
+
+[data-portal='student'] erp-student-subject-attendance {
+  @include subject-attendance.styles;
+}
+
+[data-portal='student'] erp-student-attendance-analysis {
+  @include attendance-analysis.styles;
+}

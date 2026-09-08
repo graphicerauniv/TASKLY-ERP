@@ -1,0 +1,111 @@
+<div class="risk-page">
+  @if (loading()) {
+    <div class="risk-state" role="status"><span></span>Calculating attendance risk…</div>
+  } @else if (error()) {
+    <div class="risk-state risk-state--error" role="alert">
+      <p>{{ error() }}</p><button type="button" (click)="refresh()">Try again</button>
+    </div>
+  } @else if (subjectId() && selectedSubject(); as subject) {
+    <a class="risk-back" routerLink="/student/attendance/shortage">
+      <svg lucideChevronLeft size="18" aria-hidden="true"></svg> Back to Shortage & Risk
+    </a>
+    <header class="risk-detail-heading">
+      <erp-student-subject-icon [subject]="subject.subjectName" [size]="38" [boxSize]="72" />
+      <div><h1>{{ subject.subjectName }} shortage</h1><p>{{ subject.subjectCode || 'Current subject' }}</p></div>
+      <span class="risk-status" [attr.data-status]="subject.status">{{ statusLabel(subject.status) }}</span>
+    </header>
+
+    <section class="risk-detail-metrics" aria-label="Subject attendance summary">
+      <div><strong>{{ subject.presentLectures }}</strong><span>Classes attended</span></div>
+      <div><strong>{{ subject.totalLectures }}</strong><span>Classes held</span></div>
+      <div><strong>{{ formatPercent(subject.attendancePercentage) }}</strong><span>Current attendance</span></div>
+      <div><strong>{{ subject.requiredAttendance }}%</strong><span>University minimum</span></div>
+    </section>
+
+    <div class="risk-detail-grid">
+      <div class="risk-detail-main">
+        <section class="risk-calculation">
+          <header><svg lucideCalculator size="22" aria-hidden="true"></svg><div><h2>Shortage calculation</h2><p>{{ subject.message }}</p></div></header>
+          @if (subject.status === 'critical') {
+            <div class="risk-equation">
+              <span><strong>{{ subject.presentLectures }} / {{ subject.totalLectures }}</strong><small>Current</small></span>
+              <b>+</b>
+              <span><strong>{{ subject.classesToTarget }} / {{ subject.classesToTarget }}</strong><small>Next classes present</small></span>
+              <b>=</b>
+              <span class="risk-equation__result"><strong>{{ subject.presentLectures + (subject.classesToTarget || 0) }} / {{ subject.totalLectures + (subject.classesToTarget || 0) }}</strong><small>{{ subject.requiredAttendance }}% target</small></span>
+            </div>
+            <p class="risk-note"><svg lucideInfo size="17" aria-hidden="true"></svg>
+              @if (subject.canReachTarget) { The published schedule has enough classes to reach the minimum. }
+              @else { Even perfect attendance reaches {{ formatPercent(subject.bestPossibleAttendance) }} within the current published schedule. }
+            </p>
+          } @else if (subject.status === 'pending') {
+            <div class="risk-positive"><svg lucideClock3 size="26" aria-hidden="true"></svg><div><strong>Waiting for the first saved attendance</strong><p>No shortage is calculated until faculty records a class.</p></div></div>
+          } @else {
+            <div class="risk-positive"><svg lucideCheck size="28" aria-hidden="true"></svg><div><strong>Target reached</strong><p>{{ subject.message }}</p></div></div>
+          }
+        </section>
+
+        <section class="risk-records">
+          <header><h2>Recent attendance</h2><a [routerLink]="['/student/attendance/subjects', subject.subjectId]">View all attendance <svg lucideChevronRight size="17"></svg></a></header>
+          <div class="risk-records__table">
+            @for (record of detail()?.records?.slice(0, 6) || []; track record.recordId) {
+              <div><span>{{ record.date | date: 'dd MMM yyyy' }}</span><span>{{ record.startTime || 'Time not set' }}</span><em [attr.data-status]="record.status">{{ record.status === 'present' ? 'Present' : 'Absent' }}</em></div>
+            } @empty { <p>No attendance records have been saved for this subject.</p> }
+          </div>
+        </section>
+      </div>
+
+      <aside class="risk-actions">
+        <h2>What you can do</h2>
+        <ol>
+          <li><span>1</span><div><strong>Attend upcoming classes</strong><p>Be present in the next scheduled lectures.</p></div></li>
+          <li><span>2</span><div><strong>Review saved attendance</strong><p>Check the lecture records already marked.</p></div></li>
+          <li><span>3</span><div><strong>Report an incorrect record</strong><p>Open the subject record and submit a correction.</p></div></li>
+        </ol>
+        <a class="risk-primary-link" [routerLink]="['/student/attendance/subjects', subject.subjectId]">View subject attendance <svg lucideChevronRight size="18"></svg></a>
+        <div class="risk-upcoming"><strong>Next scheduled classes</strong><span>{{ subject.upcomingLectures }} published in the current schedule window</span></div>
+      </aside>
+    </div>
+  } @else if (risk(); as data) {
+    <section class="risk-overview-hero">
+      <header class="risk-heading">
+        <div class="risk-heading__icon"><img src="/assets/student/attendance/shortage-alerts.webp" width="128" height="128" alt="" aria-hidden="true" /></div>
+        <div><nav><a routerLink="/student/attendance">Attendance</a><span>/</span>Shortage & Risk</nav><h1>Shortage & Risk</h1><p>Subjects needing your attention.</p></div>
+        <a class="risk-alert-link" routerLink="/student/attendance/alerts"><svg lucideBell size="19"></svg><span>View alerts</span><b>{{ data.summary.belowMinimum + data.summary.atRisk + data.summary.pending }}</b><svg lucideChevronRight size="17"></svg></a>
+      </header>
+
+      <section class="risk-summary" aria-label="Attendance risk summary">
+        <div data-tone="danger"><span><svg lucideAlertTriangle size="22"></svg></span><strong>{{ data.summary.belowMinimum }}</strong><p>Below minimum<small>&lt; {{ data.requiredAttendance }}% attendance</small></p></div>
+        <div data-tone="warning"><span><svg lucideAlertTriangle size="22"></svg></span><strong>{{ data.summary.atRisk }}</strong><p>At risk<small>Close to the minimum</small></p></div>
+        <div data-tone="pending"><span><svg lucideClock3 size="22"></svg></span><strong>{{ data.summary.pending }}</strong><p>Pending<small>Attendance not recorded</small></p></div>
+        <div data-tone="success"><span><svg lucideCheck size="22"></svg></span><strong>{{ data.summary.onTrack }}</strong><p>On track<small>Safe for now</small></p></div>
+      </section>
+    </section>
+
+    <section class="risk-panel">
+      <div class="risk-tabs"><a class="is-active" routerLink="/student/attendance/shortage">Overview</a><a routerLink="/student/attendance/alerts">Alerts</a></div>
+      <div class="risk-toolbar">
+        <label><svg lucideSearch size="18"></svg><input #searchInput type="search" placeholder="Search subject or code" [value]="search()" (input)="setSearch(searchInput.value)" /></label>
+        <label class="risk-filter"><svg lucideListFilter size="18"></svg><select #statusSelect [value]="filter()" (change)="setFilter(statusSelect.value)"><option value="all">All statuses</option><option value="critical">Critical</option><option value="at-risk">At risk</option><option value="watch">Watch</option><option value="pending">Pending</option><option value="on-track">On track</option></select><svg lucideChevronDown size="16"></svg></label>
+        <button type="button" aria-label="Refresh attendance risk" (click)="refresh()"><svg lucideRefreshCw size="18"></svg></button>
+      </div>
+
+      <div class="risk-list" role="list">
+        <div class="risk-list__head" aria-hidden="true"><span>Subject</span><span>Attended / held</span><span>Current</span><span>Minimum</span><span>What it means</span><span>Status</span><span>Action</span></div>
+        @for (subject of visibleSubjects(); track subject.subjectId) {
+          <article role="listitem">
+            <div class="risk-subject"><erp-student-subject-icon [subject]="subject.subjectName" /><span><strong>{{ subject.subjectName }}</strong><small>{{ subject.subjectCode || 'Subject' }}</small></span></div>
+            <span class="risk-held">{{ subject.totalLectures ? subject.presentLectures + ' / ' + subject.totalLectures : 'Not started' }}</span>
+            <strong class="risk-percent" [attr.data-status]="subject.status">{{ subject.totalLectures ? formatPercent(subject.attendancePercentage) : '—' }}</strong>
+            <span class="risk-minimum">{{ subject.requiredAttendance }}%</span>
+            <p class="risk-meaning">{{ subject.message }}</p>
+            <span class="risk-status" [attr.data-status]="subject.status">{{ statusLabel(subject.status) }}</span>
+            <a [routerLink]="['/student/attendance/shortage', subject.subjectId]" [attr.aria-label]="'View shortage details for ' + subject.subjectName">View details <svg lucideChevronRight size="17"></svg></a>
+          </article>
+        } @empty { <div class="risk-empty">No subjects match the current search and status filter.</div> }
+      </div>
+      @if (visibleSubjects().length < filteredSubjects().length) { <button class="risk-load-more" type="button" (click)="loadMore()">Load more ({{ visibleSubjects().length }} of {{ filteredSubjects().length }}) <svg lucideChevronDown size="18"></svg></button> }
+      <footer>Last synced {{ data.syncedAt | date: 'medium' }}</footer>
+    </section>
+  }
+</div>

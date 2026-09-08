@@ -1,68 +1,221 @@
-<div class="student-fees-page" aria-label="Student attendance">
-  <header class="student-fees-heading">
-    <div class="student-fees-heading__copy">
-      <nav><span>Academics</span><b>/</b><strong>Attendance</strong></nav>
-      <h1>My Attendance</h1>
-      <p>Only lectures where faculty saved attendance are included.</p>
+<div class="student-attendance-page" aria-labelledby="student-attendance-title">
+  <header class="student-attendance-heading">
+    <div>
+      <nav aria-label="Breadcrumb"><span>Academics</span><b>/</b><strong>Attendance</strong></nav>
+      <h1 id="student-attendance-title">Attendance</h1>
+      <p>
+        <span>Track, understand and improve your attendance.</span>
+        <span class="student-attendance-heading__mobile-copy">
+          Track and improve your attendance
+        </span>
+      </p>
+    </div>
+    <div class="student-attendance-context" aria-label="Attendance actions">
+      <button
+        class="student-attendance-refresh"
+        type="button"
+        [disabled]="loading() || refreshing()"
+        (click)="refresh()"
+        aria-label="Refresh attendance"
+      >
+        <svg lucideRefreshCw size="19" [class.is-spinning]="refreshing()" aria-hidden="true"></svg>
+      </button>
+      @if (lastUpdated(); as updated) {
+        <small>Updated {{ updated | date: 'shortTime' }}</small>
+      }
     </div>
   </header>
+
   @if (loading()) {
-    <section class="student-fees-message"><strong>Loading attendance…</strong></section>
+    <section class="student-attendance-state" role="status" aria-live="polite">
+      <span class="student-attendance-state__spinner" aria-hidden="true"></span>
+      <strong>Loading your attendance</strong>
+      <p>Preparing your current academic summary…</p>
+    </section>
   } @else if (error()) {
-    <section class="student-fees-message" role="alert">
-      <strong>{{ error() }}</strong>
+    <section class="student-attendance-state student-attendance-state--error" role="alert">
+      <svg lucideAlertTriangle size="28" aria-hidden="true"></svg>
+      <strong>Attendance could not be loaded</strong>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="refresh()">Try again</button>
     </section>
   } @else {
-    <section class="student-fee-ledger">
+    <section
+      class="student-attendance-hero"
+      [class.student-attendance-hero--safe]="status() === 'safe'"
+      [class.student-attendance-hero--warning]="status() === 'warning'"
+      [class.student-attendance-hero--critical]="status() === 'critical'"
+      [class.student-attendance-hero--unknown]="status() === 'unknown'"
+      [style.--student-attendance-progress]="percentage() + '%'"
+      aria-labelledby="attendance-overall-heading"
+    >
+      <div
+        class="student-attendance-page__ring"
+        role="img"
+        [attr.aria-label]="
+          formatPercentage(percentage()) + '% overall attendance, ' + statusLabel()
+        "
+      >
+        <span>
+          <strong>{{ formatPercentage(percentage()) }}%</strong>
+          <small>Overall attendance</small>
+          <em>{{ statusLabel() }}</em>
+        </span>
+      </div>
+
+      <div class="student-attendance-hero__summary">
+        <h2 id="attendance-overall-heading" class="student-attendance-hero__desktop-copy">
+          <strong>{{ overall().presentLectures }}</strong> present from
+          <b>{{ overall().totalLectures }}</b> conducted lectures
+        </h2>
+        <h2 class="student-attendance-hero__mobile-copy" aria-hidden="true">
+          <strong>{{ overall().presentLectures }}</strong> of
+          <b>{{ overall().totalLectures }}</b>
+          <span>lectures attended</span>
+        </h2>
+        <div class="student-attendance-progress" aria-hidden="true">
+          <span></span><i [style.left]="requiredAttendance + '%'"></i>
+        </div>
+        <small>Required {{ requiredAttendance }}%</small>
+        <dl>
+          <div>
+            <dt>Present</dt>
+            <dd class="is-present">{{ overall().presentLectures }}</dd>
+          </div>
+          <div>
+            <dt>Absent</dt>
+            <dd class="is-absent">{{ overall().absentLectures }}</dd>
+          </div>
+          <div>
+            <dt>Conducted</dt>
+            <dd>{{ overall().totalLectures }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="student-attendance-hero__visual">
+        <img
+          src="/assets/student/attendance/attendance-hero.webp"
+          width="520"
+          height="459"
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+        />
+        <strong>{{ requirementMessage() }}</strong>
+      </div>
+
+      <div class="student-attendance-status" aria-label="Attendance status">
+        <span>
+          @if (status() === 'safe') {
+            <svg lucideCheck size="18" aria-hidden="true"></svg>
+          } @else {
+            <svg lucideAlertTriangle size="17" aria-hidden="true"></svg>
+          }
+        </span>
+        <strong>{{ statusLabel() }}</strong>
+      </div>
+    </section>
+
+    <section class="student-attendance-tools" aria-labelledby="attendance-tools-heading">
       <header>
+        <h2 id="attendance-tools-heading">Attendance tools</h2>
+        <p>Open a feature to view complete details</p>
+      </header>
+      <div class="student-attendance-tools__grid">
+        @for (tool of attendanceTools; track tool.id) {
+          @if (tool.route; as route) {
+            <a
+              [routerLink]="route"
+              [class]="'student-attendance-tool student-attendance-tool--' + tool.tone"
+            >
+              <img
+                [src]="tool.image"
+                width="320"
+                height="320"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+              />
+              <span>
+                <strong>{{ tool.title }}</strong>
+                <small>{{ tool.description }}</small>
+              </span>
+              <i aria-hidden="true"><svg lucideChevronRight size="20"></svg></i>
+            </a>
+          } @else {
+            <button
+              type="button"
+              [class]="'student-attendance-tool student-attendance-tool--' + tool.tone"
+              (click)="activateTool(tool)"
+            >
+              <img
+                [src]="tool.image"
+                width="320"
+                height="320"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+              />
+              <span>
+                <strong>{{ tool.title }}</strong>
+                <small>{{ tool.description }}</small>
+              </span>
+              <i aria-hidden="true"><svg lucideChevronRight size="20"></svg></i>
+            </button>
+          }
+        }
+      </div>
+      <p class="student-attendance-tool-notice" aria-live="polite">{{ toolNotice() }}</p>
+    </section>
+
+    <section class="student-attendance-alerts" aria-labelledby="attendance-alerts-heading">
+      <header>
+        <span><svg lucideAlertTriangle size="20" aria-hidden="true"></svg></span>
         <div>
-          <h2>Overall Attendance</h2>
+          <h2 id="attendance-alerts-heading">Needs attention</h2>
+          <p>Subjects below required attendance ({{ requiredAttendance }}%)</p>
+        </div>
+        <a routerLink="/student/attendance/alerts">
+          View alerts <svg lucideChevronRight size="17" aria-hidden="true"></svg>
+        </a>
+      </header>
+
+      @for (subject of needsAttention(); track subject.subjectId) {
+        <article>
+          <div class="student-attendance-alerts__subject">
+            <span class="student-attendance-alerts__subject-icon" aria-hidden="true">
+              <erp-student-subject-icon [subject]="subject.subjectName" [size]="20" />
+            </span>
+            <span class="student-attendance-alerts__subject-copy">
+              <strong>{{ subject.subjectName }}</strong>
+              <small>{{ subject.subjectCode || 'Subject' }}</small>
+            </span>
+          </div>
+          <span class="student-attendance-alerts__progress" aria-hidden="true">
+            <i [style.width]="subject.attendancePercentage + '%'"></i>
+          </span>
+          <b>{{ formatPercentage(subject.attendancePercentage) }}%</b>
+          <em>{{
+            subject.attendancePercentage >= requiredAttendance - 10 ? 'At risk' : 'Critical'
+          }}</em>
+          <a
+            [routerLink]="['/student/attendance/shortage', subject.subjectId]"
+            [attr.aria-label]="'View attendance alert for ' + subject.subjectName"
+          >
+            <svg lucideChevronRight size="18" aria-hidden="true"></svg>
+          </a>
+        </article>
+      } @empty {
+        <div class="student-attendance-alerts__empty">
+          <span><svg lucideCheck size="18" aria-hidden="true"></svg></span>
           <p>
-            {{ overall().presentLectures }} present from {{ overall().totalLectures }} conducted
-            lectures
+            <strong>No attendance shortage</strong> All conducted subjects meet the requirement.
           </p>
         </div>
-        <strong>{{ overall().attendancePercentage }}%</strong>
-      </header>
-    </section>
-    <section class="student-fee-ledger">
-      <header>
-        <div><h2>Subjects</h2></div>
-      </header>
-      <div class="student-fee-ledger__table">
-        <table>
-          <thead>
-            <tr>
-              <th>Subject</th>
-              <th>Subject code</th>
-              <th>Faculty</th>
-              <th>Total lectures</th>
-              <th>Present</th>
-              <th>Absent</th>
-              <th>Attendance</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (subject of subjects(); track subject.subjectId) {
-              <tr>
-                <td>{{ subject.subjectName }}</td>
-                <td>{{ subject.subjectCode || '—' }}</td>
-                <td>{{ subject.facultyNames.join(', ') || '—' }}</td>
-                <td>{{ subject.totalLectures }}</td>
-                <td>{{ subject.presentLectures }}</td>
-                <td>{{ subject.absentLectures }}</td>
-                <td>
-                  <strong>{{ subject.attendancePercentage }}%</strong>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="7">No attendance has been marked yet.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      }
     </section>
   }
 </div>

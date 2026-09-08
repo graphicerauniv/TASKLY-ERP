@@ -49,6 +49,14 @@ import {
   FacultyAttendanceClass,
   AttendanceStudent,
   StudentAttendanceSubject,
+  StudentAttendanceAnalytics,
+  StudentAttendanceDetail,
+  AttendanceCorrectionRequest,
+  AttendanceCorrectionRecord,
+  AttendanceCorrectionFeed,
+  StudentAttendanceRisk,
+  StudentNotificationFeed,
+  StudentNotificationPreferences,
 } from './models';
 import type { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
@@ -237,6 +245,96 @@ export class ApiService {
     }>(`${API_BASE_URL}/student-attendance`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+  }
+  studentAttendanceAnalytics(token: string) {
+    return this.http.get<StudentAttendanceAnalytics>(`${API_BASE_URL}/student-attendance/analytics`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+  studentAttendanceRisk(token: string) {
+    return this.http.get<StudentAttendanceRisk>(`${API_BASE_URL}/student-attendance/risk`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+  studentAttendanceAlerts(token: string) {
+    return this.http.get<StudentNotificationFeed>(`${API_BASE_URL}/student-attendance/alerts`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+  markStudentAttendanceAlertsRead(token: string, body: { ids?: string[]; all?: boolean }) {
+    return this.http.post<{ readIds: string[] }>(
+      `${API_BASE_URL}/student-attendance/alerts/read`,
+      body,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  studentAttendanceAlertPreferences(token: string) {
+    return this.http.get<{ preferences: StudentNotificationPreferences }>(
+      `${API_BASE_URL}/student-attendance/alert-preferences`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  saveStudentAttendanceAlertPreferences(
+    token: string,
+    preferences: StudentNotificationPreferences,
+  ) {
+    return this.http.put<{ preferences: StudentNotificationPreferences }>(
+      `${API_BASE_URL}/student-attendance/alert-preferences`,
+      preferences,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  studentSubjectAttendance(token: string, subjectId: string) {
+    return this.http.get<StudentAttendanceDetail>(
+      `${API_BASE_URL}/student-attendance/subjects/${subjectId}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  createAttendanceCorrectionRequest(token: string, recordId: string, reason: string) {
+    return this.http.post<{ item: AttendanceCorrectionRequest }>(
+      `${API_BASE_URL}/student-attendance/correction-requests`,
+      { recordId, reason },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  studentAttendanceCorrectionRecords(token: string) {
+    return this.http.get<{ items: AttendanceCorrectionRecord[] }>(
+      `${API_BASE_URL}/student-attendance/correction-records`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  studentAttendanceCorrectionRequests(token: string) {
+    return this.http.get<AttendanceCorrectionFeed>(
+      `${API_BASE_URL}/student-attendance/correction-requests`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  studentAttendanceCorrectionRequest(token: string, requestId: string) {
+    return this.http.get<{ item: AttendanceCorrectionRequest }>(
+      `${API_BASE_URL}/student-attendance/correction-requests/${requestId}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  createStudentAttendanceCorrection(token: string, body: FormData) {
+    return this.http.post<{ item: AttendanceCorrectionRequest }>(
+      `${API_BASE_URL}/student-attendance/correction-requests`,
+      body,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  respondStudentAttendanceCorrection(token: string, requestId: string, body: FormData) {
+    return this.http.post<{ item: AttendanceCorrectionRequest }>(
+      `${API_BASE_URL}/student-attendance/correction-requests/${requestId}/respond`,
+      body,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  withdrawStudentAttendanceCorrection(token: string, requestId: string) {
+    return this.http.post<{ message: string }>(
+      `${API_BASE_URL}/student-attendance/correction-requests/${requestId}/withdraw`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
   }
   masterTypes() {
     return this.http.get<{ items: MasterType[] }>(`${API_BASE_URL}/master-data/types`);

@@ -523,6 +523,26 @@ const DOMAIN_TABLES = Object.freeze({
       'status',
     ],
   },
+  attendanceCorrectionRequests: {
+    table: 'attendance_correction_requests',
+    columns: [
+      'requestNumber',
+      'attendanceRecordId',
+      'attendanceSessionId',
+      'timetableEntryId',
+      'studentAdmissionId',
+      'studentId',
+      'academicSession',
+      'semester',
+      'subjectId',
+      'attendanceDate',
+      'recordedStatus',
+      'requestedStatus',
+      'reasonType',
+      'status',
+      'active',
+    ],
+  },
 });
 
 async function createRuntimeMigrationsTable(pool) {
