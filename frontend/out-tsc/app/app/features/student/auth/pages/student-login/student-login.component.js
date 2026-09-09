@@ -188,9 +188,9 @@ export class StudentLoginComponent {
         this.error.set('');
         const { studentId, password } = this.form.getRawValue();
         this.api.studentLogin(studentId, password).subscribe({
-            next: ({ token, student }) => {
+            next: ({ token, refreshToken, student }) => {
                 this.studentToken = token;
-                this.saveSession(token, student);
+                this.saveSession(token, student, refreshToken);
                 this.loading.set(false);
                 if (student.mustChangePassword)
                     this.changeRequired.set(true);
@@ -214,8 +214,8 @@ export class StudentLoginComponent {
         this.loading.set(true);
         this.error.set('');
         this.api.changeStudentPassword(this.studentToken, password).subscribe({
-            next: ({ token, student }) => {
-                this.saveSession(token, student);
+            next: ({ token, refreshToken, student }) => {
+                this.saveSession(token, student, refreshToken);
                 this.loading.set(false);
                 void this.router.navigate(['/student/dashboard']);
             },
@@ -225,8 +225,8 @@ export class StudentLoginComponent {
             },
         });
     }
-    saveSession(token, student) {
-        this.session.save(token, student);
+    saveSession(token, student, refreshToken) {
+        this.session.save(token, student, refreshToken);
     }
     static ɵfac = function StudentLoginComponent_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || StudentLoginComponent)(); };
     static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: StudentLoginComponent, selectors: [["erp-student-login"]], decls: 41, vars: 8, consts: [[1, "admin-login-page", "erp-auth-backdrop"], ["aria-labelledby", "student-login-title", 1, "admin-login-shell"], ["src", "assets/images/auth/admin/admin-network.png", "alt", "", "aria-hidden", "true", "decoding", "async", 1, "admin-login-shell__network"], [1, "admin-login-shell__desktop-brand"], ["routerLink", "/student/login", "aria-label", "Graphic Era student login"], ["src", "assets/images/brand/graphic-era-logo.png", "alt", "Graphic Era deemed to be University, Dehradun", "width", "438", "height", "137", "fetchpriority", "high"], ["aria-label", "Graphic Era University", 1, "erp-mobile-auth-hero"], ["routerLink", "/student/login", 1, "erp-mobile-auth-hero__brand"], ["src", "assets/images/auth/admin/graphic-era-building-mobile.webp", "alt", "", "aria-hidden", "true", "decoding", "async", 1, "erp-mobile-auth-hero__art"], ["src", "assets/images/auth/admin/admin-building.png", "alt", "", "aria-hidden", "true", "decoding", "async", 1, "admin-login-shell__building"], ["role", "status", 1, "admin-login-shell__service-status"], ["aria-hidden", "true"], [1, "admin-auth-panel"], ["novalidate", "", 1, "admin-auth-form", 3, "ngSubmit", "formGroup"], [1, "admin-auth-form__heading"], ["aria-hidden", "true", 1, "admin-auth-form__shield"], ["lucideShieldCheck", "", 3, "size", "strokeWidth"], [1, "admin-auth-form__title-row"], ["id", "student-login-title"], ["role", "alert", 1, "admin-auth-form__alert"], [1, "admin-auth-form__security"], ["lucideShieldCheck", "", "aria-hidden", "true", 3, "size", "strokeWidth"], ["role", "status", 1, "admin-login-shell__mobile-footer"], ["aria-hidden", "true", 1, "admin-login-shell__mobile-footer-dot"], ["href", "mailto:support@geu.ac.in"], [1, "admin-auth-form__field"], ["for", "new-student-password"], [1, "admin-auth-form__control"], ["lucideLockKeyhole", "", "aria-hidden", "true", 3, "size", "strokeWidth"], ["id", "new-student-password", "formControlName", "password", "autocomplete", "new-password", "placeholder", "Enter a strong password", 3, "type"], ["type", "button", 1, "admin-auth-form__password-toggle", 3, "click"], ["lucideEyeOff", "", "aria-hidden", "true", 3, "size", "strokeWidth"], ["lucideEye", "", "aria-hidden", "true", 3, "size", "strokeWidth"], ["for", "confirm-student-password"], ["id", "confirm-student-password", "type", "password", "formControlName", "confirmPassword", "autocomplete", "new-password", "placeholder", "Enter the password again"], ["type", "submit", 1, "admin-auth-form__submit", 3, "disabled"], ["for", "student-id"], ["lucideUserRound", "", "aria-hidden", "true", 3, "size", "strokeWidth"], ["id", "student-id", "type", "text", "formControlName", "studentId", "autocomplete", "username", "placeholder", "Enter your Student ID"], ["for", "student-password"], ["id", "student-password", "formControlName", "password", "autocomplete", "current-password", "placeholder", "Enter your password", 3, "type"], [1, "admin-auth-form__options"], [1, "admin-auth-form__remember"], ["type", "checkbox", "formControlName", "rememberMe"], ["href", "mailto:support@geu.ac.in?subject=Student%20password%20reset"]], template: function StudentLoginComponent_Template(rf, ctx) { if (rf & 1) {

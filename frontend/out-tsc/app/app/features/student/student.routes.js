@@ -31,6 +31,51 @@ export const STUDENT_ROUTES = [
                 loadComponent: () => import('./academics/student-timetable.component').then((component) => component.StudentTimetableComponent),
             },
             {
+                path: 'attendance/reports',
+                title: 'Attendance Reports & Downloads | GEU ERP',
+                loadComponent: () => import('./academics/student-attendance-reports.component').then((component) => component.StudentAttendanceReportsComponent),
+            },
+            {
+                path: 'attendance/corrections',
+                title: 'Attendance Correction Requests | GEU ERP',
+                loadComponent: () => import('./academics/student-attendance-corrections.component').then((component) => component.StudentAttendanceCorrectionsComponent),
+            },
+            {
+                path: 'attendance/alerts/preferences',
+                title: 'Attendance Alert Preferences | GEU ERP',
+                loadComponent: () => import('./academics/student-attendance-alert-preferences.component').then((component) => component.StudentAttendanceAlertPreferencesComponent),
+            },
+            {
+                path: 'attendance/alerts',
+                title: 'Attendance Alerts | GEU ERP',
+                loadComponent: () => import('./academics/student-attendance-alerts.component').then((component) => component.StudentAttendanceAlertsComponent),
+            },
+            {
+                path: 'attendance/shortage/:subjectId',
+                title: 'Subject Attendance Shortage | GEU ERP',
+                loadComponent: () => import('./academics/student-attendance-shortage.component').then((component) => component.StudentAttendanceShortageComponent),
+            },
+            {
+                path: 'attendance/shortage',
+                title: 'Attendance Shortage & Risk | GEU ERP',
+                loadComponent: () => import('./academics/student-attendance-shortage.component').then((component) => component.StudentAttendanceShortageComponent),
+            },
+            {
+                path: 'attendance/analyze',
+                title: 'Analyze Attendance | GEU ERP',
+                loadComponent: () => import('./academics/student-attendance-analysis.component').then((component) => component.StudentAttendanceAnalysisComponent),
+            },
+            {
+                path: 'attendance/subjects/:subjectId',
+                title: 'Subject Attendance History | GEU ERP',
+                loadComponent: () => import('./academics/student-subject-attendance.component').then((component) => component.StudentSubjectAttendanceComponent),
+            },
+            {
+                path: 'attendance/subjects',
+                title: 'Subject Attendance | GEU ERP',
+                loadComponent: () => import('./academics/student-subject-attendance.component').then((component) => component.StudentSubjectAttendanceComponent),
+            },
+            {
                 path: 'attendance',
                 title: 'My Attendance | GEU ERP',
                 loadComponent: () => import('./academics/student-attendance.component').then((component) => component.StudentAttendanceComponent),

@@ -74,6 +74,81 @@ export class ApiService {
             headers: { Authorization: `Bearer ${token}` },
         });
     }
+    studentAttendanceAnalytics(token) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/analytics`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    }
+    studentAttendanceRisk(token) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/risk`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    }
+    studentAttendanceAlerts(token) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/alerts`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    }
+    markStudentAttendanceAlertsRead(token, body) {
+        return this.http.post(`${API_BASE_URL}/student-attendance/alerts/read`, body, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentAttendanceAlertPreferences(token) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/alert-preferences`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    saveStudentAttendanceAlertPreferences(token, preferences) {
+        return this.http.put(`${API_BASE_URL}/student-attendance/alert-preferences`, preferences, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentSubjectAttendance(token, subjectId) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/subjects/${subjectId}`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    createAttendanceCorrectionRequest(token, recordId, reason) {
+        return this.http.post(`${API_BASE_URL}/student-attendance/correction-requests`, { recordId, reason }, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentAttendanceCorrectionRecords(token) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/correction-records`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentAttendanceCorrectionRequests(token) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/correction-requests`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentAttendanceCorrectionRequest(token, requestId) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/correction-requests/${requestId}`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentAttendanceCorrectionAttachment(token, requestId, key) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/correction-requests/${requestId}/attachment`, {
+            params: { key },
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: 'blob',
+        });
+    }
+    createStudentAttendanceCorrection(token, body) {
+        return this.http.post(`${API_BASE_URL}/student-attendance/correction-requests`, body, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    respondStudentAttendanceCorrection(token, requestId, body) {
+        return this.http.post(`${API_BASE_URL}/student-attendance/correction-requests/${requestId}/respond`, body, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    withdrawStudentAttendanceCorrection(token, requestId) {
+        return this.http.post(`${API_BASE_URL}/student-attendance/correction-requests/${requestId}/withdraw`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentAttendanceReports(token) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/reports`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    }
+    previewStudentAttendanceReport(token, body) {
+        return this.http.post(`${API_BASE_URL}/student-attendance/reports/preview`, body, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    createStudentAttendanceReport(token, body) {
+        return this.http.post(`${API_BASE_URL}/student-attendance/reports`, body, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    downloadStudentAttendanceReport(token, reportId) {
+        return this.http.get(`${API_BASE_URL}/student-attendance/reports/${reportId}/download`, {
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: 'blob',
+        });
+    }
+    regenerateStudentAttendanceReport(token, reportId) {
+        return this.http.post(`${API_BASE_URL}/student-attendance/reports/${reportId}/regenerate`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    }
     masterTypes() {
         return this.http.get(`${API_BASE_URL}/master-data/types`);
     }
@@ -538,6 +613,21 @@ export class ApiService {
     }
     commitCourseFeeImport(body) {
         return this.http.post(`${API_BASE_URL}/fees/course-fees/import/commit`, body);
+    }
+    examMasterBootstrap() {
+        return this.http.get(`${API_BASE_URL}/exam-master/bootstrap`);
+    }
+    examMasterRecords(resource) {
+        return this.http.get(`${API_BASE_URL}/exam-master/${resource}`);
+    }
+    createExamMasterRecord(resource, body) {
+        return this.http.post(`${API_BASE_URL}/exam-master/${resource}`, body);
+    }
+    updateExamMasterRecord(resource, itemId, body) {
+        return this.http.patch(`${API_BASE_URL}/exam-master/${resource}/${itemId}`, body);
+    }
+    deleteExamMasterRecord(resource, itemId) {
+        return this.http.delete(`${API_BASE_URL}/exam-master/${resource}/${itemId}`);
     }
     static ɵfac = function ApiService_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || ApiService)(); };
     static ɵprov = /*@__PURE__*/ i0.ɵɵdefineInjectable({ token: ApiService, factory: ApiService.ɵfac, providedIn: 'root' });

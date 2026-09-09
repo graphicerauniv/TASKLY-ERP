@@ -62,6 +62,21 @@ export const ADMIN_ROUTES = [
                 loadComponent: () => import('./academics/timetable-builder.component').then((component) => component.TimetableBuilderComponent),
             },
             { path: 'academics', pathMatch: 'full', redirectTo: 'academics/groups' },
+            ...[
+                ['buildings', 'buildings'],
+                ['locations', 'locations'],
+                ['floors', 'floors'],
+                ['rooms', 'rooms'],
+            ].map(([path, section]) => ({
+                path: `settings/exam-master/${path}`,
+                loadComponent: () => import('./exam-master/exam-master.component').then((component) => component.ExamMasterComponent),
+                data: { section },
+            })),
+            {
+                path: 'settings/exam-master',
+                pathMatch: 'full',
+                redirectTo: 'settings/exam-master/buildings',
+            },
             {
                 path: 'master-data',
                 pathMatch: 'full',

@@ -80,6 +80,7 @@ export function serialize(document) {
 }
 
 async function ensureIndexes(databaseInstance) {
+  await databaseInstance.collection('examBuildings').updateMany({}, { $unset: { code: '' } });
   await migrateFormDestinations(databaseInstance);
   await migrateFacultyAccounts(databaseInstance);
   await migrateActiveStudents(databaseInstance);
@@ -266,6 +267,19 @@ async function ensureIndexes(databaseInstance) {
       databaseInstance
         .collection('academicRooms')
         .createIndex({ code: 1, collegeId: 1 }, { unique: true }),
+    () => databaseInstance.collection('examBuildings').createIndex({ name: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('examLocations')
+        .createIndex({ buildingId: 1, name: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('examFloors')
+        .createIndex({ locationId: 1, floorNumber: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('examRooms')
+        .createIndex({ floorId: 1, roomNumber: 1 }, { unique: true }),
     () =>
       databaseInstance
         .collection('studentAcademicAssignments')

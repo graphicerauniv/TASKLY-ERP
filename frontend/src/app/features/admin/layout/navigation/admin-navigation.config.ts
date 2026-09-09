@@ -507,8 +507,47 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
     label: 'Settings',
     description: 'Configure reusable academic and operational master data.',
     icon: 'settings',
-    activeWhen: [/^\/admin\/master-data\/(?!hostel(?:\/|$))[^/]+(?:\/|$)/],
+    activeWhen: [
+      /^\/admin\/master-data\/(?!hostel(?:\/|$))[^/]+(?:\/|$)/,
+      branch('/admin/settings'),
+    ],
     children: [
+      {
+        id: 'exam-master',
+        label: 'Exam master',
+        description: 'Buildings, locations, floors and rooms',
+        icon: 'calendar',
+        children: [
+          {
+            id: 'exam-buildings',
+            label: 'Buildings',
+            route: '/admin/settings/exam-master/buildings',
+            icon: 'building',
+            activeWhen: [exact('/admin/settings/exam-master/buildings')],
+          },
+          {
+            id: 'exam-locations',
+            label: 'Locations',
+            route: '/admin/settings/exam-master/locations',
+            icon: 'location',
+            activeWhen: [exact('/admin/settings/exam-master/locations')],
+          },
+          {
+            id: 'exam-floors',
+            label: 'Floors',
+            route: '/admin/settings/exam-master/floors',
+            icon: 'structure',
+            activeWhen: [exact('/admin/settings/exam-master/floors')],
+          },
+          {
+            id: 'exam-rooms',
+            label: 'Rooms',
+            route: '/admin/settings/exam-master/rooms',
+            icon: 'room',
+            activeWhen: [exact('/admin/settings/exam-master/rooms')],
+          },
+        ],
+      },
       {
         id: 'academic-masters',
         label: 'Academic masters',

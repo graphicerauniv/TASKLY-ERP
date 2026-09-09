@@ -283,6 +283,46 @@ export interface AcademicRoom {
   subjectIds: string[];
   isActive: boolean;
 }
+
+export interface ExamBuilding {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface ExamLocation {
+  _id: string;
+  buildingId: string;
+  buildingName: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface ExamFloor {
+  _id: string;
+  buildingId: string;
+  buildingName: string;
+  locationId: string;
+  locationName: string;
+  floorNumber: number;
+  name: string;
+  isActive: boolean;
+}
+
+export interface ExamRoom {
+  _id: string;
+  buildingId: string;
+  buildingName: string;
+  locationId: string;
+  locationName: string;
+  floorId: string;
+  floorName: string;
+  floorNumber: number;
+  roomNumber: string;
+  name: string;
+  capacity: number;
+  isActive: boolean;
+}
 export interface TimetableMaster {
   _id: string;
   name: string;

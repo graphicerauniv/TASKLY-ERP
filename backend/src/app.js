@@ -21,6 +21,7 @@ import {
   studentAttendanceRouter,
 } from './routes/attendance.routes.js';
 import { studentSupportRouter } from './routes/student-support.routes.js';
+import { examMasterRouter } from './routes/exam-master.routes.js';
 
 export function createApp() {
   const app = express();
@@ -62,6 +63,7 @@ export function createApp() {
   app.use(`${config.apiPrefix}/hostels`, requireAdmin, hostelsRouter);
   app.use(`${config.apiPrefix}/fees`, requireAdmin, feesRouter);
   app.use(`${config.apiPrefix}/academics`, requireAdmin, academicsRouter);
+  app.use(`${config.apiPrefix}/exam-master`, requireAdmin, examMasterRouter);
   app.use(
     `${config.apiPrefix}/attendance-corrections`,
     requireAdmin,

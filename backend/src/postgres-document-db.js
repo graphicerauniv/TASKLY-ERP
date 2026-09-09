@@ -407,6 +407,42 @@ const DOMAIN_TABLES = Object.freeze({
     table: 'academic_rooms',
     columns: ['code', 'name', 'universityId', 'collegeId', 'roomType', 'capacity', 'isActive'],
   },
+  examBuildings: {
+    table: 'exam_buildings',
+    columns: ['name', 'isActive'],
+  },
+  examLocations: {
+    table: 'exam_locations',
+    columns: ['buildingId', 'buildingName', 'name', 'isActive'],
+  },
+  examFloors: {
+    table: 'exam_floors',
+    columns: [
+      'buildingId',
+      'buildingName',
+      'locationId',
+      'locationName',
+      'floorNumber',
+      'name',
+      'isActive',
+    ],
+  },
+  examRooms: {
+    table: 'exam_rooms',
+    columns: [
+      'buildingId',
+      'buildingName',
+      'locationId',
+      'locationName',
+      'floorId',
+      'floorName',
+      'floorNumber',
+      'roomNumber',
+      'name',
+      'capacity',
+      'isActive',
+    ],
+  },
   studentAcademicAssignments: {
     table: 'student_academic_assignments',
     columns: [

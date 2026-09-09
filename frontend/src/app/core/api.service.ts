@@ -1329,4 +1329,27 @@ export class ApiService {
       body,
     );
   }
+
+  examMasterBootstrap() {
+    return this.http.get<{
+      buildings: import('./models').ExamBuilding[];
+      locations: import('./models').ExamLocation[];
+      floors: import('./models').ExamFloor[];
+      rooms: import('./models').ExamRoom[];
+    }>(`${API_BASE_URL}/exam-master/bootstrap`);
+  }
+  examMasterRecords<T>(resource: string) {
+    return this.http.get<{ items: T[] }>(`${API_BASE_URL}/exam-master/${resource}`);
+  }
+  createExamMasterRecord<T>(resource: string, body: unknown) {
+    return this.http.post<{ item: T }>(`${API_BASE_URL}/exam-master/${resource}`, body);
+  }
+  updateExamMasterRecord<T>(resource: string, itemId: string, body: unknown) {
+    return this.http.patch<{ item: T }>(`${API_BASE_URL}/exam-master/${resource}/${itemId}`, body);
+  }
+  deleteExamMasterRecord(resource: string, itemId: string) {
+    return this.http.delete<{ deleted: boolean }>(
+      `${API_BASE_URL}/exam-master/${resource}/${itemId}`,
+    );
+  }
 }

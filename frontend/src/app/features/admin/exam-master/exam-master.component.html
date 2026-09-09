@@ -1,0 +1,248 @@
+<erp-admin-page
+  [title]="title()"
+  [description]="description()"
+  variant="compact"
+  layout="collection"
+>
+  <button page-actions class="erp-button erp-button--primary" type="button" (click)="openCreate()">
+    <svg lucidePlus size="17" aria-hidden="true"></svg>Create {{ singular() }}
+  </button>
+
+  @if (error()) {
+    <div class="erp-alert erp-alert--error" role="alert">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="erp-alert erp-alert--success" role="status">{{ message() }}</div>
+  }
+
+  <section class="exam-summary" aria-label="Exam Master summary">
+    <div>
+      <svg lucideBuilding2 size="21"></svg
+      ><span
+        ><small>Buildings</small><strong>{{ buildings().length }}</strong></span
+      >
+    </div>
+    <div>
+      <svg lucideMapPinned size="21"></svg
+      ><span
+        ><small>Locations</small><strong>{{ locations().length }}</strong></span
+      >
+    </div>
+    <div>
+      <svg lucideLayers3 size="21"></svg
+      ><span
+        ><small>Floors</small><strong>{{ floors().length }}</strong></span
+      >
+    </div>
+    <div>
+      <svg lucideDoorOpen size="21"></svg
+      ><span
+        ><small>Rooms</small><strong>{{ rooms().length }}</strong></span
+      >
+    </div>
+  </section>
+
+  <section class="erp-card erp-table-shell">
+    <div class="exam-toolbar">
+      <label class="erp-search-control"
+        ><svg lucideSearch size="17"></svg
+        ><input
+          type="search"
+          [(ngModel)]="search"
+          [placeholder]="'Search ' + title().toLowerCase()"
+      /></label>
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Hierarchy</th>
+            @if (section() === 'rooms') {
+              <th>Capacity</th>
+            }
+            <th>Status</th>
+            <th class="erp-table-shell__actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of records(); track item._id) {
+            <tr>
+              <td>
+                <strong>{{ item.name }}</strong>
+                @if ($any(item).roomNumber) {
+                  <small>Room {{ $any(item).roomNumber }}</small>
+                }
+              </td>
+              <td>
+                @if (section() === 'buildings') {
+                  Exam building
+                } @else if (section() === 'locations') {
+                  {{ $any(item).buildingName }}
+                } @else if (section() === 'floors') {
+                  <strong>{{ $any(item).buildingName }}</strong
+                  ><small>{{ $any(item).locationName }} · Floor {{ $any(item).floorNumber }}</small>
+                } @else {
+                  <strong>{{ $any(item).buildingName }} · {{ $any(item).locationName }}</strong
+                  ><small>{{ $any(item).floorName }}</small>
+                }
+              </td>
+              @if (section() === 'rooms') {
+                <td>
+                  <strong>{{ $any(item).capacity }}</strong
+                  ><small>students</small>
+                </td>
+              }
+              <td>
+                <span class="erp-status" [class.erp-status--neutral]="!item.isActive"
+                  ><i></i>{{ item.isActive ? 'Active' : 'Inactive' }}</span
+                >
+              </td>
+              <td class="erp-table-shell__actions">
+                <button
+                  class="exam-icon-button"
+                  type="button"
+                  aria-label="Edit"
+                  (click)="openEdit(item)"
+                >
+                  <svg lucidePencil size="17"></svg></button
+                ><button
+                  class="exam-icon-button exam-icon-button--danger"
+                  type="button"
+                  aria-label="Delete"
+                  (click)="remove(item)"
+                >
+                  <svg lucideTrash2 size="17"></svg>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="section() === 'rooms' ? 5 : 4" class="exam-empty">
+                {{ loading() ? 'Loading…' : 'No records created yet.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (drawerOpen()) {
+    <div class="erp-drawer-layer">
+      <button
+        class="erp-drawer-backdrop"
+        type="button"
+        aria-label="Close"
+        (click)="closeDrawer()"
+      ></button>
+      <aside class="erp-drawer exam-drawer" role="dialog" aria-modal="true">
+        <header class="erp-drawer__header">
+          <div>
+            <h2>{{ editingId() ? 'Edit' : 'Create' }} {{ singular() }}</h2>
+            <p>Configure the Exam Master hierarchy.</p>
+          </div>
+          <button type="button" aria-label="Close" (click)="closeDrawer()">
+            <svg lucideX size="21"></svg>
+          </button>
+        </header>
+        <div class="erp-drawer__body exam-form">
+          @if (section() !== 'buildings') {
+            <label
+              ><span>Building *</span
+              ><select
+                class="erp-control"
+                [(ngModel)]="buildingId"
+                (ngModelChange)="buildingChanged()"
+              >
+                <option value="">Select building</option>
+                @for (item of buildings(); track item._id) {
+                  @if (item.isActive || item._id === buildingId) {
+                    <option [value]="item._id">{{ item.name }}</option>
+                  }
+                }
+              </select></label
+            >
+          }
+          @if (section() === 'floors' || section() === 'rooms') {
+            <label
+              ><span>Location *</span
+              ><select
+                class="erp-control"
+                [(ngModel)]="locationId"
+                (ngModelChange)="locationChanged()"
+              >
+                <option value="">Select location</option>
+                @for (item of locationsForBuilding(); track item._id) {
+                  <option [value]="item._id">{{ item.name }}</option>
+                }
+              </select></label
+            >
+          }
+          @if (section() === 'rooms') {
+            <label
+              ><span>Floor *</span
+              ><select class="erp-control" [(ngModel)]="floorId">
+                <option value="">Select floor</option>
+                @for (item of floorsForLocation(); track item._id) {
+                  <option [value]="item._id">{{ item.name }} · Floor {{ item.floorNumber }}</option>
+                }
+              </select></label
+            >
+          }
+          <label
+            ><span
+              >{{
+                section() === 'rooms' ? 'Room name' : (singular() | titlecase) + ' name'
+              }}
+              *</span
+            ><input
+              class="erp-control"
+              [(ngModel)]="name"
+              [placeholder]="
+                section() === 'rooms' ? 'Examination Hall A' : 'Enter ' + singular() + ' name'
+              "
+          /></label>
+          @if (section() === 'floors') {
+            <label
+              ><span>Floor number *</span
+              ><input
+                class="erp-control"
+                type="number"
+                min="-10"
+                max="300"
+                [(ngModel)]="floorNumber"
+            /></label>
+          }
+          @if (section() === 'rooms') {
+            <label
+              ><span>Room number *</span
+              ><input class="erp-control" [(ngModel)]="roomNumber" placeholder="101"
+            /></label>
+            <label
+              ><span>Seating capacity *</span
+              ><input class="erp-control" type="number" min="1" max="10000" [(ngModel)]="capacity"
+            /></label>
+          }
+          <label class="exam-check"
+            ><input type="checkbox" [(ngModel)]="isActive" /><span
+              >Active and available for exam configuration</span
+            ></label
+          >
+        </div>
+        <footer class="erp-drawer__footer">
+          <button class="erp-button erp-button--secondary" type="button" (click)="closeDrawer()">
+            Cancel</button
+          ><button
+            class="erp-button erp-button--primary"
+            type="button"
+            [disabled]="saving() || !valid()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Saving…' : 'Save ' + singular() }}
+          </button>
+        </footer>
+      </aside>
+    </div>
+  }
+</erp-admin-page>

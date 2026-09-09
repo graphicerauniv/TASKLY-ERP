@@ -54,16 +54,18 @@ export const ADMIN_NAVIGATION = [
         children: [
             {
                 id: 'new-admission',
-                label: 'New admission',
+                label: 'New application',
                 description: 'Register a new student application',
+                group: 'Application intake',
                 route: '/admin/admission/student',
                 icon: 'createStudent',
                 activeWhen: [exact('/admin/admission/student'), /^\/admin\/admissions\/[^/]+\/edit\/?$/],
             },
             {
                 id: 'admission-forms',
-                label: 'Forms',
+                label: 'Form builder',
                 description: 'Build and manage admission forms',
+                group: 'Configuration',
                 route: '/admin/admissions/forms',
                 icon: 'draft',
                 activeWhen: [branch('/admin/admissions/forms'), branch('/admin/form-builder')],
@@ -394,8 +396,47 @@ export const ADMIN_NAVIGATION = [
         label: 'Settings',
         description: 'Configure reusable academic and operational master data.',
         icon: 'settings',
-        activeWhen: [/^\/admin\/master-data\/(?!hostel(?:\/|$))[^/]+(?:\/|$)/],
+        activeWhen: [
+            /^\/admin\/master-data\/(?!hostel(?:\/|$))[^/]+(?:\/|$)/,
+            branch('/admin/settings'),
+        ],
         children: [
+            {
+                id: 'exam-master',
+                label: 'Exam master',
+                description: 'Buildings, locations, floors and rooms',
+                icon: 'calendar',
+                children: [
+                    {
+                        id: 'exam-buildings',
+                        label: 'Buildings',
+                        route: '/admin/settings/exam-master/buildings',
+                        icon: 'building',
+                        activeWhen: [exact('/admin/settings/exam-master/buildings')],
+                    },
+                    {
+                        id: 'exam-locations',
+                        label: 'Locations',
+                        route: '/admin/settings/exam-master/locations',
+                        icon: 'location',
+                        activeWhen: [exact('/admin/settings/exam-master/locations')],
+                    },
+                    {
+                        id: 'exam-floors',
+                        label: 'Floors',
+                        route: '/admin/settings/exam-master/floors',
+                        icon: 'structure',
+                        activeWhen: [exact('/admin/settings/exam-master/floors')],
+                    },
+                    {
+                        id: 'exam-rooms',
+                        label: 'Rooms',
+                        route: '/admin/settings/exam-master/rooms',
+                        icon: 'room',
+                        activeWhen: [exact('/admin/settings/exam-master/rooms')],
+                    },
+                ],
+            },
             {
                 id: 'academic-masters',
                 label: 'Academic masters',
@@ -445,7 +486,7 @@ export const ADMIN_NAVIGATION = [
     },
 ];
 const ADMIN_PAGE_TITLES = [
-    { pattern: exact('/admin/admission/student'), title: 'New admission' },
+    { pattern: exact('/admin/admission/student'), title: 'New application' },
     { pattern: exact('/admin/admissions/applications'), title: 'All applications' },
     { pattern: exact('/admin/admissions/unfilled'), title: 'Draft applications' },
     { pattern: exact('/admin/admissions/not-approved'), title: 'Awaiting review' },
