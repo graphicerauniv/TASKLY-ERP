@@ -1,0 +1,221 @@
+<main class="semester-registration-page">
+  <a class="back-link" routerLink="/student/academics">
+    <svg lucideArrowLeft aria-hidden="true"></svg>
+    Back to Academics
+  </a>
+
+  <header class="registration-hero">
+    <div>
+      <small>Registration &amp; Programmes</small>
+      <h1>Semester Registration</h1>
+      <p>Review your academic allocation and assigned subjects before registering.</p>
+    </div>
+    <img
+      src="/assets/student/academics/semester-registration.png"
+      width="240"
+      height="200"
+      alt=""
+      aria-hidden="true"
+    />
+  </header>
+
+  @if (message()) {
+    <div class="registration-notice registration-notice--success" aria-live="polite">
+      <svg lucideCheck aria-hidden="true"></svg>
+      {{ message() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="registration-notice registration-notice--error" role="alert">
+      <svg lucideCircleAlert aria-hidden="true"></svg>
+      <span>{{ error() }}</span>
+      <button type="button" (click)="load()"><svg lucideRefreshCw></svg>Try again</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <section class="registration-state" aria-live="polite">
+      <span class="registration-loader"></span>
+      <h2>Loading semester details</h2>
+      <p>We are checking your current academic allocation and subjects.</p>
+    </section>
+  } @else if (context(); as data) {
+    <section class="registration-status" [class.is-complete]="!!data.registration">
+      <span>
+        @if (data.registration) {
+          <svg lucideCheck aria-hidden="true"></svg>
+        } @else {
+          <svg lucideGraduationCap aria-hidden="true"></svg>
+        }
+      </span>
+      <div>
+        <small>Current status</small>
+        <h2>{{ data.registration ? 'Semester Registration Completed' : 'Ready for review' }}</h2>
+        <p>
+          @if (data.registration) {
+            Registered on {{ data.registration.registeredAt | date: 'medium' }}
+          } @else {
+            Semester {{ data.student.semester }} · {{ data.student.academicSession }}
+          }
+        </p>
+      </div>
+    </section>
+
+    <div class="registration-layout">
+      <div class="registration-main">
+        <section class="registration-card">
+          <header>
+            <div>
+              <small>Student record</small>
+              <h2>Academic details</h2>
+            </div>
+          </header>
+          <dl class="detail-grid">
+            <div>
+              <dt>Student name</dt>
+              <dd>{{ data.student.studentName }}</dd>
+            </div>
+            <div>
+              <dt>Student ID</dt>
+              <dd>{{ data.student.studentId }}</dd>
+            </div>
+            <div>
+              <dt>Academic session</dt>
+              <dd>{{ data.student.academicSession }}</dd>
+            </div>
+            <div>
+              <dt>Current semester</dt>
+              <dd>Semester {{ data.student.semester }}</dd>
+            </div>
+            <div>
+              <dt>University</dt>
+              <dd>{{ data.student.universityName || '—' }}</dd>
+            </div>
+            <div>
+              <dt>College</dt>
+              <dd>{{ data.student.collegeName || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Department</dt>
+              <dd>{{ data.student.departmentName || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Level</dt>
+              <dd>{{ data.student.levelName || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Course</dt>
+              <dd>{{ data.student.courseName || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Academic year</dt>
+              <dd>Year {{ data.student.currentAcademicYear }}</dd>
+            </div>
+            <div>
+              <dt>Group</dt>
+              <dd>{{ data.assignment?.groupName || 'Not assigned' }}</dd>
+            </div>
+            <div>
+              <dt>Section / Set</dt>
+              <dd>
+                {{
+                  data.assignment
+                    ? data.assignment.sectionName + ' / ' + data.assignment.setName
+                    : 'Not assigned'
+                }}
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="registration-card">
+          <header class="subjects-heading">
+            <div>
+              <small>Current semester</small>
+              <h2>Assigned subjects</h2>
+            </div>
+            <strong>{{ data.subjects.length }} subjects</strong>
+          </header>
+          <div class="subjects-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Type</th>
+                  <th>Requirement</th>
+                  <th>Credits</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (subject of data.subjects; track subject._id) {
+                  <tr>
+                    <td>
+                      <strong>{{ subject.name }}</strong
+                      ><small>{{ subject.code || 'No code' }}</small>
+                    </td>
+                    <td>{{ subject.subjectType || '—' }}</td>
+                    <td>{{ subject.requirement === 'elective' ? 'Elective' : 'Required' }}</td>
+                    <td>{{ subject.credits }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4">No subjects are assigned for this semester.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <aside class="registration-card registration-action-card">
+        <span class="action-icon"><svg lucideBookOpen aria-hidden="true"></svg></span>
+        <h2>Complete registration</h2>
+        @if (data.registration) {
+          <p>
+            Your current semester is registered. The saved subject snapshot cannot be submitted
+            again.
+          </p>
+          <dl>
+            <div>
+              <dt>Semester</dt>
+              <dd>{{ data.registration.semester }}</dd>
+            </div>
+            <div>
+              <dt>Subjects</dt>
+              <dd>{{ data.registration.subjectCount }}</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>Registered</dd>
+            </div>
+          </dl>
+        } @else if (data.blockers.length) {
+          <p>Registration cannot be completed until the following requirements are resolved:</p>
+          <ul>
+            @for (blocker of data.blockers; track blocker) {
+              <li>{{ blocker }}</li>
+            }
+          </ul>
+        } @else {
+          <p>By registering, you confirm the academic details and subjects shown on this page.</p>
+        }
+        <button
+          class="registration-button"
+          type="button"
+          [disabled]="!data.eligible || registering()"
+          (click)="register()"
+        >
+          <svg lucideCheck aria-hidden="true"></svg>
+          {{
+            registering()
+              ? 'Registering…'
+              : data.registration
+                ? 'Already registered'
+                : 'Register Semester'
+          }}
+        </button>
+      </aside>
+    </div>
+  }
+</main>

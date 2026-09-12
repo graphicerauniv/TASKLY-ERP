@@ -1,3 +1,4 @@
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -117,8 +118,10 @@ function MasterDataComponent_Conditional_0_Conditional_9_For_22_Template(rf, ctx
 } }
 function MasterDataComponent_Conditional_0_Conditional_9_ForEmpty_23_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵelementStart(0, "tr")(1, "td", 21);
-    i0.ɵɵtext(2, "No custom masters created.");
-    i0.ɵɵelementEnd()();
+    i0.ɵɵelement(2, "erp-admin-illustration", 22);
+    i0.ɵɵelementStart(3, "p");
+    i0.ɵɵtext(4, "No custom masters created.");
+    i0.ɵɵelementEnd()()();
 } }
 function MasterDataComponent_Conditional_0_Conditional_9_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵelementStart(0, "section", 11)(1, "div", 19)(2, "div")(3, "h2");
@@ -142,7 +145,7 @@ function MasterDataComponent_Conditional_0_Conditional_9_Template(rf, ctx) { if 
     i0.ɵɵtext(19, "Status");
     i0.ɵɵelementEnd()()();
     i0.ɵɵelementStart(20, "tbody");
-    i0.ɵɵrepeaterCreate(21, MasterDataComponent_Conditional_0_Conditional_9_For_22_Template, 1, 1, null, null, _forTrack0, false, MasterDataComponent_Conditional_0_Conditional_9_ForEmpty_23_Template, 3, 0, "tr");
+    i0.ɵɵrepeaterCreate(21, MasterDataComponent_Conditional_0_Conditional_9_For_22_Template, 1, 1, null, null, _forTrack0, false, MasterDataComponent_Conditional_0_Conditional_9_ForEmpty_23_Template, 5, 0, "tr");
     i0.ɵɵelementEnd()()();
 } if (rf & 2) {
     const ctx_r0 = i0.ɵɵnextContext(2);
@@ -174,12 +177,12 @@ function MasterDataComponent_Conditional_0_Template(rf, ctx) { if (rf & 1) {
 } }
 function MasterDataComponent_Conditional_1_Conditional_2_Template(rf, ctx) { if (rf & 1) {
     const _r5 = i0.ɵɵgetCurrentView();
-    i0.ɵɵelementStart(0, "a", 23);
+    i0.ɵɵelementStart(0, "a", 24);
     i0.ɵɵtext(1, "Create value");
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(2, "label", 24);
+    i0.ɵɵelementStart(2, "label", 25);
     i0.ɵɵtext(3, "Bulk upload");
-    i0.ɵɵelementStart(4, "input", 25);
+    i0.ɵɵelementStart(4, "input", 26);
     i0.ɵɵlistener("change", function MasterDataComponent_Conditional_1_Conditional_2_Template_input_change_4_listener($event) { i0.ɵɵrestoreView(_r5); const ctx_r0 = i0.ɵɵnextContext(2); return i0.ɵɵresetView(ctx_r0.importFile($event)); });
     i0.ɵɵelementEnd()();
 } if (rf & 2) {
@@ -187,7 +190,7 @@ function MasterDataComponent_Conditional_1_Conditional_2_Template(rf, ctx) { if 
     i0.ɵɵproperty("routerLink", ctx_r0.createRoute());
 } }
 function MasterDataComponent_Conditional_1_Conditional_3_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "a", 22);
+    i0.ɵɵelementStart(0, "a", 23);
     i0.ɵɵtext(1, "View values");
     i0.ɵɵelementEnd();
 } if (rf & 2) {
@@ -229,7 +232,7 @@ function MasterDataComponent_Conditional_1_Conditional_8_For_13_Template(rf, ctx
     i0.ɵɵelementEnd();
     i0.ɵɵelementStart(3, "select", 15);
     i0.ɵɵtwoWayListener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_For_13_Template_select_ngModelChange_3_listener($event) { const dependencySlug_r8 = i0.ɵɵrestoreView(_r7).$implicit; const ctx_r0 = i0.ɵɵnextContext(3); i0.ɵɵtwoWayBindingSet(ctx_r0.selectedDependencies[dependencySlug_r8], $event) || (ctx_r0.selectedDependencies[dependencySlug_r8] = $event); return i0.ɵɵresetView($event); });
-    i0.ɵɵlistener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_For_13_Template_select_ngModelChange_3_listener() { const ɵ$index_179_r9 = i0.ɵɵrestoreView(_r7).$index; const ctx_r0 = i0.ɵɵnextContext(3); return i0.ɵɵresetView(ctx_r0.dependencyChanged(ɵ$index_179_r9)); });
+    i0.ɵɵlistener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_For_13_Template_select_ngModelChange_3_listener() { const ɵ$index_183_r9 = i0.ɵɵrestoreView(_r7).$index; const ctx_r0 = i0.ɵɵnextContext(3); return i0.ɵɵresetView(ctx_r0.dependencyChanged(ɵ$index_183_r9)); });
     i0.ɵɵelementStart(4, "option", 16);
     i0.ɵɵtext(5);
     i0.ɵɵelementEnd();
@@ -237,7 +240,7 @@ function MasterDataComponent_Conditional_1_Conditional_8_For_13_Template(rf, ctx
     i0.ɵɵelementEnd()();
 } if (rf & 2) {
     const dependencySlug_r8 = ctx.$implicit;
-    const ɵ$index_179_r9 = ctx.$index;
+    const ɵ$index_183_r9 = ctx.$index;
     const ctx_r0 = i0.ɵɵnextContext(3);
     i0.ɵɵadvance(2);
     i0.ɵɵtextInterpolate1("", ctx_r0.dependencyLabel(dependencySlug_r8), " *");
@@ -246,10 +249,10 @@ function MasterDataComponent_Conditional_1_Conditional_8_For_13_Template(rf, ctx
     i0.ɵɵadvance(2);
     i0.ɵɵtextInterpolate1("Select ", ctx_r0.dependencyLabel(dependencySlug_r8));
     i0.ɵɵadvance();
-    i0.ɵɵrepeater(ctx_r0.dependencyOptions(ɵ$index_179_r9));
+    i0.ɵɵrepeater(ctx_r0.dependencyOptions(ɵ$index_183_r9));
 } }
 function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_For_25_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "option", 33);
+    i0.ɵɵelementStart(0, "option", 34);
     i0.ɵɵtext(1);
     i0.ɵɵelementEnd();
 } if (rf & 2) {
@@ -263,7 +266,7 @@ function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template
     i0.ɵɵelementStart(0, "label")(1, "span");
     i0.ɵɵtext(2, "Course code *");
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(3, "input", 28);
+    i0.ɵɵelementStart(3, "input", 29);
     i0.ɵɵtwoWayListener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template_input_ngModelChange_3_listener($event) { i0.ɵɵrestoreView(_r11); const ctx_r0 = i0.ɵɵnextContext(3); i0.ɵɵtwoWayBindingSet(ctx_r0.courseCode, $event) || (ctx_r0.courseCode = $event); return i0.ɵɵresetView($event); });
     i0.ɵɵelementEnd()();
     i0.ɵɵelementStart(4, "label")(5, "span");
@@ -271,22 +274,22 @@ function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template
     i0.ɵɵelementEnd();
     i0.ɵɵelementStart(7, "select", 15);
     i0.ɵɵtwoWayListener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template_select_ngModelChange_7_listener($event) { i0.ɵɵrestoreView(_r11); const ctx_r0 = i0.ɵɵnextContext(3); i0.ɵɵtwoWayBindingSet(ctx_r0.courseExamPattern, $event) || (ctx_r0.courseExamPattern = $event); return i0.ɵɵresetView($event); });
-    i0.ɵɵelementStart(8, "option", 29);
+    i0.ɵɵelementStart(8, "option", 30);
     i0.ɵɵtext(9, "Semester-wise exams");
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(10, "option", 30);
+    i0.ɵɵelementStart(10, "option", 31);
     i0.ɵɵtext(11, "Year-wise exams");
     i0.ɵɵelementEnd()()();
     i0.ɵɵelementStart(12, "label")(13, "span");
     i0.ɵɵtext(14, "Duration years *");
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(15, "input", 31);
+    i0.ɵɵelementStart(15, "input", 32);
     i0.ɵɵtwoWayListener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template_input_ngModelChange_15_listener($event) { i0.ɵɵrestoreView(_r11); const ctx_r0 = i0.ɵɵnextContext(3); i0.ɵɵtwoWayBindingSet(ctx_r0.courseDurationYears, $event) || (ctx_r0.courseDurationYears = $event); return i0.ɵɵresetView($event); });
     i0.ɵɵelementEnd()();
     i0.ɵɵelementStart(16, "label")(17, "span");
     i0.ɵɵtext(18, "Total semesters *");
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(19, "input", 32);
+    i0.ɵɵelementStart(19, "input", 33);
     i0.ɵɵtwoWayListener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template_input_ngModelChange_19_listener($event) { i0.ɵɵrestoreView(_r11); const ctx_r0 = i0.ɵɵnextContext(3); i0.ɵɵtwoWayBindingSet(ctx_r0.courseTotalSemesters, $event) || (ctx_r0.courseTotalSemesters = $event); return i0.ɵɵresetView($event); });
     i0.ɵɵelementEnd()();
     i0.ɵɵelementStart(20, "label")(21, "span");
@@ -294,7 +297,7 @@ function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template
     i0.ɵɵelementEnd();
     i0.ɵɵelementStart(23, "select", 15);
     i0.ɵɵtwoWayListener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template_select_ngModelChange_23_listener($event) { i0.ɵɵrestoreView(_r11); const ctx_r0 = i0.ɵɵnextContext(3); i0.ɵɵtwoWayBindingSet(ctx_r0.courseDefaultAcademicYear, $event) || (ctx_r0.courseDefaultAcademicYear = $event); return i0.ɵɵresetView($event); });
-    i0.ɵɵrepeaterCreate(24, MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_For_25_Template, 2, 2, "option", 33, i0.ɵɵrepeaterTrackByIdentity);
+    i0.ɵɵrepeaterCreate(24, MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_For_25_Template, 2, 2, "option", 34, i0.ɵɵrepeaterTrackByIdentity);
     i0.ɵɵelementEnd()();
 } if (rf & 2) {
     const ctx_r0 = i0.ɵɵnextContext(3);
@@ -313,7 +316,7 @@ function MasterDataComponent_Conditional_1_Conditional_8_Conditional_14_Template
 } }
 function MasterDataComponent_Conditional_1_Conditional_8_Conditional_17_Template(rf, ctx) { if (rf & 1) {
     const _r13 = i0.ɵɵgetCurrentView();
-    i0.ɵɵelementStart(0, "button", 34);
+    i0.ɵɵelementStart(0, "button", 35);
     i0.ɵɵlistener("click", function MasterDataComponent_Conditional_1_Conditional_8_Conditional_17_Template_button_click_0_listener() { i0.ɵɵrestoreView(_r13); const ctx_r0 = i0.ɵɵnextContext(3); return i0.ɵɵresetView(ctx_r0.reset()); });
     i0.ɵɵtext(1, " Cancel ");
     i0.ɵɵelementEnd();
@@ -329,7 +332,7 @@ function MasterDataComponent_Conditional_1_Conditional_8_Template(rf, ctx) { if 
     i0.ɵɵelementStart(7, "div", 13)(8, "label")(9, "span");
     i0.ɵɵtext(10, "Name *");
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(11, "input", 26);
+    i0.ɵɵelementStart(11, "input", 27);
     i0.ɵɵtwoWayListener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_8_Template_input_ngModelChange_11_listener($event) { i0.ɵɵrestoreView(_r6); const ctx_r0 = i0.ɵɵnextContext(2); i0.ɵɵtwoWayBindingSet(ctx_r0.name, $event) || (ctx_r0.name = $event); return i0.ɵɵresetView($event); });
     i0.ɵɵelementEnd()();
     i0.ɵɵrepeaterCreate(12, MasterDataComponent_Conditional_1_Conditional_8_For_13_Template, 8, 3, "label", null, i0.ɵɵrepeaterTrackByIdentity);
@@ -338,7 +341,7 @@ function MasterDataComponent_Conditional_1_Conditional_8_Template(rf, ctx) { if 
     i0.ɵɵlistener("click", function MasterDataComponent_Conditional_1_Conditional_8_Template_button_click_15_listener() { i0.ɵɵrestoreView(_r6); const ctx_r0 = i0.ɵɵnextContext(2); return i0.ɵɵresetView(ctx_r0.save()); });
     i0.ɵɵtext(16);
     i0.ɵɵelementEnd();
-    i0.ɵɵconditionalCreate(17, MasterDataComponent_Conditional_1_Conditional_8_Conditional_17_Template, 2, 0, "button", 27);
+    i0.ɵɵconditionalCreate(17, MasterDataComponent_Conditional_1_Conditional_8_Conditional_17_Template, 2, 0, "button", 28);
     i0.ɵɵelementEnd()();
 } if (rf & 2) {
     const ctx_r0 = i0.ɵɵnextContext(2);
@@ -396,11 +399,11 @@ function MasterDataComponent_Conditional_1_Conditional_9_For_27_Template(rf, ctx
     i0.ɵɵelementEnd()();
     i0.ɵɵconditionalCreate(4, MasterDataComponent_Conditional_1_Conditional_9_For_27_Conditional_4_Template, 2, 1, "td");
     i0.ɵɵconditionalCreate(5, MasterDataComponent_Conditional_1_Conditional_9_For_27_Conditional_5_Template, 5, 4, "td");
-    i0.ɵɵelementStart(6, "td")(7, "button", 39);
+    i0.ɵɵelementStart(6, "td")(7, "button", 40);
     i0.ɵɵlistener("click", function MasterDataComponent_Conditional_1_Conditional_9_For_27_Template_button_click_7_listener() { const item_r16 = i0.ɵɵrestoreView(_r15).$implicit; const ctx_r0 = i0.ɵɵnextContext(3); return i0.ɵɵresetView(ctx_r0.toggle(item_r16)); });
     i0.ɵɵtext(8);
     i0.ɵɵelementEnd()();
-    i0.ɵɵelementStart(9, "td", 38)(10, "erp-compact-action-menu", 40);
+    i0.ɵɵelementStart(9, "td", 39)(10, "erp-compact-action-menu", 41);
     i0.ɵɵlistener("selected", function MasterDataComponent_Conditional_1_Conditional_9_For_27_Template_erp_compact_action_menu_selected_10_listener($event) { const item_r16 = i0.ɵɵrestoreView(_r15).$implicit; const ctx_r0 = i0.ɵɵnextContext(3); return i0.ɵɵresetView(ctx_r0.handleRowAction($event, item_r16)); });
     i0.ɵɵelementEnd()()();
 } if (rf & 2) {
@@ -420,7 +423,7 @@ function MasterDataComponent_Conditional_1_Conditional_9_For_27_Template(rf, ctx
     i0.ɵɵproperty("items", ctx_r0.isCourseMaster() ? ctx_r0.courseRowActions : ctx_r0.baseRowActions);
 } }
 function MasterDataComponent_Conditional_1_Conditional_9_ForEmpty_28_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "tr")(1, "td", 41);
+    i0.ɵɵelementStart(0, "tr")(1, "td", 42);
     i0.ɵɵtext(2);
     i0.ɵɵelementEnd()();
 } if (rf & 2) {
@@ -440,15 +443,15 @@ function MasterDataComponent_Conditional_1_Conditional_9_Template(rf, ctx) { if 
     i0.ɵɵelementStart(7, "p");
     i0.ɵɵtext(8, "Search, review and manage this master list separately from creation.");
     i0.ɵɵelementEnd()();
-    i0.ɵɵelementStart(9, "div", 35)(10, "input", 36);
+    i0.ɵɵelementStart(9, "div", 36)(10, "input", 37);
     i0.ɵɵtwoWayListener("ngModelChange", function MasterDataComponent_Conditional_1_Conditional_9_Template_input_ngModelChange_10_listener($event) { i0.ɵɵrestoreView(_r14); const ctx_r0 = i0.ɵɵnextContext(2); i0.ɵɵtwoWayBindingSet(ctx_r0.search, $event) || (ctx_r0.search = $event); return i0.ɵɵresetView($event); });
     i0.ɵɵlistener("keyup.enter", function MasterDataComponent_Conditional_1_Conditional_9_Template_input_keyup_enter_10_listener() { i0.ɵɵrestoreView(_r14); const ctx_r0 = i0.ɵɵnextContext(2); return i0.ɵɵresetView(ctx_r0.loadValues()); });
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(11, "button", 34);
+    i0.ɵɵelementStart(11, "button", 35);
     i0.ɵɵlistener("click", function MasterDataComponent_Conditional_1_Conditional_9_Template_button_click_11_listener() { i0.ɵɵrestoreView(_r14); const ctx_r0 = i0.ɵɵnextContext(2); return i0.ɵɵresetView(ctx_r0.loadValues()); });
     i0.ɵɵtext(12, " Search ");
     i0.ɵɵelementEnd()()();
-    i0.ɵɵelementStart(13, "div", 37)(14, "table")(15, "thead")(16, "tr")(17, "th");
+    i0.ɵɵelementStart(13, "div", 38)(14, "table")(15, "thead")(16, "tr")(17, "th");
     i0.ɵɵtext(18, "Name");
     i0.ɵɵelementEnd();
     i0.ɵɵconditionalCreate(19, MasterDataComponent_Conditional_1_Conditional_9_Conditional_19_Template, 2, 0, "th");
@@ -456,7 +459,7 @@ function MasterDataComponent_Conditional_1_Conditional_9_Template(rf, ctx) { if 
     i0.ɵɵelementStart(21, "th");
     i0.ɵɵtext(22, "Status");
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(23, "th", 38);
+    i0.ɵɵelementStart(23, "th", 39);
     i0.ɵɵtext(24, "Actions");
     i0.ɵɵelementEnd()()();
     i0.ɵɵelementStart(25, "tbody");
@@ -477,7 +480,7 @@ function MasterDataComponent_Conditional_1_Conditional_9_Template(rf, ctx) { if 
 } }
 function MasterDataComponent_Conditional_1_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵelementStart(0, "erp-admin-page", 1)(1, "div", 3);
-    i0.ɵɵconditionalCreate(2, MasterDataComponent_Conditional_1_Conditional_2_Template, 5, 1)(3, MasterDataComponent_Conditional_1_Conditional_3_Template, 2, 1, "a", 22);
+    i0.ɵɵconditionalCreate(2, MasterDataComponent_Conditional_1_Conditional_2_Template, 5, 1)(3, MasterDataComponent_Conditional_1_Conditional_3_Template, 2, 1, "a", 23);
     i0.ɵɵelementEnd();
     i0.ɵɵconditionalCreate(4, MasterDataComponent_Conditional_1_Conditional_4_Template, 2, 1, "p", 6);
     i0.ɵɵconditionalCreate(5, MasterDataComponent_Conditional_1_Conditional_5_Template, 2, 1, "p", 7);
@@ -498,7 +501,7 @@ function MasterDataComponent_Conditional_1_Template(rf, ctx) { if (rf & 1) {
 } }
 function MasterDataComponent_Conditional_2_Template(rf, ctx) { if (rf & 1) {
     const _r17 = i0.ɵɵgetCurrentView();
-    i0.ɵɵelementStart(0, "erp-confirm-dialog", 42);
+    i0.ɵɵelementStart(0, "erp-confirm-dialog", 43);
     i0.ɵɵlistener("cancelled", function MasterDataComponent_Conditional_2_Template_erp_confirm_dialog_cancelled_0_listener() { i0.ɵɵrestoreView(_r17); const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.cancelConfirmation()); })("confirmed", function MasterDataComponent_Conditional_2_Template_erp_confirm_dialog_confirmed_0_listener() { i0.ɵɵrestoreView(_r17); const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.confirmRequestedAction()); });
     i0.ɵɵelementEnd();
 } if (rf & 2) {
@@ -830,7 +833,7 @@ export class MasterDataComponent {
             : 'Master Data';
     }
     static ɵfac = function MasterDataComponent_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || MasterDataComponent)(); };
-    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: MasterDataComponent, selectors: [["erp-master-data"]], decls: 3, vars: 2, consts: [["eyebrow", "Master Data", "description", "Create reusable data sources for dynamic dropdowns.", "variant", "minimal", 3, "title", "layout"], ["eyebrow", "Master Data", "description", "Add, edit, activate, import, and organize database values.", "variant", "minimal", 3, "title", "layout"], [3, "open", "eyebrow", "title", "message", "confirmLabel", "destructive"], ["page-actions", "", 1, "master-page-actions"], ["routerLink", "/admin/master-data/custom/create", 1, "erp-button", "erp-button--primary"], ["routerLink", "/admin/master-data/custom/view", 1, "erp-button", "erp-button--secondary"], [1, "erp-notice", "erp-notice--success"], [1, "erp-notice", "erp-notice--error"], [1, "master-data-workspace"], [1, "erp-main-column"], [1, "erp-card", "erp-card--padded", "master-create-card"], [1, "erp-card", "erp-table-shell", "master-table-card"], [1, "erp-card__header"], [1, "erp-form-grid", "master-value-grid"], ["placeholder", "e.g. Board, Religion, Category", 1, "erp-control", 3, "ngModelChange", "ngModel"], [1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", ""], [3, "value"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "click"], [1, "erp-table-toolbar"], [1, "erp-status"], ["colspan", "4", 1, "erp-empty-state"], [1, "erp-button", "erp-button--secondary", 3, "routerLink"], [1, "erp-button", "erp-button--primary", 3, "routerLink"], [1, "erp-button", "erp-button--secondary", "upload"], ["type", "file", "accept", ".csv,.xlsx,.xls", 3, "change"], ["placeholder", "Enter value name", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["type", "button", 1, "erp-button", "erp-button--secondary"], ["maxlength", "12", "placeholder", "e.g. BCA", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", "semester"], ["value", "year"], ["type", "number", "min", "1", "max", "10", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["type", "number", "min", "1", "max", "20", 1, "erp-control", 3, "ngModelChange", "ngModel"], [3, "ngValue"], ["type", "button", 1, "erp-button", "erp-button--secondary", 3, "click"], [1, "erp-table-toolbar__actions"], ["placeholder", "Search values", 1, "erp-control", 3, "ngModelChange", "keyup.enter", "ngModel"], [1, "erp-table-shell__scroll"], [1, "erp-table-shell__actions"], ["type", "button", 1, "erp-status", 3, "click"], [3, "selected", "items"], [1, "erp-empty-state"], [3, "cancelled", "confirmed", "open", "eyebrow", "title", "message", "confirmLabel", "destructive"]], template: function MasterDataComponent_Template(rf, ctx) { if (rf & 1) {
+    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: MasterDataComponent, selectors: [["erp-master-data"]], decls: 3, vars: 2, consts: [["eyebrow", "Master Data", "description", "Create reusable data sources for dynamic dropdowns.", "variant", "compact", 3, "title", "layout"], ["eyebrow", "Master Data", "description", "Add, edit, activate, import, and organize database values.", "variant", "compact", 3, "title", "layout"], [3, "open", "eyebrow", "title", "message", "confirmLabel", "destructive"], ["page-actions", "", 1, "master-page-actions"], ["routerLink", "/admin/master-data/custom/create", 1, "erp-button", "erp-button--primary"], ["routerLink", "/admin/master-data/custom/view", 1, "erp-button", "erp-button--secondary"], [1, "erp-notice", "erp-notice--success"], [1, "erp-notice", "erp-notice--error"], [1, "master-data-workspace"], [1, "erp-main-column"], [1, "erp-card", "erp-card--padded", "master-create-card"], [1, "erp-card", "erp-table-shell", "master-table-card"], [1, "erp-card__header"], [1, "erp-form-grid", "master-value-grid"], ["placeholder", "e.g. Board, Religion, Category", 1, "erp-control", 3, "ngModelChange", "ngModel"], [1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", ""], [3, "value"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "click"], [1, "erp-table-toolbar"], [1, "erp-status"], ["colspan", "4", 1, "erp-empty-state"], ["kind", "dataConfiguration", "size", "compact"], [1, "erp-button", "erp-button--secondary", 3, "routerLink"], [1, "erp-button", "erp-button--primary", 3, "routerLink"], [1, "erp-button", "erp-button--secondary", "upload"], ["type", "file", "accept", ".csv,.xlsx,.xls", 3, "change"], ["placeholder", "Enter value name", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["type", "button", 1, "erp-button", "erp-button--secondary"], ["maxlength", "12", "placeholder", "e.g. BCA", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", "semester"], ["value", "year"], ["type", "number", "min", "1", "max", "10", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["type", "number", "min", "1", "max", "20", 1, "erp-control", 3, "ngModelChange", "ngModel"], [3, "ngValue"], ["type", "button", 1, "erp-button", "erp-button--secondary", 3, "click"], [1, "erp-table-toolbar__actions"], ["placeholder", "Search values", 1, "erp-control", 3, "ngModelChange", "keyup.enter", "ngModel"], [1, "erp-table-shell__scroll"], [1, "erp-table-shell__actions"], ["type", "button", 1, "erp-status", 3, "click"], [3, "selected", "items"], [1, "erp-empty-state"], [3, "cancelled", "confirmed", "open", "eyebrow", "title", "message", "confirmLabel", "destructive"]], template: function MasterDataComponent_Template(rf, ctx) { if (rf & 1) {
             i0.ɵɵconditionalCreate(0, MasterDataComponent_Conditional_0_Template, 10, 6, "erp-admin-page", 0)(1, MasterDataComponent_Conditional_1_Template, 10, 6, "erp-admin-page", 1);
             i0.ɵɵconditionalCreate(2, MasterDataComponent_Conditional_2_Template, 1, 6, "erp-confirm-dialog", 2);
         } if (rf & 2) {
@@ -838,7 +841,8 @@ export class MasterDataComponent {
             i0.ɵɵconditional(ctx.slug() === "custom" ? 0 : 1);
             i0.ɵɵadvance(2);
             i0.ɵɵconditional((tmp_1_0 = ctx.confirmDialog()) ? 2 : -1, tmp_1_0);
-        } }, dependencies: [AdminPageComponent,
+        } }, dependencies: [AdminIllustrationComponent,
+            AdminPageComponent,
             CompactActionMenuComponent,
             ConfirmDialogComponent,
             FormsModule, i1.NgSelectOption, i1.ɵNgSelectMultipleOption, i1.DefaultValueAccessor, i1.NumberValueAccessor, i1.SelectControlValueAccessor, i1.NgControlStatus, i1.MaxLengthValidator, i1.MinValidator, i1.MaxValidator, i1.NgModel, RouterLink], encapsulation: 2, changeDetection: 0 });
@@ -846,11 +850,12 @@ export class MasterDataComponent {
 (() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassMetadata(MasterDataComponent, [{
         type: Component,
         args: [{ selector: 'erp-master-data', imports: [
+                    AdminIllustrationComponent,
                     AdminPageComponent,
                     CompactActionMenuComponent,
                     ConfirmDialogComponent,
                     FormsModule,
                     RouterLink,
-                ], changeDetection: ChangeDetectionStrategy.OnPush, template: "@if (slug() === 'custom') {\n  <erp-admin-page\n    eyebrow=\"Master Data\"\n    [title]=\"pageTitle()\"\n    description=\"Create reusable data sources for dynamic dropdowns.\"\n    variant=\"minimal\"\n    [layout]=\"isViewPage() ? 'collection' : 'default'\"\n  >\n    <div page-actions class=\"master-page-actions\">\n      @if (isViewPage()) {\n        <a class=\"erp-button erp-button--primary\" routerLink=\"/admin/master-data/custom/create\"\n          >Create custom</a\n        >\n      } @else {\n        <a class=\"erp-button erp-button--secondary\" routerLink=\"/admin/master-data/custom/view\"\n          >View custom masters</a\n        >\n      }\n    </div>\n    @if (message()) {\n      <p class=\"erp-notice erp-notice--success\">{{ message() }}</p>\n    }\n    @if (error()) {\n      <p class=\"erp-notice erp-notice--error\">{{ error() }}</p>\n    }\n    <div class=\"master-data-workspace\">\n      <main class=\"erp-main-column\">\n        @if (isCreatePage()) {\n          <section class=\"erp-card erp-card--padded master-create-card\">\n            <div class=\"erp-card__header\">\n              <div>\n                <h2>Create custom master</h2>\n                <p>Use clear reusable names so future forms stay easy to maintain.</p>\n              </div>\n            </div>\n            <div class=\"erp-form-grid master-value-grid\">\n              <label\n                ><span>Name</span\n                ><input\n                  class=\"erp-control\"\n                  [(ngModel)]=\"customName\"\n                  placeholder=\"e.g. Board, Religion, Category\"\n              /></label>\n              <label\n                ><span>Parent master (optional)</span\n                ><select class=\"erp-control\" [(ngModel)]=\"customParent\">\n                  <option value=\"\">No parent</option>\n                  @for (type of types(); track type.slug) {\n                    <option [value]=\"type.slug\">{{ type.name }}</option>\n                  }\n                </select></label\n              >\n              <button class=\"erp-button erp-button--primary\" type=\"button\" (click)=\"createCustom()\">\n                Create master\n              </button>\n            </div>\n          </section>\n        } @else {\n          <section class=\"erp-card erp-table-shell master-table-card\">\n            <div class=\"erp-table-toolbar\">\n              <div>\n                <h2>\n                  Custom masters <small>{{ customTypeCount() }}</small>\n                </h2>\n                <p>Review custom dropdown data sources separately from creation.</p>\n              </div>\n            </div>\n            <table>\n              <thead>\n                <tr>\n                  <th>Name</th>\n                  <th>Slug</th>\n                  <th>Parent</th>\n                  <th>Status</th>\n                </tr>\n              </thead>\n              <tbody>\n                @for (type of types(); track type.slug) {\n                  @if (type.isCustom) {\n                    <tr>\n                      <td>\n                        <strong>{{ type.name }}</strong>\n                      </td>\n                      <td>{{ type.slug }}</td>\n                      <td>{{ type.parentTypeSlug || '\u2014' }}</td>\n                      <td><span class=\"erp-status\">Active</span></td>\n                    </tr>\n                  }\n                } @empty {\n                  <tr>\n                    <td colspan=\"4\" class=\"erp-empty-state\">No custom masters created.</td>\n                  </tr>\n                }\n              </tbody>\n            </table>\n          </section>\n        }\n      </main>\n    </div>\n  </erp-admin-page>\n} @else {\n  <erp-admin-page\n    eyebrow=\"Master Data\"\n    [title]=\"pageTitle()\"\n    description=\"Add, edit, activate, import, and organize database values.\"\n    variant=\"minimal\"\n    [layout]=\"isViewPage() ? 'collection' : 'default'\"\n  >\n    <div page-actions class=\"master-page-actions\">\n      @if (isViewPage()) {\n        <a class=\"erp-button erp-button--primary\" [routerLink]=\"createRoute()\">Create value</a>\n        <label class=\"erp-button erp-button--secondary upload\"\n          >Bulk upload<input type=\"file\" accept=\".csv,.xlsx,.xls\" (change)=\"importFile($event)\"\n        /></label>\n      } @else {\n        <a class=\"erp-button erp-button--secondary\" [routerLink]=\"viewRoute()\">View values</a>\n      }\n    </div>\n    @if (message()) {\n      <p class=\"erp-notice erp-notice--success\">{{ message() }}</p>\n    }\n    @if (error()) {\n      <p class=\"erp-notice erp-notice--error\">{{ error() }}</p>\n    }\n    <div class=\"master-data-workspace\">\n      <main class=\"erp-main-column\">\n        @if (isCreatePage()) {\n          <section class=\"erp-card erp-card--padded master-create-card\">\n            <div class=\"erp-card__header\">\n              <div>\n                <h2>{{ editingId() ? 'Edit value' : 'Add value' }}</h2>\n                <p>\n                  Keep values consistent because these records power form dropdowns and filters.\n                </p>\n              </div>\n            </div>\n            <div class=\"erp-form-grid master-value-grid\">\n              <label\n                ><span>Name *</span\n                ><input class=\"erp-control\" [(ngModel)]=\"name\" placeholder=\"Enter value name\"\n              /></label>\n              @for (dependencySlug of dependencySlugs(); track dependencySlug; let index = $index) {\n                <label>\n                  <span>{{ dependencyLabel(dependencySlug) }} *</span>\n                  <select\n                    class=\"erp-control\"\n                    [(ngModel)]=\"selectedDependencies[dependencySlug]\"\n                    (ngModelChange)=\"dependencyChanged(index)\"\n                  >\n                    <option value=\"\">Select {{ dependencyLabel(dependencySlug) }}</option>\n                    @for (option of dependencyOptions(index); track option._id) {\n                      <option [value]=\"option._id\">{{ option.name }}</option>\n                    }\n                  </select>\n                </label>\n              }\n              @if (isCourseMaster()) {\n                <label\n                  ><span>Course code *</span\n                  ><input\n                    class=\"erp-control\"\n                    [(ngModel)]=\"courseCode\"\n                    maxlength=\"12\"\n                    placeholder=\"e.g. BCA\"\n                /></label>\n                <label\n                  ><span>Exam pattern *</span\n                  ><select class=\"erp-control\" [(ngModel)]=\"courseExamPattern\">\n                    <option value=\"semester\">Semester-wise exams</option>\n                    <option value=\"year\">Year-wise exams</option>\n                  </select></label\n                >\n                <label\n                  ><span>Duration years *</span\n                  ><input\n                    class=\"erp-control\"\n                    type=\"number\"\n                    min=\"1\"\n                    max=\"10\"\n                    [(ngModel)]=\"courseDurationYears\"\n                /></label>\n                <label\n                  ><span>Total semesters *</span\n                  ><input\n                    class=\"erp-control\"\n                    type=\"number\"\n                    min=\"1\"\n                    max=\"20\"\n                    [(ngModel)]=\"courseTotalSemesters\"\n                /></label>\n                <label\n                  ><span>Default current academic year *</span\n                  ><select class=\"erp-control\" [(ngModel)]=\"courseDefaultAcademicYear\">\n                    @for (year of courseYearOptions(); track year) {\n                      <option [ngValue]=\"year\">Year {{ year }}</option>\n                    }\n                  </select></label\n                >\n              }\n              <button class=\"erp-button erp-button--primary\" type=\"button\" (click)=\"save()\">\n                {{ editingId() ? 'Save changes' : 'Add value' }}\n              </button>\n              @if (editingId()) {\n                <button class=\"erp-button erp-button--secondary\" type=\"button\" (click)=\"reset()\">\n                  Cancel\n                </button>\n              }\n            </div>\n          </section>\n        } @else {\n          <section class=\"erp-card erp-table-shell master-table-card\">\n            <div class=\"erp-table-toolbar\">\n              <div>\n                <h2>\n                  Saved values <small>{{ valueTotal() }}</small>\n                </h2>\n                <p>Search, review and manage this master list separately from creation.</p>\n              </div>\n              <div class=\"erp-table-toolbar__actions\">\n                <input\n                  class=\"erp-control\"\n                  [(ngModel)]=\"search\"\n                  placeholder=\"Search values\"\n                  (keyup.enter)=\"loadValues()\"\n                />\n                <button\n                  class=\"erp-button erp-button--secondary\"\n                  type=\"button\"\n                  (click)=\"loadValues()\"\n                >\n                  Search\n                </button>\n              </div>\n            </div>\n            <div class=\"erp-table-shell__scroll\">\n              <table>\n                <thead>\n                  <tr>\n                    <th>Name</th>\n                    @if (dependencySlugs().length) {\n                      <th>Depends on</th>\n                    }\n                    @if (isCourseMaster()) {\n                      <th>Configuration</th>\n                    }\n                    <th>Status</th>\n                    <th class=\"erp-table-shell__actions\">Actions</th>\n                  </tr>\n                </thead>\n                <tbody>\n                  @for (item of values(); track item._id) {\n                    <tr>\n                      <td>\n                        <strong>{{ item.name }}</strong>\n                      </td>\n                      @if (dependencySlugs().length) {\n                        <td>{{ parentPath(item) }}</td>\n                      }\n                      @if (isCourseMaster()) {\n                        <td>\n                          <strong\n                            >{{ item.metadata?.['courseCode'] || 'Code not set' }} \u00B7\n                            {{\n                              item.metadata?.['examPattern'] === 'year'\n                                ? 'Year-wise exams'\n                                : 'Semester-wise exams'\n                            }}</strong\n                          >\n                          <small\n                            >{{ item.metadata?.['durationYears'] || 4 }} years \u00B7\n                            {{ item.metadata?.['totalSemesters'] || 8 }} semesters \u00B7 fee type\n                            selected during fee setup</small\n                          >\n                        </td>\n                      }\n                      <td>\n                        <button\n                          class=\"erp-status\"\n                          [class.erp-status--neutral]=\"!item.isActive\"\n                          type=\"button\"\n                          (click)=\"toggle(item)\"\n                        >\n                          {{ item.isActive ? 'Enabled' : 'Disabled' }}\n                        </button>\n                      </td>\n                      <td class=\"erp-table-shell__actions\">\n                        <erp-compact-action-menu\n                          [items]=\"isCourseMaster() ? courseRowActions : baseRowActions\"\n                          (selected)=\"handleRowAction($event, item)\"\n                        />\n                      </td>\n                    </tr>\n                  } @empty {\n                    <tr>\n                      <td\n                        [attr.colspan]=\"\n                          (dependencySlugs().length ? 4 : 3) + (isCourseMaster() ? 1 : 0)\n                        \"\n                        class=\"erp-empty-state\"\n                      >\n                        {{ loading() ? 'Loading\u2026' : 'No values found.' }}\n                      </td>\n                    </tr>\n                  }\n                </tbody>\n              </table>\n            </div>\n          </section>\n        }\n      </main>\n    </div>\n  </erp-admin-page>\n}\n\n@if (confirmDialog(); as dialog) {\n  <erp-confirm-dialog\n    [open]=\"true\"\n    [eyebrow]=\"dialog.eyebrow\"\n    [title]=\"dialog.title\"\n    [message]=\"dialog.message\"\n    [confirmLabel]=\"dialog.confirmLabel\"\n    [destructive]=\"dialog.destructive\"\n    (cancelled)=\"cancelConfirmation()\"\n    (confirmed)=\"confirmRequestedAction()\"\n  />\n}\n" }]
+                ], changeDetection: ChangeDetectionStrategy.OnPush, template: "@if (slug() === 'custom') {\n  <erp-admin-page\n    eyebrow=\"Master Data\"\n    [title]=\"pageTitle()\"\n    description=\"Create reusable data sources for dynamic dropdowns.\"\n    variant=\"compact\"\n    [layout]=\"isViewPage() ? 'collection' : 'default'\"\n  >\n    <div page-actions class=\"master-page-actions\">\n      @if (isViewPage()) {\n        <a class=\"erp-button erp-button--primary\" routerLink=\"/admin/master-data/custom/create\"\n          >Create custom</a\n        >\n      } @else {\n        <a class=\"erp-button erp-button--secondary\" routerLink=\"/admin/master-data/custom/view\"\n          >View custom masters</a\n        >\n      }\n    </div>\n    @if (message()) {\n      <p class=\"erp-notice erp-notice--success\">{{ message() }}</p>\n    }\n    @if (error()) {\n      <p class=\"erp-notice erp-notice--error\">{{ error() }}</p>\n    }\n    <div class=\"master-data-workspace\">\n      <main class=\"erp-main-column\">\n        @if (isCreatePage()) {\n          <section class=\"erp-card erp-card--padded master-create-card\">\n            <div class=\"erp-card__header\">\n              <div>\n                <h2>Create custom master</h2>\n                <p>Use clear reusable names so future forms stay easy to maintain.</p>\n              </div>\n            </div>\n            <div class=\"erp-form-grid master-value-grid\">\n              <label\n                ><span>Name</span\n                ><input\n                  class=\"erp-control\"\n                  [(ngModel)]=\"customName\"\n                  placeholder=\"e.g. Board, Religion, Category\"\n              /></label>\n              <label\n                ><span>Parent master (optional)</span\n                ><select class=\"erp-control\" [(ngModel)]=\"customParent\">\n                  <option value=\"\">No parent</option>\n                  @for (type of types(); track type.slug) {\n                    <option [value]=\"type.slug\">{{ type.name }}</option>\n                  }\n                </select></label\n              >\n              <button class=\"erp-button erp-button--primary\" type=\"button\" (click)=\"createCustom()\">\n                Create master\n              </button>\n            </div>\n          </section>\n        } @else {\n          <section class=\"erp-card erp-table-shell master-table-card\">\n            <div class=\"erp-table-toolbar\">\n              <div>\n                <h2>\n                  Custom masters <small>{{ customTypeCount() }}</small>\n                </h2>\n                <p>Review custom dropdown data sources separately from creation.</p>\n              </div>\n            </div>\n            <table>\n              <thead>\n                <tr>\n                  <th>Name</th>\n                  <th>Slug</th>\n                  <th>Parent</th>\n                  <th>Status</th>\n                </tr>\n              </thead>\n              <tbody>\n                @for (type of types(); track type.slug) {\n                  @if (type.isCustom) {\n                    <tr>\n                      <td>\n                        <strong>{{ type.name }}</strong>\n                      </td>\n                      <td>{{ type.slug }}</td>\n                      <td>{{ type.parentTypeSlug || '\u2014' }}</td>\n                      <td><span class=\"erp-status\">Active</span></td>\n                    </tr>\n                  }\n                } @empty {\n                  <tr>\n                    <td colspan=\"4\" class=\"erp-empty-state\">\n                      <erp-admin-illustration kind=\"dataConfiguration\" size=\"compact\" />\n                      <p>No custom masters created.</p>\n                    </td>\n                  </tr>\n                }\n              </tbody>\n            </table>\n          </section>\n        }\n      </main>\n    </div>\n  </erp-admin-page>\n} @else {\n  <erp-admin-page\n    eyebrow=\"Master Data\"\n    [title]=\"pageTitle()\"\n    description=\"Add, edit, activate, import, and organize database values.\"\n    variant=\"compact\"\n    [layout]=\"isViewPage() ? 'collection' : 'default'\"\n  >\n    <div page-actions class=\"master-page-actions\">\n      @if (isViewPage()) {\n        <a class=\"erp-button erp-button--primary\" [routerLink]=\"createRoute()\">Create value</a>\n        <label class=\"erp-button erp-button--secondary upload\"\n          >Bulk upload<input type=\"file\" accept=\".csv,.xlsx,.xls\" (change)=\"importFile($event)\"\n        /></label>\n      } @else {\n        <a class=\"erp-button erp-button--secondary\" [routerLink]=\"viewRoute()\">View values</a>\n      }\n    </div>\n    @if (message()) {\n      <p class=\"erp-notice erp-notice--success\">{{ message() }}</p>\n    }\n    @if (error()) {\n      <p class=\"erp-notice erp-notice--error\">{{ error() }}</p>\n    }\n    <div class=\"master-data-workspace\">\n      <main class=\"erp-main-column\">\n        @if (isCreatePage()) {\n          <section class=\"erp-card erp-card--padded master-create-card\">\n            <div class=\"erp-card__header\">\n              <div>\n                <h2>{{ editingId() ? 'Edit value' : 'Add value' }}</h2>\n                <p>\n                  Keep values consistent because these records power form dropdowns and filters.\n                </p>\n              </div>\n            </div>\n            <div class=\"erp-form-grid master-value-grid\">\n              <label\n                ><span>Name *</span\n                ><input class=\"erp-control\" [(ngModel)]=\"name\" placeholder=\"Enter value name\"\n              /></label>\n              @for (dependencySlug of dependencySlugs(); track dependencySlug; let index = $index) {\n                <label>\n                  <span>{{ dependencyLabel(dependencySlug) }} *</span>\n                  <select\n                    class=\"erp-control\"\n                    [(ngModel)]=\"selectedDependencies[dependencySlug]\"\n                    (ngModelChange)=\"dependencyChanged(index)\"\n                  >\n                    <option value=\"\">Select {{ dependencyLabel(dependencySlug) }}</option>\n                    @for (option of dependencyOptions(index); track option._id) {\n                      <option [value]=\"option._id\">{{ option.name }}</option>\n                    }\n                  </select>\n                </label>\n              }\n              @if (isCourseMaster()) {\n                <label\n                  ><span>Course code *</span\n                  ><input\n                    class=\"erp-control\"\n                    [(ngModel)]=\"courseCode\"\n                    maxlength=\"12\"\n                    placeholder=\"e.g. BCA\"\n                /></label>\n                <label\n                  ><span>Exam pattern *</span\n                  ><select class=\"erp-control\" [(ngModel)]=\"courseExamPattern\">\n                    <option value=\"semester\">Semester-wise exams</option>\n                    <option value=\"year\">Year-wise exams</option>\n                  </select></label\n                >\n                <label\n                  ><span>Duration years *</span\n                  ><input\n                    class=\"erp-control\"\n                    type=\"number\"\n                    min=\"1\"\n                    max=\"10\"\n                    [(ngModel)]=\"courseDurationYears\"\n                /></label>\n                <label\n                  ><span>Total semesters *</span\n                  ><input\n                    class=\"erp-control\"\n                    type=\"number\"\n                    min=\"1\"\n                    max=\"20\"\n                    [(ngModel)]=\"courseTotalSemesters\"\n                /></label>\n                <label\n                  ><span>Default current academic year *</span\n                  ><select class=\"erp-control\" [(ngModel)]=\"courseDefaultAcademicYear\">\n                    @for (year of courseYearOptions(); track year) {\n                      <option [ngValue]=\"year\">Year {{ year }}</option>\n                    }\n                  </select></label\n                >\n              }\n              <button class=\"erp-button erp-button--primary\" type=\"button\" (click)=\"save()\">\n                {{ editingId() ? 'Save changes' : 'Add value' }}\n              </button>\n              @if (editingId()) {\n                <button class=\"erp-button erp-button--secondary\" type=\"button\" (click)=\"reset()\">\n                  Cancel\n                </button>\n              }\n            </div>\n          </section>\n        } @else {\n          <section class=\"erp-card erp-table-shell master-table-card\">\n            <div class=\"erp-table-toolbar\">\n              <div>\n                <h2>\n                  Saved values <small>{{ valueTotal() }}</small>\n                </h2>\n                <p>Search, review and manage this master list separately from creation.</p>\n              </div>\n              <div class=\"erp-table-toolbar__actions\">\n                <input\n                  class=\"erp-control\"\n                  [(ngModel)]=\"search\"\n                  placeholder=\"Search values\"\n                  (keyup.enter)=\"loadValues()\"\n                />\n                <button\n                  class=\"erp-button erp-button--secondary\"\n                  type=\"button\"\n                  (click)=\"loadValues()\"\n                >\n                  Search\n                </button>\n              </div>\n            </div>\n            <div class=\"erp-table-shell__scroll\">\n              <table>\n                <thead>\n                  <tr>\n                    <th>Name</th>\n                    @if (dependencySlugs().length) {\n                      <th>Depends on</th>\n                    }\n                    @if (isCourseMaster()) {\n                      <th>Configuration</th>\n                    }\n                    <th>Status</th>\n                    <th class=\"erp-table-shell__actions\">Actions</th>\n                  </tr>\n                </thead>\n                <tbody>\n                  @for (item of values(); track item._id) {\n                    <tr>\n                      <td>\n                        <strong>{{ item.name }}</strong>\n                      </td>\n                      @if (dependencySlugs().length) {\n                        <td>{{ parentPath(item) }}</td>\n                      }\n                      @if (isCourseMaster()) {\n                        <td>\n                          <strong\n                            >{{ item.metadata?.['courseCode'] || 'Code not set' }} \u00B7\n                            {{\n                              item.metadata?.['examPattern'] === 'year'\n                                ? 'Year-wise exams'\n                                : 'Semester-wise exams'\n                            }}</strong\n                          >\n                          <small\n                            >{{ item.metadata?.['durationYears'] || 4 }} years \u00B7\n                            {{ item.metadata?.['totalSemesters'] || 8 }} semesters \u00B7 fee type\n                            selected during fee setup</small\n                          >\n                        </td>\n                      }\n                      <td>\n                        <button\n                          class=\"erp-status\"\n                          [class.erp-status--neutral]=\"!item.isActive\"\n                          type=\"button\"\n                          (click)=\"toggle(item)\"\n                        >\n                          {{ item.isActive ? 'Enabled' : 'Disabled' }}\n                        </button>\n                      </td>\n                      <td class=\"erp-table-shell__actions\">\n                        <erp-compact-action-menu\n                          [items]=\"isCourseMaster() ? courseRowActions : baseRowActions\"\n                          (selected)=\"handleRowAction($event, item)\"\n                        />\n                      </td>\n                    </tr>\n                  } @empty {\n                    <tr>\n                      <td\n                        [attr.colspan]=\"\n                          (dependencySlugs().length ? 4 : 3) + (isCourseMaster() ? 1 : 0)\n                        \"\n                        class=\"erp-empty-state\"\n                      >\n                        {{ loading() ? 'Loading\u2026' : 'No values found.' }}\n                      </td>\n                    </tr>\n                  }\n                </tbody>\n              </table>\n            </div>\n          </section>\n        }\n      </main>\n    </div>\n  </erp-admin-page>\n}\n\n@if (confirmDialog(); as dialog) {\n  <erp-confirm-dialog\n    [open]=\"true\"\n    [eyebrow]=\"dialog.eyebrow\"\n    [title]=\"dialog.title\"\n    [message]=\"dialog.message\"\n    [confirmLabel]=\"dialog.confirmLabel\"\n    [destructive]=\"dialog.destructive\"\n    (cancelled)=\"cancelConfirmation()\"\n    (confirmed)=\"confirmRequestedAction()\"\n  />\n}\n" }]
     }], () => [], null); })();
-(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(MasterDataComponent, { className: "MasterDataComponent", filePath: "frontend/src/app/features/admin/master-data/master-data.component.ts", lineNumber: 52 }); })();
+(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(MasterDataComponent, { className: "MasterDataComponent", filePath: "frontend/src/app/features/admin/master-data/master-data.component.ts", lineNumber: 54 }); })();

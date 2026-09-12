@@ -1,0 +1,293 @@
+<erp-admin-page
+  eyebrow="Exam"
+  title="Subject schedule"
+  description="Schedule mapped subjects by course, date and examination shift."
+  variant="compact"
+  layout="collection"
+>
+  <div page-actions class="erp-button-group">
+    <button class="erp-button erp-button--secondary" type="button" (click)="downloadTemplate()">
+      Download CSV template
+    </button>
+    <button
+      class="erp-button erp-button--secondary"
+      type="button"
+      [disabled]="uploading()"
+      (click)="scheduleCsvInput.click()"
+    >
+      {{ uploading() ? 'Uploading…' : 'Upload CSV' }}
+    </button>
+    <input
+      #scheduleCsvInput
+      class="erp-sr-only"
+      type="file"
+      accept=".csv,text/csv"
+      (change)="uploadCsv($event)"
+    />
+    <button class="erp-button erp-button--primary" type="button" (click)="openCreate()">
+      Schedule subject
+    </button>
+  </div>
+
+  @if (message()) {
+    <p class="erp-notice erp-notice--success">{{ message() }}</p>
+  }
+  @if (error() && !drawerOpen()) {
+    <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+  }
+
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>
+          Scheduled subjects <small>{{ items().length }}</small>
+        </h2>
+        <p>Subjects are validated against their configured academic scope.</p>
+      </div>
+      <input
+        class="erp-control"
+        type="search"
+        placeholder="Search subjects or courses"
+        aria-label="Search subject schedules"
+        [(ngModel)]="search"
+      />
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Course / Semester</th>
+            <th>Exam schedule</th>
+            <th>Exam date</th>
+            <th>Shift</th>
+            <th>University / College</th>
+            <th>Status</th>
+            <th class="erp-table-shell__actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of visibleItems(); track item._id) {
+            <tr>
+              <td>
+                <strong>{{ item.subjectName }}</strong
+                ><small>{{ item.subjectCode || 'No subject code' }}</small>
+              </td>
+              <td>
+                <strong>{{ item.courseName }}</strong
+                ><small>{{ item.departmentName }} · Semester {{ item.semester }}</small>
+              </td>
+              <td>{{ item.examScheduleCaption }}</td>
+              <td>{{ item.examDate }}</td>
+              <td>
+                Shift {{ item.shiftSerial
+                }}<small
+                  >{{ item.timeFrom }} {{ item.timeFromMeridiem }} – {{ item.timeTo }}
+                  {{ item.timeToMeridiem }}</small
+                >
+              </td>
+              <td>
+                <strong>{{ item.collegeName }}</strong
+                ><small>{{ item.universityName }}</small>
+              </td>
+              <td>
+                <span class="erp-status">{{ item.isActive ? 'Scheduled' : 'Inactive' }}</span>
+              </td>
+              <td class="erp-table-shell__actions">
+                <erp-compact-action-menu
+                  [items]="rowActions()"
+                  (selected)="handleAction($event, item)"
+                />
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="erp-empty-state">
+                <erp-admin-illustration kind="taskSchedule" size="compact" />
+                <p>{{ loading() ? 'Loading subject schedules…' : 'No subjects scheduled.' }}</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</erp-admin-page>
+
+<erp-admin-drawer
+  [open]="drawerOpen()"
+  [title]="editingId() ? 'Edit subject schedule' : 'Schedule a subject'"
+  eyebrow="Exam"
+  description="Select the academic mapping, examination date and saved shift."
+  illustration="taskSchedule"
+  [busy]="saving()"
+  (closed)="closeDrawer()"
+>
+  @if (error()) {
+    <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+  }
+  <section class="erp-card erp-card--padded">
+    <div class="erp-form-grid">
+      <label>
+        <span>Academic session *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="academicSessionId"
+          (ngModelChange)="scheduleScopeChanged()"
+        >
+          <option value="">Select academic session</option>
+          @for (item of master('academic'); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>University *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="universityId"
+          (ngModelChange)="universityChanged()"
+        >
+          <option value="">Select university</option>
+          @for (item of master('university'); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>College *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="collegeId"
+          [disabled]="!universityId"
+          (ngModelChange)="collegeChanged()"
+        >
+          <option value="">Select college</option>
+          @for (item of scopedMaster('college', universityId); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Exam schedule *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="examScheduleId"
+          [disabled]="!academicSessionId || !universityId || !collegeId"
+          (ngModelChange)="examScheduleChanged()"
+        >
+          <option value="">Select exam schedule</option>
+          @for (item of scheduleOptions(); track item._id) {
+            <option [value]="item._id">{{ item.caption }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Department *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="departmentId"
+          [disabled]="!collegeId"
+          (ngModelChange)="departmentChanged()"
+        >
+          <option value="">Select department</option>
+          @for (item of scopedMaster('department', collegeId); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Level *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="levelId"
+          [disabled]="!departmentId"
+          (ngModelChange)="levelChanged()"
+        >
+          <option value="">Select level</option>
+          @for (item of scopedMaster('level', departmentId); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Course *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="courseId"
+          [disabled]="!levelId"
+          (ngModelChange)="scheduleScopeChanged()"
+        >
+          <option value="">Select course</option>
+          @for (item of scopedMaster('course', levelId); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Semester *</span>
+        <select class="erp-control" [(ngModel)]="semester" (ngModelChange)="scheduleScopeChanged()">
+          <option [ngValue]="null">Select semester</option>
+          @for (item of semesters; track item) {
+            <option [ngValue]="item">Semester {{ item }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Mapped subject *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="subjectId"
+          [disabled]="loadingSubjects() || !courseId"
+        >
+          <option value="">{{ loadingSubjects() ? 'Loading subjects…' : 'Select subject' }}</option>
+          @for (item of subjects(); track item._id) {
+            <option [value]="item._id">
+              {{ item.name }}{{ item.code ? ' · ' + item.code : '' }}
+            </option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Exam date *</span>
+        <input class="erp-control" type="date" [(ngModel)]="examDate" />
+      </label>
+      <label>
+        <span>Shift *</span>
+        <select class="erp-control" [(ngModel)]="shiftId" [disabled]="!examScheduleId">
+          <option value="">Select shift time</option>
+          @for (item of shiftOptions(); track item._id) {
+            <option [value]="item._id">
+              {{ item.timeFrom }} {{ item.timeFromMeridiem }} - {{ item.timeTo }}
+              {{ item.timeToMeridiem }}
+            </option>
+          }
+        </select>
+      </label>
+      <label>
+        <input type="checkbox" [(ngModel)]="isActive" />
+        <span>Active subject schedule</span>
+      </label>
+    </div>
+  </section>
+  <button
+    drawer-actions
+    class="erp-button erp-button--primary"
+    type="button"
+    [disabled]="saving() || loadingSubjects()"
+    (click)="save()"
+  >
+    {{ saving() ? 'Saving…' : 'Save subject schedule' }}
+  </button>
+</erp-admin-drawer>
+
+<erp-confirm-dialog
+  [open]="!!deleteTarget()"
+  eyebrow="Subject schedule"
+  title="Delete this scheduled subject?"
+  [message]="'This removes the subject from the selected examination schedule.'"
+  confirmLabel="Delete schedule"
+  [destructive]="true"
+  (confirmed)="deleteItem()"
+  (cancelled)="deleteTarget.set(null)"
+/>

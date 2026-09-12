@@ -23,12 +23,6 @@
       >
     </div>
     <div>
-      <svg lucideMapPinned size="21"></svg
-      ><span
-        ><small>Locations</small><strong>{{ locations().length }}</strong></span
-      >
-    </div>
-    <div>
       <svg lucideLayers3 size="21"></svg
       ><span
         ><small>Floors</small><strong>{{ floors().length }}</strong></span
@@ -77,13 +71,11 @@
               <td>
                 @if (section() === 'buildings') {
                   Exam building
-                } @else if (section() === 'locations') {
-                  {{ $any(item).buildingName }}
                 } @else if (section() === 'floors') {
                   <strong>{{ $any(item).buildingName }}</strong
-                  ><small>{{ $any(item).locationName }} · Floor {{ $any(item).floorNumber }}</small>
+                  ><small>Floor {{ $any(item).floorNumber }}</small>
                 } @else {
-                  <strong>{{ $any(item).buildingName }} · {{ $any(item).locationName }}</strong
+                  <strong>{{ $any(item).buildingName }}</strong
                   ><small>{{ $any(item).floorName }}</small>
                 }
               </td>
@@ -164,27 +156,12 @@
               </select></label
             >
           }
-          @if (section() === 'floors' || section() === 'rooms') {
-            <label
-              ><span>Location *</span
-              ><select
-                class="erp-control"
-                [(ngModel)]="locationId"
-                (ngModelChange)="locationChanged()"
-              >
-                <option value="">Select location</option>
-                @for (item of locationsForBuilding(); track item._id) {
-                  <option [value]="item._id">{{ item.name }}</option>
-                }
-              </select></label
-            >
-          }
           @if (section() === 'rooms') {
             <label
               ><span>Floor *</span
               ><select class="erp-control" [(ngModel)]="floorId">
                 <option value="">Select floor</option>
-                @for (item of floorsForLocation(); track item._id) {
+                @for (item of floorsForBuilding(); track item._id) {
                   <option [value]="item._id">{{ item.name }} · Floor {{ item.floorNumber }}</option>
                 }
               </select></label

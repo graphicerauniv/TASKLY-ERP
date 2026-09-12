@@ -3,12 +3,13 @@ import test from 'node:test';
 import { timetablePdf } from '../src/routes/academics.routes.js';
 import { PostgresDocumentDatabase } from '../src/postgres-document-db.js';
 
-test('registers the student timetable reminders PostgreSQL collection', async () => {
+test('registers the student timetable and semester registration PostgreSQL collections', async () => {
   const database = new PostgresDocumentDatabase(
     'postgresql://taskly:test@localhost:5432/taskly_test',
   );
   assert.ok(database.collection('studentTimetableReminders'));
   assert.ok(database.collection('studentTimetablePreferences'));
+  assert.ok(database.collection('studentSemesterRegistrations'));
   await database.close();
 });
 

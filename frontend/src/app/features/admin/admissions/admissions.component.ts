@@ -109,6 +109,11 @@ const TABLE_COLUMNS: readonly ColumnVisibilityOption[] = [
   { id: 'activity', label: 'Last activity' },
 ];
 
+const DATABASE_TABLE_COLUMNS: readonly ColumnVisibilityOption[] = [
+  ...TABLE_COLUMNS,
+  { id: 'semesterRegistration', label: 'Semester registration' },
+];
+
 const FILTER_FIELDS: readonly FilterPopoverField[] = [
   { id: 'application', label: 'Application ID', placeholder: 'e.g. APP-2026-0012' },
   { id: 'studentId', label: 'Student ID', placeholder: 'e.g. STU-10482' },
@@ -176,10 +181,12 @@ export class AdmissionsComponent {
   readonly appliedSearch = signal('');
   readonly selectedStudentIds = signal<Set<string>>(new Set());
   readonly tableColumns = TABLE_COLUMNS;
+  readonly databaseTableColumns = DATABASE_TABLE_COLUMNS;
   readonly filterFields = signal<readonly FilterPopoverField[]>(FILTER_FIELDS);
   readonly appliedFilters = signal<Readonly<Record<string, string>>>({});
-  readonly visibleColumns = signal<readonly string[]>(TABLE_COLUMNS.map((column) => column.id));
-  readonly visibleTableColumnCount = computed(() => this.visibleColumns().length + 2);
+  readonly visibleColumns = signal<readonly string[]>(
+    DATABASE_TABLE_COLUMNS.map((column) => column.id),
+  );
 
   readonly previewOpen = signal(false);
   readonly preview = signal<Admission | null>(null);
@@ -189,6 +196,12 @@ export class AdmissionsComponent {
   readonly formId = signal('');
   readonly activeOnly = signal(false);
   readonly databaseMode = signal(false);
+  readonly visibleTableColumnCount = computed(
+    () =>
+      this.visibleColumns().filter(
+        (column) => column !== 'semesterRegistration' || this.databaseMode(),
+      ).length + 2,
+  );
 
   readonly credentialStudent = signal<Admission | null>(null);
   readonly credentialSaving = signal(false);
@@ -709,6 +722,10 @@ export class AdmissionsComponent {
 
   activityLabel(item: Admission) {
     return admissionDateLabel(admissionLastActivity(item));
+  }
+
+  semesterRegistrationDateLabel(item: Admission) {
+    return item.semesterRegisteredAt ? admissionDateLabel(item.semesterRegisteredAt) : '';
   }
 
   createdLabel(item: Admission) {

@@ -65,6 +65,21 @@ export function resolveAdminWorkspace(url: string): AdminWorkspace | null {
       link('Finance operations', '/admin/fees/overview'),
     ]);
   }
+  if (path.startsWith('/admin/exams/')) {
+    return workspace('Exam', 'Exam schedule', 'taskSchedule', [
+      link('Exam schedules', '/admin/exams/schedules'),
+      link('Shift schedules', '/admin/exams/shifts'),
+      link('Subject schedules', '/admin/exams/subject-schedules'),
+      link('Eligible students', '/admin/exams/eligibility'),
+    ]);
+  }
+  if (path.startsWith('/admin/settings/exam-master/')) {
+    return workspace('Settings', 'Exam master', 'roomUnavailable', [
+      link('Buildings', '/admin/settings/exam-master/buildings'),
+      link('Floors', '/admin/settings/exam-master/floors'),
+      link('Rooms', '/admin/settings/exam-master/rooms'),
+    ]);
+  }
   if (/^\/admin\/fees\/(overview|schedules|progression)$/.test(path)) {
     return workspace(
       'Finance',

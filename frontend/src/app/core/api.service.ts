@@ -63,6 +63,12 @@ import {
   AttendanceReportConfig,
   AttendanceReportFeed,
   AttendanceReportPreview,
+  ExamSchedule,
+  ExamEligibilityResult,
+  ExamShiftSchedule,
+  ExamSubjectSchedule,
+  SemesterRegistrationContext,
+  StudentSemesterRegistration,
 } from './models';
 import type { StudentProfile } from '../features/student/profile/models/student-profile.model';
 
@@ -218,6 +224,22 @@ export class ApiService {
     }>(`${API_BASE_URL}/student-academics/timetable`, {
       ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
     });
+  }
+  studentSemesterRegistration(token: string) {
+    return this.http.get<SemesterRegistrationContext>(
+      `${API_BASE_URL}/student-academics/semester-registration`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+  registerStudentSemester(token: string) {
+    return this.http.post<{
+      item: StudentSemesterRegistration;
+      alreadyRegistered: boolean;
+    }>(
+      `${API_BASE_URL}/student-academics/semester-registration`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
   }
   studentTimetablePdf(token: string, weekStart: string, includeDetails = true) {
     return this.http.get(`${API_BASE_URL}/student-academics/timetable.pdf`, {
@@ -1333,7 +1355,6 @@ export class ApiService {
   examMasterBootstrap() {
     return this.http.get<{
       buildings: import('./models').ExamBuilding[];
-      locations: import('./models').ExamLocation[];
       floors: import('./models').ExamFloor[];
       rooms: import('./models').ExamRoom[];
     }>(`${API_BASE_URL}/exam-master/bootstrap`);
@@ -1350,6 +1371,90 @@ export class ApiService {
   deleteExamMasterRecord(resource: string, itemId: string) {
     return this.http.delete<{ deleted: boolean }>(
       `${API_BASE_URL}/exam-master/${resource}/${itemId}`,
+    );
+  }
+  examSchedules() {
+    return this.http.get<{ items: ExamSchedule[] }>(`${API_BASE_URL}/exams/schedules`);
+  }
+  createExamSchedule(
+    body: Omit<
+      ExamSchedule,
+      '_id' | 'academicSession' | 'universityName' | 'collegeName' | 'examTypeName'
+    >,
+  ) {
+    return this.http.post<{ item: ExamSchedule }>(`${API_BASE_URL}/exams/schedules`, body);
+  }
+  updateExamSchedule(scheduleId: string, body: Partial<ExamSchedule>) {
+    return this.http.patch<{ item: ExamSchedule }>(
+      `${API_BASE_URL}/exams/schedules/${scheduleId}`,
+      body,
+    );
+  }
+  deleteExamSchedule(scheduleId: string) {
+    return this.http.delete<{ deleted: boolean }>(`${API_BASE_URL}/exams/schedules/${scheduleId}`);
+  }
+  examShiftSchedules() {
+    return this.http.get<{ items: ExamShiftSchedule[] }>(`${API_BASE_URL}/exams/shifts`);
+  }
+  createExamShiftSchedule(body: Partial<ExamShiftSchedule>) {
+    return this.http.post<{ item: ExamShiftSchedule }>(`${API_BASE_URL}/exams/shifts`, body);
+  }
+  updateExamShiftSchedule(shiftId: string, body: Partial<ExamShiftSchedule>) {
+    return this.http.patch<{ item: ExamShiftSchedule }>(
+      `${API_BASE_URL}/exams/shifts/${shiftId}`,
+      body,
+    );
+  }
+  deleteExamShiftSchedule(shiftId: string) {
+    return this.http.delete<{ deleted: boolean }>(`${API_BASE_URL}/exams/shifts/${shiftId}`);
+  }
+  examSubjectOptions(options: {
+    academicSessionId: string;
+    universityId: string;
+    collegeId: string;
+    departmentId: string;
+    levelId: string;
+    courseId: string;
+    semester: number;
+  }) {
+    return this.http.get<{ items: AcademicSubject[] }>(`${API_BASE_URL}/exams/subject-options`, {
+      params: { ...options },
+    });
+  }
+  examSubjectSchedules() {
+    return this.http.get<{ items: ExamSubjectSchedule[] }>(
+      `${API_BASE_URL}/exams/subject-schedules`,
+    );
+  }
+  importExamSubjectSchedules(file: File) {
+    const data = new FormData();
+    data.append('file', file);
+    return this.http.post<{
+      imported: number;
+      failed: number;
+      errors: Array<{ row: number; message: string }>;
+    }>(`${API_BASE_URL}/exams/subject-schedules/import`, data);
+  }
+  examEligibleStudents(subjectScheduleId: string) {
+    return this.http.get<ExamEligibilityResult>(`${API_BASE_URL}/exams/eligibility`, {
+      params: { subjectScheduleId },
+    });
+  }
+  createExamSubjectSchedule(body: Partial<ExamSubjectSchedule>) {
+    return this.http.post<{ item: ExamSubjectSchedule }>(
+      `${API_BASE_URL}/exams/subject-schedules`,
+      body,
+    );
+  }
+  updateExamSubjectSchedule(itemId: string, body: Partial<ExamSubjectSchedule>) {
+    return this.http.patch<{ item: ExamSubjectSchedule }>(
+      `${API_BASE_URL}/exams/subject-schedules/${itemId}`,
+      body,
+    );
+  }
+  deleteExamSubjectSchedule(itemId: string) {
+    return this.http.delete<{ deleted: boolean }>(
+      `${API_BASE_URL}/exams/subject-schedules/${itemId}`,
     );
   }
 }

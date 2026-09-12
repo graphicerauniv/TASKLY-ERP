@@ -1,0 +1,229 @@
+<erp-admin-page
+  eyebrow="Exam"
+  title="Shift schedule"
+  description="Define the timing of each shift within an exam schedule."
+  variant="compact"
+  layout="collection"
+>
+  <button page-actions class="erp-button erp-button--primary" type="button" (click)="openCreate()">
+    Create shift
+  </button>
+
+  @if (message()) {
+    <p class="erp-notice erp-notice--success">{{ message() }}</p>
+  }
+  @if (error() && !drawerOpen()) {
+    <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+  }
+
+  <section class="erp-card erp-table-shell">
+    <div class="erp-table-toolbar">
+      <div>
+        <h2>
+          Saved shifts <small>{{ shifts().length }}</small>
+        </h2>
+        <p>Each shift belongs to one configured exam schedule.</p>
+      </div>
+      <input
+        class="erp-control"
+        type="search"
+        placeholder="Search shifts"
+        aria-label="Search exam shifts"
+        [(ngModel)]="search"
+      />
+    </div>
+    <div class="erp-table-shell__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Shift</th>
+            <th>Caption</th>
+            <th>Exam schedule</th>
+            <th>Session</th>
+            <th>University / College</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th class="erp-table-shell__actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of visibleShifts(); track item._id) {
+            <tr>
+              <td>
+                <strong>Shift {{ item.shiftSerial }}</strong>
+              </td>
+              <td>{{ item.caption }}</td>
+              <td>{{ item.examScheduleCaption }}</td>
+              <td>{{ item.academicSession }}</td>
+              <td>
+                <strong>{{ item.collegeName }}</strong
+                ><small>{{ item.universityName }}</small>
+              </td>
+              <td>
+                {{ item.timeFrom }} {{ item.timeFromMeridiem }} – {{ item.timeTo }}
+                {{ item.timeToMeridiem }}
+              </td>
+              <td>
+                <span class="erp-status">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+              </td>
+              <td class="erp-table-shell__actions">
+                <erp-compact-action-menu
+                  [items]="rowActions()"
+                  (selected)="handleAction($event, item)"
+                />
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="erp-empty-state">
+                <erp-admin-illustration kind="taskSchedule" size="compact" />
+                <p>{{ loading() ? 'Loading shift schedules…' : 'No shift schedules found.' }}</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</erp-admin-page>
+
+<erp-admin-drawer
+  [open]="drawerOpen()"
+  [title]="editingId() ? 'Edit shift schedule' : 'Create shift schedule'"
+  eyebrow="Exam"
+  description="Choose the exam schedule, shift number and working time."
+  illustration="taskSchedule"
+  [busy]="saving()"
+  (closed)="closeDrawer()"
+>
+  @if (error()) {
+    <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+  }
+  <section class="erp-card erp-card--padded">
+    <div class="erp-form-grid">
+      <label>
+        <span>Session *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="academicSessionId"
+          (ngModelChange)="scopeChanged()"
+        >
+          <option value="">Select session</option>
+          @for (item of master('academic'); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>University *</span>
+        <select class="erp-control" [(ngModel)]="universityId" (ngModelChange)="scopeChanged()">
+          <option value="">Select university</option>
+          @for (item of master('university'); track item._id) {
+            <option [value]="item._id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Exam schedule *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="examScheduleId"
+          [disabled]="!academicSessionId || !universityId"
+        >
+          <option value="">Select exam schedule</option>
+          @for (item of scheduleOptions(); track item._id) {
+            <option [value]="item._id">{{ item.caption }} · {{ item.collegeName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Shift caption *</span>
+        <input
+          class="erp-control"
+          type="text"
+          maxlength="240"
+          placeholder="Enter shift caption"
+          [(ngModel)]="caption"
+        />
+      </label>
+      <label>
+        <span>Shift serial *</span>
+        <select class="erp-control" [(ngModel)]="shiftSerial">
+          @for (serial of shiftSerials; track serial) {
+            <option [ngValue]="serial">{{ serial }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Time from *</span>
+        <input
+          class="erp-control"
+          type="text"
+          inputmode="numeric"
+          maxlength="5"
+          placeholder="HH:MM"
+          [(ngModel)]="timeFrom"
+        />
+      </label>
+      <label>
+        <span>From AM/PM *</span>
+        <select class="erp-control" [(ngModel)]="timeFromMeridiem">
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </label>
+      <label>
+        <span>Time to *</span>
+        <input
+          class="erp-control"
+          type="text"
+          inputmode="numeric"
+          maxlength="5"
+          placeholder="HH:MM"
+          [(ngModel)]="timeTo"
+        />
+      </label>
+      <label>
+        <span>To AM/PM *</span>
+        <select class="erp-control" [(ngModel)]="timeToMeridiem">
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </label>
+      <label>
+        <input type="checkbox" [(ngModel)]="isActive" />
+        <span>Active shift</span>
+      </label>
+    </div>
+    @if (!editingId()) {
+      <button
+        class="erp-button erp-button--secondary"
+        type="button"
+        [disabled]="saving()"
+        (click)="resetForm()"
+      >
+        Reset
+      </button>
+    }
+  </section>
+  <button
+    drawer-actions
+    class="erp-button erp-button--primary"
+    type="button"
+    [disabled]="saving()"
+    (click)="save()"
+  >
+    {{ saving() ? 'Saving…' : 'Save shift' }}
+  </button>
+</erp-admin-drawer>
+
+<erp-confirm-dialog
+  [open]="!!deleteTarget()"
+  eyebrow="Exam shift"
+  title="Delete this shift schedule?"
+  [message]="'This permanently removes the selected shift from its exam schedule.'"
+  confirmLabel="Delete shift"
+  [destructive]="true"
+  (confirmed)="deleteShift()"
+  (cancelled)="deleteTarget.set(null)"
+/>

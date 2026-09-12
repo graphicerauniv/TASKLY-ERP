@@ -332,6 +332,47 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
     ],
   },
   {
+    id: 'exams',
+    label: 'Exam',
+    description: 'Configure examination schedules and delivery.',
+    icon: 'calendar',
+    activeWhen: [branch('/admin/exams')],
+    children: [
+      {
+        id: 'exam-schedules',
+        label: 'Exam schedule',
+        description: 'Create and manage exam definitions',
+        route: '/admin/exams/schedules',
+        icon: 'calendar',
+        activeWhen: [exact('/admin/exams/schedules')],
+      },
+      {
+        id: 'exam-shifts',
+        label: 'Shift schedule',
+        description: 'Configure exam shift timings',
+        route: '/admin/exams/shifts',
+        icon: 'calendar',
+        activeWhen: [exact('/admin/exams/shifts')],
+      },
+      {
+        id: 'exam-subject-schedules',
+        label: 'Subject schedule',
+        description: 'Schedule subjects, dates and shifts',
+        route: '/admin/exams/subject-schedules',
+        icon: 'book',
+        activeWhen: [exact('/admin/exams/subject-schedules')],
+      },
+      {
+        id: 'exam-eligibility',
+        label: 'Eligible students',
+        description: 'Review exam eligibility and blocking reasons',
+        route: '/admin/exams/eligibility',
+        icon: 'approval',
+        activeWhen: [exact('/admin/exams/eligibility')],
+      },
+    ],
+  },
+  {
     id: 'finance',
     label: 'Finance',
     description: 'Manage fees, payments, scholarships and publications.',
@@ -515,7 +556,7 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
       {
         id: 'exam-master',
         label: 'Exam master',
-        description: 'Buildings, locations, floors and rooms',
+        description: 'Buildings, floors and examination rooms',
         icon: 'calendar',
         children: [
           {
@@ -524,13 +565,6 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationSection[] = [
             route: '/admin/settings/exam-master/buildings',
             icon: 'building',
             activeWhen: [exact('/admin/settings/exam-master/buildings')],
-          },
-          {
-            id: 'exam-locations',
-            label: 'Locations',
-            route: '/admin/settings/exam-master/locations',
-            icon: 'location',
-            activeWhen: [exact('/admin/settings/exam-master/locations')],
           },
           {
             id: 'exam-floors',

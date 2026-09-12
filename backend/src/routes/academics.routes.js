@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import express from 'express';
 import PDFDocument from 'pdfkit';
 import { z } from 'zod';
@@ -1974,6 +1975,153 @@ export function timetablePdf(student, timetable, weekStart, includeDetails = tru
     document.end();
   });
 }
+
+async function semesterRegistrationContext(student) {
+  const academicSession = student.academicSession || '';
+  const semester = Number(student.currentSemester || 1);
+  const assignment = await db().collection('studentAcademicAssignments').findOne({
+    studentAdmissionId: student._id,
+    academicSession,
+    semester,
+    status: 'active',
+  });
+  const blockers = [];
+  if (!academicSession) blockers.push('The student does not have an academic session.');
+  if (!assignment) blockers.push('Academic group, section and set allocation is required.');
+
+  let subjects = [];
+  if (assignment) {
+    const groupIds = [assignment.groupId, ...(assignment.groupIds || [])]
+      .filter(Boolean)
+      .map((value) => id(value, 'groupId'));
+    const subjectAssignments = groupIds.length
+      ? await db()
+          .collection('groupSubjectAssignments')
+          .find({
+            groupId: { $in: groupIds },
+            academicSession,
+            semester,
+            status: 'active',
+          })
+          .toArray()
+      : [];
+    const assignmentBySubject = new Map();
+    for (const item of subjectAssignments)
+      if (!assignmentBySubject.has(String(item.subjectId)))
+        assignmentBySubject.set(String(item.subjectId), item);
+    const subjectIds = [...assignmentBySubject.keys()].map((value) => id(value, 'subjectId'));
+    const records = subjectIds.length
+      ? await db()
+          .collection('subjects')
+          .find({ _id: { $in: subjectIds }, isActive: true })
+          .sort({ name: 1, code: 1 })
+          .toArray()
+      : [];
+    subjects = records.map((subject) => ({
+      _id: subject._id,
+      name: subject.name,
+      code: subject.code || '',
+      subjectType: subject.subjectType || '',
+      credits: Number(subject.credits || 0),
+      requirement: assignmentBySubject.get(String(subject._id))?.requirement || 'required',
+    }));
+  }
+  if (assignment && !subjects.length)
+    blockers.push('No active subjects are assigned to the student’s group for this semester.');
+
+  const registration = await db()
+    .collection('studentSemesterRegistrations')
+    .findOne({ studentAdmissionId: student._id, academicSession, semester });
+  return {
+    student: {
+      _id: student._id,
+      studentId: student.studentId || '',
+      studentName: student.studentName || student.name || '',
+      academicSession,
+      semester,
+      currentAcademicYear: Number(student.currentAcademicYear || Math.ceil(semester / 2)),
+      universityId: student.universityId || null,
+      universityName: student.universityName || '',
+      collegeId: student.collegeId || null,
+      collegeName: student.collegeName || '',
+      departmentId: student.departmentId || null,
+      departmentName: student.departmentName || '',
+      levelId: student.levelId || null,
+      levelName: student.levelName || '',
+      courseId: student.courseId || null,
+      courseName: student.courseName || '',
+    },
+    assignment: assignment ? serialize(assignment) : null,
+    subjects: subjects.map(serialize),
+    registration: registration ? serialize(registration) : null,
+    eligible: blockers.length === 0 && !registration,
+    blockers,
+  };
+}
+
+studentAcademicsRouter.get(
+  '/semester-registration',
+  asyncHandler(async (request, response) => {
+    const context = await semesterRegistrationContext(request.student);
+    const history = await db()
+      .collection('studentSemesterRegistrations')
+      .find({ studentAdmissionId: request.student._id, status: 'registered' })
+      .sort({ registeredAt: -1 })
+      .toArray();
+    response.json({ ...context, history: history.map(serialize) });
+  }),
+);
+
+studentAcademicsRouter.post(
+  '/semester-registration',
+  asyncHandler(async (request, response) => {
+    const context = await semesterRegistrationContext(request.student);
+    if (context.registration)
+      return response.json({ item: context.registration, alreadyRegistered: true });
+    if (!context.eligible)
+      return response.status(409).json({
+        message: context.blockers[0] || 'Semester registration is currently unavailable.',
+      });
+    const now = new Date();
+    const { student, assignment, subjects } = context;
+    const document = {
+      studentAdmissionId: request.student._id,
+      studentId: student.studentId,
+      studentName: student.studentName,
+      academicSession: student.academicSession,
+      semester: student.semester,
+      currentAcademicYear: student.currentAcademicYear,
+      universityId: student.universityId,
+      universityName: student.universityName,
+      collegeId: student.collegeId,
+      collegeName: student.collegeName,
+      departmentId: student.departmentId,
+      departmentName: student.departmentName,
+      levelId: student.levelId,
+      levelName: student.levelName,
+      courseId: student.courseId,
+      courseName: student.courseName,
+      groupId: assignment.groupId,
+      groupName: assignment.groupName || '',
+      sectionId: assignment.sectionId,
+      sectionName: assignment.sectionName || '',
+      setId: assignment.setId,
+      setName: assignment.setName || '',
+      subjectIds: subjects.map((subject) => subject._id),
+      subjectCount: subjects.length,
+      subjects,
+      status: 'registered',
+      registeredAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const result = await db().collection('studentSemesterRegistrations').insertOne(document);
+    response.status(201).json({
+      item: serialize({ ...document, _id: result.insertedId }),
+      alreadyRegistered: false,
+    });
+  }),
+);
 
 studentAcademicsRouter.get(
   '/timetable.pdf',

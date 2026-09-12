@@ -1,0 +1,25 @@
+/* ERP-LOCAL-STYLE: unique responsive geometry for the schedule directory filter and editor fields. */
+:host {
+  display: block;
+}
+
+.schedule-search {
+  width: min(22rem, 100%);
+}
+
+.field-wide {
+  grid-column: 1 / -1;
+}
+
+.status-control {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-2);
+}
+
+@media (max-width: 48rem) {
+  .schedule-search {
+    width: 100%;
+  }
+}

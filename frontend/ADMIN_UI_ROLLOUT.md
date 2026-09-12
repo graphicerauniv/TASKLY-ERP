@@ -3,7 +3,7 @@
 ## Scope
 
 The route audit expands `ADMIN_ROUTES`, ignores redirects, and counts parameterised paths once.
-There are **53 non-Academics page routes using 22 component layouts**. The **12 Academics
+There are **60 non-Academics page routes using 27 component layouts**. The **12 Academics
 routes are protected reference pages**. Student-facing and public-facing routes are not restyled.
 
 | Area                                    | Routes | Coverage                                                                                                                                                                                                                                      |
@@ -12,12 +12,13 @@ routes are protected reference pages**. Student-facing and public-facing routes 
 | Admissions / students / forms / records |     19 | Form builder (2), admission entry, forms library, form applications, submissions, fill form, student database, database edit, database records, application edit/review/detail, all/draft/pending/approved applications, promotions, deletion |
 | Master data / hostel                    |      9 | Master create/view/edit templates; hostel details/structure/rooms/capacity/allocation/overview                                                                                                                                                |
 | Dashboard                               |      1 | Operational summary and workspace shortcuts                                                                                                                                                                                                   |
+| Exam                                    |      7 | Exam, shift and subject schedules, eligibility, plus examination building, floor and room masters                                                                                                                                             |
 
 ## Implementation plan
 
 1. Use the Academics canvas, blue accent, light table headings, subtle borders and compact
    controls through a single admin-only token scope; preserve Academics styles and behavior.
-2. Give all 53 routes a shared illustrated workspace bar with real routed subpage links.
+2. Give all 60 routes a shared illustrated workspace bar with real routed subpage links.
    Keep creation separate from directories, expose existing import/draft routes, and retain
    student-record context when moving between application, scholarship and payment pages.
 3. Replace old dark Finance illustrations with the semantic generated WebP catalogue.
@@ -43,8 +44,8 @@ routes are protected reference pages**. Student-facing and public-facing routes 
 Run `npm run check:admin-workspaces`, `npm run check:ui`, and `npm run build`.
 Review desktop (1440), laptop (1024), tablet (768) and phone (390) when browser access is available.
 
-The workspace contract check is part of the production build. It verifies the 53-route /
-22-layout inventory, valid subpage destinations, exactly one current link per page,
+The workspace contract check is part of the production build. It verifies the 60-route /
+27-layout inventory, valid subpage destinations, exactly one current link per page,
 query-string/trailing-slash handling, available illustration assets, and no remaining
 references to the legacy dark Finance icon set. It also verifies that Academics and
 student/public URLs do not receive the workspace bar.

@@ -62,9 +62,25 @@ export const ADMIN_ROUTES = [
                 loadComponent: () => import('./academics/timetable-builder.component').then((component) => component.TimetableBuilderComponent),
             },
             { path: 'academics', pathMatch: 'full', redirectTo: 'academics/groups' },
+            {
+                path: 'exams/schedules',
+                loadComponent: () => import('./exams/exam-schedules.component').then((component) => component.ExamSchedulesComponent),
+            },
+            {
+                path: 'exams/shifts',
+                loadComponent: () => import('./exams/exam-shifts.component').then((component) => component.ExamShiftsComponent),
+            },
+            {
+                path: 'exams/subject-schedules',
+                loadComponent: () => import('./exams/exam-subject-schedules.component').then((component) => component.ExamSubjectSchedulesComponent),
+            },
+            {
+                path: 'exams/eligibility',
+                loadComponent: () => import('./exams/exam-eligibility.component').then((component) => component.ExamEligibilityComponent),
+            },
+            { path: 'exams', pathMatch: 'full', redirectTo: 'exams/schedules' },
             ...[
                 ['buildings', 'buildings'],
-                ['locations', 'locations'],
                 ['floors', 'floors'],
                 ['rooms', 'rooms'],
             ].map(([path, section]) => ({
@@ -72,6 +88,11 @@ export const ADMIN_ROUTES = [
                 loadComponent: () => import('./exam-master/exam-master.component').then((component) => component.ExamMasterComponent),
                 data: { section },
             })),
+            {
+                path: 'settings/exam-master/locations',
+                pathMatch: 'full',
+                redirectTo: 'settings/exam-master/floors',
+            },
             {
                 path: 'settings/exam-master',
                 pathMatch: 'full',
@@ -102,10 +123,15 @@ export const ADMIN_ROUTES = [
             {
                 path: 'fees',
                 pathMatch: 'full',
-                redirectTo: 'fees/books/create',
+                redirectTo: 'fees/overview',
+            },
+            {
+                path: 'fees/overview',
+                loadComponent: () => import('./fee-management/finance-overview.component').then((component) => component.FinanceOverviewComponent),
             },
             {
                 path: 'fees/progression',
+                canDeactivate: [(page) => !page.saving()],
                 loadComponent: () => import('./fee-progression/fee-progression.component').then((component) => component.FeeProgressionComponent),
             },
             {
@@ -128,10 +154,12 @@ export const ADMIN_ROUTES = [
                 loadComponent: () => import('./scholarships/scholarships.component').then((component) => component.ScholarshipsComponent),
                 data: { mode: 'edit' },
             },
-            {
-                path: 'accounts',
+            { path: 'accounts', pathMatch: 'full', redirectTo: 'accounts/payments' },
+            ...['overview', 'payments', 'credits', 'discounts'].map((section) => ({
+                path: `accounts/${section}`,
+                data: { section },
                 loadComponent: () => import('./accounts/accounts.component').then((component) => component.AccountsComponent),
-            },
+            })),
             ...[
                 ['books/create', 'books', 'create'],
                 ['books/view', 'books', 'view'],

@@ -39,12 +39,12 @@ const routePattern = (route) =>
       '$',
   );
 
-assert.equal(editable.length, 53, 'Update the rollout audit when admin routes change');
+assert.equal(editable.length, 60, 'Update the rollout audit when admin routes change');
 assert.equal(
   new Set(
     editable.map((route) => route.loadComponent.toString().match(/component\.([A-Z]\w+)/)?.[1]),
   ).size,
-  22,
+  27,
   'Update the component layout audit',
 );
 assert.equal(reference.length, 12, 'Review changes to protected Academics routes');

@@ -96,7 +96,7 @@
           }
         </form>
         <erp-column-visibility-popover
-          [options]="tableColumns"
+          [options]="databaseMode() ? databaseTableColumns : tableColumns"
           [visible]="visibleColumns()"
           (visibleChange)="updateVisibleColumns($event)"
         />
@@ -160,6 +160,9 @@
             @if (columnVisible('activity')) {
               <th scope="col">Last activity</th>
             }
+            @if (databaseMode() && columnVisible('semesterRegistration')) {
+              <th scope="col">Semester registration</th>
+            }
             <th class="erp-table-shell__actions" scope="col">Actions</th>
           </tr>
         </thead>
@@ -182,6 +185,9 @@
                 }
                 @if (columnVisible('activity')) {
                   <td><span class="erp-skeleton applications-skeleton--date"></span></td>
+                }
+                @if (databaseMode() && columnVisible('semesterRegistration')) {
+                  <td><span class="erp-skeleton applications-skeleton--status"></span></td>
                 }
                 <td><span class="erp-skeleton applications-skeleton--action"></span></td>
               </tr>
@@ -268,6 +274,27 @@
                     <small>{{
                       item.approvedAt ? 'Approved' : item.submittedAt ? 'Submitted' : 'Created'
                     }}</small>
+                  </td>
+                }
+                @if (databaseMode() && columnVisible('semesterRegistration')) {
+                  <td class="applications-activity">
+                    <span
+                      class="erp-status"
+                      [class.erp-status--draft]="item.semesterRegistrationStatus !== 'registered'"
+                    >
+                      {{
+                        item.semesterRegistrationStatus === 'registered'
+                          ? 'Registered'
+                          : 'Not registered'
+                      }}
+                    </span>
+                    <small>
+                      {{
+                        item.semesterRegistrationStatus === 'registered'
+                          ? semesterRegistrationDateLabel(item)
+                          : 'Current semester'
+                      }}
+                    </small>
                   </td>
                 }
                 <td class="erp-table-shell__actions">

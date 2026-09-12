@@ -258,6 +258,47 @@ export const ADMIN_NAVIGATION = [
         ],
     },
     {
+        id: 'exams',
+        label: 'Exam',
+        description: 'Configure examination schedules and delivery.',
+        icon: 'calendar',
+        activeWhen: [branch('/admin/exams')],
+        children: [
+            {
+                id: 'exam-schedules',
+                label: 'Exam schedule',
+                description: 'Create and manage exam definitions',
+                route: '/admin/exams/schedules',
+                icon: 'calendar',
+                activeWhen: [exact('/admin/exams/schedules')],
+            },
+            {
+                id: 'exam-shifts',
+                label: 'Shift schedule',
+                description: 'Configure exam shift timings',
+                route: '/admin/exams/shifts',
+                icon: 'calendar',
+                activeWhen: [exact('/admin/exams/shifts')],
+            },
+            {
+                id: 'exam-subject-schedules',
+                label: 'Subject schedule',
+                description: 'Schedule subjects, dates and shifts',
+                route: '/admin/exams/subject-schedules',
+                icon: 'book',
+                activeWhen: [exact('/admin/exams/subject-schedules')],
+            },
+            {
+                id: 'exam-eligibility',
+                label: 'Eligible students',
+                description: 'Review exam eligibility and blocking reasons',
+                route: '/admin/exams/eligibility',
+                icon: 'approval',
+                activeWhen: [exact('/admin/exams/eligibility')],
+            },
+        ],
+    },
+    {
         id: 'finance',
         label: 'Finance',
         description: 'Manage fees, payments, scholarships and publications.',
@@ -265,12 +306,49 @@ export const ADMIN_NAVIGATION = [
         activeWhen: [branch('/admin/fees'), branch('/admin/accounts')],
         children: [
             {
+                id: 'finance-overview',
+                label: 'Finance overview',
+                description: 'Open a focused finance workspace',
+                route: '/admin/fees/overview',
+                icon: 'finance',
+                activeWhen: [exact('/admin/fees/overview')],
+            },
+            {
                 id: 'accounts',
                 label: 'Accounts & payments',
                 description: 'Track collections and payment activity',
-                route: '/admin/accounts',
                 icon: 'finance',
                 activeWhen: [branch('/admin/accounts')],
+                children: [
+                    {
+                        id: 'collection-overview',
+                        label: 'Collections overview',
+                        route: '/admin/accounts/overview',
+                        icon: 'finance',
+                        activeWhen: [exact('/admin/accounts/overview')],
+                    },
+                    {
+                        id: 'payment-directory',
+                        label: 'Student payments',
+                        route: '/admin/accounts/payments',
+                        icon: 'fees',
+                        activeWhen: [exact('/admin/accounts/payments')],
+                    },
+                    {
+                        id: 'credit-directory',
+                        label: 'Excess credits',
+                        route: '/admin/accounts/credits',
+                        icon: 'finance',
+                        activeWhen: [exact('/admin/accounts/credits')],
+                    },
+                    {
+                        id: 'discount-directory',
+                        label: 'Discount audit',
+                        route: '/admin/accounts/discounts',
+                        icon: 'scholarship',
+                        activeWhen: [exact('/admin/accounts/discounts')],
+                    },
+                ],
             },
             {
                 id: 'fee-progression',
@@ -404,7 +482,7 @@ export const ADMIN_NAVIGATION = [
             {
                 id: 'exam-master',
                 label: 'Exam master',
-                description: 'Buildings, locations, floors and rooms',
+                description: 'Buildings, floors and examination rooms',
                 icon: 'calendar',
                 children: [
                     {
@@ -413,13 +491,6 @@ export const ADMIN_NAVIGATION = [
                         route: '/admin/settings/exam-master/buildings',
                         icon: 'building',
                         activeWhen: [exact('/admin/settings/exam-master/buildings')],
-                    },
-                    {
-                        id: 'exam-locations',
-                        label: 'Locations',
-                        route: '/admin/settings/exam-master/locations',
-                        icon: 'location',
-                        activeWhen: [exact('/admin/settings/exam-master/locations')],
                     },
                     {
                         id: 'exam-floors',

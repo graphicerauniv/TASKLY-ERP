@@ -1,3 +1,6 @@
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
+import { AdminDrawerComponent } from '../../../shared/ui/admin-drawer/admin-drawer.component';
+import { CompactActionMenuComponent, } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -8,8 +11,8 @@ import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confir
 import * as i0 from "@angular/core";
 import * as i1 from "@angular/forms";
 const _forTrack0 = ($index, $item) => $item._id;
-function FeeSchedulesComponent_Conditional_1_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "p", 1);
+function FeeSchedulesComponent_Conditional_3_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "p", 2);
     i0.ɵɵtext(1);
     i0.ɵɵelementEnd();
 } if (rf & 2) {
@@ -17,8 +20,8 @@ function FeeSchedulesComponent_Conditional_1_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵadvance();
     i0.ɵɵtextInterpolate(ctx_r0.message());
 } }
-function FeeSchedulesComponent_Conditional_2_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "p", 2);
+function FeeSchedulesComponent_Conditional_4_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "p", 3);
     i0.ɵɵtext(1);
     i0.ɵɵelementEnd();
 } if (rf & 2) {
@@ -26,58 +29,8 @@ function FeeSchedulesComponent_Conditional_2_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵadvance();
     i0.ɵɵtextInterpolate(ctx_r0.error());
 } }
-function FeeSchedulesComponent_For_18_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "option", 8);
-    i0.ɵɵtext(1);
-    i0.ɵɵelementEnd();
-} if (rf & 2) {
-    const item_r2 = ctx.$implicit;
-    i0.ɵɵproperty("value", item_r2._id);
-    i0.ɵɵadvance();
-    i0.ɵɵtextInterpolate(item_r2.name);
-} }
-function FeeSchedulesComponent_For_26_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "option", 8);
-    i0.ɵɵtext(1);
-    i0.ɵɵelementEnd();
-} if (rf & 2) {
-    const item_r3 = ctx.$implicit;
-    i0.ɵɵproperty("value", item_r3._id);
-    i0.ɵɵadvance();
-    i0.ɵɵtextInterpolate(item_r3.name);
-} }
-function FeeSchedulesComponent_For_34_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "option", 8);
-    i0.ɵɵtext(1);
-    i0.ɵɵelementEnd();
-} if (rf & 2) {
-    const item_r4 = ctx.$implicit;
-    i0.ɵɵproperty("value", item_r4.name);
-    i0.ɵɵadvance();
-    i0.ɵɵtextInterpolate(item_r4.name);
-} }
-function FeeSchedulesComponent_Conditional_62_Template(rf, ctx) { if (rf & 1) {
-    const _r5 = i0.ɵɵgetCurrentView();
-    i0.ɵɵelementStart(0, "button", 20);
-    i0.ɵɵlistener("click", function FeeSchedulesComponent_Conditional_62_Template_button_click_0_listener() { i0.ɵɵrestoreView(_r5); const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.resetForm()); });
-    i0.ɵɵtext(1, " Cancel ");
-    i0.ɵɵelementEnd();
-} if (rf & 2) {
-    const ctx_r0 = i0.ɵɵnextContext();
-    i0.ɵɵproperty("disabled", ctx_r0.saving());
-} }
-function FeeSchedulesComponent_For_94_Conditional_32_Template(rf, ctx) { if (rf & 1) {
-    const _r8 = i0.ɵɵgetCurrentView();
-    i0.ɵɵelementStart(0, "button", 14);
-    i0.ɵɵlistener("click", function FeeSchedulesComponent_For_94_Conditional_32_Template_button_click_0_listener() { i0.ɵɵrestoreView(_r8); const item_r7 = i0.ɵɵnextContext().$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.publish(item_r7, true)); });
-    i0.ɵɵtext(1, " Change year & show fee ");
-    i0.ɵɵelementEnd();
-} if (rf & 2) {
-    const ctx_r0 = i0.ɵɵnextContext(2);
-    i0.ɵɵproperty("disabled", ctx_r0.publishingId());
-} }
-function FeeSchedulesComponent_For_94_Template(rf, ctx) { if (rf & 1) {
-    const _r6 = i0.ɵɵgetCurrentView();
+function FeeSchedulesComponent_For_36_Template(rf, ctx) { if (rf & 1) {
+    const _r2 = i0.ɵɵgetCurrentView();
     i0.ɵɵelementStart(0, "tr")(1, "td")(2, "strong");
     i0.ɵɵtext(3);
     i0.ɵɵelementEnd();
@@ -108,52 +61,131 @@ function FeeSchedulesComponent_For_94_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵelementStart(22, "td")(23, "span", 21);
     i0.ɵɵtext(24);
     i0.ɵɵelementEnd()();
-    i0.ɵɵelementStart(25, "td")(26, "button", 22);
-    i0.ɵɵlistener("click", function FeeSchedulesComponent_For_94_Template_button_click_26_listener() { const item_r7 = i0.ɵɵrestoreView(_r6).$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.edit(item_r7)); });
-    i0.ɵɵtext(27, " Edit");
-    i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(28, "button", 22);
-    i0.ɵɵlistener("click", function FeeSchedulesComponent_For_94_Template_button_click_28_listener() { const item_r7 = i0.ɵɵrestoreView(_r6).$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.toggle(item_r7)); });
-    i0.ɵɵtext(29);
-    i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(30, "button", 23);
-    i0.ɵɵlistener("click", function FeeSchedulesComponent_For_94_Template_button_click_30_listener() { const item_r7 = i0.ɵɵrestoreView(_r6).$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.requestDelete(item_r7)); });
-    i0.ɵɵtext(31, " Delete schedule ");
-    i0.ɵɵelementEnd();
-    i0.ɵɵconditionalCreate(32, FeeSchedulesComponent_For_94_Conditional_32_Template, 2, 1, "button", 24);
-    i0.ɵɵelementEnd()();
+    i0.ɵɵelementStart(25, "td", 22)(26, "erp-compact-action-menu", 23);
+    i0.ɵɵlistener("selected", function FeeSchedulesComponent_For_36_Template_erp_compact_action_menu_selected_26_listener($event) { const item_r3 = i0.ɵɵrestoreView(_r2).$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.handleRowAction($event, item_r3)); });
+    i0.ɵɵelementEnd()()();
 } if (rf & 2) {
-    const item_r7 = ctx.$implicit;
+    const item_r3 = ctx.$implicit;
+    const ctx_r0 = i0.ɵɵnextContext();
     i0.ɵɵadvance(3);
-    i0.ɵɵtextInterpolate(item_r7.collegeName);
+    i0.ɵɵtextInterpolate(item_r3.collegeName);
     i0.ɵɵadvance(2);
-    i0.ɵɵtextInterpolate(item_r7.universityName);
+    i0.ɵɵtextInterpolate(item_r3.universityName);
     i0.ɵɵadvance(2);
-    i0.ɵɵtextInterpolate(item_r7.academicSession);
+    i0.ɵɵtextInterpolate(item_r3.academicSession);
     i0.ɵɵadvance(2);
-    i0.ɵɵtextInterpolate(item_r7.mode === "semester" ? "Next semester" : "Next academic year");
+    i0.ɵɵtextInterpolate(item_r3.mode === "semester" ? "Next semester" : "Next academic year");
     i0.ɵɵadvance(2);
-    i0.ɵɵtextInterpolate(i0.ɵɵpipeBind2(12, 11, item_r7.publishAt, "medium"));
+    i0.ɵɵtextInterpolate(i0.ɵɵpipeBind2(12, 10, item_r3.publishAt, "medium"));
     i0.ɵɵadvance(3);
-    i0.ɵɵtextInterpolate(i0.ɵɵpipeBind2(15, 14, item_r7.nextPeriodDeadline, "medium"));
+    i0.ɵɵtextInterpolate(i0.ɵɵpipeBind2(15, 13, item_r3.nextPeriodDeadline, "medium"));
     i0.ɵɵadvance(3);
-    i0.ɵɵtextInterpolate1(" ", i0.ɵɵpipeBind2(18, 17, item_r7.dailyFineAmount, "INR"), " / day");
+    i0.ɵɵtextInterpolate1(" ", i0.ɵɵpipeBind2(18, 16, item_r3.dailyFineAmount, "INR"), " / day");
     i0.ɵɵadvance(3);
-    i0.ɵɵtextInterpolate1("Cap ", i0.ɵɵpipeBind2(21, 20, item_r7.maxFineAmount, "INR"));
+    i0.ɵɵtextInterpolate1("Cap ", i0.ɵɵpipeBind2(21, 19, item_r3.maxFineAmount, "INR"));
     i0.ɵɵadvance(4);
-    i0.ɵɵtextInterpolate(item_r7.isActive ? "Active" : "Inactive");
-    i0.ɵɵadvance(5);
-    i0.ɵɵtextInterpolate1(" ", item_r7.isActive ? "Disable" : "Enable", " ");
-    i0.ɵɵadvance(3);
-    i0.ɵɵconditional(item_r7.mode === "year" && item_r7.isActive ? 32 : -1);
+    i0.ɵɵtextInterpolate(item_r3.isActive ? "Active" : "Inactive");
+    i0.ɵɵadvance(2);
+    i0.ɵɵproperty("items", ctx_r0.rowActions(item_r3));
 } }
-function FeeSchedulesComponent_ForEmpty_95_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "tr")(1, "td", 25);
-    i0.ɵɵtext(2, "No fee publication schedules configured.");
-    i0.ɵɵelementEnd()();
+function FeeSchedulesComponent_ForEmpty_37_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "tr")(1, "td", 24);
+    i0.ɵɵelement(2, "erp-admin-illustration", 25);
+    i0.ɵɵelementStart(3, "p");
+    i0.ɵɵtext(4, "No fee publication schedules configured.");
+    i0.ɵɵelementEnd()()();
+} }
+function FeeSchedulesComponent_Conditional_40_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "p", 9);
+    i0.ɵɵtext(1);
+    i0.ɵɵelementEnd();
+} if (rf & 2) {
+    const ctx_r0 = i0.ɵɵnextContext();
+    i0.ɵɵadvance();
+    i0.ɵɵtextInterpolate(ctx_r0.error());
+} }
+function FeeSchedulesComponent_For_56_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "option", 15);
+    i0.ɵɵtext(1);
+    i0.ɵɵelementEnd();
+} if (rf & 2) {
+    const item_r4 = ctx.$implicit;
+    i0.ɵɵproperty("value", item_r4._id);
+    i0.ɵɵadvance();
+    i0.ɵɵtextInterpolate(item_r4.name);
+} }
+function FeeSchedulesComponent_For_64_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "option", 15);
+    i0.ɵɵtext(1);
+    i0.ɵɵelementEnd();
+} if (rf & 2) {
+    const item_r5 = ctx.$implicit;
+    i0.ɵɵproperty("value", item_r5._id);
+    i0.ɵɵadvance();
+    i0.ɵɵtextInterpolate(item_r5.name);
+} }
+function FeeSchedulesComponent_For_72_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "option", 15);
+    i0.ɵɵtext(1);
+    i0.ɵɵelementEnd();
+} if (rf & 2) {
+    const item_r6 = ctx.$implicit;
+    i0.ɵɵproperty("value", item_r6.name);
+    i0.ɵɵadvance();
+    i0.ɵɵtextInterpolate(item_r6.name);
 } }
 export class FeeSchedulesComponent {
     api = inject(ApiService);
+    drawerOpen = signal(false, ...(ngDevMode ? [{ debugName: "drawerOpen" }] : /* istanbul ignore next */ []));
+    openCreate() {
+        this.resetForm();
+        this.error.set('');
+        this.drawerOpen.set(true);
+    }
+    closeDrawer() {
+        if (!this.saving()) {
+            this.drawerOpen.set(false);
+            this.resetForm();
+        }
+    }
+    rowActions(item) {
+        return [
+            { id: 'edit', label: 'Edit schedule', icon: 'edit' },
+            {
+                id: 'toggle',
+                label: item.isActive ? 'Disable schedule' : 'Enable schedule',
+                icon: 'check',
+                disabled: !!this.publishingId() || this.saving(),
+            },
+            ...(item.mode === 'year' && item.isActive
+                ? [
+                    {
+                        id: 'publish',
+                        label: 'Change year & show fee',
+                        icon: 'transfer',
+                        disabled: !!this.publishingId() || this.saving(),
+                    },
+                ]
+                : []),
+            {
+                id: 'delete',
+                label: 'Delete schedule',
+                icon: 'delete',
+                destructive: true,
+                disabled: this.saving(),
+            },
+        ];
+    }
+    handleRowAction(action, item) {
+        if (action === 'edit')
+            this.edit(item);
+        else if (action === 'toggle')
+            this.toggle(item);
+        else if (action === 'publish')
+            this.publish(item, true);
+        else if (action === 'delete')
+            this.requestDelete(item);
+    }
     items = signal([], ...(ngDevMode ? [{ debugName: "items" }] : /* istanbul ignore next */ []));
     universities = signal([], ...(ngDevMode ? [{ debugName: "universities" }] : /* istanbul ignore next */ []));
     colleges = signal([], ...(ngDevMode ? [{ debugName: "colleges" }] : /* istanbul ignore next */ []));
@@ -231,6 +263,7 @@ export class FeeSchedulesComponent {
                     ? 'Fee publication schedule updated.'
                     : 'Fee publication schedule created.');
                 this.saving.set(false);
+                this.drawerOpen.set(false);
                 this.resetForm();
                 this.load();
             },
@@ -241,6 +274,7 @@ export class FeeSchedulesComponent {
         });
     }
     edit(item) {
+        this.drawerOpen.set(true);
         this.editingId.set(item._id);
         this.universityId = item.universityId;
         this.collegeId = item.collegeId;
@@ -313,131 +347,145 @@ export class FeeSchedulesComponent {
         return shifted.toISOString().slice(0, 16);
     }
     static ɵfac = function FeeSchedulesComponent_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || FeeSchedulesComponent)(); };
-    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: FeeSchedulesComponent, selectors: [["erp-fee-schedules"]], decls: 97, vars: 18, consts: [["eyebrow", "Fee Management", "title", "Fee Change & Publication", "description", "Publish upcoming fees without changing the student's academic semester or year.", "variant", "minimal"], [1, "erp-notice", "erp-notice--success"], [1, "erp-notice", "erp-notice--error"], [1, "erp-card", "erp-card--padded"], [1, "erp-card__header"], [1, "erp-form-grid"], [1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", ""], [3, "value"], ["value", "semester"], ["value", "year"], ["type", "datetime-local", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["type", "number", "min", "0", 1, "erp-control", 3, "ngModelChange", "ngModel"], [1, "erp-form-actions"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "click", "disabled"], ["type", "button", 1, "erp-button", "erp-button--secondary", 3, "disabled"], [1, "erp-card", "erp-table-shell"], [1, "erp-table-toolbar"], [1, "erp-table-shell__scroll"], ["eyebrow", "Fee publication", "title", "Delete this publication schedule?", "confirmLabel", "Delete schedule", 3, "confirmed", "cancelled", "open", "message", "destructive"], ["type", "button", 1, "erp-button", "erp-button--secondary", 3, "click", "disabled"], [1, "erp-status"], ["type", "button", 1, "erp-button", "erp-button--secondary", 3, "click"], ["type", "button", 1, "erp-button", "erp-button--danger", 3, "click"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "disabled"], ["colspan", "8", 1, "erp-empty-state"]], template: function FeeSchedulesComponent_Template(rf, ctx) { if (rf & 1) {
-            i0.ɵɵelementStart(0, "erp-admin-page", 0);
-            i0.ɵɵconditionalCreate(1, FeeSchedulesComponent_Conditional_1_Template, 2, 1, "p", 1);
-            i0.ɵɵconditionalCreate(2, FeeSchedulesComponent_Conditional_2_Template, 2, 1, "p", 2);
-            i0.ɵɵelementStart(3, "section", 3)(4, "div", 4)(5, "div")(6, "h2");
-            i0.ɵɵtext(7, "Configure common deadline");
+    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: FeeSchedulesComponent, selectors: [["erp-fee-schedules"]], decls: 99, vars: 21, consts: [["eyebrow", "Fee Management", "title", "Fee Change & Publication", "description", "Publish upcoming fees without changing the student's academic semester or year.", "variant", "compact", "layout", "collection"], ["page-actions", "", "type", "button", 1, "erp-button", "erp-button--primary", 3, "click"], [1, "erp-notice", "erp-notice--success"], [1, "erp-notice", "erp-notice--error"], [1, "erp-card", "erp-table-shell"], [1, "erp-table-toolbar"], [1, "erp-table-shell__scroll"], ["eyebrow", "Fee publication", "title", "Delete this publication schedule?", "confirmLabel", "Delete schedule", 3, "confirmed", "cancelled", "open", "message", "destructive"], ["eyebrow", "Fee publication", "description", "Set the publication time, deadline and fine rules.", "illustration", "taskSchedule", 3, "closed", "open", "title", "busy"], ["role", "alert", 1, "erp-notice", "erp-notice--error"], [1, "erp-card", "erp-card--padded"], [1, "erp-card__header"], [1, "erp-form-grid"], [1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", ""], [3, "value"], ["value", "semester"], ["value", "year"], ["type", "datetime-local", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["type", "number", "min", "0", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["drawer-actions", "", "type", "button", 1, "erp-button", "erp-button--primary", 3, "click", "disabled"], [1, "erp-status"], [1, "erp-table-shell__actions"], [3, "selected", "items"], ["colspan", "8", 1, "erp-empty-state"], ["kind", "feeWallet", "size", "compact"]], template: function FeeSchedulesComponent_Template(rf, ctx) { if (rf & 1) {
+            i0.ɵɵelementStart(0, "erp-admin-page", 0)(1, "button", 1);
+            i0.ɵɵlistener("click", function FeeSchedulesComponent_Template_button_click_1_listener() { return ctx.openCreate(); });
+            i0.ɵɵtext(2, " Create schedule ");
             i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(8, "p");
-            i0.ɵɵtext(9, "One university/college schedule applies to every course in the selected session.");
+            i0.ɵɵconditionalCreate(3, FeeSchedulesComponent_Conditional_3_Template, 2, 1, "p", 2);
+            i0.ɵɵconditionalCreate(4, FeeSchedulesComponent_Conditional_4_Template, 2, 1, "p", 3);
+            i0.ɵɵelementStart(5, "section", 4)(6, "div", 5)(7, "div")(8, "h2");
+            i0.ɵɵtext(9, " Publication schedules ");
+            i0.ɵɵelementStart(10, "small");
+            i0.ɵɵtext(11);
+            i0.ɵɵelementEnd()();
+            i0.ɵɵelementStart(12, "p");
+            i0.ɵɵtext(13, " Publication prepares the next ledger, reveals it at the visibility time, and applies its fine rule after the next-fee deadline. ");
             i0.ɵɵelementEnd()()();
-            i0.ɵɵelementStart(10, "div", 5)(11, "label")(12, "span");
-            i0.ɵɵtext(13, "University *");
+            i0.ɵɵelementStart(14, "div", 6)(15, "table")(16, "thead")(17, "tr")(18, "th");
+            i0.ɵɵtext(19, "University / College");
             i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(14, "select", 6);
-            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_14_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.universityId, $event) || (ctx.universityId = $event); return $event; });
-            i0.ɵɵlistener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_14_listener() { return ctx.changeUniversity(); });
-            i0.ɵɵelementStart(15, "option", 7);
-            i0.ɵɵtext(16, "Select university");
+            i0.ɵɵelementStart(20, "th");
+            i0.ɵɵtext(21, "Session");
             i0.ɵɵelementEnd();
-            i0.ɵɵrepeaterCreate(17, FeeSchedulesComponent_For_18_Template, 2, 2, "option", 8, _forTrack0);
-            i0.ɵɵelementEnd()();
-            i0.ɵɵelementStart(19, "label")(20, "span");
-            i0.ɵɵtext(21, "College *");
+            i0.ɵɵelementStart(22, "th");
+            i0.ɵɵtext(23, "Target");
             i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(22, "select", 6);
-            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_22_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.collegeId, $event) || (ctx.collegeId = $event); return $event; });
-            i0.ɵɵelementStart(23, "option", 7);
-            i0.ɵɵtext(24, "Select college");
+            i0.ɵɵelementStart(24, "th");
+            i0.ɵɵtext(25, "Visible from");
             i0.ɵɵelementEnd();
-            i0.ɵɵrepeaterCreate(25, FeeSchedulesComponent_For_26_Template, 2, 2, "option", 8, _forTrack0);
-            i0.ɵɵelementEnd()();
-            i0.ɵɵelementStart(27, "label")(28, "span");
-            i0.ɵɵtext(29, "Academic session *");
+            i0.ɵɵelementStart(26, "th");
+            i0.ɵɵtext(27, "Previous deadline");
             i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(30, "select", 6);
-            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_30_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.academicSession, $event) || (ctx.academicSession = $event); return $event; });
-            i0.ɵɵelementStart(31, "option", 7);
-            i0.ɵɵtext(32, "Select session");
+            i0.ɵɵelementStart(28, "th");
+            i0.ɵɵtext(29, "Fine");
             i0.ɵɵelementEnd();
-            i0.ɵɵrepeaterCreate(33, FeeSchedulesComponent_For_34_Template, 2, 2, "option", 8, _forTrack0);
-            i0.ɵɵelementEnd()();
-            i0.ɵɵelementStart(35, "label")(36, "span");
-            i0.ɵɵtext(37, "Transition type *");
+            i0.ɵɵelementStart(30, "th");
+            i0.ɵɵtext(31, "Status");
             i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(38, "select", 6);
-            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_38_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.mode, $event) || (ctx.mode = $event); return $event; });
-            i0.ɵɵelementStart(39, "option", 9);
-            i0.ɵɵtext(40, "Next semester");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(41, "option", 10);
-            i0.ɵɵtext(42, "Next academic year");
+            i0.ɵɵelementStart(32, "th");
+            i0.ɵɵtext(33, "Actions");
             i0.ɵɵelementEnd()()();
-            i0.ɵɵelementStart(43, "label")(44, "span");
-            i0.ɵɵtext(45, "Upcoming fee visible from *");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(46, "input", 11);
-            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_input_ngModelChange_46_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.publishAt, $event) || (ctx.publishAt = $event); return $event; });
-            i0.ɵɵelementEnd()();
-            i0.ɵɵelementStart(47, "label")(48, "span");
-            i0.ɵɵtext(49, "Next fee deadline *");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(50, "input", 11);
-            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_input_ngModelChange_50_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.nextPeriodDeadline, $event) || (ctx.nextPeriodDeadline = $event); return $event; });
-            i0.ɵɵelementEnd()();
-            i0.ɵɵelementStart(51, "label")(52, "span");
-            i0.ɵɵtext(53, "Daily fine after deadline");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(54, "input", 12);
-            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_input_ngModelChange_54_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.dailyFineAmount, $event) || (ctx.dailyFineAmount = $event); return $event; });
-            i0.ɵɵelementEnd()();
-            i0.ɵɵelementStart(55, "label")(56, "span");
-            i0.ɵɵtext(57, "Maximum fine");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(58, "input", 12);
-            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_input_ngModelChange_58_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.maxFineAmount, $event) || (ctx.maxFineAmount = $event); return $event; });
-            i0.ɵɵelementEnd()()();
-            i0.ɵɵelementStart(59, "div", 13)(60, "button", 14);
-            i0.ɵɵlistener("click", function FeeSchedulesComponent_Template_button_click_60_listener() { return ctx.save(); });
-            i0.ɵɵtext(61);
-            i0.ɵɵelementEnd();
-            i0.ɵɵconditionalCreate(62, FeeSchedulesComponent_Conditional_62_Template, 2, 1, "button", 15);
-            i0.ɵɵelementEnd()();
-            i0.ɵɵelementStart(63, "section", 16)(64, "div", 17)(65, "div")(66, "h2");
-            i0.ɵɵtext(67, " Publication schedules ");
-            i0.ɵɵelementStart(68, "small");
-            i0.ɵɵtext(69);
-            i0.ɵɵelementEnd()();
-            i0.ɵɵelementStart(70, "p");
-            i0.ɵɵtext(71, " Publication prepares the next ledger, reveals it at the visibility time, and applies its fine rule after the next-fee deadline. ");
-            i0.ɵɵelementEnd()()();
-            i0.ɵɵelementStart(72, "div", 18)(73, "table")(74, "thead")(75, "tr")(76, "th");
-            i0.ɵɵtext(77, "University / College");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(78, "th");
-            i0.ɵɵtext(79, "Session");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(80, "th");
-            i0.ɵɵtext(81, "Target");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(82, "th");
-            i0.ɵɵtext(83, "Visible from");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(84, "th");
-            i0.ɵɵtext(85, "Previous deadline");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(86, "th");
-            i0.ɵɵtext(87, "Fine");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(88, "th");
-            i0.ɵɵtext(89, "Status");
-            i0.ɵɵelementEnd();
-            i0.ɵɵelementStart(90, "th");
-            i0.ɵɵtext(91, "Actions");
-            i0.ɵɵelementEnd()()();
-            i0.ɵɵelementStart(92, "tbody");
-            i0.ɵɵrepeaterCreate(93, FeeSchedulesComponent_For_94_Template, 33, 23, "tr", null, _forTrack0, false, FeeSchedulesComponent_ForEmpty_95_Template, 3, 0, "tr");
+            i0.ɵɵelementStart(34, "tbody");
+            i0.ɵɵrepeaterCreate(35, FeeSchedulesComponent_For_36_Template, 27, 22, "tr", null, _forTrack0, false, FeeSchedulesComponent_ForEmpty_37_Template, 5, 0, "tr");
             i0.ɵɵelementEnd()()()()();
-            i0.ɵɵelementStart(96, "erp-confirm-dialog", 19);
-            i0.ɵɵlistener("confirmed", function FeeSchedulesComponent_Template_erp_confirm_dialog_confirmed_96_listener() { return ctx.deleteSchedule(); })("cancelled", function FeeSchedulesComponent_Template_erp_confirm_dialog_cancelled_96_listener() { return ctx.deleteTarget.set(null); });
+            i0.ɵɵelementStart(38, "erp-confirm-dialog", 7);
+            i0.ɵɵlistener("confirmed", function FeeSchedulesComponent_Template_erp_confirm_dialog_confirmed_38_listener() { return ctx.deleteSchedule(); })("cancelled", function FeeSchedulesComponent_Template_erp_confirm_dialog_cancelled_38_listener() { return ctx.deleteTarget.set(null); });
             i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(39, "erp-admin-drawer", 8);
+            i0.ɵɵlistener("closed", function FeeSchedulesComponent_Template_erp_admin_drawer_closed_39_listener() { return ctx.closeDrawer(); });
+            i0.ɵɵconditionalCreate(40, FeeSchedulesComponent_Conditional_40_Template, 2, 1, "p", 9);
+            i0.ɵɵelementStart(41, "section", 10)(42, "div", 11)(43, "div")(44, "h2");
+            i0.ɵɵtext(45, "Configure common deadline");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(46, "p");
+            i0.ɵɵtext(47, "One university/college schedule applies to every course in the selected session.");
+            i0.ɵɵelementEnd()()();
+            i0.ɵɵelementStart(48, "div", 12)(49, "label")(50, "span");
+            i0.ɵɵtext(51, "University *");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(52, "select", 13);
+            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_52_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.universityId, $event) || (ctx.universityId = $event); return $event; });
+            i0.ɵɵlistener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_52_listener() { return ctx.changeUniversity(); });
+            i0.ɵɵelementStart(53, "option", 14);
+            i0.ɵɵtext(54, "Select university");
+            i0.ɵɵelementEnd();
+            i0.ɵɵrepeaterCreate(55, FeeSchedulesComponent_For_56_Template, 2, 2, "option", 15, _forTrack0);
+            i0.ɵɵelementEnd()();
+            i0.ɵɵelementStart(57, "label")(58, "span");
+            i0.ɵɵtext(59, "College *");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(60, "select", 13);
+            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_60_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.collegeId, $event) || (ctx.collegeId = $event); return $event; });
+            i0.ɵɵelementStart(61, "option", 14);
+            i0.ɵɵtext(62, "Select college");
+            i0.ɵɵelementEnd();
+            i0.ɵɵrepeaterCreate(63, FeeSchedulesComponent_For_64_Template, 2, 2, "option", 15, _forTrack0);
+            i0.ɵɵelementEnd()();
+            i0.ɵɵelementStart(65, "label")(66, "span");
+            i0.ɵɵtext(67, "Academic session *");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(68, "select", 13);
+            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_68_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.academicSession, $event) || (ctx.academicSession = $event); return $event; });
+            i0.ɵɵelementStart(69, "option", 14);
+            i0.ɵɵtext(70, "Select session");
+            i0.ɵɵelementEnd();
+            i0.ɵɵrepeaterCreate(71, FeeSchedulesComponent_For_72_Template, 2, 2, "option", 15, _forTrack0);
+            i0.ɵɵelementEnd()();
+            i0.ɵɵelementStart(73, "label")(74, "span");
+            i0.ɵɵtext(75, "Transition type *");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(76, "select", 13);
+            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_select_ngModelChange_76_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.mode, $event) || (ctx.mode = $event); return $event; });
+            i0.ɵɵelementStart(77, "option", 16);
+            i0.ɵɵtext(78, "Next semester");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(79, "option", 17);
+            i0.ɵɵtext(80, "Next academic year");
+            i0.ɵɵelementEnd()()();
+            i0.ɵɵelementStart(81, "label")(82, "span");
+            i0.ɵɵtext(83, "Upcoming fee visible from *");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(84, "input", 18);
+            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_input_ngModelChange_84_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.publishAt, $event) || (ctx.publishAt = $event); return $event; });
+            i0.ɵɵelementEnd()();
+            i0.ɵɵelementStart(85, "label")(86, "span");
+            i0.ɵɵtext(87, "Next fee deadline *");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(88, "input", 18);
+            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_input_ngModelChange_88_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.nextPeriodDeadline, $event) || (ctx.nextPeriodDeadline = $event); return $event; });
+            i0.ɵɵelementEnd()();
+            i0.ɵɵelementStart(89, "label")(90, "span");
+            i0.ɵɵtext(91, "Daily fine after deadline");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(92, "input", 19);
+            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_input_ngModelChange_92_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.dailyFineAmount, $event) || (ctx.dailyFineAmount = $event); return $event; });
+            i0.ɵɵelementEnd()();
+            i0.ɵɵelementStart(93, "label")(94, "span");
+            i0.ɵɵtext(95, "Maximum fine");
+            i0.ɵɵelementEnd();
+            i0.ɵɵelementStart(96, "input", 19);
+            i0.ɵɵtwoWayListener("ngModelChange", function FeeSchedulesComponent_Template_input_ngModelChange_96_listener($event) { i0.ɵɵtwoWayBindingSet(ctx.maxFineAmount, $event) || (ctx.maxFineAmount = $event); return $event; });
+            i0.ɵɵelementEnd()()()();
+            i0.ɵɵelementStart(97, "button", 20);
+            i0.ɵɵlistener("click", function FeeSchedulesComponent_Template_button_click_97_listener() { return ctx.save(); });
+            i0.ɵɵtext(98);
+            i0.ɵɵelementEnd()();
         } if (rf & 2) {
+            i0.ɵɵadvance(3);
+            i0.ɵɵconditional(ctx.message() ? 3 : -1);
             i0.ɵɵadvance();
-            i0.ɵɵconditional(ctx.message() ? 1 : -1);
+            i0.ɵɵconditional(ctx.error() ? 4 : -1);
+            i0.ɵɵadvance(7);
+            i0.ɵɵtextInterpolate(ctx.items().length);
+            i0.ɵɵadvance(24);
+            i0.ɵɵrepeater(ctx.items());
+            i0.ɵɵadvance(3);
+            i0.ɵɵproperty("open", !!ctx.deleteTarget())("message", "This removes the schedule rule. Existing ledgers, payments and receipts will be preserved.")("destructive", true);
             i0.ɵɵadvance();
-            i0.ɵɵconditional(ctx.error() ? 2 : -1);
+            i0.ɵɵproperty("open", ctx.drawerOpen())("title", ctx.editingId() ? "Edit publication schedule" : "Create publication schedule")("busy", ctx.saving());
+            i0.ɵɵadvance();
+            i0.ɵɵconditional(ctx.error() ? 40 : -1);
             i0.ɵɵadvance(12);
             i0.ɵɵtwoWayProperty("ngModel", ctx.universityId);
             i0.ɵɵadvance(3);
@@ -460,22 +508,29 @@ export class FeeSchedulesComponent {
             i0.ɵɵtwoWayProperty("ngModel", ctx.dailyFineAmount);
             i0.ɵɵadvance(4);
             i0.ɵɵtwoWayProperty("ngModel", ctx.maxFineAmount);
-            i0.ɵɵadvance(2);
+            i0.ɵɵadvance();
             i0.ɵɵproperty("disabled", ctx.saving());
             i0.ɵɵadvance();
-            i0.ɵɵtextInterpolate1(" ", ctx.saving() ? "Saving\u2026" : ctx.editingId() ? "Save schedule" : "Create schedule", " ");
-            i0.ɵɵadvance();
-            i0.ɵɵconditional(ctx.editingId() ? 62 : -1);
-            i0.ɵɵadvance(7);
-            i0.ɵɵtextInterpolate(ctx.items().length);
-            i0.ɵɵadvance(24);
-            i0.ɵɵrepeater(ctx.items());
-            i0.ɵɵadvance(3);
-            i0.ɵɵproperty("open", !!ctx.deleteTarget())("message", "This removes the schedule rule. Existing ledgers, payments and receipts will be preserved.")("destructive", true);
-        } }, dependencies: [AdminPageComponent, ConfirmDialogComponent, FormsModule, i1.NgSelectOption, i1.ɵNgSelectMultipleOption, i1.DefaultValueAccessor, i1.NumberValueAccessor, i1.SelectControlValueAccessor, i1.NgControlStatus, i1.MinValidator, i1.NgModel, CurrencyPipe, DatePipe], encapsulation: 2, changeDetection: 0 });
+            i0.ɵɵtextInterpolate1(" ", ctx.saving() ? "Saving\u2026" : "Save schedule", " ");
+        } }, dependencies: [AdminIllustrationComponent,
+            AdminDrawerComponent,
+            CompactActionMenuComponent,
+            AdminPageComponent,
+            ConfirmDialogComponent,
+            FormsModule, i1.NgSelectOption, i1.ɵNgSelectMultipleOption, i1.DefaultValueAccessor, i1.NumberValueAccessor, i1.SelectControlValueAccessor, i1.NgControlStatus, i1.MinValidator, i1.NgModel, CurrencyPipe,
+            DatePipe], encapsulation: 2, changeDetection: 0 });
 }
 (() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassMetadata(FeeSchedulesComponent, [{
         type: Component,
-        args: [{ selector: 'erp-fee-schedules', imports: [AdminPageComponent, ConfirmDialogComponent, CurrencyPipe, DatePipe, FormsModule], changeDetection: ChangeDetectionStrategy.OnPush, template: "<erp-admin-page\n  eyebrow=\"Fee Management\"\n  title=\"Fee Change & Publication\"\n  description=\"Publish upcoming fees without changing the student's academic semester or year.\"\n  variant=\"minimal\"\n>\n  @if (message()) {\n    <p class=\"erp-notice erp-notice--success\">{{ message() }}</p>\n  }\n  @if (error()) {\n    <p class=\"erp-notice erp-notice--error\">{{ error() }}</p>\n  }\n  <section class=\"erp-card erp-card--padded\">\n    <div class=\"erp-card__header\">\n      <div>\n        <h2>Configure common deadline</h2>\n        <p>One university/college schedule applies to every course in the selected session.</p>\n      </div>\n    </div>\n    <div class=\"erp-form-grid\">\n      <label\n        ><span>University *</span\n        ><select\n          class=\"erp-control\"\n          [(ngModel)]=\"universityId\"\n          (ngModelChange)=\"changeUniversity()\"\n        >\n          <option value=\"\">Select university</option>\n          @for (item of universities(); track item._id) {\n            <option [value]=\"item._id\">{{ item.name }}</option>\n          }\n        </select></label\n      >\n      <label\n        ><span>College *</span\n        ><select class=\"erp-control\" [(ngModel)]=\"collegeId\">\n          <option value=\"\">Select college</option>\n          @for (item of collegeOptions(); track item._id) {\n            <option [value]=\"item._id\">{{ item.name }}</option>\n          }\n        </select></label\n      >\n      <label\n        ><span>Academic session *</span\n        ><select class=\"erp-control\" [(ngModel)]=\"academicSession\">\n          <option value=\"\">Select session</option>\n          @for (item of academicSessions(); track item._id) {\n            <option [value]=\"item.name\">{{ item.name }}</option>\n          }\n        </select></label\n      >\n      <label\n        ><span>Transition type *</span\n        ><select class=\"erp-control\" [(ngModel)]=\"mode\">\n          <option value=\"semester\">Next semester</option>\n          <option value=\"year\">Next academic year</option>\n        </select></label\n      >\n      <label\n        ><span>Upcoming fee visible from *</span\n        ><input class=\"erp-control\" type=\"datetime-local\" [(ngModel)]=\"publishAt\"\n      /></label>\n      <label\n        ><span>Next fee deadline *</span\n        ><input class=\"erp-control\" type=\"datetime-local\" [(ngModel)]=\"nextPeriodDeadline\"\n      /></label>\n      <label\n        ><span>Daily fine after deadline</span\n        ><input class=\"erp-control\" type=\"number\" min=\"0\" [(ngModel)]=\"dailyFineAmount\"\n      /></label>\n      <label\n        ><span>Maximum fine</span\n        ><input class=\"erp-control\" type=\"number\" min=\"0\" [(ngModel)]=\"maxFineAmount\"\n      /></label>\n    </div>\n    <div class=\"erp-form-actions\">\n      <button\n        class=\"erp-button erp-button--primary\"\n        type=\"button\"\n        [disabled]=\"saving()\"\n        (click)=\"save()\"\n      >\n        {{ saving() ? 'Saving\u2026' : editingId() ? 'Save schedule' : 'Create schedule' }}\n      </button>\n      @if (editingId()) {\n        <button\n          class=\"erp-button erp-button--secondary\"\n          type=\"button\"\n          [disabled]=\"saving()\"\n          (click)=\"resetForm()\"\n        >\n          Cancel\n        </button>\n      }\n    </div>\n  </section>\n  <section class=\"erp-card erp-table-shell\">\n    <div class=\"erp-table-toolbar\">\n      <div>\n        <h2>\n          Publication schedules <small>{{ items().length }}</small>\n        </h2>\n        <p>\n          Publication prepares the next ledger, reveals it at the visibility time, and applies its\n          fine rule after the next-fee deadline.\n        </p>\n      </div>\n    </div>\n    <div class=\"erp-table-shell__scroll\">\n      <table>\n        <thead>\n          <tr>\n            <th>University / College</th>\n            <th>Session</th>\n            <th>Target</th>\n            <th>Visible from</th>\n            <th>Previous deadline</th>\n            <th>Fine</th>\n            <th>Status</th>\n            <th>Actions</th>\n          </tr>\n        </thead>\n        <tbody>\n          @for (item of items(); track item._id) {\n            <tr>\n              <td>\n                <strong>{{ item.collegeName }}</strong\n                ><small>{{ item.universityName }}</small>\n              </td>\n              <td>{{ item.academicSession }}</td>\n              <td>{{ item.mode === 'semester' ? 'Next semester' : 'Next academic year' }}</td>\n              <td>{{ item.publishAt | date: 'medium' }}</td>\n              <td>{{ item.nextPeriodDeadline | date: 'medium' }}</td>\n              <td>\n                {{ item.dailyFineAmount | currency: 'INR' }} / day<small\n                  >Cap {{ item.maxFineAmount | currency: 'INR' }}</small\n                >\n              </td>\n              <td>\n                <span class=\"erp-status\">{{ item.isActive ? 'Active' : 'Inactive' }}</span>\n              </td>\n              <td>\n                <button class=\"erp-button erp-button--secondary\" type=\"button\" (click)=\"edit(item)\">\n                  Edit</button\n                ><button\n                  class=\"erp-button erp-button--secondary\"\n                  type=\"button\"\n                  (click)=\"toggle(item)\"\n                >\n                  {{ item.isActive ? 'Disable' : 'Enable' }}\n                </button>\n                <button\n                  class=\"erp-button erp-button--danger\"\n                  type=\"button\"\n                  (click)=\"requestDelete(item)\"\n                >\n                  Delete schedule\n                </button>\n                @if (item.mode === 'year' && item.isActive) {\n                  <button\n                    class=\"erp-button erp-button--primary\"\n                    type=\"button\"\n                    [disabled]=\"publishingId()\"\n                    (click)=\"publish(item, true)\"\n                  >\n                    Change year & show fee\n                  </button>\n                }\n              </td>\n            </tr>\n          } @empty {\n            <tr>\n              <td colspan=\"8\" class=\"erp-empty-state\">No fee publication schedules configured.</td>\n            </tr>\n          }\n        </tbody>\n      </table>\n    </div>\n  </section>\n</erp-admin-page>\n\n<erp-confirm-dialog\n  [open]=\"!!deleteTarget()\"\n  eyebrow=\"Fee publication\"\n  title=\"Delete this publication schedule?\"\n  [message]=\"'This removes the schedule rule. Existing ledgers, payments and receipts will be preserved.'\"\n  confirmLabel=\"Delete schedule\"\n  [destructive]=\"true\"\n  (confirmed)=\"deleteSchedule()\"\n  (cancelled)=\"deleteTarget.set(null)\"\n/>\n" }]
+        args: [{ selector: 'erp-fee-schedules', imports: [
+                    AdminIllustrationComponent,
+                    AdminDrawerComponent,
+                    CompactActionMenuComponent,
+                    AdminPageComponent,
+                    ConfirmDialogComponent,
+                    CurrencyPipe,
+                    DatePipe,
+                    FormsModule,
+                ], changeDetection: ChangeDetectionStrategy.OnPush, template: "<erp-admin-page\n  eyebrow=\"Fee Management\"\n  title=\"Fee Change & Publication\"\n  description=\"Publish upcoming fees without changing the student's academic semester or year.\"\n  variant=\"compact\"\n  layout=\"collection\"\n>\n  <button page-actions class=\"erp-button erp-button--primary\" type=\"button\" (click)=\"openCreate()\">\n    Create schedule\n  </button>\n  @if (message()) {\n    <p class=\"erp-notice erp-notice--success\">{{ message() }}</p>\n  }\n  @if (error()) {\n    <p class=\"erp-notice erp-notice--error\">{{ error() }}</p>\n  }\n  <section class=\"erp-card erp-table-shell\">\n    <div class=\"erp-table-toolbar\">\n      <div>\n        <h2>\n          Publication schedules <small>{{ items().length }}</small>\n        </h2>\n        <p>\n          Publication prepares the next ledger, reveals it at the visibility time, and applies its\n          fine rule after the next-fee deadline.\n        </p>\n      </div>\n    </div>\n    <div class=\"erp-table-shell__scroll\">\n      <table>\n        <thead>\n          <tr>\n            <th>University / College</th>\n            <th>Session</th>\n            <th>Target</th>\n            <th>Visible from</th>\n            <th>Previous deadline</th>\n            <th>Fine</th>\n            <th>Status</th>\n            <th>Actions</th>\n          </tr>\n        </thead>\n        <tbody>\n          @for (item of items(); track item._id) {\n            <tr>\n              <td>\n                <strong>{{ item.collegeName }}</strong\n                ><small>{{ item.universityName }}</small>\n              </td>\n              <td>{{ item.academicSession }}</td>\n              <td>{{ item.mode === 'semester' ? 'Next semester' : 'Next academic year' }}</td>\n              <td>{{ item.publishAt | date: 'medium' }}</td>\n              <td>{{ item.nextPeriodDeadline | date: 'medium' }}</td>\n              <td>\n                {{ item.dailyFineAmount | currency: 'INR' }} / day<small\n                  >Cap {{ item.maxFineAmount | currency: 'INR' }}</small\n                >\n              </td>\n              <td>\n                <span class=\"erp-status\">{{ item.isActive ? 'Active' : 'Inactive' }}</span>\n              </td>\n              <td class=\"erp-table-shell__actions\">\n                <erp-compact-action-menu\n                  [items]=\"rowActions(item)\"\n                  (selected)=\"handleRowAction($event, item)\"\n                />\n              </td>\n            </tr>\n          } @empty {\n            <tr>\n              <td colspan=\"8\" class=\"erp-empty-state\">\n                <erp-admin-illustration kind=\"feeWallet\" size=\"compact\" />\n                <p>No fee publication schedules configured.</p>\n              </td>\n            </tr>\n          }\n        </tbody>\n      </table>\n    </div>\n  </section>\n</erp-admin-page>\n\n<erp-confirm-dialog\n  [open]=\"!!deleteTarget()\"\n  eyebrow=\"Fee publication\"\n  title=\"Delete this publication schedule?\"\n  [message]=\"'This removes the schedule rule. Existing ledgers, payments and receipts will be preserved.'\"\n  confirmLabel=\"Delete schedule\"\n  [destructive]=\"true\"\n  (confirmed)=\"deleteSchedule()\"\n  (cancelled)=\"deleteTarget.set(null)\"\n/>\n<erp-admin-drawer\n  [open]=\"drawerOpen()\"\n  [title]=\"editingId() ? 'Edit publication schedule' : 'Create publication schedule'\"\n  eyebrow=\"Fee publication\"\n  description=\"Set the publication time, deadline and fine rules.\"\n  illustration=\"taskSchedule\"\n  [busy]=\"saving()\"\n  (closed)=\"closeDrawer()\"\n>\n  @if (error()) {\n    <p class=\"erp-notice erp-notice--error\" role=\"alert\">{{ error() }}</p>\n  }\n  <section class=\"erp-card erp-card--padded\">\n    <div class=\"erp-card__header\">\n      <div>\n        <h2>Configure common deadline</h2>\n        <p>One university/college schedule applies to every course in the selected session.</p>\n      </div>\n    </div>\n    <div class=\"erp-form-grid\">\n      <label\n        ><span>University *</span\n        ><select\n          class=\"erp-control\"\n          [(ngModel)]=\"universityId\"\n          (ngModelChange)=\"changeUniversity()\"\n        >\n          <option value=\"\">Select university</option>\n          @for (item of universities(); track item._id) {\n            <option [value]=\"item._id\">{{ item.name }}</option>\n          }\n        </select></label\n      >\n      <label\n        ><span>College *</span\n        ><select class=\"erp-control\" [(ngModel)]=\"collegeId\">\n          <option value=\"\">Select college</option>\n          @for (item of collegeOptions(); track item._id) {\n            <option [value]=\"item._id\">{{ item.name }}</option>\n          }\n        </select></label\n      >\n      <label\n        ><span>Academic session *</span\n        ><select class=\"erp-control\" [(ngModel)]=\"academicSession\">\n          <option value=\"\">Select session</option>\n          @for (item of academicSessions(); track item._id) {\n            <option [value]=\"item.name\">{{ item.name }}</option>\n          }\n        </select></label\n      >\n      <label\n        ><span>Transition type *</span\n        ><select class=\"erp-control\" [(ngModel)]=\"mode\">\n          <option value=\"semester\">Next semester</option>\n          <option value=\"year\">Next academic year</option>\n        </select></label\n      >\n      <label\n        ><span>Upcoming fee visible from *</span\n        ><input class=\"erp-control\" type=\"datetime-local\" [(ngModel)]=\"publishAt\"\n      /></label>\n      <label\n        ><span>Next fee deadline *</span\n        ><input class=\"erp-control\" type=\"datetime-local\" [(ngModel)]=\"nextPeriodDeadline\"\n      /></label>\n      <label\n        ><span>Daily fine after deadline</span\n        ><input class=\"erp-control\" type=\"number\" min=\"0\" [(ngModel)]=\"dailyFineAmount\"\n      /></label>\n      <label\n        ><span>Maximum fine</span\n        ><input class=\"erp-control\" type=\"number\" min=\"0\" [(ngModel)]=\"maxFineAmount\"\n      /></label>\n    </div>\n  </section>\n\n  <button\n    drawer-actions\n    class=\"erp-button erp-button--primary\"\n    type=\"button\"\n    [disabled]=\"saving()\"\n    (click)=\"save()\"\n  >\n    {{ saving() ? 'Saving\u2026' : 'Save schedule' }}\n  </button>\n</erp-admin-drawer>\n" }]
     }], () => [], null); })();
-(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(FeeSchedulesComponent, { className: "FeeSchedulesComponent", filePath: "frontend/src/app/features/admin/fee-schedules/fee-schedules.component.ts", lineNumber: 16 }); })();
+(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(FeeSchedulesComponent, { className: "FeeSchedulesComponent", filePath: "frontend/src/app/features/admin/fee-schedules/fee-schedules.component.ts", lineNumber: 31 }); })();

@@ -172,6 +172,8 @@ export interface Admission {
   approvedAt?: string;
   isActive?: boolean;
   mustChangePassword?: boolean;
+  semesterRegistrationStatus?: 'registered' | 'not_registered';
+  semesterRegisteredAt?: string | null;
 }
 
 export interface AcademicGroup {
@@ -290,20 +292,10 @@ export interface ExamBuilding {
   isActive: boolean;
 }
 
-export interface ExamLocation {
-  _id: string;
-  buildingId: string;
-  buildingName: string;
-  name: string;
-  isActive: boolean;
-}
-
 export interface ExamFloor {
   _id: string;
   buildingId: string;
   buildingName: string;
-  locationId: string;
-  locationName: string;
   floorNumber: number;
   name: string;
   isActive: boolean;
@@ -313,8 +305,6 @@ export interface ExamRoom {
   _id: string;
   buildingId: string;
   buildingName: string;
-  locationId: string;
-  locationName: string;
   floorId: string;
   floorName: string;
   floorNumber: number;
@@ -322,6 +312,110 @@ export interface ExamRoom {
   name: string;
   capacity: number;
   isActive: boolean;
+}
+
+export type ExamType =
+  | 'sessional'
+  | 'internal_practical'
+  | 'teacher_assessment'
+  | 'end_term'
+  | 'end_term_practical'
+  | 'mid_term';
+
+export interface ExamSchedule {
+  _id: string;
+  academicSessionId: string;
+  academicSession: string;
+  universityId: string;
+  universityName: string;
+  collegeId: string;
+  collegeName: string;
+  semesterParity: 'odd' | 'even';
+  examType: ExamType;
+  examTypeName: string;
+  caption: string;
+  theoryQuestionViewCount: number;
+  practicalQuestionViewCount: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ExamShiftSchedule {
+  _id: string;
+  academicSessionId: string;
+  academicSession: string;
+  universityId: string;
+  universityName: string;
+  collegeId: string;
+  collegeName: string;
+  examScheduleId: string;
+  examScheduleCaption: string;
+  caption: string;
+  shiftSerial: number;
+  timeFrom: string;
+  timeFromMeridiem: 'AM' | 'PM';
+  timeFromMinutes: number;
+  timeTo: string;
+  timeToMeridiem: 'AM' | 'PM';
+  timeToMinutes: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ExamSubjectSchedule {
+  _id: string;
+  academicSessionId: string;
+  academicSession: string;
+  universityId: string;
+  universityName: string;
+  collegeId: string;
+  collegeName: string;
+  examScheduleId: string;
+  examScheduleCaption: string;
+  departmentId: string;
+  departmentName: string;
+  levelId: string;
+  levelName: string;
+  courseId: string;
+  courseName: string;
+  semester: number;
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  examDate: string;
+  shiftId: string;
+  shiftCaption: string;
+  shiftSerial: number;
+  timeFrom: string;
+  timeFromMeridiem: 'AM' | 'PM';
+  timeTo: string;
+  timeToMeridiem: 'AM' | 'PM';
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ExamEligibleStudent {
+  studentAdmissionId: string;
+  studentId: string;
+  studentName: string;
+  courseName: string;
+  academicSession: string;
+  semester: number;
+  semesterRegistered: boolean;
+  subjectAssigned: boolean;
+  outstandingBalance: number;
+  backlogCount: number;
+  eligible: boolean;
+  reasons: string[];
+}
+
+export interface ExamEligibilityResult {
+  schedule: ExamSubjectSchedule;
+  items: ExamEligibleStudent[];
+  summary: { total: number; eligible: number; ineligible: number };
 }
 export interface TimetableMaster {
   _id: string;
@@ -660,6 +754,66 @@ export interface StudentSession {
   currentAcademicYear?: number;
   currentSemester?: number;
   feeFrequency?: 'year' | 'semester';
+}
+
+export interface SemesterRegistrationSubject {
+  _id: string;
+  name: string;
+  code: string;
+  subjectType: string;
+  credits: number;
+  requirement: 'required' | 'elective';
+}
+
+export interface StudentSemesterRegistration {
+  _id: string;
+  studentAdmissionId: string;
+  studentId: string;
+  studentName: string;
+  academicSession: string;
+  semester: number;
+  currentAcademicYear: number;
+  universityName: string;
+  collegeName: string;
+  departmentName: string;
+  levelName: string;
+  courseName: string;
+  groupName: string;
+  sectionName: string;
+  setName: string;
+  subjects: SemesterRegistrationSubject[];
+  subjectCount: number;
+  status: 'registered';
+  registeredAt: string;
+}
+
+export interface SemesterRegistrationContext {
+  student: {
+    _id: string;
+    studentId: string;
+    studentName: string;
+    academicSession: string;
+    semester: number;
+    currentAcademicYear: number;
+    universityName: string;
+    collegeName: string;
+    departmentName: string;
+    levelName: string;
+    courseName: string;
+  };
+  assignment: {
+    groupId: string;
+    groupName: string;
+    sectionId: string;
+    sectionName: string;
+    setId: string;
+    setName: string;
+  } | null;
+  subjects: SemesterRegistrationSubject[];
+  registration: StudentSemesterRegistration | null;
+  history: StudentSemesterRegistration[];
+  eligible: boolean;
+  blockers: string[];
 }
 
 export interface StudentFeeEntry {

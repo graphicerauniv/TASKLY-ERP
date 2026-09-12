@@ -12,17 +12,12 @@ const commonSchema = z.object({
 });
 const schemas = {
   buildings: commonSchema,
-  locations: commonSchema.extend({
-    buildingId: objectIdString,
-  }),
   floors: commonSchema.extend({
     buildingId: objectIdString,
-    locationId: objectIdString,
     floorNumber: z.coerce.number().int().min(-10).max(300),
   }),
   rooms: commonSchema.extend({
     buildingId: objectIdString,
-    locationId: objectIdString,
     floorId: objectIdString,
     roomNumber: z.string().trim().min(1).max(50),
     capacity: z.coerce.number().int().min(1).max(10000),
@@ -30,7 +25,6 @@ const schemas = {
 };
 const collections = {
   buildings: 'examBuildings',
-  locations: 'examLocations',
   floors: 'examFloors',
   rooms: 'examRooms',
 };
@@ -48,7 +42,7 @@ function definition(resource) {
 
 function dataForStorage(data) {
   const output = { ...data };
-  for (const field of ['buildingId', 'locationId', 'floorId'])
+  for (const field of ['buildingId', 'floorId'])
     if (output[field]) output[field] = id(output[field], field);
   return output;
 }
@@ -61,30 +55,16 @@ async function resolveHierarchy(resource, data) {
     .findOne({ _id: id(data.buildingId, 'buildingId'), isActive: true });
   if (!building) throw Object.assign(new Error('Select an active exam building.'), { status: 400 });
   output.buildingName = building.name;
-  if (resource === 'locations') return output;
-  const location = await db()
-    .collection('examLocations')
-    .findOne({
-      _id: id(data.locationId, 'locationId'),
-      buildingId: building._id,
-      isActive: true,
-    });
-  if (!location)
-    throw Object.assign(new Error('The selected location does not belong to this building.'), {
-      status: 400,
-    });
-  output.locationName = location.name;
   if (resource === 'floors') return output;
   const floor = await db()
     .collection('examFloors')
     .findOne({
       _id: id(data.floorId, 'floorId'),
       buildingId: building._id,
-      locationId: location._id,
       isActive: true,
     });
   if (!floor)
-    throw Object.assign(new Error('The selected floor does not belong to this location.'), {
+    throw Object.assign(new Error('The selected floor does not belong to this building.'), {
       status: 400,
     });
   output.floorName = floor.name;
@@ -94,11 +74,9 @@ async function resolveHierarchy(resource, data) {
 
 function duplicateFilter(resource, data) {
   if (resource === 'buildings') return { name: data.name };
-  if (resource === 'locations')
-    return { buildingId: id(data.buildingId, 'buildingId'), name: data.name };
   if (resource === 'floors')
     return {
-      locationId: id(data.locationId, 'locationId'),
+      buildingId: id(data.buildingId, 'buildingId'),
       floorNumber: data.floorNumber,
     };
   return { floorId: id(data.floorId, 'floorId'), roomNumber: data.roomNumber };
@@ -108,7 +86,7 @@ examMasterRouter.get(
   '/bootstrap',
   asyncHandler(async (request, response) => {
     void request;
-    const [buildings, locations, floors, rooms] = await Promise.all(
+    const [buildings, floors, rooms] = await Promise.all(
       Object.values(collections).map((collection) =>
         db()
           .collection(collection)
@@ -119,7 +97,6 @@ examMasterRouter.get(
     );
     response.json({
       buildings: buildings.map(serialize),
-      locations: locations.map(serialize),
       floors: floors.map(serialize),
       rooms: rooms.map(serialize),
     });
@@ -179,23 +156,12 @@ examMasterRouter.patch(
       .updateOne({ _id: itemId }, { $set: { ...dataForStorage(data), updatedAt: new Date() } });
     if (resource === 'buildings')
       await Promise.all(
-        ['examLocations', 'examFloors', 'examRooms'].map((dependentCollection) =>
+        ['examFloors', 'examRooms'].map((dependentCollection) =>
           db()
             .collection(dependentCollection)
             .updateMany(
               { buildingId: itemId },
               { $set: { buildingName: data.name, updatedAt: new Date() } },
-            ),
-        ),
-      );
-    if (resource === 'locations')
-      await Promise.all(
-        ['examFloors', 'examRooms'].map((dependentCollection) =>
-          db()
-            .collection(dependentCollection)
-            .updateMany(
-              { locationId: itemId },
-              { $set: { locationName: data.name, updatedAt: new Date() } },
             ),
         ),
       );
@@ -224,13 +190,8 @@ examMasterRouter.delete(
     const itemId = id(request.params.itemId, 'itemId');
     const dependencies = {
       buildings: [
-        ['examLocations', 'buildingId'],
         ['examFloors', 'buildingId'],
         ['examRooms', 'buildingId'],
-      ],
-      locations: [
-        ['examFloors', 'locationId'],
-        ['examRooms', 'locationId'],
       ],
       floors: [['examRooms', 'floorId']],
       rooms: [],

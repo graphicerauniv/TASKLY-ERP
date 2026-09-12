@@ -1,0 +1,323 @@
+:host {
+  display: block;
+}
+
+.semester-registration-page {
+  display: grid;
+  gap: 18px;
+  color: var(--student-color-text);
+}
+
+.back-link {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 8px;
+  color: var(--student-color-primary);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.back-link svg,
+.registration-notice svg,
+.registration-button svg {
+  width: 19px;
+}
+
+.registration-hero {
+  display: flex;
+  min-height: 190px;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 26px 40px;
+  border: 1px solid var(--student-color-border);
+  border-radius: 22px;
+  background: linear-gradient(
+    135deg,
+    var(--student-color-surface),
+    var(--student-color-primary-soft)
+  );
+  box-shadow: var(--student-shadow-card);
+}
+
+.registration-hero small,
+.registration-card header small,
+.registration-status small {
+  color: var(--student-color-primary);
+  font-weight: 800;
+}
+
+.registration-hero h1 {
+  margin: 8px 0;
+  font-size: clamp(30px, 4vw, 44px);
+  letter-spacing: -0.035em;
+}
+
+.registration-hero p,
+.registration-status p,
+.registration-action-card p,
+.registration-state p {
+  margin: 0;
+  color: var(--student-color-text-secondary);
+  line-height: 1.55;
+}
+
+.registration-hero img {
+  width: 180px;
+  height: 150px;
+  object-fit: contain;
+}
+
+.registration-notice {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border: 1px solid var(--student-color-border);
+  border-radius: 12px;
+}
+
+.registration-notice--success {
+  color: var(--student-color-success);
+  background: var(--student-color-success-soft);
+}
+
+.registration-notice--error {
+  color: var(--student-color-danger);
+  background: var(--student-color-danger-soft);
+}
+
+.registration-notice button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 750;
+}
+
+.registration-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--student-color-border);
+  border-radius: 18px;
+  background: var(--student-color-surface);
+  box-shadow: var(--student-shadow-card);
+}
+
+.registration-status > span,
+.action-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--student-color-primary);
+  background: var(--student-color-primary-soft);
+}
+
+.registration-status.is-complete > span {
+  color: var(--student-color-success);
+  background: var(--student-color-success-soft);
+}
+
+.registration-status svg,
+.action-icon svg {
+  width: 25px;
+}
+
+.registration-status h2,
+.registration-card h2 {
+  margin: 4px 0;
+  font-size: 21px;
+}
+
+.registration-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.8fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.registration-main {
+  display: grid;
+  gap: 18px;
+}
+
+.registration-card,
+.registration-state {
+  padding: 24px;
+  border: 1px solid var(--student-color-border);
+  border-radius: 18px;
+  background: var(--student-color-surface);
+  box-shadow: var(--student-shadow-card);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+  margin: 18px 0 0;
+}
+
+.detail-grid div,
+.registration-action-card dl div {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--student-color-divider);
+}
+
+dt {
+  color: var(--student-color-text-secondary);
+  font-size: 13px;
+}
+
+dd {
+  margin: 5px 0 0;
+  font-weight: 750;
+}
+
+.subjects-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.subjects-heading > strong {
+  color: var(--student-color-primary);
+}
+
+.subjects-table {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--student-color-divider);
+  text-align: left;
+}
+
+th {
+  color: var(--student-color-text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+td strong,
+td small {
+  display: block;
+}
+
+td small {
+  margin-top: 4px;
+  color: var(--student-color-text-secondary);
+}
+
+.registration-action-card {
+  position: sticky;
+  top: 18px;
+}
+
+.registration-action-card h2 {
+  margin-top: 16px;
+}
+
+.registration-action-card ul {
+  padding-left: 20px;
+  color: var(--student-color-danger);
+}
+
+.registration-button {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--student-color-text-inverse);
+  background: var(--student-color-primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.registration-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.registration-state {
+  display: grid;
+  min-height: 280px;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.registration-loader {
+  width: 38px;
+  height: 38px;
+  border: 3px solid var(--student-color-border);
+  border-top-color: var(--student-color-primary);
+  border-radius: 50%;
+  animation: registration-spin 0.8s linear infinite;
+}
+
+@keyframes registration-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 850px) {
+  .registration-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-action-card {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .registration-hero {
+    min-height: 160px;
+    padding: 20px;
+  }
+
+  .registration-hero img {
+    width: 100px;
+    height: 100px;
+  }
+
+  .registration-hero h1 {
+    font-size: 29px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-card,
+  .registration-state {
+    padding: 18px;
+  }
+}

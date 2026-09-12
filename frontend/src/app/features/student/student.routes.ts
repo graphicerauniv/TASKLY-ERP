@@ -39,6 +39,14 @@ export const STUDENT_ROUTES: Routes = [
           ),
       },
       {
+        path: 'academics/semester-registration',
+        title: 'Semester Registration | GEU ERP',
+        loadComponent: () =>
+          import('./academics/student-semester-registration.component').then(
+            (component) => component.StudentSemesterRegistrationComponent,
+          ),
+      },
+      {
         path: 'academics/service/:serviceId',
         title: 'Academic Service | GEU ERP',
         loadComponent: () =>

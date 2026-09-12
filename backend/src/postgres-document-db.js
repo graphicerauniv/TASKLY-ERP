@@ -411,35 +411,93 @@ const DOMAIN_TABLES = Object.freeze({
     table: 'exam_buildings',
     columns: ['name', 'isActive'],
   },
-  examLocations: {
-    table: 'exam_locations',
-    columns: ['buildingId', 'buildingName', 'name', 'isActive'],
-  },
   examFloors: {
     table: 'exam_floors',
-    columns: [
-      'buildingId',
-      'buildingName',
-      'locationId',
-      'locationName',
-      'floorNumber',
-      'name',
-      'isActive',
-    ],
+    columns: ['buildingId', 'buildingName', 'floorNumber', 'name', 'isActive'],
   },
   examRooms: {
     table: 'exam_rooms',
     columns: [
       'buildingId',
       'buildingName',
-      'locationId',
-      'locationName',
       'floorId',
       'floorName',
       'floorNumber',
       'roomNumber',
       'name',
       'capacity',
+      'isActive',
+    ],
+  },
+  examSchedules: {
+    table: 'exam_schedules',
+    columns: [
+      'academicSessionId',
+      'academicSession',
+      'universityId',
+      'universityName',
+      'collegeId',
+      'collegeName',
+      'semesterParity',
+      'examType',
+      'examTypeName',
+      'caption',
+      'theoryQuestionViewCount',
+      'practicalQuestionViewCount',
+      'isActive',
+    ],
+  },
+  examShiftSchedules: {
+    table: 'exam_shift_schedules',
+    columns: [
+      'academicSessionId',
+      'academicSession',
+      'universityId',
+      'universityName',
+      'collegeId',
+      'collegeName',
+      'examScheduleId',
+      'examScheduleCaption',
+      'caption',
+      'shiftSerial',
+      'timeFrom',
+      'timeFromMeridiem',
+      'timeFromMinutes',
+      'timeTo',
+      'timeToMeridiem',
+      'timeToMinutes',
+      'isActive',
+    ],
+  },
+  examSubjectSchedules: {
+    table: 'exam_subject_schedules',
+    columns: [
+      'academicSessionId',
+      'academicSession',
+      'universityId',
+      'universityName',
+      'collegeId',
+      'collegeName',
+      'examScheduleId',
+      'examScheduleCaption',
+      'departmentId',
+      'departmentName',
+      'levelId',
+      'levelName',
+      'courseId',
+      'courseName',
+      'semester',
+      'subjectId',
+      'subjectName',
+      'subjectCode',
+      'examDate',
+      'shiftId',
+      'shiftCaption',
+      'shiftSerial',
+      'timeFrom',
+      'timeFromMeridiem',
+      'timeTo',
+      'timeToMeridiem',
       'isActive',
     ],
   },
@@ -455,6 +513,51 @@ const DOMAIN_TABLES = Object.freeze({
       'sectionIds',
       'setId',
       'status',
+    ],
+  },
+  studentSemesterRegistrations: {
+    table: 'student_semester_registrations',
+    columns: [
+      'studentAdmissionId',
+      'studentId',
+      'studentName',
+      'academicSession',
+      'semester',
+      'currentAcademicYear',
+      'universityId',
+      'universityName',
+      'collegeId',
+      'collegeName',
+      'departmentId',
+      'departmentName',
+      'levelId',
+      'levelName',
+      'courseId',
+      'courseName',
+      'groupId',
+      'groupName',
+      'sectionId',
+      'sectionName',
+      'setId',
+      'setName',
+      'subjectIds',
+      'subjectCount',
+      'status',
+      'registeredAt',
+    ],
+  },
+  studentBacklogs: {
+    table: 'student_backlogs',
+    columns: [
+      'studentAdmissionId',
+      'studentId',
+      'academicSession',
+      'semester',
+      'subjectId',
+      'subjectCode',
+      'subjectName',
+      'status',
+      'isActive',
     ],
   },
   studentAcademicAssignmentHistory: {
@@ -932,7 +1035,13 @@ class PostgresCollection {
 
   /** Bounded directory reads: unlike the compatibility cursor, paging happens in SQL. */
   async readPage(filter = {}, { page = 1, pageSize = 25 } = {}) {
-    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100)
+    if (
+      !Number.isSafeInteger(page) ||
+      page < 1 ||
+      !Number.isSafeInteger(pageSize) ||
+      pageSize < 1 ||
+      pageSize > 100
+    )
       throw new Error('Invalid directory pagination.');
     const total = await this.countDocuments(filter);
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -946,7 +1055,10 @@ class PostgresCollection {
        limit $${parameters.length - 1} offset $${parameters.length}`,
       parameters,
     );
-    return { items: result.rows.map((row) => hydrateDocument(row.document)), pagination: { page: currentPage, pageSize, total, totalPages } };
+    return {
+      items: result.rows.map((row) => hydrateDocument(row.document)),
+      pagination: { page: currentPage, pageSize, total, totalPages },
+    };
   }
 
   /** Aggregate totals in PostgreSQL, never from a truncated page of transactions. */

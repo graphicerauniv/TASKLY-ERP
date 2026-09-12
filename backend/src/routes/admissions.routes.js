@@ -72,7 +72,11 @@ admissionsRouter.get(
       if (!value) continue;
       const match = { $regex: escapeRegex(value), $options: 'i' };
       if (documentFields.length === 1) filter[documentFields[0]] = match;
-      else filter.$and = [...(filter.$and || []), { $or: documentFields.map((field) => ({ [field]: match })) }];
+      else
+        filter.$and = [
+          ...(filter.$and || []),
+          { $or: documentFields.map((field) => ({ [field]: match })) },
+        ];
     }
     const [items, total] = await Promise.all([
       db()
@@ -97,11 +101,40 @@ admissionsRouter.get(
       const key = String(ledger.studentAdmissionId);
       kindsByStudent.set(key, [...(kindsByStudent.get(key) || []), ledger.kind]);
     }
+    const registrations = items.length
+      ? await db()
+          .collection('studentSemesterRegistrations')
+          .find({
+            studentAdmissionId: { $in: items.map((item) => item._id) },
+            status: 'registered',
+          })
+          .project({
+            studentAdmissionId: 1,
+            academicSession: 1,
+            semester: 1,
+            registeredAt: 1,
+          })
+          .toArray()
+      : [];
+    const registrationByPeriod = new Map(
+      registrations.map((registration) => [
+        `${registration.studentAdmissionId}:${registration.academicSession}:${registration.semester}`,
+        registration,
+      ]),
+    );
     response.json(
       pageResult(
-        items.map((item) =>
-          serialize({ ...item, feeLedgerKinds: kindsByStudent.get(String(item._id)) || [] }),
-        ),
+        items.map((item) => {
+          const registration = registrationByPeriod.get(
+            `${item._id}:${item.academicSession}:${Number(item.currentSemester || 1)}`,
+          );
+          return serialize({
+            ...item,
+            feeLedgerKinds: kindsByStudent.get(String(item._id)) || [],
+            semesterRegistrationStatus: registration ? 'registered' : 'not_registered',
+            semesterRegisteredAt: registration?.registeredAt || null,
+          });
+        }),
         total,
         page,
         limit,

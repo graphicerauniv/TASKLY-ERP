@@ -93,7 +93,7 @@ export class StudentAcademicsDashboardComponent {
           title: 'Semester Registration',
           description: 'Register for next semester',
           icon: `${ASSET_ROOT}/semester-registration.png`,
-          route: '/student/academics/service/semester-registration',
+          route: '/student/academics/semester-registration',
         },
         {
           id: 'enrollment',

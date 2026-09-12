@@ -6,7 +6,6 @@ import {
   LucideBuilding2,
   LucideDoorOpen,
   LucideLayers3,
-  LucideMapPinned,
   LucidePencil,
   LucidePlus,
   LucideSearch,
@@ -14,11 +13,11 @@ import {
   LucideX,
 } from '@lucide/angular';
 import { ApiService } from '../../../core/api.service';
-import { ExamBuilding, ExamFloor, ExamLocation, ExamRoom } from '../../../core/models';
+import { ExamBuilding, ExamFloor, ExamRoom } from '../../../core/models';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 
-type ExamMasterSection = 'buildings' | 'locations' | 'floors' | 'rooms';
-type ExamMasterRecord = ExamBuilding | ExamLocation | ExamFloor | ExamRoom;
+type ExamMasterSection = 'buildings' | 'floors' | 'rooms';
+type ExamMasterRecord = ExamBuilding | ExamFloor | ExamRoom;
 
 function apiMessage(error: unknown, fallback: string): string {
   if (typeof error === 'object' && error && 'error' in error) {
@@ -37,7 +36,6 @@ function apiMessage(error: unknown, fallback: string): string {
     LucideBuilding2,
     LucideDoorOpen,
     LucideLayers3,
-    LucideMapPinned,
     LucidePencil,
     LucidePlus,
     LucideSearch,
@@ -55,7 +53,6 @@ export class ExamMasterComponent {
 
   readonly section = signal<ExamMasterSection>('buildings');
   readonly buildings = signal<ExamBuilding[]>([]);
-  readonly locations = signal<ExamLocation[]>([]);
   readonly floors = signal<ExamFloor[]>([]);
   readonly rooms = signal<ExamRoom[]>([]);
   readonly loading = signal(true);
@@ -68,7 +65,6 @@ export class ExamMasterComponent {
   search = '';
   name = '';
   buildingId = '';
-  locationId = '';
   floorId = '';
   floorNumber = 0;
   roomNumber = '';
@@ -93,23 +89,19 @@ export class ExamMasterComponent {
   title(): string {
     return {
       buildings: 'Exam buildings',
-      locations: 'Exam locations',
       floors: 'Exam floors',
       rooms: 'Exam rooms',
     }[this.section()];
   }
 
   singular(): string {
-    return { buildings: 'building', locations: 'location', floors: 'floor', rooms: 'room' }[
-      this.section()
-    ];
+    return { buildings: 'building', floors: 'floor', rooms: 'room' }[this.section()];
   }
 
   description(): string {
     return {
       buildings: 'Create the buildings available for examinations.',
-      locations: 'Add locations within each examination building.',
-      floors: 'Configure numbered floors for every building location.',
+      floors: 'Configure numbered floors for every examination building.',
       rooms: 'Maintain examination rooms and their seating capacity.',
     }[this.section()];
   }
@@ -117,7 +109,6 @@ export class ExamMasterComponent {
   records(): ExamMasterRecord[] {
     const source = {
       buildings: this.buildings(),
-      locations: this.locations(),
       floors: this.floors(),
       rooms: this.rooms(),
     }[this.section()] as ExamMasterRecord[];
@@ -127,7 +118,6 @@ export class ExamMasterComponent {
       [
         item.name,
         'buildingName' in item ? item.buildingName : '',
-        'locationName' in item ? item.locationName : '',
         'floorName' in item ? item.floorName : '',
         'roomNumber' in item ? item.roomNumber : '',
       ].some((value) =>
@@ -138,18 +128,9 @@ export class ExamMasterComponent {
     );
   }
 
-  locationsForBuilding(): ExamLocation[] {
-    return this.locations().filter(
-      (item) => item.isActive && (!this.buildingId || item.buildingId === this.buildingId),
-    );
-  }
-
-  floorsForLocation(): ExamFloor[] {
+  floorsForBuilding(): ExamFloor[] {
     return this.floors().filter(
-      (item) =>
-        item.isActive &&
-        (!this.buildingId || item.buildingId === this.buildingId) &&
-        (!this.locationId || item.locationId === this.locationId),
+      (item) => item.isActive && (!this.buildingId || item.buildingId === this.buildingId),
     );
   }
 
@@ -159,7 +140,6 @@ export class ExamMasterComponent {
     this.api.examMasterBootstrap().subscribe({
       next: (data) => {
         this.buildings.set(data.buildings);
-        this.locations.set(data.locations);
         this.floors.set(data.floors);
         this.rooms.set(data.rooms);
         this.loading.set(false);
@@ -182,7 +162,6 @@ export class ExamMasterComponent {
     this.name = record.name;
     this.isActive = record.isActive;
     if ('buildingId' in record) this.buildingId = record.buildingId;
-    if ('locationId' in record) this.locationId = record.locationId;
     if ('floorId' in record) this.floorId = record.floorId;
     if ('floorNumber' in record) this.floorNumber = record.floorNumber;
     if ('roomNumber' in record) this.roomNumber = record.roomNumber;
@@ -197,20 +176,12 @@ export class ExamMasterComponent {
   }
 
   buildingChanged(): void {
-    if (!this.locationsForBuilding().some((item) => item._id === this.locationId)) {
-      this.locationId = '';
-      this.floorId = '';
-    }
-  }
-
-  locationChanged(): void {
-    if (!this.floorsForLocation().some((item) => item._id === this.floorId)) this.floorId = '';
+    if (!this.floorsForBuilding().some((item) => item._id === this.floorId)) this.floorId = '';
   }
 
   valid(): boolean {
     if (!this.name.trim()) return false;
     if (this.section() !== 'buildings' && !this.buildingId) return false;
-    if (['floors', 'rooms'].includes(this.section()) && !this.locationId) return false;
     if (
       this.section() === 'rooms' &&
       (!this.floorId || !this.roomNumber.trim() || this.capacity < 1)
@@ -225,23 +196,19 @@ export class ExamMasterComponent {
     const body =
       this.section() === 'buildings'
         ? common
-        : this.section() === 'locations'
-          ? { ...common, buildingId: this.buildingId }
-          : this.section() === 'floors'
-            ? {
-                ...common,
-                buildingId: this.buildingId,
-                locationId: this.locationId,
-                floorNumber: Number(this.floorNumber),
-              }
-            : {
-                ...common,
-                buildingId: this.buildingId,
-                locationId: this.locationId,
-                floorId: this.floorId,
-                roomNumber: this.roomNumber.trim(),
-                capacity: Number(this.capacity),
-              };
+        : this.section() === 'floors'
+          ? {
+              ...common,
+              buildingId: this.buildingId,
+              floorNumber: Number(this.floorNumber),
+            }
+          : {
+              ...common,
+              buildingId: this.buildingId,
+              floorId: this.floorId,
+              roomNumber: this.roomNumber.trim(),
+              capacity: Number(this.capacity),
+            };
     this.saving.set(true);
     this.error.set('');
     const request = this.editingId()
@@ -277,7 +244,6 @@ export class ExamMasterComponent {
     this.editingId.set(null);
     this.name = '';
     this.buildingId = '';
-    this.locationId = '';
     this.floorId = '';
     this.floorNumber = 0;
     this.roomNumber = '';

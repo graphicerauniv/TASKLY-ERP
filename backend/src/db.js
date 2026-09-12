@@ -6,8 +6,8 @@ import { syncActiveStudent } from './services/active-student.js';
 import { syncAdmissionIdentity } from './services/admission-identity.js';
 
 let database;
-const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-08-v27';
-const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-08-v27';
+const DATABASE_TABLE_VERSION = 'postgres-domain-tables-2026-09-12-v33';
+const DATABASE_INDEX_VERSION = 'postgres-domain-indexes-2026-09-12-v33';
 
 export async function connectDatabase() {
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -81,6 +81,7 @@ export function serialize(document) {
 
 async function ensureIndexes(databaseInstance) {
   await databaseInstance.collection('examBuildings').updateMany({}, { $unset: { code: '' } });
+  await migrateExamMasterHierarchy(databaseInstance);
   await migrateFormDestinations(databaseInstance);
   await migrateFacultyAccounts(databaseInstance);
   await migrateActiveStudents(databaseInstance);
@@ -270,20 +271,53 @@ async function ensureIndexes(databaseInstance) {
     () => databaseInstance.collection('examBuildings').createIndex({ name: 1 }, { unique: true }),
     () =>
       databaseInstance
-        .collection('examLocations')
-        .createIndex({ buildingId: 1, name: 1 }, { unique: true }),
-    () =>
-      databaseInstance
         .collection('examFloors')
-        .createIndex({ locationId: 1, floorNumber: 1 }, { unique: true }),
+        .createIndex({ buildingId: 1, floorNumber: 1 }, { unique: true }),
     () =>
       databaseInstance
         .collection('examRooms')
         .createIndex({ floorId: 1, roomNumber: 1 }, { unique: true }),
     () =>
+      databaseInstance.collection('examSchedules').createIndex(
+        {
+          academicSessionId: 1,
+          collegeId: 1,
+          semesterParity: 1,
+          examType: 1,
+          caption: 1,
+        },
+        { unique: true },
+      ),
+    () =>
+      databaseInstance
+        .collection('examShiftSchedules')
+        .createIndex({ examScheduleId: 1, shiftSerial: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('examSubjectSchedules')
+        .createIndex(
+          { examScheduleId: 1, courseId: 1, semester: 1, subjectId: 1 },
+          { unique: true },
+        ),
+    () =>
+      databaseInstance
+        .collection('examSubjectSchedules')
+        .createIndex(
+          { examScheduleId: 1, courseId: 1, semester: 1, examDate: 1, shiftId: 1 },
+          { unique: true },
+        ),
+    () =>
       databaseInstance
         .collection('studentAcademicAssignments')
         .createIndex({ studentAdmissionId: 1, academicSession: 1, semester: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('studentSemesterRegistrations')
+        .createIndex({ studentAdmissionId: 1, academicSession: 1, semester: 1 }, { unique: true }),
+    () =>
+      databaseInstance
+        .collection('studentBacklogs')
+        .createIndex({ studentAdmissionId: 1, status: 1, isActive: 1 }),
     () =>
       databaseInstance
         .collection('groupSubjectAssignments')
@@ -653,6 +687,22 @@ async function removeLegacyApplicationNumberIndex(databaseInstance) {
   }
   const index = indexes.find((candidate) => candidate.key?.applicationNumber === 1);
   if (index) await databaseInstance.collection('admissions').dropIndex(index.name);
+}
+
+async function migrateExamMasterHierarchy(databaseInstance) {
+  await Promise.all([
+    databaseInstance
+      .collection('examFloors')
+      .updateMany({}, { $unset: { locationId: '', locationName: '' } }),
+    databaseInstance
+      .collection('examRooms')
+      .updateMany({}, { $unset: { locationId: '', locationName: '' } }),
+  ]);
+  const indexes = await databaseInstance.collection('examFloors').indexes();
+  const legacyIndex = indexes.find(
+    (index) => index.key?.locationId === 1 && index.key?.floorNumber === 1,
+  );
+  if (legacyIndex) await databaseInstance.collection('examFloors').dropIndex(legacyIndex.name);
 }
 
 async function migrateHostelFloors(databaseInstance) {

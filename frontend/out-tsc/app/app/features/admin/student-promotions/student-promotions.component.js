@@ -1,5 +1,7 @@
+import { AdminIllustrationComponent } from '../../../shared/ui/admin-illustration/admin-illustration.component';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RecordDrawerComponent, } from '../../../shared/ui/record-drawer/record-drawer.component';
 import { ApiService } from '../../../core/api.service';
 import { AdminPageComponent } from '../../../shared/ui/admin-page/admin-page.component';
 import { CompactActionMenuComponent, } from '../../../shared/ui/compact-action-menu/compact-action-menu.component';
@@ -77,7 +79,7 @@ function StudentPromotionsComponent_Conditional_46_Template(rf, ctx) { if (rf & 
 } }
 function StudentPromotionsComponent_Conditional_61_Template(rf, ctx) { if (rf & 1) {
     const _r6 = i0.ɵɵgetCurrentView();
-    i0.ɵɵelementStart(0, "button", 25);
+    i0.ɵɵelementStart(0, "button", 26);
     i0.ɵɵlistener("click", function StudentPromotionsComponent_Conditional_61_Template_button_click_0_listener() { i0.ɵɵrestoreView(_r6); const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.promoteSelected()); });
     i0.ɵɵtext(1);
     i0.ɵɵelementEnd();
@@ -89,7 +91,7 @@ function StudentPromotionsComponent_Conditional_61_Template(rf, ctx) { if (rf & 
 } }
 function StudentPromotionsComponent_For_84_Conditional_2_Template(rf, ctx) { if (rf & 1) {
     const _r7 = i0.ɵɵgetCurrentView();
-    i0.ɵɵelementStart(0, "input", 30);
+    i0.ɵɵelementStart(0, "input", 31);
     i0.ɵɵlistener("change", function StudentPromotionsComponent_For_84_Conditional_2_Template_input_change_0_listener($event) { i0.ɵɵrestoreView(_r7); const item_r8 = i0.ɵɵnextContext().$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.toggle(item_r8._id, $event.target.checked)); });
     i0.ɵɵelementEnd();
 } if (rf & 2) {
@@ -100,7 +102,7 @@ function StudentPromotionsComponent_For_84_Conditional_2_Template(rf, ctx) { if 
 } }
 function StudentPromotionsComponent_For_84_Conditional_21_Template(rf, ctx) { if (rf & 1) {
     const _r9 = i0.ɵɵgetCurrentView();
-    i0.ɵɵelementStart(0, "erp-compact-action-menu", 31);
+    i0.ɵɵelementStart(0, "erp-compact-action-menu", 32);
     i0.ɵɵlistener("selected", function StudentPromotionsComponent_For_84_Conditional_21_Template_erp_compact_action_menu_selected_0_listener($event) { i0.ɵɵrestoreView(_r9); const item_r8 = i0.ɵɵnextContext().$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.handleRowAction($event, item_r8)); });
     i0.ɵɵelementEnd();
 } if (rf & 2) {
@@ -108,11 +110,17 @@ function StudentPromotionsComponent_For_84_Conditional_21_Template(rf, ctx) { if
     i0.ɵɵproperty("items", ctx_r0.pendingActions);
 } }
 function StudentPromotionsComponent_For_84_Conditional_22_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵtext(0, " \u2014 ");
+    const _r10 = i0.ɵɵgetCurrentView();
+    i0.ɵɵelementStart(0, "erp-compact-action-menu", 32);
+    i0.ɵɵlistener("selected", function StudentPromotionsComponent_For_84_Conditional_22_Template_erp_compact_action_menu_selected_0_listener($event) { i0.ɵɵrestoreView(_r10); const item_r8 = i0.ɵɵnextContext().$implicit; const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.handleRowAction($event, item_r8)); });
+    i0.ɵɵelementEnd();
+} if (rf & 2) {
+    const ctx_r0 = i0.ɵɵnextContext(2);
+    i0.ɵɵproperty("items", ctx_r0.previewActions);
 } }
 function StudentPromotionsComponent_For_84_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵelementStart(0, "tr")(1, "td");
-    i0.ɵɵconditionalCreate(2, StudentPromotionsComponent_For_84_Conditional_2_Template, 1, 2, "input", 26);
+    i0.ɵɵconditionalCreate(2, StudentPromotionsComponent_For_84_Conditional_2_Template, 1, 2, "input", 27);
     i0.ɵɵelementEnd();
     i0.ɵɵelementStart(3, "td")(4, "strong");
     i0.ɵɵtext(5);
@@ -129,14 +137,14 @@ function StudentPromotionsComponent_For_84_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵelementStart(12, "td");
     i0.ɵɵtext(13);
     i0.ɵɵelementEnd();
-    i0.ɵɵelementStart(14, "td")(15, "span", 27);
+    i0.ɵɵelementStart(14, "td")(15, "span", 28);
     i0.ɵɵtext(16);
     i0.ɵɵelementEnd()();
-    i0.ɵɵelementStart(17, "td")(18, "span", 27);
+    i0.ɵɵelementStart(17, "td")(18, "span", 28);
     i0.ɵɵtext(19);
     i0.ɵɵelementEnd()();
-    i0.ɵɵelementStart(20, "td", 28);
-    i0.ɵɵconditionalCreate(21, StudentPromotionsComponent_For_84_Conditional_21_Template, 1, 1, "erp-compact-action-menu", 29)(22, StudentPromotionsComponent_For_84_Conditional_22_Template, 1, 0);
+    i0.ɵɵelementStart(20, "td", 29);
+    i0.ɵɵconditionalCreate(21, StudentPromotionsComponent_For_84_Conditional_21_Template, 1, 1, "erp-compact-action-menu", 30)(22, StudentPromotionsComponent_For_84_Conditional_22_Template, 1, 1, "erp-compact-action-menu", 30);
     i0.ɵɵelementEnd()();
 } if (rf & 2) {
     const item_r8 = ctx.$implicit;
@@ -160,14 +168,57 @@ function StudentPromotionsComponent_For_84_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵadvance(2);
     i0.ɵɵconditional(item_r8.status === "pending" ? 21 : 22);
 } }
+function StudentPromotionsComponent_ForEmpty_85_Conditional_2_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelement(0, "erp-admin-illustration", 34);
+} }
 function StudentPromotionsComponent_ForEmpty_85_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "tr")(1, "td", 32);
-    i0.ɵɵtext(2);
+    i0.ɵɵelementStart(0, "tr")(1, "td", 33);
+    i0.ɵɵconditionalCreate(2, StudentPromotionsComponent_ForEmpty_85_Conditional_2_Template, 1, 0, "erp-admin-illustration", 34);
+    i0.ɵɵtext(3);
     i0.ɵɵelementEnd()();
 } if (rf & 2) {
     const ctx_r0 = i0.ɵɵnextContext();
     i0.ɵɵadvance(2);
+    i0.ɵɵconditional(!ctx_r0.loading() ? 2 : -1);
+    i0.ɵɵadvance();
     i0.ɵɵtextInterpolate1(" ", ctx_r0.loading() ? "Loading student promotions\u2026" : "No matching student promotions.", " ");
+} }
+function StudentPromotionsComponent_Conditional_86_Conditional_1_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "p", 36);
+    i0.ɵɵtext(1);
+    i0.ɵɵelementEnd();
+} if (rf & 2) {
+    const ctx_r0 = i0.ɵɵnextContext(2);
+    i0.ɵɵadvance();
+    i0.ɵɵtextInterpolate(ctx_r0.error());
+} }
+function StudentPromotionsComponent_Conditional_86_Conditional_2_Template(rf, ctx) { if (rf & 1) {
+    const _r12 = i0.ɵɵgetCurrentView();
+    i0.ɵɵelementStart(0, "button", 38);
+    i0.ɵɵlistener("click", function StudentPromotionsComponent_Conditional_86_Conditional_2_Template_button_click_0_listener() { i0.ɵɵrestoreView(_r12); const item_r13 = i0.ɵɵnextContext(); const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.promoteOne(item_r13)); });
+    i0.ɵɵtext(1);
+    i0.ɵɵelementEnd();
+} if (rf & 2) {
+    const ctx_r0 = i0.ɵɵnextContext(2);
+    i0.ɵɵproperty("disabled", ctx_r0.saving());
+    i0.ɵɵadvance();
+    i0.ɵɵtextInterpolate1(" ", ctx_r0.saving() ? "Promoting\u2026" : "Promote student", " ");
+} }
+function StudentPromotionsComponent_Conditional_86_Template(rf, ctx) { if (rf & 1) {
+    const _r11 = i0.ɵɵgetCurrentView();
+    i0.ɵɵelementStart(0, "erp-record-drawer", 35);
+    i0.ɵɵlistener("closed", function StudentPromotionsComponent_Conditional_86_Template_erp_record_drawer_closed_0_listener() { i0.ɵɵrestoreView(_r11); const ctx_r0 = i0.ɵɵnextContext(); return i0.ɵɵresetView(ctx_r0.preview.set(null)); });
+    i0.ɵɵconditionalCreate(1, StudentPromotionsComponent_Conditional_86_Conditional_1_Template, 2, 1, "p", 36);
+    i0.ɵɵconditionalCreate(2, StudentPromotionsComponent_Conditional_86_Conditional_2_Template, 2, 2, "button", 37);
+    i0.ɵɵelementEnd();
+} if (rf & 2) {
+    const item_r13 = ctx;
+    const ctx_r0 = i0.ɵɵnextContext();
+    i0.ɵɵproperty("open", true)("title", item_r13.studentName)("fields", ctx_r0.detailFields(item_r13))("busy", ctx_r0.saving());
+    i0.ɵɵadvance();
+    i0.ɵɵconditional(ctx_r0.error() ? 1 : -1);
+    i0.ɵɵadvance();
+    i0.ɵɵconditional(item_r13.status === "pending" ? 2 : -1);
 } }
 export class StudentPromotionsComponent {
     api = inject(ApiService);
@@ -179,8 +230,23 @@ export class StudentPromotionsComponent {
     message = signal('', ...(ngDevMode ? [{ debugName: "message" }] : /* istanbul ignore next */ []));
     error = signal('', ...(ngDevMode ? [{ debugName: "error" }] : /* istanbul ignore next */ []));
     pendingActions = [
+        { id: 'preview', label: 'View promotion details', icon: 'view' },
         { id: 'promote', label: 'Promote student', icon: 'transfer' },
     ];
+    previewActions = [
+        { id: 'preview', label: 'View promotion details', icon: 'view' },
+    ];
+    preview = signal(null, ...(ngDevMode ? [{ debugName: "preview" }] : /* istanbul ignore next */ []));
+    detailFields(item) {
+        return [
+            { label: 'Student ID', value: item.studentId },
+            { label: 'Course', value: item.courseName },
+            { label: 'Academic session', value: item.academicSession },
+            { label: 'Current period', value: this.currentPeriod(item) },
+            { label: 'Prepared fee period', value: item.targetPeriodLabel },
+            { label: 'Promotion status', value: item.status },
+        ];
+    }
     mode = 'semester';
     status = 'pending';
     search = '';
@@ -252,8 +318,8 @@ export class StudentPromotionsComponent {
         this.promote([item._id]);
     }
     handleRowAction(action, item) {
-        if (action === 'promote')
-            this.promoteOne(item);
+        if (action === 'preview' || action === 'promote')
+            this.preview.set(item);
     }
     promoteSelected() {
         if (!this.selected().size) {
@@ -280,8 +346,10 @@ export class StudentPromotionsComponent {
                 else
                     this.error.set(failures.join(' ') || 'No students were promoted.');
                 this.saving.set(false);
-                if (promoted)
+                if (promoted) {
+                    this.preview.set(null);
                     this.load();
+                }
             },
             error: (error) => {
                 this.error.set(error.error?.message || 'Could not promote the selected students.');
@@ -290,7 +358,7 @@ export class StudentPromotionsComponent {
         });
     }
     static ɵfac = function StudentPromotionsComponent_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || StudentPromotionsComponent)(); };
-    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: StudentPromotionsComponent, selectors: [["erp-student-promotions"]], decls: 86, vars: 21, consts: [["eyebrow", "Admissions", "title", "Student Promotion", "description", "Promote students only after their next semester or year fee period has been prepared.", "variant", "minimal", "layout", "collection"], ["page-actions", "", 1, "erp-table-toolbar__actions"], ["type", "button", 1, "erp-button", 3, "click"], [1, "erp-notice", "erp-notice--success"], [1, "erp-notice", "erp-notice--error"], [1, "erp-card", "erp-card--padded"], [1, "erp-form-grid"], ["type", "search", "placeholder", "Student name or ID", 1, "erp-control", 3, "ngModelChange", "ngModel"], [1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", "pending"], ["value", "promoted"], ["value", "cancelled"], ["value", "all"], ["placeholder", "e.g. 2026-2027", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", ""], [3, "value"], [3, "ngValue"], [1, "erp-table-toolbar__actions"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "click"], ["type", "button", 1, "erp-button", "erp-button--secondary", 3, "click"], [1, "erp-card", "erp-table-shell"], [1, "erp-table-toolbar"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "disabled"], [1, "erp-table-shell__scroll"], ["type", "checkbox", "aria-label", "Select all pending promotions", 3, "change", "checked"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "click", "disabled"], ["type", "checkbox", 3, "checked"], [1, "erp-status"], [1, "erp-table-shell__actions"], [3, "items"], ["type", "checkbox", 3, "change", "checked"], [3, "selected", "items"], ["colspan", "8", 1, "erp-empty-state"]], template: function StudentPromotionsComponent_Template(rf, ctx) { if (rf & 1) {
+    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: StudentPromotionsComponent, selectors: [["erp-student-promotions"]], decls: 87, vars: 22, consts: [["eyebrow", "Admissions", "title", "Student Promotion", "description", "Promote students only after their next semester or year fee period has been prepared.", "variant", "compact", "layout", "collection"], ["page-actions", "", 1, "erp-table-toolbar__actions"], ["type", "button", 1, "erp-button", 3, "click"], [1, "erp-notice", "erp-notice--success"], [1, "erp-notice", "erp-notice--error"], [1, "erp-card", "erp-card--padded"], [1, "erp-form-grid"], ["type", "search", "placeholder", "Student name or ID", 1, "erp-control", 3, "ngModelChange", "ngModel"], [1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", "pending"], ["value", "promoted"], ["value", "cancelled"], ["value", "all"], ["placeholder", "e.g. 2026-2027", 1, "erp-control", 3, "ngModelChange", "ngModel"], ["value", ""], [3, "value"], [3, "ngValue"], [1, "erp-table-toolbar__actions"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "click"], ["type", "button", 1, "erp-button", "erp-button--secondary", 3, "click"], [1, "erp-card", "erp-table-shell"], [1, "erp-table-toolbar"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "disabled"], [1, "erp-table-shell__scroll"], ["type", "checkbox", "aria-label", "Select all pending promotions", 3, "change", "checked"], ["description", "Review the student\u2019s academic progression.", "illustration", "addStudent", "guidance", "Promotion moves the student into the prepared semester or academic year. Review the current and target periods before continuing.", 3, "open", "title", "fields", "busy"], ["type", "button", 1, "erp-button", "erp-button--primary", 3, "click", "disabled"], ["type", "checkbox", 3, "checked"], [1, "erp-status"], [1, "erp-table-shell__actions"], [3, "items"], ["type", "checkbox", 3, "change", "checked"], [3, "selected", "items"], ["colspan", "8", 1, "erp-empty-state"], ["kind", "addStudent", "size", "compact"], ["description", "Review the student\u2019s academic progression.", "illustration", "addStudent", "guidance", "Promotion moves the student into the prepared semester or academic year. Review the current and target periods before continuing.", 3, "closed", "open", "title", "fields", "busy"], ["role", "alert", 1, "erp-notice", "erp-notice--error"], ["drawer-actions", "", "type", "button", 1, "erp-button", "erp-button--primary", 3, "disabled"], ["drawer-actions", "", "type", "button", 1, "erp-button", "erp-button--primary", 3, "click", "disabled"]], template: function StudentPromotionsComponent_Template(rf, ctx) { if (rf & 1) {
             i0.ɵɵelementStart(0, "erp-admin-page", 0)(1, "div", 1)(2, "button", 2);
             i0.ɵɵlistener("click", function StudentPromotionsComponent_Template_button_click_2_listener() { return ctx.changeMode("semester"); });
             i0.ɵɵtext(3, " Semester-wise ");
@@ -395,9 +463,11 @@ export class StudentPromotionsComponent {
             i0.ɵɵtext(81, "Action");
             i0.ɵɵelementEnd()()();
             i0.ɵɵelementStart(82, "tbody");
-            i0.ɵɵrepeaterCreate(83, StudentPromotionsComponent_For_84_Template, 23, 9, "tr", null, _forTrack0, false, StudentPromotionsComponent_ForEmpty_85_Template, 3, 1, "tr");
+            i0.ɵɵrepeaterCreate(83, StudentPromotionsComponent_For_84_Template, 23, 9, "tr", null, _forTrack0, false, StudentPromotionsComponent_ForEmpty_85_Template, 4, 2, "tr");
             i0.ɵɵelementEnd()()()()();
+            i0.ɵɵconditionalCreate(86, StudentPromotionsComponent_Conditional_86_Template, 3, 6, "erp-record-drawer", 25);
         } if (rf & 2) {
+            let tmp_19_0;
             i0.ɵɵadvance(2);
             i0.ɵɵclassProp("erp-button--primary", ctx.mode === "semester")("erp-button--secondary", ctx.mode !== "semester");
             i0.ɵɵadvance(2);
@@ -432,16 +502,22 @@ export class StudentPromotionsComponent {
             i0.ɵɵproperty("checked", ctx.selected().size > 0 && ctx.selected().size === ctx.items().length);
             i0.ɵɵadvance(16);
             i0.ɵɵrepeater(ctx.items());
-        } }, dependencies: [AdminPageComponent,
+            i0.ɵɵadvance(3);
+            i0.ɵɵconditional((tmp_19_0 = ctx.preview()) ? 86 : -1, tmp_19_0);
+        } }, dependencies: [AdminIllustrationComponent,
+            RecordDrawerComponent,
+            AdminPageComponent,
             CompactActionMenuComponent,
             FormsModule, i1.NgSelectOption, i1.ɵNgSelectMultipleOption, i1.DefaultValueAccessor, i1.SelectControlValueAccessor, i1.NgControlStatus, i1.NgModel], encapsulation: 2, changeDetection: 0 });
 }
 (() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassMetadata(StudentPromotionsComponent, [{
         type: Component,
         args: [{ selector: 'erp-student-promotions', imports: [
+                    AdminIllustrationComponent,
+                    RecordDrawerComponent,
                     AdminPageComponent,
                     CompactActionMenuComponent,
                     FormsModule,
-                ], changeDetection: ChangeDetectionStrategy.OnPush, template: "<erp-admin-page\n  eyebrow=\"Admissions\"\n  title=\"Student Promotion\"\n  description=\"Promote students only after their next semester or year fee period has been prepared.\"\n  variant=\"minimal\"\n  layout=\"collection\"\n>\n  <div page-actions class=\"erp-table-toolbar__actions\">\n    <button\n      class=\"erp-button\"\n      [class.erp-button--primary]=\"mode === 'semester'\"\n      [class.erp-button--secondary]=\"mode !== 'semester'\"\n      type=\"button\"\n      (click)=\"changeMode('semester')\"\n    >\n      Semester-wise\n    </button>\n    <button\n      class=\"erp-button\"\n      [class.erp-button--primary]=\"mode === 'year'\"\n      [class.erp-button--secondary]=\"mode !== 'year'\"\n      type=\"button\"\n      (click)=\"changeMode('year')\"\n    >\n      Year-wise\n    </button>\n  </div>\n\n  @if (message()) {\n    <p class=\"erp-notice erp-notice--success\">{{ message() }}</p>\n  }\n  @if (error()) {\n    <p class=\"erp-notice erp-notice--error\">{{ error() }}</p>\n  }\n\n  <section class=\"erp-card erp-card--padded\">\n    <div class=\"erp-form-grid\">\n      <label\n        ><span>Search</span\n        ><input\n          class=\"erp-control\"\n          type=\"search\"\n          placeholder=\"Student name or ID\"\n          [(ngModel)]=\"search\"\n      /></label>\n      <label\n        ><span>Status</span\n        ><select class=\"erp-control\" [(ngModel)]=\"status\">\n          <option value=\"pending\">Pending</option>\n          <option value=\"promoted\">Promoted</option>\n          <option value=\"cancelled\">Cancelled</option>\n          <option value=\"all\">All</option>\n        </select></label\n      >\n      <label\n        ><span>Session</span\n        ><input class=\"erp-control\" placeholder=\"e.g. 2026-2027\" [(ngModel)]=\"academicSession\"\n      /></label>\n      <label\n        ><span>Course</span\n        ><select class=\"erp-control\" [(ngModel)]=\"courseId\">\n          <option value=\"\">All courses</option>\n          @for (course of courses(); track course._id) {\n            <option [value]=\"course._id\">{{ course.name }}</option>\n          }\n        </select></label\n      >\n      <label\n        ><span>Current year</span\n        ><select class=\"erp-control\" [(ngModel)]=\"currentAcademicYear\">\n          <option [ngValue]=\"null\">All years</option>\n          @for (year of academicYears; track year) {\n            <option [ngValue]=\"year\">Year {{ year }}</option>\n          }\n        </select></label\n      >\n      @if (mode === 'semester') {\n        <label\n          ><span>Current semester</span\n          ><select class=\"erp-control\" [(ngModel)]=\"currentSemester\">\n            <option [ngValue]=\"null\">All semesters</option>\n            @for (semester of semesters; track semester) {\n              <option [ngValue]=\"semester\">Semester {{ semester }}</option>\n            }\n          </select></label\n        >\n      }\n    </div>\n    <div class=\"erp-table-toolbar__actions\">\n      <button class=\"erp-button erp-button--primary\" type=\"button\" (click)=\"load()\">\n        Apply filters\n      </button>\n      <button class=\"erp-button erp-button--secondary\" type=\"button\" (click)=\"resetFilters()\">\n        Reset\n      </button>\n    </div>\n  </section>\n\n  <section class=\"erp-card erp-table-shell\">\n    <div class=\"erp-table-toolbar\">\n      <div>\n        <h2>\n          Student records <small>{{ items().length }}</small>\n        </h2>\n        <p>Creating a fee does not change the academic period. Promotion happens only here.</p>\n      </div>\n      @if (status === 'pending' || status === 'all') {\n        <button\n          class=\"erp-button erp-button--primary\"\n          type=\"button\"\n          [disabled]=\"saving()\"\n          (click)=\"promoteSelected()\"\n        >\n          {{ saving() ? 'Promoting\u2026' : 'Promote selected' }}\n        </button>\n      }\n    </div>\n    <div class=\"erp-table-shell__scroll\">\n      <table>\n        <thead>\n          <tr>\n            <th>\n              <input\n                type=\"checkbox\"\n                aria-label=\"Select all pending promotions\"\n                [checked]=\"selected().size > 0 && selected().size === items().length\"\n                (change)=\"toggleAll($any($event.target).checked)\"\n              />\n            </th>\n            <th>Student</th>\n            <th>Course</th>\n            <th>Session</th>\n            <th>Current period</th>\n            <th>Prepared fee period</th>\n            <th>Status</th>\n            <th>Action</th>\n          </tr>\n        </thead>\n        <tbody>\n          @for (item of items(); track item._id) {\n            <tr>\n              <td>\n                @if (item.status === 'pending') {\n                  <input\n                    type=\"checkbox\"\n                    [checked]=\"selected().has(item._id)\"\n                    [attr.aria-label]=\"'Select ' + item.studentName\"\n                    (change)=\"toggle(item._id, $any($event.target).checked)\"\n                  />\n                }\n              </td>\n              <td>\n                <strong>{{ item.studentName }}</strong\n                ><small>{{ item.studentId }}</small>\n              </td>\n              <td>{{ item.courseName }}</td>\n              <td>{{ item.academicSession }}</td>\n              <td>{{ currentPeriod(item) }}</td>\n              <td>\n                <span class=\"erp-status\">{{ item.targetPeriodLabel }}</span>\n              </td>\n              <td>\n                <span class=\"erp-status\">{{ item.status }}</span>\n              </td>\n              <td class=\"erp-table-shell__actions\">\n                @if (item.status === 'pending') {\n                  <erp-compact-action-menu\n                    [items]=\"pendingActions\"\n                    (selected)=\"handleRowAction($event, item)\"\n                  />\n                } @else {\n                  \u2014\n                }\n              </td>\n            </tr>\n          } @empty {\n            <tr>\n              <td colspan=\"8\" class=\"erp-empty-state\">\n                {{ loading() ? 'Loading student promotions\u2026' : 'No matching student promotions.' }}\n              </td>\n            </tr>\n          }\n        </tbody>\n      </table>\n    </div>\n  </section>\n</erp-admin-page>\n" }]
+                ], changeDetection: ChangeDetectionStrategy.OnPush, template: "<erp-admin-page\n  eyebrow=\"Admissions\"\n  title=\"Student Promotion\"\n  description=\"Promote students only after their next semester or year fee period has been prepared.\"\n  variant=\"compact\"\n  layout=\"collection\"\n>\n  <div page-actions class=\"erp-table-toolbar__actions\">\n    <button\n      class=\"erp-button\"\n      [class.erp-button--primary]=\"mode === 'semester'\"\n      [class.erp-button--secondary]=\"mode !== 'semester'\"\n      type=\"button\"\n      (click)=\"changeMode('semester')\"\n    >\n      Semester-wise\n    </button>\n    <button\n      class=\"erp-button\"\n      [class.erp-button--primary]=\"mode === 'year'\"\n      [class.erp-button--secondary]=\"mode !== 'year'\"\n      type=\"button\"\n      (click)=\"changeMode('year')\"\n    >\n      Year-wise\n    </button>\n  </div>\n\n  @if (message()) {\n    <p class=\"erp-notice erp-notice--success\">{{ message() }}</p>\n  }\n  @if (error()) {\n    <p class=\"erp-notice erp-notice--error\">{{ error() }}</p>\n  }\n\n  <section class=\"erp-card erp-card--padded\">\n    <div class=\"erp-form-grid\">\n      <label\n        ><span>Search</span\n        ><input\n          class=\"erp-control\"\n          type=\"search\"\n          placeholder=\"Student name or ID\"\n          [(ngModel)]=\"search\"\n      /></label>\n      <label\n        ><span>Status</span\n        ><select class=\"erp-control\" [(ngModel)]=\"status\">\n          <option value=\"pending\">Pending</option>\n          <option value=\"promoted\">Promoted</option>\n          <option value=\"cancelled\">Cancelled</option>\n          <option value=\"all\">All</option>\n        </select></label\n      >\n      <label\n        ><span>Session</span\n        ><input class=\"erp-control\" placeholder=\"e.g. 2026-2027\" [(ngModel)]=\"academicSession\"\n      /></label>\n      <label\n        ><span>Course</span\n        ><select class=\"erp-control\" [(ngModel)]=\"courseId\">\n          <option value=\"\">All courses</option>\n          @for (course of courses(); track course._id) {\n            <option [value]=\"course._id\">{{ course.name }}</option>\n          }\n        </select></label\n      >\n      <label\n        ><span>Current year</span\n        ><select class=\"erp-control\" [(ngModel)]=\"currentAcademicYear\">\n          <option [ngValue]=\"null\">All years</option>\n          @for (year of academicYears; track year) {\n            <option [ngValue]=\"year\">Year {{ year }}</option>\n          }\n        </select></label\n      >\n      @if (mode === 'semester') {\n        <label\n          ><span>Current semester</span\n          ><select class=\"erp-control\" [(ngModel)]=\"currentSemester\">\n            <option [ngValue]=\"null\">All semesters</option>\n            @for (semester of semesters; track semester) {\n              <option [ngValue]=\"semester\">Semester {{ semester }}</option>\n            }\n          </select></label\n        >\n      }\n    </div>\n    <div class=\"erp-table-toolbar__actions\">\n      <button class=\"erp-button erp-button--primary\" type=\"button\" (click)=\"load()\">\n        Apply filters\n      </button>\n      <button class=\"erp-button erp-button--secondary\" type=\"button\" (click)=\"resetFilters()\">\n        Reset\n      </button>\n    </div>\n  </section>\n\n  <section class=\"erp-card erp-table-shell\">\n    <div class=\"erp-table-toolbar\">\n      <div>\n        <h2>\n          Student records <small>{{ items().length }}</small>\n        </h2>\n        <p>Creating a fee does not change the academic period. Promotion happens only here.</p>\n      </div>\n      @if (status === 'pending' || status === 'all') {\n        <button\n          class=\"erp-button erp-button--primary\"\n          type=\"button\"\n          [disabled]=\"saving()\"\n          (click)=\"promoteSelected()\"\n        >\n          {{ saving() ? 'Promoting\u2026' : 'Promote selected' }}\n        </button>\n      }\n    </div>\n    <div class=\"erp-table-shell__scroll\">\n      <table>\n        <thead>\n          <tr>\n            <th>\n              <input\n                type=\"checkbox\"\n                aria-label=\"Select all pending promotions\"\n                [checked]=\"selected().size > 0 && selected().size === items().length\"\n                (change)=\"toggleAll($any($event.target).checked)\"\n              />\n            </th>\n            <th>Student</th>\n            <th>Course</th>\n            <th>Session</th>\n            <th>Current period</th>\n            <th>Prepared fee period</th>\n            <th>Status</th>\n            <th>Action</th>\n          </tr>\n        </thead>\n        <tbody>\n          @for (item of items(); track item._id) {\n            <tr>\n              <td>\n                @if (item.status === 'pending') {\n                  <input\n                    type=\"checkbox\"\n                    [checked]=\"selected().has(item._id)\"\n                    [attr.aria-label]=\"'Select ' + item.studentName\"\n                    (change)=\"toggle(item._id, $any($event.target).checked)\"\n                  />\n                }\n              </td>\n              <td>\n                <strong>{{ item.studentName }}</strong\n                ><small>{{ item.studentId }}</small>\n              </td>\n              <td>{{ item.courseName }}</td>\n              <td>{{ item.academicSession }}</td>\n              <td>{{ currentPeriod(item) }}</td>\n              <td>\n                <span class=\"erp-status\">{{ item.targetPeriodLabel }}</span>\n              </td>\n              <td>\n                <span class=\"erp-status\">{{ item.status }}</span>\n              </td>\n              <td class=\"erp-table-shell__actions\">\n                @if (item.status === 'pending') {\n                  <erp-compact-action-menu\n                    [items]=\"pendingActions\"\n                    (selected)=\"handleRowAction($event, item)\"\n                  />\n                } @else {\n                  <erp-compact-action-menu\n                    [items]=\"previewActions\"\n                    (selected)=\"handleRowAction($event, item)\"\n                  />\n                }\n              </td>\n            </tr>\n          } @empty {\n            <tr>\n              <td colspan=\"8\" class=\"erp-empty-state\">\n                @if (!loading()) {\n                  <erp-admin-illustration kind=\"addStudent\" size=\"compact\" />\n                }\n                {{ loading() ? 'Loading student promotions\u2026' : 'No matching student promotions.' }}\n              </td>\n            </tr>\n          }\n        </tbody>\n      </table>\n    </div>\n  </section>\n</erp-admin-page>\n\n@if (preview(); as item) {\n  <erp-record-drawer\n    [open]=\"true\"\n    [title]=\"item.studentName\"\n    description=\"Review the student\u2019s academic progression.\"\n    [fields]=\"detailFields(item)\"\n    [busy]=\"saving()\"\n    illustration=\"addStudent\"\n    guidance=\"Promotion moves the student into the prepared semester or academic year. Review the current and target periods before continuing.\"\n    (closed)=\"preview.set(null)\"\n  >\n    @if (error()) {\n      <p class=\"erp-notice erp-notice--error\" role=\"alert\">{{ error() }}</p>\n    }\n    @if (item.status === 'pending') {\n      <button\n        drawer-actions\n        class=\"erp-button erp-button--primary\"\n        type=\"button\"\n        [disabled]=\"saving()\"\n        (click)=\"promoteOne(item)\"\n      >\n        {{ saving() ? 'Promoting\u2026' : 'Promote student' }}\n      </button>\n    }\n  </erp-record-drawer>\n}\n" }]
     }], () => [], null); })();
-(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(StudentPromotionsComponent, { className: "StudentPromotionsComponent", filePath: "frontend/src/app/features/admin/student-promotions/student-promotions.component.ts", lineNumber: 21 }); })();
+(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(StudentPromotionsComponent, { className: "StudentPromotionsComponent", filePath: "frontend/src/app/features/admin/student-promotions/student-promotions.component.ts", lineNumber: 28 }); })();

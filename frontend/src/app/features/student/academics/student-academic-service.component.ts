@@ -190,7 +190,12 @@ export class StudentAcademicServiceComponent {
 
   constructor() {
     this.route.paramMap.subscribe((params) => {
-      const definition = SERVICES[params.get('serviceId') || ''];
+      const serviceId = params.get('serviceId') || '';
+      if (serviceId === 'semester-registration') {
+        void this.router.navigateByUrl('/student/academics/semester-registration');
+        return;
+      }
+      const definition = SERVICES[serviceId];
       if (!definition) {
         void this.router.navigateByUrl('/student/academics');
         return;

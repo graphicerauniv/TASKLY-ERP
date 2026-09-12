@@ -1,0 +1,120 @@
+<erp-admin-page
+  eyebrow="Exam"
+  title="Eligible students"
+  description="Determine eligibility from semester registration, assigned subjects, fee balance and active backlogs."
+  variant="compact"
+  layout="collection"
+>
+  @if (error()) {
+    <p class="erp-notice erp-notice--error" role="alert">{{ error() }}</p>
+  }
+
+  <section class="erp-card erp-card--padded">
+    <div class="erp-form-grid">
+      <label>
+        <span>Scheduled subject *</span>
+        <select
+          class="erp-control"
+          [(ngModel)]="subjectScheduleId"
+          [disabled]="loading() || checking()"
+          (ngModelChange)="checkEligibility()"
+        >
+          <option value="">Select scheduled subject</option>
+          @for (item of schedules(); track item._id) {
+            <option [value]="item._id">
+              {{ item.subjectName }} · {{ item.courseName }} · Semester {{ item.semester }} ·
+              {{ item.examDate }} · Shift {{ item.shiftSerial }}
+            </option>
+          }
+        </select>
+      </label>
+    </div>
+  </section>
+
+  @if (result(); as data) {
+    <section
+      class="erp-academic-metric-strip erp-academic-metric-strip--three"
+      aria-label="Eligibility summary"
+    >
+      <button class="erp-academic-metric" type="button" (click)="setFilter('all')">
+        <span
+          ><small>Evaluated</small><strong>{{ data.summary.total }}</strong></span
+        >
+      </button>
+      <button class="erp-academic-metric" type="button" (click)="setFilter('eligible')">
+        <span
+          ><small>Eligible</small><strong>{{ data.summary.eligible }}</strong></span
+        >
+      </button>
+      <button class="erp-academic-metric" type="button" (click)="setFilter('ineligible')">
+        <span
+          ><small>Ineligible</small><strong>{{ data.summary.ineligible }}</strong></span
+        >
+      </button>
+    </section>
+
+    <section class="erp-card erp-table-shell">
+      <div class="erp-table-toolbar">
+        <div>
+          <h2>{{ data.schedule.subjectName }}</h2>
+          <p>
+            {{ data.schedule.courseName }} · Semester {{ data.schedule.semester }} ·
+            {{ data.schedule.examDate }}
+          </p>
+        </div>
+      </div>
+      <div class="erp-table-shell__scroll">
+        <table [attr.aria-busy]="checking()">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Semester registration</th>
+              <th>Assigned subject</th>
+              <th>Fee balance</th>
+              <th>Backlogs</th>
+              <th>Eligibility</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of visibleStudents(); track student.studentAdmissionId) {
+              <tr>
+                <td>
+                  <strong>{{ student.studentName }}</strong>
+                  <small>{{ student.studentId || 'Student ID unavailable' }}</small>
+                </td>
+                <td>
+                  <span class="erp-status" [class.erp-status--draft]="!student.semesterRegistered">
+                    {{ student.semesterRegistered ? 'Completed' : 'Incomplete' }}
+                  </span>
+                </td>
+                <td>{{ student.subjectAssigned ? 'Assigned' : 'Not assigned' }}</td>
+                <td>{{ student.outstandingBalance | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                <td>{{ student.backlogCount }}</td>
+                <td>
+                  <span class="erp-status" [class.erp-status--draft]="!student.eligible">
+                    {{ student.eligible ? 'Eligible' : 'Ineligible' }}
+                  </span>
+                  @if (student.reasons.length) {
+                    <small>{{ student.reasons.join(' ') }}</small>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="erp-empty-state">
+                  <erp-admin-illustration kind="noResults" size="compact" />
+                  <p>No students match this eligibility view.</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  } @else if (!loading() && !checking()) {
+    <section class="erp-card erp-empty-state">
+      <erp-admin-illustration kind="taskSchedule" size="compact" />
+      <p>Select a scheduled subject to determine eligible students.</p>
+    </section>
+  }
+</erp-admin-page>

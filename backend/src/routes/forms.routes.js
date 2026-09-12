@@ -363,7 +363,7 @@ formsRouter.get(
       .collection('masterValues')
       .find({
         typeSlug: {
-          $in: ['academic', 'university', 'college', 'department', 'level'],
+          $in: ['academic', 'university', 'college', 'department', 'level', 'course'],
         },
         isActive: true,
       })

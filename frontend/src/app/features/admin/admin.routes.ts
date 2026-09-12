@@ -89,9 +89,37 @@ export const ADMIN_ROUTES: Routes = [
           ),
       },
       { path: 'academics', pathMatch: 'full', redirectTo: 'academics/groups' },
+      {
+        path: 'exams/schedules',
+        loadComponent: () =>
+          import('./exams/exam-schedules.component').then(
+            (component) => component.ExamSchedulesComponent,
+          ),
+      },
+      {
+        path: 'exams/shifts',
+        loadComponent: () =>
+          import('./exams/exam-shifts.component').then(
+            (component) => component.ExamShiftsComponent,
+          ),
+      },
+      {
+        path: 'exams/subject-schedules',
+        loadComponent: () =>
+          import('./exams/exam-subject-schedules.component').then(
+            (component) => component.ExamSubjectSchedulesComponent,
+          ),
+      },
+      {
+        path: 'exams/eligibility',
+        loadComponent: () =>
+          import('./exams/exam-eligibility.component').then(
+            (component) => component.ExamEligibilityComponent,
+          ),
+      },
+      { path: 'exams', pathMatch: 'full', redirectTo: 'exams/schedules' },
       ...[
         ['buildings', 'buildings'],
-        ['locations', 'locations'],
         ['floors', 'floors'],
         ['rooms', 'rooms'],
       ].map(([path, section]) => ({
@@ -102,6 +130,11 @@ export const ADMIN_ROUTES: Routes = [
           ),
         data: { section },
       })),
+      {
+        path: 'settings/exam-master/locations',
+        pathMatch: 'full',
+        redirectTo: 'settings/exam-master/floors',
+      },
       {
         path: 'settings/exam-master',
         pathMatch: 'full',

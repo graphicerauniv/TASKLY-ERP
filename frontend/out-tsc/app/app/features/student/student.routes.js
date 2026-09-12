@@ -26,9 +26,24 @@ export const STUDENT_ROUTES = [
                 component: StudentProfileComponent,
             },
             {
-                path: 'academics',
+                path: 'academics/timetable',
                 title: 'My Timetable | GEU ERP',
                 loadComponent: () => import('./academics/student-timetable.component').then((component) => component.StudentTimetableComponent),
+            },
+            {
+                path: 'academics/semester-registration',
+                title: 'Semester Registration | GEU ERP',
+                loadComponent: () => import('./academics/student-semester-registration.component').then((component) => component.StudentSemesterRegistrationComponent),
+            },
+            {
+                path: 'academics/service/:serviceId',
+                title: 'Academic Service | GEU ERP',
+                loadComponent: () => import('./academics/student-academic-service.component').then((component) => component.StudentAcademicServiceComponent),
+            },
+            {
+                path: 'academics',
+                title: 'Academics | GEU ERP',
+                loadComponent: () => import('./academics/student-academics-dashboard.component').then((component) => component.StudentAcademicsDashboardComponent),
             },
             {
                 path: 'attendance/reports',

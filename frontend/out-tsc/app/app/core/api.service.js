@@ -60,6 +60,30 @@ export class ApiService {
             ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
         });
     }
+    studentSemesterRegistration(token) {
+        return this.http.get(`${API_BASE_URL}/student-academics/semester-registration`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    registerStudentSemester(token) {
+        return this.http.post(`${API_BASE_URL}/student-academics/semester-registration`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    studentTimetablePdf(token, weekStart, includeDetails = true) {
+        return this.http.get(`${API_BASE_URL}/student-academics/timetable.pdf`, {
+            params: { weekStart, includeDetails },
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: 'blob',
+        });
+    }
+    saveStudentTimetableReminder(token, entryId, minutesBefore = 15) {
+        return this.http.put(`${API_BASE_URL}/student-academics/timetable/reminders/${entryId}`, { minutesBefore }, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    deleteStudentTimetableReminder(token, entryId) {
+        return this.http.delete(`${API_BASE_URL}/student-academics/timetable/reminders/${entryId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    }
+    saveStudentTimetablePreferences(token, preferences) {
+        return this.http.put(`${API_BASE_URL}/student-academics/timetable/preferences`, preferences, { headers: { Authorization: `Bearer ${token}` } });
+    }
     facultyAttendanceClasses(token, date) {
         return this.http.get(`${API_BASE_URL}/faculty-attendance/classes`, { params: { date }, headers: { Authorization: `Bearer ${token}` } });
     }
@@ -325,6 +349,13 @@ export class ApiService {
         if (status)
             params = params.set('status', status);
         return this.http.get(`${API_BASE_URL}/payments/admin/accounts`, { params });
+    }
+    financeDirectory(section, options) {
+        const params = new HttpParams({ fromObject: { section, ...options } });
+        return this.http.get(`${API_BASE_URL}/payments/admin/accounts/directory`, { params });
+    }
+    financeSummary() {
+        return this.http.get(`${API_BASE_URL}/payments/admin/accounts/summary`);
     }
     downloadAdminReceipt(paymentId) {
         return this.http.get(`${API_BASE_URL}/payments/admin/accounts/${paymentId}/receipt`, {
@@ -628,6 +659,57 @@ export class ApiService {
     }
     deleteExamMasterRecord(resource, itemId) {
         return this.http.delete(`${API_BASE_URL}/exam-master/${resource}/${itemId}`);
+    }
+    examSchedules() {
+        return this.http.get(`${API_BASE_URL}/exams/schedules`);
+    }
+    createExamSchedule(body) {
+        return this.http.post(`${API_BASE_URL}/exams/schedules`, body);
+    }
+    updateExamSchedule(scheduleId, body) {
+        return this.http.patch(`${API_BASE_URL}/exams/schedules/${scheduleId}`, body);
+    }
+    deleteExamSchedule(scheduleId) {
+        return this.http.delete(`${API_BASE_URL}/exams/schedules/${scheduleId}`);
+    }
+    examShiftSchedules() {
+        return this.http.get(`${API_BASE_URL}/exams/shifts`);
+    }
+    createExamShiftSchedule(body) {
+        return this.http.post(`${API_BASE_URL}/exams/shifts`, body);
+    }
+    updateExamShiftSchedule(shiftId, body) {
+        return this.http.patch(`${API_BASE_URL}/exams/shifts/${shiftId}`, body);
+    }
+    deleteExamShiftSchedule(shiftId) {
+        return this.http.delete(`${API_BASE_URL}/exams/shifts/${shiftId}`);
+    }
+    examSubjectOptions(options) {
+        return this.http.get(`${API_BASE_URL}/exams/subject-options`, {
+            params: { ...options },
+        });
+    }
+    examSubjectSchedules() {
+        return this.http.get(`${API_BASE_URL}/exams/subject-schedules`);
+    }
+    importExamSubjectSchedules(file) {
+        const data = new FormData();
+        data.append('file', file);
+        return this.http.post(`${API_BASE_URL}/exams/subject-schedules/import`, data);
+    }
+    examEligibleStudents(subjectScheduleId) {
+        return this.http.get(`${API_BASE_URL}/exams/eligibility`, {
+            params: { subjectScheduleId },
+        });
+    }
+    createExamSubjectSchedule(body) {
+        return this.http.post(`${API_BASE_URL}/exams/subject-schedules`, body);
+    }
+    updateExamSubjectSchedule(itemId, body) {
+        return this.http.patch(`${API_BASE_URL}/exams/subject-schedules/${itemId}`, body);
+    }
+    deleteExamSubjectSchedule(itemId) {
+        return this.http.delete(`${API_BASE_URL}/exams/subject-schedules/${itemId}`);
     }
     static ɵfac = function ApiService_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || ApiService)(); };
     static ɵprov = /*@__PURE__*/ i0.ɵɵdefineInjectable({ token: ApiService, factory: ApiService.ɵfac, providedIn: 'root' });

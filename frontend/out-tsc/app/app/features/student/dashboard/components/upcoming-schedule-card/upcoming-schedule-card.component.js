@@ -68,7 +68,7 @@ function UpcomingScheduleCardComponent_Conditional_8_Conditional_0_Template(rf, 
     i0.ɵɵelementStart(26, "div", 13);
     i0.ɵɵrepeaterCreate(27, UpcomingScheduleCardComponent_Conditional_8_Conditional_0_For_28_Template, 11, 5, "div", 14, _forTrack0);
     i0.ɵɵelementStart(29, "button", 15);
-    i0.ɵɵtext(30, "View full schedule");
+    i0.ɵɵtext(30, " View full schedule ");
     i0.ɵɵelementEnd()();
 } if (rf & 2) {
     const nextClass_r2 = ctx;
@@ -110,7 +110,7 @@ function UpcomingScheduleCardComponent_Conditional_9_Template(rf, ctx) { if (rf 
 export class UpcomingScheduleCardComponent {
     state = input.required(...(ngDevMode ? [{ debugName: "state" }] : /* istanbul ignore next */ []));
     static ɵfac = function UpcomingScheduleCardComponent_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || UpcomingScheduleCardComponent)(); };
-    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: UpcomingScheduleCardComponent, selectors: [["erp-upcoming-schedule-card"]], inputs: { state: [1, "state"] }, decls: 10, vars: 1, consts: [[1, "student-operational-card", "student-operational-card--schedule"], [1, "student-operational-card__header"], ["lucideCalendarDays", "", "size", "18", "aria-hidden", "true"], ["type", "button", "routerLink", "/student/academics", "aria-label", "View timetable"], ["title", "Schedule unavailable", 3, "status", "message"], ["status", "empty", "title", "No more classes today", "message", "Your next configured class will appear here on its scheduled day."], [1, "student-schedule-mobile"], [1, "student-schedule-mobile__time"], [1, "student-schedule-mobile__content"], ["lucideMapPin", "", "size", "14", "aria-hidden", "true"], [1, "student-schedule-mobile__timeline"], ["type", "button", "routerLink", "/student/academics", "aria-label", "Open timetable"], ["lucideChevronRight", "", "size", "22", "aria-hidden", "true"], [1, "student-schedule-desktop"], [1, "student-schedule-row"], ["type", "button", "routerLink", "/student/academics"], ["aria-hidden", "true", 1, "student-schedule-row__marker"], [1, "student-schedule-row__details"], [1, "student-schedule-row__relative"]], template: function UpcomingScheduleCardComponent_Template(rf, ctx) { if (rf & 1) {
+    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: UpcomingScheduleCardComponent, selectors: [["erp-upcoming-schedule-card"]], inputs: { state: [1, "state"] }, decls: 10, vars: 1, consts: [[1, "student-operational-card", "student-operational-card--schedule"], [1, "student-operational-card__header"], ["lucideCalendarDays", "", "size", "18", "aria-hidden", "true"], ["type", "button", "routerLink", "/student/academics/timetable", "aria-label", "View timetable"], ["title", "Schedule unavailable", 3, "status", "message"], ["status", "empty", "title", "No more classes today", "message", "Your next configured class will appear here on its scheduled day."], [1, "student-schedule-mobile"], [1, "student-schedule-mobile__time"], [1, "student-schedule-mobile__content"], ["lucideMapPin", "", "size", "14", "aria-hidden", "true"], [1, "student-schedule-mobile__timeline"], ["type", "button", "routerLink", "/student/academics/timetable", "aria-label", "Open timetable"], ["lucideChevronRight", "", "size", "22", "aria-hidden", "true"], [1, "student-schedule-desktop"], [1, "student-schedule-row"], ["type", "button", "routerLink", "/student/academics/timetable"], ["aria-hidden", "true", 1, "student-schedule-row__marker"], [1, "student-schedule-row__details"], [1, "student-schedule-row__relative"]], template: function UpcomingScheduleCardComponent_Template(rf, ctx) { if (rf & 1) {
             i0.ɵɵelementStart(0, "article", 0)(1, "header", 1)(2, "span");
             i0.ɵɵnamespaceSVG();
             i0.ɵɵelement(3, "svg", 2);
@@ -150,7 +150,7 @@ export class UpcomingScheduleCardComponent {
         <span
           ><svg lucideCalendarDays size="18" aria-hidden="true"></svg><strong>Up next</strong></span
         >
-        <button type="button" routerLink="/student/academics" aria-label="View timetable">
+        <button type="button" routerLink="/student/academics/timetable" aria-label="View timetable">
           View timetable
         </button>
       </header>
@@ -179,7 +179,11 @@ export class UpcomingScheduleCardComponent {
                 ><span>Completed</span>
               </div>
             </div>
-            <button type="button" routerLink="/student/academics" aria-label="Open timetable">
+            <button
+              type="button"
+              routerLink="/student/academics/timetable"
+              aria-label="Open timetable"
+            >
               <svg lucideChevronRight size="22" aria-hidden="true"></svg>
             </button>
           </div>
@@ -196,7 +200,9 @@ export class UpcomingScheduleCardComponent {
                 <small class="student-schedule-row__relative">{{ item.relativeLabel }}</small>
               </div>
             }
-            <button type="button" routerLink="/student/academics">View full schedule</button>
+            <button type="button" routerLink="/student/academics/timetable">
+              View full schedule
+            </button>
           </div>
         } @else {
           <erp-dashboard-widget-state
@@ -217,4 +223,4 @@ export class UpcomingScheduleCardComponent {
                 changeDetection: ChangeDetectionStrategy.OnPush,
             }]
     }], null, { state: [{ type: i0.Input, args: [{ isSignal: true, alias: "state", required: true }] }] }); })();
-(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(UpcomingScheduleCardComponent, { className: "UpcomingScheduleCardComponent", filePath: "frontend/src/app/features/student/dashboard/components/upcoming-schedule-card/upcoming-schedule-card.component.ts", lineNumber: 91 }); })();
+(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassDebugInfo(UpcomingScheduleCardComponent, { className: "UpcomingScheduleCardComponent", filePath: "frontend/src/app/features/student/dashboard/components/upcoming-schedule-card/upcoming-schedule-card.component.ts", lineNumber: 97 }); })();
